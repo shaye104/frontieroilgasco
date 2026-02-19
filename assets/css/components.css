@@ -317,6 +317,26 @@ textarea:focus {
   margin: 0 0 var(--space-2);
 }
 
+.employee-page-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  min-height: min(70vh, 760px);
+}
+
+.employee-page-panel {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.9rem;
+  background: #ffffff;
+  min-height: 0;
+}
+
+.employee-page-panel-activity {
+  display: flex;
+  flex-direction: column;
+}
+
 .modal-actions {
   display: flex;
   gap: var(--space-2);
@@ -371,6 +391,11 @@ textarea:focus {
   .employee-modal-grid {
     grid-template-columns: 1fr;
     overflow: auto;
+  }
+
+  .employee-page-grid {
+    grid-template-columns: 1fr;
+    min-height: 0;
   }
 
   .details-split {

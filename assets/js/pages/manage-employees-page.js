@@ -19,15 +19,7 @@ initIntranetPageGuard({
     filterSerialSelector: '#filterSerialNumber',
     filterUsernameSelector: '#filterRobloxUsername',
     openCreateEmployeeBtnSelector: '#openCreateEmployeeBtn',
-    createFormSelector: '#createEmployeeForm',
-    editFormSelector: '#editEmployeeForm',
-    disciplinaryFormSelector: '#disciplinaryForm',
-    noteFormSelector: '#noteForm',
-    activeDisciplinaryListSelector: '#activeDisciplinaryList',
-    activityListSelector: '#activityList',
-    tenureDaysSelector: '#tenureDays',
-    openDisciplinaryModalBtnSelector: '#openDisciplinaryModalBtn',
-    openNoteModalBtnSelector: '#openNoteModalBtn'
+    createFormSelector: '#createEmployeeForm'
   });
 });
 

@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T12:54:31.774Z
+Generated: 2026-02-19T12:59:14.039Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -11,6 +11,7 @@ SITE STRUCTURE
 - admin-config.html | title: Frontier Oil & Gas Company | System Config | primary heading: System Config
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
+- employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
 - intranet.html | title: Frontier Oil & Gas Company | Employee Intranet | primary heading: Employee Intranet
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
@@ -24,6 +25,7 @@ JAVASCRIPT MODULES
 - assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/company-data.js | exports: companyProfile
+- assets/js/modules/employee-profile.js | exports: No public exports
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
 - assets/js/modules/intranet-page-guard.js | exports: No public exports
 - assets/js/modules/manage-employees.js | exports: No public exports
@@ -35,6 +37,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/admin-config-page.js | exports: No public exports
 - assets/js/pages/admin-panel-page.js | exports: No public exports
 - assets/js/pages/application-page.js | exports: No public exports
+- assets/js/pages/employee-profile-page.js | exports: No public exports
 - assets/js/pages/home.js | exports: No public exports
 - assets/js/pages/intranet-page.js | exports: No public exports
 - assets/js/pages/manage-employees-page.js | exports: No public exports
