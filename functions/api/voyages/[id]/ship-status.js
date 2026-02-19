@@ -46,7 +46,10 @@ export async function onRequestPut(context) {
     .run();
 
   await env.DB
-    .prepare(`INSERT INTO voyage_logs (voyage_id, author_employee_id, message, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`)
+    .prepare(
+      `INSERT INTO voyage_logs (voyage_id, author_employee_id, message, log_type, updated_at)
+       VALUES (?, ?, ?, 'system', CURRENT_TIMESTAMP)`
+    )
     .bind(
       voyageId,
       employee.id,

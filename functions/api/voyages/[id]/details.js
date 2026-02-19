@@ -133,7 +133,7 @@ export async function onRequestPut(context) {
   if (Number(voyage.officer_of_watch_employee_id) !== officerOfWatchEmployeeId) {
     logs.push(changeLine('Officer of the Watch', oldOow, nextOow));
     if (currentCrewIds.has(officerOfWatchEmployeeId)) {
-      logs.push(`Crew Complement auto-update: removed ${nextOow} because Officer of the Watch cannot be in crew.`);
+      logs.push(`Crew updated: ${nextOow} removed because they are Officer of the Watch.`);
     }
   }
 
@@ -175,7 +175,10 @@ export async function onRequestPut(context) {
     await env.DB.batch(
       logs.map((message) =>
         env.DB
-          .prepare('INSERT INTO voyage_logs (voyage_id, author_employee_id, message, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)')
+          .prepare(
+            `INSERT INTO voyage_logs (voyage_id, author_employee_id, message, log_type, updated_at)
+             VALUES (?, ?, ?, 'system', CURRENT_TIMESTAMP)`
+          )
           .bind(voyageId, employee.id, message)
       )
     );

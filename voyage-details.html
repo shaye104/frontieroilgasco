@@ -43,18 +43,18 @@
           <div id="voyageDetailFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="panel hidden employee-page-grid">
+        <section id="protectedContent" class="panel hidden employee-page-grid voyage-detail-grid">
           <section class="employee-page-panel">
             <h2>Voyage Profile</h2>
             <div id="shipStatusControls" class="modal-actions hidden">
-              <button id="shipInPortBtn" class="btn btn-secondary" type="button">Ship In Port</button>
               <button id="shipUnderwayBtn" class="btn btn-accent" type="button">Ship Underway</button>
+              <button id="shipInPortBtn" class="btn btn-secondary" type="button">Ship In Port</button>
             </div>
             <div id="voyageFieldList" class="voyage-field-list"></div>
 
-            <h3>Cargo Manifest</h3>
-            <div class="modal-actions">
-              <button id="openAddCargoBtn" class="btn btn-secondary hidden" type="button">+ Add Cargo</button>
+            <div class="modal-header manifest-head-row">
+              <h3>Cargo Manifest</h3>
+              <button id="openAddCargoBtn" class="btn btn-secondary btn-plus hidden" type="button" aria-label="Add Cargo">+</button>
             </div>
             <div class="table-wrap manifest-table-wrap">
               <table class="data-table manifest-table">
@@ -124,6 +124,12 @@
           <input name="baseSellPrice" type="number" min="0" step="0.01" required />
           <h3>Cargo Lost (Informational)</h3>
           <div id="cargoLostEditor"></div>
+          <div id="cancelVoyageWrap" class="hidden">
+            <h3>Cancel Voyage</h3>
+            <p class="muted">Press and hold for 3 seconds to permanently delete this voyage.</p>
+            <button id="cancelVoyageHoldBtn" class="btn btn-warning" type="button">Hold To Cancel Voyage</button>
+            <div class="hold-progress"><span id="cancelVoyageProgress"></span></div>
+          </div>
           <div class="modal-actions">
             <button class="btn btn-danger" type="submit">Finalize Voyage</button>
             <button class="btn btn-secondary" type="button" data-close-modal="endVoyageModal">Cancel</button>

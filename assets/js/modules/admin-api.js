@@ -304,6 +304,10 @@ export function updateVoyageShipStatus(voyageId, shipStatus) {
   });
 }
 
+export function cancelVoyage(voyageId) {
+  return requestJson(`/api/voyages/${voyageId}/cancel`, { method: 'DELETE' });
+}
+
 export function searchEmployees(options = {}) {
   const params = new URLSearchParams();
   if (options.username) params.set('username', String(options.username));

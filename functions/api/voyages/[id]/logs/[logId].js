@@ -29,8 +29,17 @@ export async function onRequestPut(context) {
   const message = String(payload?.message || '').trim();
   if (!message) return json({ error: 'Log message is required.' }, 400);
 
-  const existing = await env.DB.prepare('SELECT id FROM voyage_logs WHERE id = ? AND voyage_id = ?').bind(logId, voyageId).first();
+  const existing = await env.DB
+    .prepare('SELECT id, author_employee_id, log_type FROM voyage_logs WHERE id = ? AND voyage_id = ?')
+    .bind(logId, voyageId)
+    .first();
   if (!existing) return json({ error: 'Log entry not found.' }, 404);
+  if (String(existing.log_type || 'manual') !== 'manual') {
+    return json({ error: 'System log entries cannot be edited.' }, 403);
+  }
+  if (Number(existing.author_employee_id) !== Number(employee.id)) {
+    return json({ error: 'You can only edit your own manual log entries.' }, 403);
+  }
 
   await env.DB
     .prepare('UPDATE voyage_logs SET message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')

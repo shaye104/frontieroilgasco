@@ -30,7 +30,10 @@ initIntranetPageGuard({
     updateFieldFormSelector: '#updateFieldForm',
     updateFieldTitleSelector: '#updateFieldTitle',
     updateFieldKeySelector: '#updateFieldKey',
-    updateFieldControlsSelector: '#updateFieldControls'
+    updateFieldControlsSelector: '#updateFieldControls',
+    cancelVoyageWrapSelector: '#cancelVoyageWrap',
+    cancelVoyageHoldButtonSelector: '#cancelVoyageHoldBtn',
+    cancelVoyageProgressSelector: '#cancelVoyageProgress'
   });
 });
 

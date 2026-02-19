@@ -1,4 +1,5 @@
 import {
+  cancelVoyage,
   createVoyageLog,
   endVoyage,
   getVoyage,
@@ -83,6 +84,9 @@ export async function initVoyageDetails(config) {
   const updateFieldTitle = document.querySelector(config.updateFieldTitleSelector);
   const updateFieldKey = document.querySelector(config.updateFieldKeySelector);
   const updateFieldControls = document.querySelector(config.updateFieldControlsSelector);
+  const cancelVoyageWrap = document.querySelector(config.cancelVoyageWrapSelector);
+  const cancelVoyageHoldBtn = document.querySelector(config.cancelVoyageHoldButtonSelector);
+  const cancelVoyageProgress = document.querySelector(config.cancelVoyageProgressSelector);
 
   if (
     !feedback ||
@@ -105,7 +109,10 @@ export async function initVoyageDetails(config) {
     !updateFieldForm ||
     !updateFieldTitle ||
     !updateFieldKey ||
-    !updateFieldControls
+    !updateFieldControls ||
+    !cancelVoyageWrap ||
+    !cancelVoyageHoldBtn ||
+    !cancelVoyageProgress
   ) {
     return;
   }
@@ -120,6 +127,9 @@ export async function initVoyageDetails(config) {
   let manifest = [];
   let logs = [];
   const searchCache = new Map();
+  let cancelHoldTimer = null;
+  let cancelHoldStart = 0;
+  let cancelHoldRaf = null;
 
   async function lookupEmployees(queryKind, query) {
     const clean = normalize(query);
@@ -137,15 +147,15 @@ export async function initVoyageDetails(config) {
   }
 
   function renderStatusControls() {
-    const canEdit = Boolean(detail.permissions?.canEdit);
-    if (!canEdit) {
+    if (String(detail.voyage.status) !== 'ONGOING') {
       shipStatusControls.classList.add('hidden');
       return;
     }
     shipStatusControls.classList.remove('hidden');
+    const canEdit = Boolean(detail.permissions?.canEdit);
     const status = String(detail.voyage.ship_status || 'IN_PORT');
-    shipInPortBtn.disabled = status === 'IN_PORT';
-    shipUnderwayBtn.disabled = status === 'UNDERWAY';
+    shipInPortBtn.disabled = !canEdit || status === 'IN_PORT';
+    shipUnderwayBtn.disabled = !canEdit || status === 'UNDERWAY';
   }
 
   function renderFieldList() {
@@ -237,9 +247,11 @@ export async function initVoyageDetails(config) {
     logList.innerHTML = logs
       .map(
         (entry) => `<li class="role-item">
-          <span class="role-id">${formatWhen(entry.created_at)} | ${text(entry.author_name)} | ${text(entry.message)}</span>
+          <span class="role-id">${formatWhen(entry.created_at)} | ${text(entry.author_name)} | ${
+            String(entry.log_type || 'manual') === 'system' ? '[System] ' : ''
+          }${text(entry.message)}</span>
           ${
-            canEdit
+            canEdit && String(entry.log_type || 'manual') === 'manual'
               ? `<button class="btn btn-secondary" type="button" data-edit-log="${entry.id}" data-current-message="${encodeURIComponent(
                   entry.message || ''
                 )}">Edit</button>`
@@ -304,6 +316,9 @@ export async function initVoyageDetails(config) {
     else endVoyageBtn.classList.add('hidden');
     if (detail.permissions?.canEdit) addLogForm.classList.remove('hidden');
     else addLogForm.classList.add('hidden');
+    if (detail.permissions?.canEnd && String(detail.voyage.status) === 'ONGOING') cancelVoyageWrap.classList.remove('hidden');
+    else cancelVoyageWrap.classList.add('hidden');
+    cancelVoyageHoldBtn.disabled = !(detail.permissions?.canEnd && String(detail.voyage.status) === 'ONGOING');
   }
 
   function openFieldModal(fieldKey) {
@@ -334,8 +349,8 @@ export async function initVoyageDetails(config) {
     } else if (fieldKey === 'officerOfWatchEmployeeId') {
       updateFieldTitle.textContent = 'Update Officer of the Watch';
       updateFieldControls.innerHTML = `
-        <label>Serial Number Search</label>
-        <input name="search" id="fieldOowSearch" type="text" autocomplete="off" placeholder="Search by serial number" />
+        <label>Roblox Username Search</label>
+        <input name="search" id="fieldOowSearch" type="text" autocomplete="off" placeholder="Search by Roblox username" />
         <input name="selectedId" id="fieldOowSelectedId" type="hidden" value="${voyage.officer_of_watch_employee_id}" />
         <p id="fieldOowSelected" class="muted">Selected: ${text(voyage.officer_name)}</p>
         <div id="fieldOowResults" class="autocomplete-list"></div>`;
@@ -344,12 +359,12 @@ export async function initVoyageDetails(config) {
       const selectedId = updateFieldControls.querySelector('#fieldOowSelectedId');
       const selectedText = updateFieldControls.querySelector('#fieldOowSelected');
       const runSearch = debounce(async () => {
-        const items = await lookupEmployees('serial', search.value);
+        const items = await lookupEmployees('username', search.value);
         results.innerHTML = items
           .map(
             (employee) => `<button class="autocomplete-item" type="button" data-pick-id="${employee.id}">
               <span>${text(employee.roblox_username)}</span>
-              <small>Serial: ${text(employee.serial_number)}</small>
+              <small>${text(employee.serial_number)}</small>
             </button>`
           )
           .join('');
@@ -473,6 +488,46 @@ export async function initVoyageDetails(config) {
     }
   });
 
+  function stopCancelHold() {
+    if (cancelHoldTimer) {
+      window.clearTimeout(cancelHoldTimer);
+      cancelHoldTimer = null;
+    }
+    if (cancelHoldRaf) {
+      window.cancelAnimationFrame(cancelHoldRaf);
+      cancelHoldRaf = null;
+    }
+    cancelHoldStart = 0;
+    cancelVoyageProgress.style.width = '0%';
+  }
+
+  async function confirmCancelVoyage() {
+    try {
+      await cancelVoyage(voyageId);
+      window.location.href = 'voyage-tracker.html';
+    } catch (error) {
+      showMessage(feedback, error.message || 'Unable to cancel voyage.', 'error');
+      stopCancelHold();
+    }
+  }
+
+  function startCancelHold() {
+    if (String(detail?.voyage?.status) !== 'ONGOING' || !detail?.permissions?.canEnd) return;
+    stopCancelHold();
+    cancelHoldStart = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - cancelHoldStart;
+      const pct = Math.min(100, Math.round((elapsed / 3000) * 100));
+      cancelVoyageProgress.style.width = `${pct}%`;
+      if (pct < 100) cancelHoldRaf = window.requestAnimationFrame(tick);
+    };
+    cancelHoldRaf = window.requestAnimationFrame(tick);
+    cancelHoldTimer = window.setTimeout(() => {
+      cancelHoldTimer = null;
+      void confirmCancelVoyage();
+    }, 3000);
+  }
+
   saveManifestBtn.addEventListener('click', async () => {
     const lines = [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => {
       const cargoTypeId = Number(row.getAttribute('data-cargo-id'));
@@ -550,6 +605,11 @@ export async function initVoyageDetails(config) {
   });
 
   endVoyageBtn.addEventListener('click', () => openModal('endVoyageModal'));
+  cancelVoyageHoldBtn.addEventListener('mousedown', startCancelHold);
+  cancelVoyageHoldBtn.addEventListener('touchstart', startCancelHold, { passive: true });
+  ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach((eventName) => {
+    cancelVoyageHoldBtn.addEventListener(eventName, stopCancelHold);
+  });
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
       const modalId = button.getAttribute('data-close-modal');
@@ -559,6 +619,7 @@ export async function initVoyageDetails(config) {
 
   endForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    stopCancelHold();
     const data = new FormData(endForm);
     const cargoLost = [...cargoLostEditor.querySelectorAll('[data-loss-cargo-id]')].map((input) => ({
       cargoTypeId: Number(input.getAttribute('data-loss-cargo-id')),

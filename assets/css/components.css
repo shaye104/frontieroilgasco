@@ -76,6 +76,17 @@
   border-color: color-mix(in srgb, var(--color-secondary) 86%, black);
 }
 
+.btn-warning {
+  background: #f2b544;
+  border-color: #f2b544;
+  color: #1f2937;
+}
+
+.btn-warning:hover {
+  background: #de9f2f;
+  border-color: #de9f2f;
+}
+
 .btn-block {
   width: 100%;
 }
@@ -348,6 +359,10 @@ textarea:focus {
   min-height: clamp(620px, 72vh, 860px);
 }
 
+.voyage-detail-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
 .employee-page-panel {
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -367,6 +382,16 @@ textarea:focus {
   min-height: 0;
   overflow-y: auto;
   padding-right: 0.25rem;
+}
+
+.voyage-detail-grid .employee-page-panel,
+.voyage-detail-grid .employee-page-panel-activity {
+  max-height: min(76vh, 860px);
+  overflow: hidden;
+}
+
+.voyage-detail-grid .employee-page-panel {
+  overflow-y: auto;
 }
 
 .modal-actions {
@@ -590,6 +615,19 @@ textarea:focus {
   z-index: 2;
 }
 
+.manifest-head-row {
+  margin-bottom: 0.6rem;
+}
+
+.btn-plus {
+  width: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
 .voyage-field-list {
   display: grid;
   gap: 0.35rem;
@@ -620,6 +658,23 @@ textarea:focus {
   min-height: 30px;
   min-width: 34px;
   padding: 0.2rem 0.35rem;
+}
+
+.hold-progress {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.hold-progress span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: #f2b544;
+  transition: width 0.08s linear;
 }
 
 .voyage-status {

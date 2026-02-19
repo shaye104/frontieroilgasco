@@ -1,4 +1,4 @@
-import { listVoyages, searchEmployees, startVoyage, updateVoyageShipStatus } from './admin-api.js';
+import { listVoyages, searchEmployees, startVoyage } from './admin-api.js';
 import { hasPermission } from './intranet-page-guard.js';
 import { clearMessage, showMessage } from './notice.js';
 
@@ -48,7 +48,7 @@ function fillSelect(select, items, placeholder) {
   if (current) select.value = current;
 }
 
-function renderVoyageCards(target, voyages, isOngoing, canStatusChange, onStatusChange) {
+function renderVoyageCards(target, voyages, isOngoing) {
   if (!target) return;
   if (!voyages.length) {
     target.innerHTML = `<p>${isOngoing ? 'No ongoing voyages.' : 'No archived voyages.'}</p>`;
@@ -57,38 +57,24 @@ function renderVoyageCards(target, voyages, isOngoing, canStatusChange, onStatus
 
   target.innerHTML = voyages
     .map((voyage) => {
-      const shipStatusLabel = voyage.ship_status === 'UNDERWAY' ? 'Ship Underway' : 'Ship In Port';
+      const underway = voyage.ship_status === 'UNDERWAY';
+      const shipStatusLabel = underway ? 'Ship Underway' : 'Ship In Port';
       return `
         <article class="panel voyage-card">
           <div class="modal-header">
             <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
-            <span class="voyage-status ${isOngoing ? 'voyage-status-active' : ''}">${isOngoing ? shipStatusLabel : 'Ended'}</span>
+            <span class="voyage-status ${isOngoing && underway ? 'voyage-status-active' : ''}">${isOngoing ? shipStatusLabel : 'Ended'}</span>
           </div>
           <p><strong>Route:</strong> ${text(voyage.departure_port)} -> ${text(voyage.destination_port)}</p>
           <p><strong>Officer of the Watch:</strong> ${text(voyage.officer_name)}</p>
           <p><strong>${isOngoing ? 'Started' : 'Ended'}:</strong> ${formatWhen(isOngoing ? voyage.started_at : voyage.ended_at)}</p>
           <div class="modal-actions">
             <a class="btn btn-secondary" href="voyage-details.html?voyageId=${voyage.id}">Open</a>
-            ${
-              isOngoing && canStatusChange && voyage.isOwner
-                ? `<button class="btn btn-secondary" type="button" data-ship-status="${voyage.id}:IN_PORT">Ship In Port</button>
-                   <button class="btn btn-accent" type="button" data-ship-status="${voyage.id}:UNDERWAY">Ship Underway</button>`
-                : ''
-            }
           </div>
         </article>
       `;
     })
     .join('');
-
-  target.querySelectorAll('[data-ship-status]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      const [idValue, shipStatus] = String(button.getAttribute('data-ship-status') || '').split(':');
-      const voyageId = Number(idValue);
-      if (!Number.isInteger(voyageId) || !shipStatus) return;
-      await onStatusChange(voyageId, shipStatus, button);
-    });
-  });
 }
 
 export async function initVoyageTracker(config, session) {
@@ -138,7 +124,6 @@ export async function initVoyageTracker(config, session) {
   let ongoingKeys = new Set();
   let selectedCrewIds = new Set();
   const searchCache = new Map();
-  const canStatusChange = hasPermission(session, 'voyages.edit');
 
   async function lookupEmployees(queryKind, queryValue) {
     const query = normalize(queryValue);
@@ -151,30 +136,13 @@ export async function initVoyageTracker(config, session) {
     return results;
   }
 
-  async function handleStatusChange(voyageId, shipStatus, button) {
-    const originalText = button.textContent;
-    button.disabled = true;
-    button.textContent = 'Saving...';
-    try {
-      await updateVoyageShipStatus(voyageId, shipStatus);
-      const item = ongoing.find((voyage) => Number(voyage.id) === Number(voyageId));
-      if (item) item.ship_status = shipStatus;
-      renderVoyageCards(ongoingRoot, ongoing, true, canStatusChange, handleStatusChange);
-    } catch (error) {
-      showMessage(feedback, error.message || 'Unable to update ship status.', 'error');
-    } finally {
-      button.disabled = false;
-      button.textContent = originalText;
-    }
-  }
-
   async function renderOowResults() {
-    const matches = await lookupEmployees('serial', oowSearch.value);
+    const matches = await lookupEmployees('username', oowSearch.value);
     oowResults.innerHTML = matches
       .map(
         (employee) => `<button class="autocomplete-item" type="button" data-oow-id="${employee.id}">
           <span>${text(employee.roblox_username)}</span>
-          <small>Serial: ${text(employee.serial_number)}</small>
+          <small>${text(employee.serial_number)}</small>
         </button>`
       )
       .join('');
@@ -235,7 +203,7 @@ export async function initVoyageTracker(config, session) {
       .map(
         (employee) => `<button class="autocomplete-item" type="button" data-crew-id="${employee.id}">
           <span>${text(employee.roblox_username)}</span>
-          <small>Serial: ${text(employee.serial_number)}</small>
+          <small>${text(employee.serial_number)}</small>
         </button>`
       )
       .join('');
@@ -286,8 +254,8 @@ export async function initVoyageTracker(config, session) {
     fillSelect(vesselClassSelect, ongoingPayload.voyageConfig?.vesselClasses || [], 'Select vessel class');
     fillSelect(vesselCallsignSelect, ongoingPayload.voyageConfig?.vesselCallsigns || [], 'Select vessel callsign');
     renderCrewSelected();
-    renderVoyageCards(ongoingRoot, ongoing, true, canStatusChange, handleStatusChange);
-    renderVoyageCards(archivedRoot, archived, false, canStatusChange, handleStatusChange);
+    renderVoyageCards(ongoingRoot, ongoing, true);
+    renderVoyageCards(archivedRoot, archived, false);
   }
 
   startBtn.addEventListener('click', () => openModal('startVoyageModal'));

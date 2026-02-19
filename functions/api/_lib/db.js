@@ -219,6 +219,7 @@ export async function ensureCoreSchema(env) {
       voyage_id INTEGER NOT NULL,
       author_employee_id INTEGER NOT NULL,
       message TEXT NOT NULL,
+      log_type TEXT NOT NULL DEFAULT 'manual',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(voyage_id) REFERENCES voyages(id),
@@ -300,6 +301,11 @@ export async function ensureCoreSchema(env) {
   const voyageColumnNames = new Set((voyageColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
   if (!voyageColumnNames.has('ship_status')) {
     await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN ship_status TEXT NOT NULL DEFAULT 'IN_PORT'`).run();
+  }
+  const voyageLogColumns = await env.DB.prepare(`PRAGMA table_info(voyage_logs)`).all();
+  const voyageLogColumnNames = new Set((voyageLogColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!voyageLogColumnNames.has('log_type')) {
+    await env.DB.prepare(`ALTER TABLE voyage_logs ADD COLUMN log_type TEXT NOT NULL DEFAULT 'manual'`).run();
   }
 
   await env.DB.batch(

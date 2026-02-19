@@ -80,7 +80,7 @@ export async function getVoyageDetail(env, voyageId, options = {}) {
     includeLogs
       ? env.DB
           .prepare(
-            `SELECT vl.id, vl.message, vl.created_at, vl.updated_at,
+            `SELECT vl.id, vl.message, vl.log_type, vl.created_at, vl.updated_at,
                     e.id AS author_employee_id, e.roblox_username AS author_name
              FROM voyage_logs vl
              INNER JOIN employees e ON e.id = vl.author_employee_id

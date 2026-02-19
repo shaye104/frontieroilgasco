@@ -20,7 +20,7 @@ export async function onRequestGet(context) {
 
   const logs = await env.DB
     .prepare(
-      `SELECT vl.id, vl.message, vl.created_at, vl.updated_at,
+      `SELECT vl.id, vl.message, vl.log_type, vl.created_at, vl.updated_at,
               e.id AS author_employee_id, e.roblox_username AS author_name
        FROM voyage_logs vl
        INNER JOIN employees e ON e.id = vl.author_employee_id
@@ -68,13 +68,16 @@ export async function onRequestPost(context) {
   if (!message) return json({ error: 'Log message is required.' }, 400);
 
   await env.DB
-    .prepare('INSERT INTO voyage_logs (voyage_id, author_employee_id, message, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)')
+    .prepare(
+      `INSERT INTO voyage_logs (voyage_id, author_employee_id, message, log_type, updated_at)
+       VALUES (?, ?, ?, 'manual', CURRENT_TIMESTAMP)`
+    )
     .bind(voyageId, employee.id, message)
     .run();
 
   const logs = await env.DB
     .prepare(
-      `SELECT vl.id, vl.message, vl.created_at, vl.updated_at,
+      `SELECT vl.id, vl.message, vl.log_type, vl.created_at, vl.updated_at,
               e.id AS author_employee_id, e.roblox_username AS author_name
        FROM voyage_logs vl
        INNER JOIN employees e ON e.id = vl.author_employee_id
