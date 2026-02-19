@@ -45,22 +45,44 @@
 
           <article id="detailsPanel" class="panel hidden">
             <h2>Employee Profile</h2>
-            <div class="card-grid">
-              <article class="panel detail-card"><h3>Roblox Username</h3><p id="fieldRobloxUsername"></p></article>
-              <article class="panel detail-card"><h3>Roblox User ID</h3><p id="fieldRobloxUserId"></p></article>
-              <article class="panel detail-card"><h3>Rank</h3><p id="fieldRank"></p></article>
-              <article class="panel detail-card"><h3>Grade</h3><p id="fieldGrade"></p></article>
-              <article class="panel detail-card"><h3>Serial Number</h3><p id="fieldSerialNumber"></p></article>
-              <article class="panel detail-card"><h3>Employee Status</h3><p id="fieldEmployeeStatus"></p></article>
-              <article class="panel detail-card"><h3>Hire Date</h3><p id="fieldHireDate"></p></article>
-              <article class="panel detail-card"><h3>Tenure (Days)</h3><p id="fieldTenureDays"></p></article>
+            <div class="details-split">
+              <section class="details-block">
+                <h3>Profile Information</h3>
+                <dl class="details-grid">
+                  <dt>Roblox Username</dt>
+                  <dd id="fieldRobloxUsername"></dd>
+
+                  <dt>Roblox User ID</dt>
+                  <dd id="fieldRobloxUserId"></dd>
+
+                  <dt>Rank</dt>
+                  <dd id="fieldRank"></dd>
+
+                  <dt>Grade</dt>
+                  <dd id="fieldGrade"></dd>
+
+                  <dt>Serial Number</dt>
+                  <dd id="fieldSerialNumber"></dd>
+
+                  <dt>Employee Status</dt>
+                  <dd id="fieldEmployeeStatus"></dd>
+
+                  <dt>Hire Date</dt>
+                  <dd id="fieldHireDate"></dd>
+
+                  <dt>Tenure (Days)</dt>
+                  <dd id="fieldTenureDays"></dd>
+                </dl>
+              </section>
+
+              <section class="details-block">
+                <h3>Active Disciplinary Records</h3>
+                <ul id="activeDisciplinaryList" class="role-list"></ul>
+
+                <h3 class="details-subhead">Disciplinary History</h3>
+                <ul id="disciplinaryHistoryList" class="role-list"></ul>
+              </section>
             </div>
-
-            <h3>Active Disciplinary Records</h3>
-            <ul id="activeDisciplinaryList" class="role-list"></ul>
-
-            <h3>Disciplinary History</h3>
-            <ul id="disciplinaryHistoryList" class="role-list"></ul>
           </article>
         </section>
       </div>
