@@ -68,13 +68,13 @@ p {
   position: sticky;
   top: 0;
   z-index: 10;
-  backdrop-filter: blur(12px);
-  background: rgba(246, 250, 251, 0.85);
-  border-bottom: 1px solid var(--color-border);
+  background: #ffffff;
+  border-bottom: 1px solid #dddddd;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 }
 
 .header-row {
-  min-height: 74px;
+  min-height: 68px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -90,9 +90,9 @@ p {
 }
 
 .brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: inline-grid;
   place-items: center;
   background: linear-gradient(160deg, var(--color-primary), var(--color-primary-strong));
@@ -104,13 +104,24 @@ p {
 
 .brand-text {
   font-family: var(--font-heading);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .site-nav {
   display: flex;
-  gap: var(--space-3);
+  align-items: center;
+  gap: 0.9rem;
   flex-wrap: wrap;
+}
+
+.site-nav a:not(.btn) {
+  color: #3f5967;
+  font-weight: 600;
+}
+
+.site-nav a:not(.btn):hover {
+  color: var(--color-primary);
+  text-decoration: none;
 }
 
 .site-footer {

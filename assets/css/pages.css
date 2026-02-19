@@ -39,7 +39,7 @@
 }
 
 .intranet-layout {
-  width: min(100%, 860px);
+  width: min(100%, 1120px);
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-3);
