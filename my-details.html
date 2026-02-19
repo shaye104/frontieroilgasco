@@ -22,8 +22,6 @@
         </a>
         <nav class="site-nav" aria-label="Primary">
           <a href="intranet.html">Dashboard</a>
-          <a href="voyage-tracker.html">Voyage Tracker</a>
-          <a href="my-fleet.html">My Fleet</a>
           <a href="my-details.html">My Details</a>
           <a id="adminNavLink" class="hidden" href="admin-panel.html">Admin Panel</a>
           <button id="navLogoutBtn" class="btn btn-secondary hidden" type="button">Log Out</button>
@@ -35,13 +33,34 @@
       <div class="container intranet-layout">
         <section class="panel">
           <h1>My Details</h1>
-          <p id="intranetIdentity" class="lead"></p>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="panel hidden">
-          <h2>Coming Soon</h2>
-          <p>Employee profile details, earnings, infractions, role/rank, and pending actions will be built here.</p>
+        <section id="protectedContent" class="hidden">
+          <article id="accessPendingPanel" class="panel hidden">
+            <h2>Access Pending</h2>
+            <p>Your access request is pending admin review. You will receive access once approved.</p>
+          </article>
+
+          <article id="detailsPanel" class="panel hidden">
+            <h2>Employee Profile</h2>
+            <div class="card-grid">
+              <article class="panel detail-card"><h3>Roblox Username</h3><p id="fieldRobloxUsername"></p></article>
+              <article class="panel detail-card"><h3>Roblox User ID</h3><p id="fieldRobloxUserId"></p></article>
+              <article class="panel detail-card"><h3>Rank</h3><p id="fieldRank"></p></article>
+              <article class="panel detail-card"><h3>Grade</h3><p id="fieldGrade"></p></article>
+              <article class="panel detail-card"><h3>Serial Number</h3><p id="fieldSerialNumber"></p></article>
+              <article class="panel detail-card"><h3>Employee Status</h3><p id="fieldEmployeeStatus"></p></article>
+              <article class="panel detail-card"><h3>Hire Date</h3><p id="fieldHireDate"></p></article>
+              <article class="panel detail-card"><h3>Tenure (Days)</h3><p id="fieldTenureDays"></p></article>
+            </div>
+
+            <h3>Active Disciplinary Records</h3>
+            <ul id="activeDisciplinaryList" class="role-list"></ul>
+
+            <h3>Disciplinary History</h3>
+            <ul id="disciplinaryHistoryList" class="role-list"></ul>
+          </article>
         </section>
       </div>
     </main>

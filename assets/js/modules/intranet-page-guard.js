@@ -13,12 +13,12 @@ async function fetchSession() {
 export async function initIntranetPageGuard(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const protectedContent = document.querySelector(config.protectedContentSelector);
-  const welcome = document.querySelector(config.welcomeSelector);
   const navLogoutButton = document.querySelector(config.navLogoutButtonSelector || '#navLogoutBtn');
   const adminNavLink = document.querySelector(config.adminNavLinkSelector || '#adminNavLink');
   const requireAdmin = Boolean(config.requireAdmin);
+  const requireEmployee = Boolean(config.requireEmployee);
 
-  if (!feedback || !protectedContent || !welcome) return null;
+  if (!feedback || !protectedContent) return null;
 
   try {
     const session = await fetchSession();
@@ -30,6 +30,11 @@ export async function initIntranetPageGuard(config) {
 
     if (requireAdmin && !session.isAdmin) {
       window.location.href = '/intranet.html?auth=denied&reason=admin_required';
+      return null;
+    }
+
+    if (requireEmployee && !session.isAdmin && session.accessPending) {
+      window.location.href = '/intranet.html?auth=denied&reason=login_required';
       return null;
     }
 
@@ -46,9 +51,7 @@ export async function initIntranetPageGuard(config) {
       else adminNavLink.classList.add('hidden');
     }
 
-    welcome.textContent = `Signed in as ${session.displayName}.`;
     protectedContent.classList.remove('hidden');
-    showMessage(feedback, 'Intranet access verified.', 'success');
     return session;
   } catch {
     showMessage(feedback, 'Unable to verify your session.', 'error');

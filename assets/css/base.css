@@ -11,10 +11,7 @@ body {
 body {
   font-family: var(--font-body);
   color: var(--color-ink);
-  background:
-    radial-gradient(circle at 90% -10%, rgba(10, 106, 134, 0.16), transparent 35%),
-    radial-gradient(circle at 15% 110%, rgba(208, 122, 32, 0.15), transparent 30%),
-    var(--color-bg);
+  background: #ffffff;
   line-height: 1.5;
 }
 

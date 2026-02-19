@@ -7,6 +7,7 @@ import {
   verifyStateToken
 } from '../_lib/auth.js';
 import { getConfiguredRoleIds } from '../_lib/roles-store.js';
+import { createOrRefreshAccessRequest, getEmployeeByDiscordUserId } from '../../_lib/db.js';
 
 function toIntranetUrl(requestUrl, params) {
   const source = new URL(requestUrl);
@@ -115,11 +116,29 @@ export async function onRequest(context) {
   }
 
   const displayName = user.global_name || user.username || 'Employee';
+  let employee = null;
+
+  if (!isAdminUser) {
+    try {
+      employee = await getEmployeeByDiscordUserId(env, user.id);
+      if (!employee) {
+        await createOrRefreshAccessRequest(env, {
+          discordUserId: user.id,
+          displayName
+        });
+      }
+    } catch {
+      return redirect(toIntranetUrl(request.url, { auth: 'error' }));
+    }
+  }
+
   const sessionToken = await createSessionToken(env.SESSION_SECRET, {
     userId: user.id,
     displayName,
     roles: memberRoles,
     isAdmin: isAdminUser,
+    hasEmployee: Boolean(employee),
+    accessPending: !isAdminUser && !employee,
     exp: Date.now() + 8 * 60 * 60 * 1000
   });
 

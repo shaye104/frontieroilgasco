@@ -22,10 +22,8 @@
         </a>
         <nav class="site-nav" aria-label="Primary">
           <a href="intranet.html">Dashboard</a>
-          <a href="voyage-tracker.html">Voyage Tracker</a>
-          <a href="my-fleet.html">My Fleet</a>
           <a href="my-details.html">My Details</a>
-          <a id="adminNavLink" class="hidden" href="admin-panel.html">Admin Panel</a>
+          <a href="admin-panel.html">Admin Panel</a>
           <button id="navLogoutBtn" class="btn btn-secondary hidden" type="button">Log Out</button>
         </nav>
       </div>
@@ -35,23 +33,16 @@
       <div class="container intranet-layout">
         <section class="panel">
           <h1>Admin Panel</h1>
-          <p id="intranetIdentity" class="lead"></p>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="panel hidden" aria-live="polite">
-          <h2>Access Role Configuration</h2>
-          <p class="section-copy">Set Discord role IDs that are allowed to access the employee intranet.</p>
-
-          <label for="roleIdInput">Discord Role ID</label>
-          <input id="roleIdInput" type="text" inputmode="numeric" placeholder="Enter role ID" />
-          <div class="button-row">
-            <button id="addRoleBtn" class="btn btn-primary" type="button">Add Role</button>
-            <button id="saveRolesBtn" class="btn btn-secondary" type="button">Save Roles</button>
-          </div>
-
-          <ul id="roleList" class="role-list"></ul>
-          <div id="adminFeedback" class="feedback" role="status" aria-live="polite"></div>
+        <section id="protectedContent" class="panel hidden">
+          <h2>Administration</h2>
+          <ul class="link-list">
+            <li><a href="manage-employees.html">Manage Employees</a></li>
+            <li><a href="access-requests.html">Access Requests</a></li>
+            <li><a href="admin-config.html">System Config</a></li>
+          </ul>
         </section>
       </div>
     </main>

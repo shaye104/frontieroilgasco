@@ -4,7 +4,9 @@ import { initializeYear } from '../modules/year.js';
 initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
-  welcomeSelector: '#intranetIdentity'
+  navLogoutButtonSelector: '#navLogoutBtn',
+  adminNavLinkSelector: '#adminNavLink',
+  requireAdmin: true
 });
 
 initializeYear();

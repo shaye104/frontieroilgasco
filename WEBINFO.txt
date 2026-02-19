@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T03:11:19.684Z
+Generated: 2026-02-19T03:40:46.550Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -7,27 +7,37 @@ PROJECT PURPOSE
 - Built for Cloudflare Pages with optional Pages Functions for authenticated intranet access.
 
 SITE STRUCTURE
+- access-requests.html | title: Frontier Oil & Gas Company | Access Requests | primary heading: Access Requests
+- admin-config.html | title: Frontier Oil & Gas Company | System Config | primary heading: System Config
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
 - intranet.html | title: Frontier Oil & Gas Company | Employee Intranet | primary heading: Employee Intranet
+- manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
 - my-fleet.html | title: Frontier Oil & Gas Company | My Fleet | primary heading: My Fleet
 - voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
 
 JAVASCRIPT MODULES
-- assets/js/modules/admin-role-config.js | exports: No public exports
+- assets/js/modules/access-requests.js | exports: No public exports
+- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createConfigValue, createEmployee, deleteConfigValue, getAdminRoles, getConfig, getEmployee, getMyDetails, getSession, listAccessRequests, listEmployees, processAccessRequest, saveAdminRoles, updateConfigValue, updateEmployee
+- assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
 - assets/js/modules/intranet-page-guard.js | exports: No public exports
+- assets/js/modules/manage-employees.js | exports: No public exports
+- assets/js/modules/my-details-panel.js | exports: No public exports
 - assets/js/modules/notice.js | exports: clearMessage, showMessage
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/year.js | exports: initializeYear
+- assets/js/pages/access-requests-page.js | exports: No public exports
+- assets/js/pages/admin-config-page.js | exports: No public exports
 - assets/js/pages/admin-panel-page.js | exports: No public exports
 - assets/js/pages/application-page.js | exports: No public exports
 - assets/js/pages/home.js | exports: No public exports
 - assets/js/pages/intranet-page.js | exports: No public exports
+- assets/js/pages/manage-employees-page.js | exports: No public exports
 - assets/js/pages/my-details-page.js | exports: No public exports
 - assets/js/pages/my-fleet-page.js | exports: No public exports
 - assets/js/pages/voyage-tracker-page.js | exports: No public exports
@@ -43,7 +53,8 @@ DATA FLOW
 - Application form validates client-side inputs, displays status messages, and stores submissions in localStorage as `frontierApplications`.
 - Intranet login starts Discord OAuth2 at `/api/auth/discord/start` and enforces access by Discord role membership.
 - Cloudflare Pages Functions in `functions/api/auth/*` exchange Discord auth code, verify guild roles, and issue a signed session cookie with admin flag.
-- Admin role configuration is managed on `admin-panel.html` and persisted in D1 via `functions/api/admin/roles.js`.
+- Users with valid auth role but no employee record are not auto-added; an access request is created in D1 for admin approval.
+- Admin actions for employee CRUD, disciplinaries, notes, access requests, and system config are handled by `functions/api/admin/*`.
 - Protected intranet subpages (`voyage-tracker.html`, `my-fleet.html`, `my-details.html`) verify active session via `/api/auth/session` before rendering content.
 - Shared feedback UI is handled in `assets/js/modules/notice.js`.
 

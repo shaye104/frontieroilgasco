@@ -1,13 +1,11 @@
+import { ensureCoreSchema } from '../../_lib/db.js';
+
 function normalizeRoleIds(roleIds) {
   return [...new Set(roleIds.map((value) => String(value).trim()).filter((value) => /^\d{6,30}$/.test(value)))];
 }
 
 async function ensureSchema(env) {
-  if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
-
-  await env.DB.prepare(
-    'CREATE TABLE IF NOT EXISTS intranet_allowed_roles (role_id TEXT PRIMARY KEY, created_at TEXT DEFAULT CURRENT_TIMESTAMP)'
-  ).run();
+  await ensureCoreSchema(env);
 }
 
 export async function getConfiguredRoleIds(env) {

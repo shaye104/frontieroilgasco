@@ -6,10 +6,14 @@ initIntranetAuth({
   loginButtonSelector: '#discordLoginBtn',
   feedbackSelector: '#loginFeedback',
   panelSelector: '#intranetPanel',
-  welcomeSelector: '#welcomeText',
   navLogoutButtonSelector: '#navLogoutBtn',
   adminNavLinkSelector: '#adminNavLink',
-  adminPanelLinkRowSelector: '#adminPanelLinkRow'
+  navVoyageLinkSelector: '#navVoyageLink',
+  navFleetLinkSelector: '#navFleetLink',
+  adminPanelLinkRowSelector: '#adminPanelLinkRow',
+  voyageLinkRowSelector: '#voyageLinkRow',
+  fleetLinkRowSelector: '#fleetLinkRow',
+  pendingPanelSelector: '#pendingPanel'
 });
 
 initializeYear();
