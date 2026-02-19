@@ -42,6 +42,7 @@ export async function initRolesAdmin(config) {
   let roles = [];
   let permissionCatalog = [];
   let selectedRoleId = null;
+  const pendingMoves = new Set();
 
   function selectedRole() {
     return roles.find((role) => Number(role.id) === Number(selectedRoleId)) || null;
@@ -89,6 +90,7 @@ export async function initRolesAdmin(config) {
     list.innerHTML = roles
       .map((role, index) => {
         const selected = Number(role.id) === Number(selectedRoleId);
+        const isSaving = pendingMoves.has(Number(role.id));
         return `
           <li class="role-item role-row ${selected ? 'role-row-selected' : ''}">
             <button class="btn btn-secondary role-row-main" type="button" data-select-role="${role.id}">
@@ -97,11 +99,11 @@ export async function initRolesAdmin(config) {
             </button>
             <div class="modal-actions">
               <button class="btn btn-secondary" type="button" data-role-move="${role.id}" data-direction="up" ${
-          index === 0 ? 'disabled' : ''
+          index === 0 || isSaving ? 'disabled' : ''
         }>&uarr;</button>
               <button class="btn btn-secondary" type="button" data-role-move="${role.id}" data-direction="down" ${
-          index === roles.length - 1 ? 'disabled' : ''
-        }>&darr;</button>
+          index === roles.length - 1 || isSaving ? 'disabled' : ''
+        }>${isSaving ? '...' : '↓'}</button>
             </div>
           </li>
         `;
@@ -120,13 +122,31 @@ export async function initRolesAdmin(config) {
       button.addEventListener('click', async () => {
         const roleId = Number(button.getAttribute('data-role-move'));
         const direction = String(button.getAttribute('data-direction') || '');
+        const currentIndex = roles.findIndex((role) => Number(role.id) === roleId);
+        const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        if (currentIndex < 0 || swapIndex < 0 || swapIndex >= roles.length) return;
+        if (pendingMoves.has(roleId)) return;
+
+        const previous = roles.map((role) => ({ ...role }));
+        const next = roles.map((role) => ({ ...role }));
+        const moving = next[currentIndex];
+        next[currentIndex] = next[swapIndex];
+        next[swapIndex] = moving;
+        roles = next;
+        pendingMoves.add(roleId);
+        renderRoleList();
         try {
           await reorderAdminRole({ id: roleId, direction });
-          await refreshRoles();
+          pendingMoves.delete(roleId);
           showMessage(feedback, 'Role order updated.', 'success');
         } catch (error) {
+          roles = previous;
+          pendingMoves.delete(roleId);
+          renderRoleList();
           showMessage(feedback, error.message || 'Unable to reorder roles.', 'error');
+          return;
         }
+        renderRoleList();
       });
     });
   }
