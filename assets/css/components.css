@@ -1,15 +1,14 @@
 .panel {
-  background: var(--color-surface);
-  border: 1px solid #dddddd;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(15, 37, 48, 0.06);
-  padding: var(--space-4);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: var(--space-3) 0;
 }
 
 .section-surface {
   background: var(--color-surface-soft);
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
+  border: none;
 }
 
 .btn {
@@ -163,15 +162,15 @@ textarea:focus {
 .link-list a {
   display: block;
   padding: 0.7rem 0.9rem;
-  border: 1px solid #dddddd;
+  border: none;
   border-radius: 10px;
-  background: #ffffff;
+  background: #f8fbfe;
   color: #1f3550;
   font-weight: 600;
 }
 
 .link-list a:hover {
-  border-color: var(--color-primary);
+  background: #f1f7ff;
   color: var(--color-primary);
   text-decoration: none;
 }
@@ -181,7 +180,7 @@ textarea:focus {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: var(--space-3);
+  gap: 0;
 }
 
 .role-item {
@@ -189,10 +188,15 @@ textarea:focus {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: 0.6rem 0.8rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: #fff;
+  padding: 0.75rem 0.1rem;
+  border: none;
+  border-bottom: 1px solid #edf2f6;
+  border-radius: 0;
+  background: transparent;
+}
+
+.role-list .role-item:last-child {
+  border-bottom: none;
 }
 
 .role-id {
@@ -289,10 +293,10 @@ textarea:focus {
 }
 
 .employee-modal-panel {
-  border: 1px solid var(--color-border);
+  border: 1px solid #edf2f6;
   border-radius: 10px;
   padding: 0.9rem;
-  background: #ffffff;
+  background: #fbfdff;
   min-height: 0;
   overflow: hidden;
 }
@@ -326,10 +330,10 @@ textarea:focus {
 }
 
 .employee-page-panel {
-  border: 1px solid var(--color-border);
+  border: 1px solid #edf2f6;
   border-radius: 10px;
-  padding: 0.9rem;
-  background: #ffffff;
+  padding: 1rem;
+  background: #fbfdff;
   min-height: 0;
   overflow: hidden;
 }
@@ -359,10 +363,10 @@ textarea:focus {
 }
 
 .details-block {
-  border: 1px solid var(--color-border);
+  border: none;
   border-radius: 10px;
-  padding: 0.9rem 1rem;
-  background: #ffffff;
+  padding: 0.2rem 0.2rem 0.9rem;
+  background: transparent;
 }
 
 .details-grid {
@@ -410,10 +414,10 @@ textarea:focus {
 
 .roles-list-panel,
 .roles-details-panel {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 0.9rem;
-  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
   text-align: left;
 }
 
@@ -435,7 +439,7 @@ textarea:focus {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: 0.65rem 0.75rem;
+  padding: 0.7rem 0.15rem;
   text-align: left;
 }
 
@@ -453,7 +457,7 @@ textarea:focus {
 }
 
 .role-row-selected {
-  border-color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .permissions-grid {
@@ -463,6 +467,9 @@ textarea:focus {
 
 .permissions-group {
   padding: 0.8rem;
+  border: 1px solid #edf2f6;
+  border-radius: 10px;
+  background: #fbfdff;
 }
 
 .permissions-list {
