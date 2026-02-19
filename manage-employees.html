@@ -21,11 +21,11 @@
           <span class="brand-text">Frontier Oil & Gas Company</span>
         </a>
         <nav class="site-nav" aria-label="Primary">
-          <a href="admin-panel.html">Admin Panel</a>
-          <a href="manage-employees.html">Manage Employees</a>
-          <a href="access-requests.html">Access Requests</a>
-          <a href="admin-config.html">System Config</a>
-          <button id="navLogoutBtn" class="btn btn-secondary hidden" type="button">Log Out</button>
+          <a href="intranet.html">Dashboard</a>
+          <a href="my-details.html">My Details</a>
+          <a href="voyage-tracker.html">Voyage Tracker</a>
+          <a href="my-fleet.html">My Fleet</a>
+          <a id="adminNavLink" class="hidden" href="admin-panel.html">Admin Panel</a>
         </nav>
       </div>
     </header>
@@ -33,94 +33,175 @@
     <main class="section">
       <div class="container intranet-layout">
         <section class="panel">
-          <h1>Manage Employees</h1>
+          <div class="modal-header">
+            <h1>Manage Employees</h1>
+            <button id="openCreateEmployeeBtn" class="btn btn-primary" type="button" aria-label="Add employee">+</button>
+          </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="manageEmployeesFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
         <section id="protectedContent" class="hidden">
           <article class="panel">
-            <h2>Create Employee</h2>
-            <form id="createEmployeeForm">
-              <label>Discord User ID</label>
-              <input name="discordUserId" type="text" required />
-              <label>Roblox Username</label>
-              <input name="robloxUsername" type="text" />
-              <label>Roblox User ID</label>
-              <input name="robloxUserId" type="text" />
-              <label>Rank</label>
-              <select name="rank"></select>
-              <label>Grade</label>
-              <select name="grade"></select>
-              <label>Serial Number</label>
-              <input name="serialNumber" type="text" />
-              <label>Employee Status</label>
-              <select name="employeeStatus"></select>
-              <label>Hire Date</label>
-              <input name="hireDate" type="date" />
-              <button class="btn btn-primary" type="submit">Create Employee</button>
-            </form>
+            <h2>Filters</h2>
+            <div class="filter-row">
+              <div>
+                <label for="filterRank">Rank</label>
+                <select id="filterRank"></select>
+              </div>
+              <div>
+                <label for="filterGrade">Grade</label>
+                <select id="filterGrade"></select>
+              </div>
+              <div>
+                <label for="filterSerialNumber">Serial Number</label>
+                <input id="filterSerialNumber" type="text" />
+              </div>
+              <div>
+                <label for="filterRobloxUsername">Roblox Username</label>
+                <input id="filterRobloxUsername" type="text" />
+              </div>
+            </div>
           </article>
 
           <article class="panel">
-            <h2>Employee List</h2>
-            <ul id="employeeList" class="role-list"></ul>
-            <p id="selectedEmployee">No employee selected.</p>
-          </article>
-
-          <article class="panel">
-            <h2>Edit Employee</h2>
-            <form id="editEmployeeForm">
-              <label>Roblox Username</label>
-              <input name="robloxUsername" type="text" />
-              <label>Roblox User ID</label>
-              <input name="robloxUserId" type="text" />
-              <label>Rank</label>
-              <select name="rank"></select>
-              <label>Grade</label>
-              <select name="grade"></select>
-              <label>Serial Number</label>
-              <input name="serialNumber" type="text" />
-              <label>Employee Status</label>
-              <select name="employeeStatus"></select>
-              <label>Hire Date</label>
-              <input name="hireDate" type="date" />
-              <button class="btn btn-primary" type="submit">Save Employee</button>
-            </form>
-          </article>
-
-          <article class="panel">
-            <h2>Add Disciplinary Record</h2>
-            <form id="disciplinaryForm">
-              <label>Type</label>
-              <select name="recordType"></select>
-              <label>Status</label>
-              <select name="recordStatus">
-                <option value="open">Open</option>
-                <option value="resolved">Resolved</option>
-                <option value="closed">Closed</option>
-              </select>
-              <label>Date</label>
-              <input name="recordDate" type="date" />
-              <label>Notes</label>
-              <textarea name="notes" rows="3"></textarea>
-              <button class="btn btn-primary" type="submit">Add Disciplinary</button>
-            </form>
-            <ul id="disciplinaryList" class="role-list"></ul>
-          </article>
-
-          <article class="panel">
-            <h2>Add General Note</h2>
-            <form id="noteForm">
-              <label>Note</label>
-              <textarea name="note" rows="3"></textarea>
-              <button class="btn btn-primary" type="submit">Add Note</button>
-            </form>
-            <ul id="notesList" class="role-list"></ul>
+            <h2>Employees</h2>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Roblox Username</th>
+                    <th>Roblox User ID</th>
+                    <th>Rank</th>
+                    <th>Grade</th>
+                    <th>Serial Number</th>
+                    <th>Status</th>
+                    <th>Hire Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="employeeTableBody"></tbody>
+              </table>
+            </div>
           </article>
         </section>
       </div>
     </main>
+
+    <section id="createEmployeeModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Create Employee</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="createEmployeeModal">Close</button>
+        </div>
+        <form id="createEmployeeForm">
+          <label>Discord User ID</label>
+          <input name="discordUserId" type="text" required />
+          <label>Roblox Username</label>
+          <input name="robloxUsername" type="text" />
+          <label>Roblox User ID</label>
+          <input name="robloxUserId" type="text" />
+          <label>Rank</label>
+          <select name="rank"></select>
+          <label>Grade</label>
+          <select name="grade"></select>
+          <label>Serial Number</label>
+          <input name="serialNumber" type="text" />
+          <label>Employee Status</label>
+          <select name="employeeStatus"></select>
+          <label>Hire Date</label>
+          <input name="hireDate" type="date" />
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit">Create Employee</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="createEmployeeModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="employeeDetailModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Employee Details</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="employeeDetailModal">Close</button>
+        </div>
+        <p id="selectedEmployee">No employee selected.</p>
+
+        <form id="editEmployeeForm">
+          <label>Roblox Username</label>
+          <input name="robloxUsername" type="text" />
+          <label>Roblox User ID</label>
+          <input name="robloxUserId" type="text" />
+          <label>Rank</label>
+          <select name="rank"></select>
+          <label>Grade</label>
+          <select name="grade"></select>
+          <label>Serial Number</label>
+          <input name="serialNumber" type="text" />
+          <label>Employee Status</label>
+          <select name="employeeStatus"></select>
+          <label>Hire Date</label>
+          <input name="hireDate" type="date" />
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="employeeDetailModal">Cancel</button>
+            <button id="openDisciplinaryModalBtn" class="btn btn-secondary" type="button">Add Disciplinary</button>
+            <button id="openNoteModalBtn" class="btn btn-secondary" type="button">Add Note</button>
+          </div>
+        </form>
+
+        <h3>Disciplinary Records</h3>
+        <ul id="disciplinaryList" class="role-list"></ul>
+
+        <h3>General Notes</h3>
+        <ul id="notesList" class="role-list"></ul>
+      </div>
+    </section>
+
+    <section id="disciplinaryModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Add Disciplinary</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="disciplinaryModal">Close</button>
+        </div>
+        <form id="disciplinaryForm">
+          <label>Type</label>
+          <select name="recordType"></select>
+          <label>Status</label>
+          <select name="recordStatus">
+            <option value="open">Open</option>
+            <option value="resolved">Resolved</option>
+            <option value="closed">Closed</option>
+          </select>
+          <label>Date</label>
+          <input name="recordDate" type="date" />
+          <label>Notes</label>
+          <textarea name="notes" rows="3"></textarea>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit">Add</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="disciplinaryModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="noteModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Add Note</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="noteModal">Close</button>
+        </div>
+        <form id="noteForm">
+          <label>Note</label>
+          <textarea name="note" rows="4"></textarea>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit">Add Note</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="noteModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
     <footer class="site-footer">
       <div class="container footer-row">

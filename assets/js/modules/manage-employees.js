@@ -9,35 +9,30 @@ import {
 } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
 
-function fillOptions(select, items) {
-  if (!select) return;
-  const current = select.value;
-  select.innerHTML = '<option value="">Select</option>' + items.map((item) => `<option value="${item.value}">${item.value}</option>`).join('');
-  if (current) select.value = current;
-}
-
 function text(value) {
   const s = String(value ?? '').trim();
   return s || 'N/A';
 }
 
-function renderEmployeeList(target, employees, onSelect) {
-  if (!target) return;
-  if (!employees.length) {
-    target.innerHTML = '<li class="role-item"><span class="role-id">No employees yet.</span></li>';
-    return;
-  }
+function fillOptions(select, items, placeholder = 'All') {
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = `<option value="">${placeholder}</option>` + items.map((item) => `<option value="${item.value}">${item.value}</option>`).join('');
+  if (current) select.value = current;
+}
 
-  target.innerHTML = employees
-    .map(
-      (emp) => `<li class="role-item"><span class="role-id">#${emp.id} | ${text(emp.roblox_username)} | Discord ${emp.discord_user_id}</span>
-      <button class="btn btn-secondary" data-open-employee="${emp.id}" type="button">Open</button></li>`
-    )
-    .join('');
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+}
 
-  target.querySelectorAll('button[data-open-employee]').forEach((button) => {
-    button.addEventListener('click', () => onSelect(Number(button.getAttribute('data-open-employee'))));
-  });
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
 }
 
 function renderRecords(target, records, format) {
@@ -50,27 +45,102 @@ function renderRecords(target, records, format) {
   target.innerHTML = records.map((item) => `<li class="role-item"><span class="role-id">${format(item)}</span></li>`).join('');
 }
 
+function applyEmployeeFilters(employees, filters) {
+  const serialFilter = String(filters.serial || '').trim().toLowerCase();
+  const usernameFilter = String(filters.username || '').trim().toLowerCase();
+
+  return employees.filter((emp) => {
+    if (filters.rank && String(emp.rank || '') !== filters.rank) return false;
+    if (filters.grade && String(emp.grade || '') !== filters.grade) return false;
+
+    const serial = String(emp.serial_number || '').toLowerCase();
+    const username = String(emp.roblox_username || '').toLowerCase();
+
+    if (serialFilter && !serial.includes(serialFilter)) return false;
+    if (usernameFilter && !username.includes(usernameFilter)) return false;
+
+    return true;
+  });
+}
+
+function renderEmployeeTable(target, employees, onOpen) {
+  if (!target) return;
+  if (!employees.length) {
+    target.innerHTML = '<tr><td colspan="9">No employees found.</td></tr>';
+    return;
+  }
+
+  target.innerHTML = employees
+    .map(
+      (emp) => `
+        <tr>
+          <td>${emp.id}</td>
+          <td>${text(emp.roblox_username)}</td>
+          <td>${text(emp.roblox_user_id)}</td>
+          <td>${text(emp.rank)}</td>
+          <td>${text(emp.grade)}</td>
+          <td>${text(emp.serial_number)}</td>
+          <td>${text(emp.employee_status)}</td>
+          <td>${text(emp.hire_date)}</td>
+          <td><button class="btn btn-secondary" type="button" data-open-employee="${emp.id}">Open</button></td>
+        </tr>
+      `
+    )
+    .join('');
+
+  target.querySelectorAll('button[data-open-employee]').forEach((button) => {
+    button.addEventListener('click', () => onOpen(Number(button.getAttribute('data-open-employee'))));
+  });
+}
+
 export async function initManageEmployees(config) {
   const feedback = document.querySelector(config.feedbackSelector);
-  const listEl = document.querySelector(config.employeeListSelector);
+  const tableBody = document.querySelector(config.employeeTableBodySelector);
+  const selectedBadge = document.querySelector(config.selectedEmployeeSelector);
+
+  const filterRank = document.querySelector(config.filterRankSelector);
+  const filterGrade = document.querySelector(config.filterGradeSelector);
+  const filterSerial = document.querySelector(config.filterSerialSelector);
+  const filterUsername = document.querySelector(config.filterUsernameSelector);
+
+  const openCreateEmployeeBtn = document.querySelector(config.openCreateEmployeeBtnSelector);
   const createForm = document.querySelector(config.createFormSelector);
   const editForm = document.querySelector(config.editFormSelector);
   const disciplinaryForm = document.querySelector(config.disciplinaryFormSelector);
   const noteForm = document.querySelector(config.noteFormSelector);
-  const selectedBadge = document.querySelector(config.selectedEmployeeSelector);
   const disciplinaryList = document.querySelector(config.disciplinaryListSelector);
   const notesList = document.querySelector(config.notesListSelector);
-  const cfg = {
-    statuses: [],
-    ranks: [],
-    grades: [],
-    disciplinary_types: []
-  };
+  const openDisciplinaryModalBtn = document.querySelector(config.openDisciplinaryModalBtnSelector);
+  const openNoteModalBtn = document.querySelector(config.openNoteModalBtnSelector);
 
-  if (!feedback || !listEl || !createForm || !editForm || !disciplinaryForm || !noteForm || !selectedBadge) return;
+  if (
+    !feedback ||
+    !tableBody ||
+    !selectedBadge ||
+    !createForm ||
+    !editForm ||
+    !disciplinaryForm ||
+    !noteForm ||
+    !disciplinaryList ||
+    !notesList
+  ) {
+    return;
+  }
 
   let employees = [];
   let selectedEmployeeId = null;
+  const cfg = { statuses: [], ranks: [], grades: [], disciplinary_types: [] };
+
+  const refreshTable = () => {
+    const filtered = applyEmployeeFilters(employees, {
+      rank: filterRank?.value || '',
+      grade: filterGrade?.value || '',
+      serial: filterSerial?.value || '',
+      username: filterUsername?.value || ''
+    });
+
+    renderEmployeeTable(tableBody, filtered, openEmployee);
+  };
 
   async function refreshConfig() {
     const [statuses, ranks, grades, disciplinaryTypes] = await Promise.all([
@@ -85,21 +155,24 @@ export async function initManageEmployees(config) {
     cfg.grades = grades.items || [];
     cfg.disciplinary_types = disciplinaryTypes.items || [];
 
-    fillOptions(createForm.querySelector('[name="employeeStatus"]'), cfg.statuses);
-    fillOptions(createForm.querySelector('[name="rank"]'), cfg.ranks);
-    fillOptions(createForm.querySelector('[name="grade"]'), cfg.grades);
+    fillOptions(filterRank, cfg.ranks, 'All Ranks');
+    fillOptions(filterGrade, cfg.grades, 'All Grades');
 
-    fillOptions(editForm.querySelector('[name="employeeStatus"]'), cfg.statuses);
-    fillOptions(editForm.querySelector('[name="rank"]'), cfg.ranks);
-    fillOptions(editForm.querySelector('[name="grade"]'), cfg.grades);
+    fillOptions(createForm.querySelector('[name="employeeStatus"]'), cfg.statuses, 'Select');
+    fillOptions(createForm.querySelector('[name="rank"]'), cfg.ranks, 'Select');
+    fillOptions(createForm.querySelector('[name="grade"]'), cfg.grades, 'Select');
 
-    fillOptions(disciplinaryForm.querySelector('[name="recordType"]'), cfg.disciplinary_types);
+    fillOptions(editForm.querySelector('[name="employeeStatus"]'), cfg.statuses, 'Select');
+    fillOptions(editForm.querySelector('[name="rank"]'), cfg.ranks, 'Select');
+    fillOptions(editForm.querySelector('[name="grade"]'), cfg.grades, 'Select');
+
+    fillOptions(disciplinaryForm.querySelector('[name="recordType"]'), cfg.disciplinary_types, 'Select');
   }
 
   async function refreshEmployees() {
     const payload = await listEmployees();
     employees = payload.employees || [];
-    renderEmployeeList(listEl, employees, openEmployee);
+    refreshTable();
   }
 
   async function openEmployee(employeeId) {
@@ -107,7 +180,7 @@ export async function initManageEmployees(config) {
     const employee = payload.employee;
 
     selectedEmployeeId = employee.id;
-    selectedBadge.textContent = `Selected Employee: #${employee.id}`;
+    selectedBadge.textContent = `Employee #${employee.id} | Discord ${text(employee.discord_user_id)}`;
 
     editForm.querySelector('[name="robloxUsername"]').value = employee.roblox_username || '';
     editForm.querySelector('[name="robloxUserId"]').value = employee.roblox_user_id || '';
@@ -120,11 +193,27 @@ export async function initManageEmployees(config) {
     renderRecords(
       disciplinaryList,
       payload.disciplinaries || [],
-      (item) => `${text(item.record_type)} | ${text(item.record_status)} | ${text(item.record_date)} | ${text(item.notes)}`
+      (item) => `${text(item.record_type)} | ${text(item.record_status)} | ${text(item.record_date)} | ${text(item.notes)} | ${text(item.issued_by)}`
     );
 
     renderRecords(notesList, payload.notes || [], (item) => `${text(item.created_at)} | ${text(item.authored_by)} | ${text(item.note)}`);
+
+    openModal('employeeDetailModal');
   }
+
+  openCreateEmployeeBtn?.addEventListener('click', () => openModal('createEmployeeModal'));
+
+  document.querySelectorAll('[data-close-modal]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.getAttribute('data-close-modal');
+      if (target) closeModal(target);
+    });
+  });
+
+  [filterRank, filterGrade, filterSerial, filterUsername].forEach((input) => {
+    input?.addEventListener('input', refreshTable);
+    input?.addEventListener('change', refreshTable);
+  });
 
   createForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -145,6 +234,7 @@ export async function initManageEmployees(config) {
       });
 
       createForm.reset();
+      closeModal('createEmployeeModal');
       await refreshEmployees();
       showMessage(feedback, 'Employee created.', 'success');
     } catch (error) {
@@ -155,12 +245,14 @@ export async function initManageEmployees(config) {
   editForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearMessage(feedback);
+
     if (!selectedEmployeeId) {
-      showMessage(feedback, 'Open an employee before editing.', 'error');
+      showMessage(feedback, 'Open an employee first.', 'error');
       return;
     }
 
     const data = new FormData(editForm);
+
     try {
       await updateEmployee(selectedEmployeeId, {
         robloxUsername: String(data.get('robloxUsername') || '').trim(),
@@ -180,15 +272,33 @@ export async function initManageEmployees(config) {
     }
   });
 
+  openDisciplinaryModalBtn?.addEventListener('click', () => {
+    if (!selectedEmployeeId) {
+      showMessage(feedback, 'Open an employee first.', 'error');
+      return;
+    }
+    openModal('disciplinaryModal');
+  });
+
+  openNoteModalBtn?.addEventListener('click', () => {
+    if (!selectedEmployeeId) {
+      showMessage(feedback, 'Open an employee first.', 'error');
+      return;
+    }
+    openModal('noteModal');
+  });
+
   disciplinaryForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearMessage(feedback);
+
     if (!selectedEmployeeId) {
-      showMessage(feedback, 'Open an employee before adding disciplinary records.', 'error');
+      showMessage(feedback, 'Open an employee first.', 'error');
       return;
     }
 
     const data = new FormData(disciplinaryForm);
+
     try {
       await addDisciplinary(selectedEmployeeId, {
         recordType: String(data.get('recordType') || '').trim(),
@@ -198,6 +308,7 @@ export async function initManageEmployees(config) {
       });
 
       disciplinaryForm.reset();
+      closeModal('disciplinaryModal');
       await openEmployee(selectedEmployeeId);
       showMessage(feedback, 'Disciplinary record added.', 'success');
     } catch (error) {
@@ -208,18 +319,21 @@ export async function initManageEmployees(config) {
   noteForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearMessage(feedback);
+
     if (!selectedEmployeeId) {
-      showMessage(feedback, 'Open an employee before adding notes.', 'error');
+      showMessage(feedback, 'Open an employee first.', 'error');
       return;
     }
 
     const data = new FormData(noteForm);
+
     try {
       await addEmployeeNote(selectedEmployeeId, {
         note: String(data.get('note') || '').trim()
       });
 
       noteForm.reset();
+      closeModal('noteModal');
       await openEmployee(selectedEmployeeId);
       showMessage(feedback, 'Note added.', 'success');
     } catch (error) {
@@ -230,7 +344,7 @@ export async function initManageEmployees(config) {
   try {
     await refreshConfig();
     await refreshEmployees();
-    showMessage(feedback, 'Manage Employees ready.', 'success');
+    clearMessage(feedback);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to initialize Manage Employees.', 'error');
   }

@@ -5,7 +5,6 @@ import { initializeYear } from '../modules/year.js';
 initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
-  navLogoutButtonSelector: '#navLogoutBtn',
   adminNavLinkSelector: '#adminNavLink',
   requireAdmin: true
 }).then((session) => {
@@ -13,14 +12,21 @@ initIntranetPageGuard({
 
   initManageEmployees({
     feedbackSelector: '#manageEmployeesFeedback',
-    employeeListSelector: '#employeeList',
+    employeeTableBodySelector: '#employeeTableBody',
     selectedEmployeeSelector: '#selectedEmployee',
+    filterRankSelector: '#filterRank',
+    filterGradeSelector: '#filterGrade',
+    filterSerialSelector: '#filterSerialNumber',
+    filterUsernameSelector: '#filterRobloxUsername',
+    openCreateEmployeeBtnSelector: '#openCreateEmployeeBtn',
     createFormSelector: '#createEmployeeForm',
     editFormSelector: '#editEmployeeForm',
     disciplinaryFormSelector: '#disciplinaryForm',
     noteFormSelector: '#noteForm',
     disciplinaryListSelector: '#disciplinaryList',
-    notesListSelector: '#notesList'
+    notesListSelector: '#notesList',
+    openDisciplinaryModalBtnSelector: '#openDisciplinaryModalBtn',
+    openNoteModalBtnSelector: '#openNoteModalBtn'
   });
 });
 

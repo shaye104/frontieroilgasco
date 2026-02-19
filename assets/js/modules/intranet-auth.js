@@ -19,7 +19,6 @@ function getAuthMessageFromUrl() {
   }
 
   if (auth === 'error') return { text: 'Login error. Please try again.', type: 'error' };
-  if (auth === 'ok') return null;
   return null;
 }
 
@@ -31,20 +30,9 @@ function cleanAuthQuery() {
   window.history.replaceState({}, '', url.toString());
 }
 
-async function handleLogout(config) {
+async function logout() {
   await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-  config.authPanel.classList.remove('hidden');
-  config.loginButton.classList.remove('hidden');
-  config.panel.classList.add('hidden');
-  config.navLogoutButton.classList.add('hidden');
-  if (config.adminNavLink) config.adminNavLink.classList.add('hidden');
-  if (config.navVoyageLink) config.navVoyageLink.classList.add('hidden');
-  if (config.navFleetLink) config.navFleetLink.classList.add('hidden');
-  if (config.adminPanelLinkRow) config.adminPanelLinkRow.classList.add('hidden');
-  if (config.voyageLinkRow) config.voyageLinkRow.classList.add('hidden');
-  if (config.fleetLinkRow) config.fleetLinkRow.classList.add('hidden');
-  if (config.pendingPanel) config.pendingPanel.classList.add('hidden');
-  clearMessage(config.feedback);
+  window.location.href = '/intranet.html';
 }
 
 export function initIntranetAuth(config) {
@@ -52,37 +40,18 @@ export function initIntranetAuth(config) {
   const loginButton = document.querySelector(config.loginButtonSelector);
   const feedback = document.querySelector(config.feedbackSelector);
   const panel = document.querySelector(config.panelSelector);
-  const navLogoutButton = document.querySelector(config.navLogoutButtonSelector);
   const adminNavLink = document.querySelector(config.adminNavLinkSelector);
-  const navVoyageLink = document.querySelector(config.navVoyageLinkSelector);
-  const navFleetLink = document.querySelector(config.navFleetLinkSelector);
   const adminPanelLinkRow = document.querySelector(config.adminPanelLinkRowSelector);
-  const voyageLinkRow = document.querySelector(config.voyageLinkRowSelector);
-  const fleetLinkRow = document.querySelector(config.fleetLinkRowSelector);
   const pendingPanel = document.querySelector(config.pendingPanelSelector);
+  const logoutButton = document.querySelector(config.logoutButtonSelector);
 
-  if (!authPanel || !loginButton || !feedback || !panel || !navLogoutButton) return;
+  if (!authPanel || !loginButton || !feedback || !panel || !logoutButton) return;
 
   loginButton.addEventListener('click', () => {
     window.location.href = '/api/auth/discord/start';
   });
 
-  navLogoutButton.addEventListener('click', () =>
-    handleLogout({
-      authPanel,
-      loginButton,
-      feedback,
-      panel,
-      navLogoutButton,
-      adminNavLink,
-      navVoyageLink,
-      navFleetLink,
-      adminPanelLinkRow,
-      voyageLinkRow,
-      fleetLinkRow,
-      pendingPanel
-    })
-  );
+  logoutButton.addEventListener('click', logout);
 
   const urlMessage = getAuthMessageFromUrl();
   if (urlMessage) {
@@ -96,39 +65,24 @@ export function initIntranetAuth(config) {
     .then((session) => {
       if (!session.loggedIn) {
         authPanel.classList.remove('hidden');
-        loginButton.classList.remove('hidden');
         panel.classList.add('hidden');
-        navLogoutButton.classList.add('hidden');
         if (adminNavLink) adminNavLink.classList.add('hidden');
-        if (navVoyageLink) navVoyageLink.classList.add('hidden');
-        if (navFleetLink) navFleetLink.classList.add('hidden');
         if (adminPanelLinkRow) adminPanelLinkRow.classList.add('hidden');
-        if (voyageLinkRow) voyageLinkRow.classList.add('hidden');
-        if (fleetLinkRow) fleetLinkRow.classList.add('hidden');
         if (pendingPanel) pendingPanel.classList.add('hidden');
         return;
       }
 
       authPanel.classList.add('hidden');
       panel.classList.remove('hidden');
-      navLogoutButton.classList.remove('hidden');
       clearMessage(feedback);
 
       if (session.isAdmin) {
         if (adminNavLink) adminNavLink.classList.remove('hidden');
-        if (navVoyageLink) navVoyageLink.classList.remove('hidden');
-        if (navFleetLink) navFleetLink.classList.remove('hidden');
         if (adminPanelLinkRow) adminPanelLinkRow.classList.remove('hidden');
-        if (voyageLinkRow) voyageLinkRow.classList.remove('hidden');
-        if (fleetLinkRow) fleetLinkRow.classList.remove('hidden');
         if (pendingPanel) pendingPanel.classList.add('hidden');
       } else {
         if (adminNavLink) adminNavLink.classList.add('hidden');
-        if (navVoyageLink) navVoyageLink.classList.add('hidden');
-        if (navFleetLink) navFleetLink.classList.add('hidden');
         if (adminPanelLinkRow) adminPanelLinkRow.classList.add('hidden');
-        if (voyageLinkRow) voyageLinkRow.classList.add('hidden');
-        if (fleetLinkRow) fleetLinkRow.classList.add('hidden');
 
         if (session.accessPending) {
           if (pendingPanel) pendingPanel.classList.remove('hidden');
@@ -142,13 +96,8 @@ export function initIntranetAuth(config) {
       showMessage(feedback, 'Unable to verify session.', 'error');
       authPanel.classList.remove('hidden');
       panel.classList.add('hidden');
-      navLogoutButton.classList.add('hidden');
       if (adminNavLink) adminNavLink.classList.add('hidden');
-      if (navVoyageLink) navVoyageLink.classList.add('hidden');
-      if (navFleetLink) navFleetLink.classList.add('hidden');
       if (adminPanelLinkRow) adminPanelLinkRow.classList.add('hidden');
-      if (voyageLinkRow) voyageLinkRow.classList.add('hidden');
-      if (fleetLinkRow) fleetLinkRow.classList.add('hidden');
       if (pendingPanel) pendingPanel.classList.add('hidden');
     });
 }

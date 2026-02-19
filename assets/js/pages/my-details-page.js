@@ -5,7 +5,6 @@ import { initializeYear } from '../modules/year.js';
 initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
-  navLogoutButtonSelector: '#navLogoutBtn',
   adminNavLinkSelector: '#adminNavLink'
 }).then((session) => {
   if (!session) return;

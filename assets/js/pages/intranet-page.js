@@ -6,13 +6,9 @@ initIntranetAuth({
   loginButtonSelector: '#discordLoginBtn',
   feedbackSelector: '#loginFeedback',
   panelSelector: '#intranetPanel',
-  navLogoutButtonSelector: '#navLogoutBtn',
+  logoutButtonSelector: '#dashboardLogoutBtn',
   adminNavLinkSelector: '#adminNavLink',
-  navVoyageLinkSelector: '#navVoyageLink',
-  navFleetLinkSelector: '#navFleetLink',
   adminPanelLinkRowSelector: '#adminPanelLinkRow',
-  voyageLinkRowSelector: '#voyageLinkRow',
-  fleetLinkRowSelector: '#fleetLinkRow',
   pendingPanelSelector: '#pendingPanel'
 });
 
