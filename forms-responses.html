@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier form responses." />
+    <title>Frontier Oil & Gas Company | Form Responses</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages.css" />
+  </head>
+  <body class="page page-intranet">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">FOG</span>
+          <span class="brand-text">Frontier Oil & Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary">
+          <a href="intranet.html">Dashboard</a>
+          <a href="my-details.html">My Details</a>
+          <a href="voyage-tracker.html">Voyage Tracker</a>
+          <a href="my-fleet.html">My Fleet</a>
+          <a href="/forms">Forms</a>
+          <a id="adminNavLink" class="hidden" href="admin-panel.html">Admin Panel</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel">
+          <div class="modal-header">
+            <h1>Form Responses</h1>
+            <div class="modal-actions">
+              <a class="btn btn-secondary" href="/forms">Forms List</a>
+              <a class="btn btn-secondary" href="/forms/admin">Manage Forms</a>
+            </div>
+          </div>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="formsResponsesFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="hidden">
+          <article class="panel">
+            <h2>Filters</h2>
+            <div class="filter-row">
+              <div>
+                <label for="filterResponseForm">Form</label>
+                <select id="filterResponseForm"></select>
+              </div>
+              <div>
+                <label for="filterResponseCategory">Category</label>
+                <select id="filterResponseCategory"></select>
+              </div>
+              <div>
+                <label for="filterResponseEmployee">Respondent</label>
+                <select id="filterResponseEmployee"></select>
+              </div>
+              <div>
+                <label for="filterDateFrom">Date From</label>
+                <input id="filterDateFrom" type="date" />
+              </div>
+              <div>
+                <label for="filterDateTo">Date To</label>
+                <input id="filterDateTo" type="date" />
+              </div>
+              <div>
+                <label>&nbsp;</label>
+                <button id="applyResponseFiltersBtn" class="btn btn-secondary" type="button">Apply Filters</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <h2>Responses</h2>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Form</th>
+                    <th>Category</th>
+                    <th>Respondent</th>
+                    <th>Submitted</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="responsesTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <h2>Response Detail</h2>
+            <div id="responseDetail"></div>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <p>Copyright <span id="currentYear"></span> Frontier Oil & Gas Company. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="assets/js/pages/forms-responses-page.js"></script>
+  </body>
+</html>

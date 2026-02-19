@@ -67,6 +67,71 @@ export async function ensureCoreSchema(env) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       value TEXT NOT NULL UNIQUE,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS form_categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS forms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT,
+      instructions TEXT,
+      category_id INTEGER,
+      status TEXT NOT NULL DEFAULT 'draft',
+      created_by TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(category_id) REFERENCES form_categories(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS form_questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      form_id INTEGER NOT NULL,
+      label TEXT NOT NULL,
+      question_type TEXT NOT NULL,
+      is_required INTEGER NOT NULL DEFAULT 0,
+      help_text TEXT,
+      options_json TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(form_id) REFERENCES forms(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS form_access_employees (
+      form_id INTEGER NOT NULL,
+      employee_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(form_id, employee_id),
+      FOREIGN KEY(form_id) REFERENCES forms(id),
+      FOREIGN KEY(employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS form_access_roles (
+      form_id INTEGER NOT NULL,
+      role_id TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(form_id, role_id),
+      FOREIGN KEY(form_id) REFERENCES forms(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS form_responses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      form_id INTEGER NOT NULL,
+      employee_id INTEGER,
+      respondent_discord_user_id TEXT NOT NULL,
+      submitted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(form_id) REFERENCES forms(id),
+      FOREIGN KEY(employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS form_response_answers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      response_id INTEGER NOT NULL,
+      question_id INTEGER NOT NULL,
+      answer_json TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(response_id) REFERENCES form_responses(id),
+      FOREIGN KEY(question_id) REFERENCES form_questions(id)
     )`
   ];
 

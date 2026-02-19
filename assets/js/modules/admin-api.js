@@ -100,3 +100,83 @@ export function processAccessRequest(payload) {
 export function getMyDetails() {
   return requestJson('/api/me/details', { method: 'GET' });
 }
+
+export function listAvailableForms() {
+  return requestJson('/api/forms', { method: 'GET' });
+}
+
+export function getAvailableForm(formId) {
+  return requestJson(`/api/forms/${formId}`, { method: 'GET' });
+}
+
+export function submitFormResponse(formId, payload) {
+  return requestJson(`/api/forms/${formId}/responses`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listFormCategories() {
+  return requestJson('/api/admin/forms/categories', { method: 'GET' });
+}
+
+export function createFormCategory(payload) {
+  return requestJson('/api/admin/forms/categories', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateFormCategory(payload) {
+  return requestJson('/api/admin/forms/categories', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteFormCategory(categoryId) {
+  return requestJson(`/api/admin/forms/categories?id=${encodeURIComponent(String(categoryId))}`, {
+    method: 'DELETE'
+  });
+}
+
+export function listFormsAdmin() {
+  return requestJson('/api/admin/forms/forms', { method: 'GET' });
+}
+
+export function createFormAdmin(payload) {
+  return requestJson('/api/admin/forms/forms', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function getFormAdmin(formId) {
+  return requestJson(`/api/admin/forms/forms/${formId}`, { method: 'GET' });
+}
+
+export function updateFormAdmin(formId, payload) {
+  return requestJson(`/api/admin/forms/forms/${formId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteFormAdmin(formId) {
+  return requestJson(`/api/admin/forms/forms/${formId}`, { method: 'DELETE' });
+}
+
+export function listFormResponses(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.formId) params.set('formId', String(filters.formId));
+  if (filters.categoryId) params.set('categoryId', String(filters.categoryId));
+  if (filters.employeeId) params.set('employeeId', String(filters.employeeId));
+  if (filters.dateFrom) params.set('dateFrom', String(filters.dateFrom));
+  if (filters.dateTo) params.set('dateTo', String(filters.dateTo));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/admin/forms/responses${suffix}`, { method: 'GET' });
+}
+
+export function getFormResponse(responseId) {
+  return requestJson(`/api/admin/forms/responses/${responseId}`, { method: 'GET' });
+}

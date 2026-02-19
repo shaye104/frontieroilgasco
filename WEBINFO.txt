@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T13:39:25.965Z
+Generated: 2026-02-19T14:08:00.916Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -12,6 +12,10 @@ SITE STRUCTURE
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
 - employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
+- form-fill.html | title: Frontier Oil & Gas Company | Fill Form | primary heading: Form
+- forms-admin.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
+- forms-responses.html | title: Frontier Oil & Gas Company | Form Responses | primary heading: Form Responses
+- forms.html | title: Frontier Oil & Gas Company | Forms | primary heading: Forms
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
 - intranet.html | title: Frontier Oil & Gas Company | Employee Intranet | primary heading: Employee Intranet
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
@@ -21,11 +25,15 @@ SITE STRUCTURE
 
 JAVASCRIPT MODULES
 - assets/js/modules/access-requests.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createConfigValue, createEmployee, deleteConfigValue, getAdminRoles, getConfig, getEmployee, getMyDetails, getSession, listAccessRequests, listEmployees, processAccessRequest, saveAdminRoles, updateConfigValue, updateEmployee
+- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createConfigValue, createEmployee, createFormAdmin, createFormCategory, deleteConfigValue, deleteFormAdmin, deleteFormCategory, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, listAccessRequests, listAvailableForms, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, processAccessRequest, saveAdminRoles, submitFormResponse, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory
 - assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/employee-profile.js | exports: No public exports
+- assets/js/modules/form-fill.js | exports: No public exports
+- assets/js/modules/forms-admin.js | exports: No public exports
+- assets/js/modules/forms-list.js | exports: No public exports
+- assets/js/modules/forms-responses.js | exports: No public exports
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
 - assets/js/modules/intranet-page-guard.js | exports: No public exports
 - assets/js/modules/manage-employees.js | exports: No public exports
@@ -38,6 +46,10 @@ JAVASCRIPT MODULES
 - assets/js/pages/admin-panel-page.js | exports: No public exports
 - assets/js/pages/application-page.js | exports: No public exports
 - assets/js/pages/employee-profile-page.js | exports: No public exports
+- assets/js/pages/form-fill-page.js | exports: No public exports
+- assets/js/pages/forms-admin-page.js | exports: No public exports
+- assets/js/pages/forms-page.js | exports: No public exports
+- assets/js/pages/forms-responses-page.js | exports: No public exports
 - assets/js/pages/home.js | exports: No public exports
 - assets/js/pages/intranet-page.js | exports: No public exports
 - assets/js/pages/manage-employees-page.js | exports: No public exports

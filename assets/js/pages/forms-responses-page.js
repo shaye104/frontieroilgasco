@@ -1,0 +1,26 @@
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js';
+import { initFormsResponses } from '../modules/forms-responses.js';
+import { initializeYear } from '../modules/year.js';
+
+initIntranetPageGuard({
+  feedbackSelector: '#guardFeedback',
+  protectedContentSelector: '#protectedContent',
+  adminNavLinkSelector: '#adminNavLink',
+  requireAdmin: true
+}).then((session) => {
+  if (!session?.isAdmin) return;
+
+  initFormsResponses({
+    feedbackSelector: '#formsResponsesFeedback',
+    formFilterSelector: '#filterResponseForm',
+    categoryFilterSelector: '#filterResponseCategory',
+    employeeFilterSelector: '#filterResponseEmployee',
+    dateFromSelector: '#filterDateFrom',
+    dateToSelector: '#filterDateTo',
+    applyFiltersBtnSelector: '#applyResponseFiltersBtn',
+    tableBodySelector: '#responsesTableBody',
+    detailSelector: '#responseDetail'
+  });
+});
+
+initializeYear();
