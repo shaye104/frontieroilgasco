@@ -84,10 +84,11 @@ export async function initVoyageDetails(config) {
   const buyTotalText = document.querySelector(config.buyTotalSelector);
   const archivedBreakdownSection = document.querySelector(config.archivedBreakdownSectionSelector);
   const archivedBreakdownFreight = document.querySelector(config.archivedBreakdownFreightSelector);
+  const archivedBreakdownLossAdjustment = document.querySelector(config.archivedBreakdownLossAdjustmentSelector);
   const archivedBreakdownRevenue = document.querySelector(config.archivedBreakdownRevenueSelector);
-  const archivedBreakdownCost = document.querySelector(config.archivedBreakdownCostSelector);
   const archivedBreakdownProfit = document.querySelector(config.archivedBreakdownProfitSelector);
   const archivedBreakdownCompanyShare = document.querySelector(config.archivedBreakdownCompanyShareSelector);
+  const archivedBreakdownCrewShare = document.querySelector(config.archivedBreakdownCrewShareSelector);
   const manifestSaveState = document.querySelector(config.manifestSaveStateSelector);
   const manifestFeedback = document.querySelector(config.manifestFeedbackSelector);
   const openEndVoyageBtn = document.querySelector(config.openEndVoyageButtonSelector);
@@ -101,11 +102,12 @@ export async function initVoyageDetails(config) {
   const cargoLostEditor = document.querySelector(config.cargoLostEditorSelector);
   const finaliseHoldBtn = document.querySelector(config.finaliseHoldButtonSelector);
   const cancelHoldBtn = document.querySelector(config.cancelVoyageHoldButtonSelector);
-  const breakdownTrueSellUnitPrice = document.querySelector(config.breakdownTrueSellUnitPriceSelector);
   const breakdownRevenue = document.querySelector(config.breakdownRevenueSelector);
   const breakdownCost = document.querySelector(config.breakdownCostSelector);
+  const breakdownLossAdjustment = document.querySelector(config.breakdownLossAdjustmentSelector);
   const breakdownProfit = document.querySelector(config.breakdownProfitSelector);
   const breakdownCompanyShare = document.querySelector(config.breakdownCompanyShareSelector);
+  const breakdownCrewShare = document.querySelector(config.breakdownCrewShareSelector);
   const breakdownContainer = document.querySelector(config.breakdownContainerSelector);
   const sellMultiplierInput = document.querySelector(config.sellMultiplierSelector);
   const baseSellPriceInput = document.querySelector(config.baseSellPriceSelector);
@@ -140,10 +142,11 @@ export async function initVoyageDetails(config) {
     !buyTotalText ||
     !archivedBreakdownSection ||
     !archivedBreakdownFreight ||
+    !archivedBreakdownLossAdjustment ||
     !archivedBreakdownRevenue ||
-    !archivedBreakdownCost ||
     !archivedBreakdownProfit ||
     !archivedBreakdownCompanyShare ||
+    !archivedBreakdownCrewShare ||
     !manifestSaveState ||
     !manifestFeedback ||
     !openEndVoyageBtn ||
@@ -157,11 +160,12 @@ export async function initVoyageDetails(config) {
     !cargoLostEditor ||
     !finaliseHoldBtn ||
     !cancelHoldBtn ||
-    !breakdownTrueSellUnitPrice ||
     !breakdownRevenue ||
     !breakdownCost ||
+    !breakdownLossAdjustment ||
     !breakdownProfit ||
     !breakdownCompanyShare ||
+    !breakdownCrewShare ||
     !breakdownContainer ||
     !sellMultiplierInput ||
     !baseSellPriceInput ||
@@ -344,23 +348,30 @@ export async function initVoyageDetails(config) {
   function syncBreakdown() {
     const { totalCost, sellMultiplier, baseSellPrice, lossMap, lines } = buildBreakdown();
     buyTotalText.textContent = formatGuilders(totalCost);
+    const totalLossUnits = lines.reduce((sum, row) => {
+      const lost = Math.min(row.quantity, Math.max(0, Number(lossMap.get(Number(row.line.cargo_type_id)) || 0)));
+      return sum + lost;
+    }, 0);
+    breakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
 
     if (sellMultiplier === null || baseSellPrice === null) {
-      breakdownTrueSellUnitPrice.textContent = '—';
       breakdownRevenue.textContent = '—';
       breakdownCost.textContent = formatGuilders(totalCost);
+      breakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
       breakdownProfit.textContent = '—';
       breakdownCompanyShare.textContent = '—';
+      breakdownCrewShare.textContent = '—';
       breakdownContainer.classList.add('hidden');
       return;
     }
 
     if (sellMultiplier < 0 || baseSellPrice < 0) {
-      breakdownTrueSellUnitPrice.textContent = '—';
       breakdownRevenue.textContent = '—';
       breakdownCost.textContent = formatGuilders(totalCost);
+      breakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
       breakdownProfit.textContent = '—';
       breakdownCompanyShare.textContent = '—';
+      breakdownCrewShare.textContent = '—';
       breakdownContainer.classList.add('hidden');
       return;
     }
@@ -376,13 +387,15 @@ export async function initVoyageDetails(config) {
     );
     const profit = toMoney(totalRevenue - totalCost);
     const companyShare = toMoney(Math.max(profit, 0) * 0.1);
+    const crewShare = toMoney(profit - companyShare);
 
     breakdownContainer.classList.remove('hidden');
-    breakdownTrueSellUnitPrice.textContent = formatGuilders(trueSellUnitPrice);
     breakdownRevenue.textContent = formatGuilders(totalRevenue);
     breakdownCost.textContent = formatGuilders(totalCost);
+    breakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
     breakdownProfit.textContent = formatGuilders(profit);
     breakdownCompanyShare.textContent = formatGuilders(companyShare);
+    breakdownCrewShare.textContent = formatGuilders(crewShare);
   }
 
   function renderStatusControls() {
@@ -401,15 +414,19 @@ export async function initVoyageDetails(config) {
     const ended = String(detail.voyage.status || '') === 'ENDED';
     archivedBreakdownSection.classList.toggle('hidden', !ended);
     if (!ended) return;
+    const cargoLost = Array.isArray(detail?.cargoLost) ? detail.cargoLost : [];
+    const totalLossUnits = cargoLost.reduce((sum, item) => sum + Math.max(0, Math.floor(Number(item?.lostQuantity || 0))), 0);
     const totalCost = toMoney(detail.voyage.buy_total ?? detail.buyTotal ?? 0);
     const totalRevenue = toMoney(detail.voyage.effective_sell ?? 0);
     const profit = toMoney(detail.voyage.profit ?? totalRevenue - totalCost);
     const companyShare = toMoney(detail.voyage.company_share ?? Math.max(profit, 0) * 0.1);
+    const crewShare = toMoney(profit - companyShare);
     archivedBreakdownFreight.textContent = formatGuilders(totalCost);
+    archivedBreakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
     archivedBreakdownRevenue.textContent = formatGuilders(totalRevenue);
-    archivedBreakdownCost.textContent = formatGuilders(totalCost);
     archivedBreakdownProfit.textContent = formatGuilders(profit);
     archivedBreakdownCompanyShare.textContent = formatGuilders(companyShare);
+    archivedBreakdownCrewShare.textContent = formatGuilders(crewShare);
   }
 
   function removeArchivedControlsFromDom() {

@@ -46,9 +46,9 @@ export async function onRequestPost(context) {
   try {
     cargoLost = cargoLostRaw.map((loss) => {
       const manifestQty = manifestByCargo.get(loss.cargoTypeId);
-      if (!Number.isInteger(manifestQty)) throw new Error('Cargo lost contains cargo not in manifest.');
-      if (!Number.isInteger(loss.lostQuantity) || loss.lostQuantity < 0) throw new Error('Lost quantity must be >= 0.');
-      if (loss.lostQuantity > manifestQty) throw new Error('Lost quantity cannot exceed manifest quantity.');
+      if (!Number.isInteger(manifestQty)) throw new Error('Freight loss adjustment contains cargo not in manifest.');
+      if (!Number.isInteger(loss.lostQuantity) || loss.lostQuantity < 0) throw new Error('Freight loss adjustment quantity must be >= 0.');
+      if (loss.lostQuantity > manifestQty) throw new Error('Freight loss adjustment quantity cannot exceed manifest quantity.');
       const line = (detail?.manifest || []).find((entry) => Number(entry.cargo_type_id) === Number(loss.cargoTypeId));
       return {
         cargoTypeId: loss.cargoTypeId,

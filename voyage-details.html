@@ -84,7 +84,7 @@
               </table>
             </div>
             <div id="manifestFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
-            <p><strong>Total Freight Value:</strong> <span id="buyTotalText">ƒ 0</span></p>
+            <p><strong>Total Freight Cost:</strong> <span id="buyTotalText">ƒ 0</span></p>
             <div class="modal-actions">
               <button id="openEndVoyageBtn" class="btn btn-danger hidden" type="button">End Voyage</button>
             </div>
@@ -106,11 +106,12 @@
             </section>
             <section id="archivedBreakdownSection" class="employee-page-panel hidden archived-breakdown-panel">
               <h3>Financial Breakdown</h3>
-              <p><strong>Total Freight Value:</strong> <span id="archivedBreakdownFreight">ƒ 0</span></p>
-              <p><strong>Total Revenue:</strong> <span id="archivedBreakdownRevenue">ƒ 0</span></p>
-              <p><strong>Total Cost:</strong> <span id="archivedBreakdownCost">ƒ 0</span></p>
-              <p><strong>Profit:</strong> <span id="archivedBreakdownProfit">ƒ 0</span></p>
+              <p><strong>Total Freight Cost:</strong> <span id="archivedBreakdownFreight">ƒ 0</span></p>
+              <p><strong>Freight Loss Adjustment:</strong> <span id="archivedBreakdownLossAdjustment">0 units</span></p>
+              <p><strong>Gross Sale Revenue:</strong> <span id="archivedBreakdownRevenue">ƒ 0</span></p>
+              <p><strong>Net Profit:</strong> <span id="archivedBreakdownProfit">ƒ 0</span></p>
               <p><strong>Company Share (10%):</strong> <span id="archivedBreakdownCompanyShare">ƒ 0</span></p>
+              <p><strong>Crew Share (90%):</strong> <span id="archivedBreakdownCrewShare">ƒ 0</span></p>
             </section>
           </div>
         </section>
@@ -151,16 +152,17 @@
             <input name="sellMultiplier" id="sellMultiplierInput" type="number" min="0" step="0.01" />
             <label>Base Sell Price</label>
             <input name="baseSellPrice" id="baseSellPriceInput" type="number" min="0" step="0.01" />
-            <h4>Cargo Lost (Informational)</h4>
+            <h4>Freight Loss Adjustment</h4>
             <div id="cargoLostEditor"></div>
           </section>
           <section id="financialBreakdown" class="section-surface hidden">
-            <h3>Live Financial Breakdown</h3>
-            <p><strong>True Sell Unit Price:</strong> <span id="breakdownTrueSellUnitPrice">—</span></p>
-            <p><strong>Total Revenue:</strong> <span id="breakdownRevenue">ƒ 0</span></p>
-            <p><strong>Total Cost:</strong> <span id="breakdownCost">ƒ 0</span></p>
-            <p><strong>Profit:</strong> <span id="breakdownProfit">—</span></p>
+            <h3>Financial Breakdown</h3>
+            <p><strong>Total Freight Cost:</strong> <span id="breakdownCost">ƒ 0</span></p>
+            <p><strong>Freight Loss Adjustment:</strong> <span id="breakdownLossAdjustment">0 units</span></p>
+            <p><strong>Gross Sale Revenue:</strong> <span id="breakdownRevenue">ƒ 0</span></p>
+            <p><strong>Net Profit:</strong> <span id="breakdownProfit">—</span></p>
             <p><strong>Company Share (10%):</strong> <span id="breakdownCompanyShare">—</span></p>
+            <p><strong>Crew Share (90%):</strong> <span id="breakdownCrewShare">—</span></p>
           </section>
           <div class="end-actions-row">
             <button id="finaliseVoyageHoldBtn" class="btn btn-submit-hold hold-sweep" type="button">Submit Voyage</button>

@@ -19,10 +19,11 @@ initIntranetPageGuard({
     buyTotalSelector: '#buyTotalText',
     archivedBreakdownSectionSelector: '#archivedBreakdownSection',
     archivedBreakdownFreightSelector: '#archivedBreakdownFreight',
+    archivedBreakdownLossAdjustmentSelector: '#archivedBreakdownLossAdjustment',
     archivedBreakdownRevenueSelector: '#archivedBreakdownRevenue',
-    archivedBreakdownCostSelector: '#archivedBreakdownCost',
     archivedBreakdownProfitSelector: '#archivedBreakdownProfit',
     archivedBreakdownCompanyShareSelector: '#archivedBreakdownCompanyShare',
+    archivedBreakdownCrewShareSelector: '#archivedBreakdownCrewShare',
     manifestSaveStateSelector: '#manifestSaveState',
     manifestFeedbackSelector: '#manifestFeedback',
     openEndVoyageButtonSelector: '#openEndVoyageBtn',
@@ -58,11 +59,12 @@ initIntranetPageGuard({
     cancelVoyageHoldButtonSelector: '#cancelVoyageHoldBtn',
     sellMultiplierSelector: '#sellMultiplierInput',
     baseSellPriceSelector: '#baseSellPriceInput',
-    breakdownTrueSellUnitPriceSelector: '#breakdownTrueSellUnitPrice',
     breakdownRevenueSelector: '#breakdownRevenue',
     breakdownCostSelector: '#breakdownCost',
+    breakdownLossAdjustmentSelector: '#breakdownLossAdjustment',
     breakdownProfitSelector: '#breakdownProfit',
     breakdownCompanyShareSelector: '#breakdownCompanyShare',
+    breakdownCrewShareSelector: '#breakdownCrewShare',
     breakdownContainerSelector: '#financialBreakdown'
   });
 });
