@@ -68,6 +68,12 @@ function getAuthMessageFromUrl() {
   const reason = params.get('reason');
 
   if (auth === 'denied') {
+    if (reason === 'login_required') {
+      return { text: 'Please sign in to access the intranet.', type: 'error' };
+    }
+    if (reason === 'admin_required') {
+      return { text: 'Admin access is required for that section.', type: 'error' };
+    }
     return {
       text: reason === 'missing_role' ? 'Access denied. Your Discord role is not authorized for intranet access.' : 'Login failed.',
       type: 'error'
@@ -120,6 +126,7 @@ export function initIntranetAuth(config) {
 
   logoutButton.addEventListener('click', async () => {
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    loginButton.classList.remove('hidden');
     panel.classList.add('hidden');
     if (adminPanel) adminPanel.classList.add('hidden');
     showMessage(feedback, 'Logged out.', 'success');
@@ -170,11 +177,13 @@ export function initIntranetAuth(config) {
   fetchSession()
     .then(async (session) => {
       if (!session.loggedIn) {
+        loginButton.classList.remove('hidden');
         panel.classList.add('hidden');
         if (adminPanel) adminPanel.classList.add('hidden');
         return;
       }
 
+      loginButton.classList.add('hidden');
       welcomeText.textContent = `Welcome, ${session.displayName}.`;
       panel.classList.remove('hidden');
       if (!urlMessage) showMessage(feedback, 'Authenticated via Discord.', 'success');

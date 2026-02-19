@@ -5,6 +5,9 @@ Static, modular website for Frontier Oil & Gas Company with three pages:
 - `index.html`: public landing page and company details
 - `application.html`: candidate application form
 - `intranet.html`: employee intranet login via Discord OAuth2 role-based access
+- `voyage-tracker.html`: intranet placeholder page (protected)
+- `my-fleet.html`: intranet placeholder page (protected)
+- `my-details.html`: intranet placeholder page (protected)
 
 ## Project Structure
 
