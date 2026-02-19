@@ -47,12 +47,16 @@
           <section class="employee-page-panel">
             <div class="modal-header">
               <h2>Voyage Profile</h2>
+              <div class="modal-actions">
+                <button id="profileEditToggleBtn" class="btn btn-secondary hidden" type="button" aria-label="Edit Voyage Profile">✏</button>
+              </div>
               <div id="shipStatusControls" class="modal-actions">
                 <button id="shipUnderwayBtn" class="btn btn-accent" type="button">Ship Underway</button>
                 <button id="shipInPortBtn" class="btn btn-secondary" type="button">Ship In Port</button>
               </div>
             </div>
             <div id="voyageFieldList" class="voyage-field-list"></div>
+            <div id="profileFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
 
             <div class="modal-header manifest-head-row">
               <h3>Cargo Manifest</h3>
@@ -98,23 +102,6 @@
         </section>
       </div>
     </main>
-
-    <section id="updateFieldModal" class="modal-overlay hidden" aria-hidden="true">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h2 id="updateFieldTitle">Update Field</h2>
-          <button class="btn btn-secondary" type="button" data-close-modal="updateFieldModal">Close</button>
-        </div>
-        <form id="updateFieldForm">
-          <input id="updateFieldKey" name="fieldKey" type="hidden" />
-          <div id="updateFieldControls"></div>
-          <div class="modal-actions">
-            <button class="btn btn-primary" type="submit">Save</button>
-            <button class="btn btn-secondary" type="button" data-close-modal="updateFieldModal">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </section>
 
     <section id="addCargoModal" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal-card">

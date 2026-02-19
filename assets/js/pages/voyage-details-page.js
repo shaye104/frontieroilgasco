@@ -13,6 +13,8 @@ initIntranetPageGuard({
     feedbackSelector: '#voyageDetailFeedback',
     headingSelector: '#voyageHeading',
     fieldListSelector: '#voyageFieldList',
+    profileFeedbackSelector: '#profileFeedback',
+    profileEditToggleSelector: '#profileEditToggleBtn',
     manifestBodySelector: '#manifestTableBody',
     buyTotalSelector: '#buyTotalText',
     manifestSaveStateSelector: '#manifestSaveState',
@@ -38,11 +40,7 @@ initIntranetPageGuard({
     breakdownCostSelector: '#breakdownCost',
     breakdownProfitSelector: '#breakdownProfit',
     breakdownCompanyShareSelector: '#breakdownCompanyShare',
-    breakdownContainerSelector: '#financialBreakdown',
-    updateFieldFormSelector: '#updateFieldForm',
-    updateFieldTitleSelector: '#updateFieldTitle',
-    updateFieldKeySelector: '#updateFieldKey',
-    updateFieldControlsSelector: '#updateFieldControls'
+    breakdownContainerSelector: '#financialBreakdown'
   });
 });
 

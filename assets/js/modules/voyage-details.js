@@ -76,6 +76,8 @@ export async function initVoyageDetails(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const heading = document.querySelector(config.headingSelector);
   const fieldList = document.querySelector(config.fieldListSelector);
+  const profileFeedback = document.querySelector(config.profileFeedbackSelector);
+  const profileEditToggleBtn = document.querySelector(config.profileEditToggleSelector);
   const shipStatusControls = document.querySelector(config.shipStatusControlsSelector);
   const shipUnderwayBtn = document.querySelector(config.shipUnderwaySelector);
   const shipInPortBtn = document.querySelector(config.shipInPortSelector);
@@ -102,17 +104,14 @@ export async function initVoyageDetails(config) {
   const breakdownContainer = document.querySelector(config.breakdownContainerSelector);
   const sellMultiplierInput = document.querySelector(config.sellMultiplierSelector);
   const baseSellPriceInput = document.querySelector(config.baseSellPriceSelector);
-
-  const updateFieldForm = document.querySelector(config.updateFieldFormSelector);
-  const updateFieldTitle = document.querySelector(config.updateFieldTitleSelector);
-  const updateFieldKey = document.querySelector(config.updateFieldKeySelector);
-  const updateFieldControls = document.querySelector(config.updateFieldControlsSelector);
   const HOLD_DURATION_MS = 500;
 
   if (
     !feedback ||
     !heading ||
     !fieldList ||
+    !profileFeedback ||
+    !profileEditToggleBtn ||
     !shipStatusControls ||
     !shipUnderwayBtn ||
     !shipInPortBtn ||
@@ -138,11 +137,7 @@ export async function initVoyageDetails(config) {
     !breakdownCompanyShare ||
     !breakdownContainer ||
     !sellMultiplierInput ||
-    !baseSellPriceInput ||
-    !updateFieldForm ||
-    !updateFieldTitle ||
-    !updateFieldKey ||
-    !updateFieldControls
+    !baseSellPriceInput
   ) {
     return;
   }
@@ -165,6 +160,8 @@ export async function initVoyageDetails(config) {
   let comboboxCleanup = [];
   let manifestSaveFlashTimer = null;
   let manifestSaveRequestId = 0;
+  let profileEditMode = false;
+  let profileDraft = null;
 
   function isOngoing() {
     return String(detail?.voyage?.status || '') === 'ONGOING';
@@ -355,24 +352,45 @@ export async function initVoyageDetails(config) {
     shipInPortBtn.disabled = !canEdit() || !underway;
   }
 
-  function renderFieldList() {
+  function buildProfileDraft() {
+    profileDraft = {
+      departurePort: String(detail?.voyage?.departure_port || ''),
+      destinationPort: String(detail?.voyage?.destination_port || ''),
+      vesselName: String(detail?.voyage?.vessel_name || ''),
+      vesselClass: String(detail?.voyage?.vessel_class || ''),
+      vesselCallsign: String(detail?.voyage?.vessel_callsign || ''),
+      officerOfWatchEmployeeId: Number(detail?.voyage?.officer_of_watch_employee_id || 0),
+      crewComplementIds: (detail?.crew || []).map((row) => Number(row.id))
+    };
+    if (profileDraft.crewComplementIds.includes(profileDraft.officerOfWatchEmployeeId)) {
+      profileDraft.crewComplementIds = profileDraft.crewComplementIds.filter((id) => id !== profileDraft.officerOfWatchEmployeeId);
+    }
+  }
+
+  function toOptions(items, value) {
+    return items
+      .map((entry) => {
+        const selected = String(entry.value) === String(value) ? 'selected' : '';
+        return `<option value="${entry.value}" ${selected}>${entry.value}</option>`;
+      })
+      .join('');
+  }
+
+  function renderProfileReadOnly() {
     const voyage = detail.voyage;
     const crewNames = (detail.crew || []).map((entry) => text(entry.roblox_username)).join(', ') || 'N/A';
     const rows = [
-      { key: 'departurePort', label: 'Port of Departure', value: text(voyage.departure_port), area: 'departure' },
-      { key: 'destinationPort', label: 'Port of Destination', value: text(voyage.destination_port), area: 'destination' },
-      { key: 'vesselName', label: 'Vessel Name', value: text(voyage.vessel_name), area: 'vessel-name' },
-      { key: 'vesselClass', label: 'Vessel Class', value: text(voyage.vessel_class), area: 'vessel-class' },
-      { key: 'vesselCallsign', label: 'Vessel Callsign', value: text(voyage.vessel_callsign), area: 'vessel-callsign' },
-      { key: 'officerOfWatchEmployeeId', label: 'Officer of the Watch', value: text(voyage.officer_name), area: 'oow' },
-      { key: 'crewComplementIds', label: 'Crew Complement', value: crewNames, area: 'crew' },
-      { key: 'status', label: 'Voyage State', value: text(voyage.status), area: 'state' },
-      { key: 'startedAt', label: 'Started', value: formatWhen(voyage.started_at), area: 'started' },
-      { key: 'endedAt', label: 'Ended', value: voyage.status === 'ENDED' ? formatWhen(voyage.ended_at) : 'N/A', area: 'ended' }
+      { label: 'Port of Departure', value: text(voyage.departure_port), area: 'departure' },
+      { label: 'Port of Destination', value: text(voyage.destination_port), area: 'destination' },
+      { label: 'Vessel Name', value: text(voyage.vessel_name), area: 'vessel-name' },
+      { label: 'Vessel Class', value: text(voyage.vessel_class), area: 'vessel-class' },
+      { label: 'Vessel Callsign', value: text(voyage.vessel_callsign), area: 'vessel-callsign' },
+      { label: 'Officer of the Watch', value: text(voyage.officer_name), area: 'oow' },
+      { label: 'Crew Complement', value: crewNames, area: 'crew' },
+      { label: 'Voyage State', value: text(voyage.status), area: 'state' },
+      { label: 'Started', value: formatWhen(voyage.started_at), area: 'started' },
+      { label: 'Ended', value: voyage.status === 'ENDED' ? formatWhen(voyage.ended_at) : 'N/A', area: 'ended' }
     ];
-
-    const editableKeys = new Set(['departurePort', 'destinationPort', 'vesselName', 'vesselClass', 'vesselCallsign', 'officerOfWatchEmployeeId', 'crewComplementIds']);
-
     fieldList.innerHTML = `<div class="voyage-profile-grid">${rows
       .map(
         (row) => `<div class="voyage-field-row voyage-field-row-${row.area}">
@@ -380,21 +398,227 @@ export async function initVoyageDetails(config) {
             <p class="voyage-field-label">${row.label}</p>
             <p class="voyage-field-value">${row.value}</p>
           </div>
-          ${
-            canEdit() && editableKeys.has(row.key)
-              ? `<button class="btn btn-secondary btn-pencil" type="button" data-edit-field="${row.key}" aria-label="Edit ${row.label}">✏</button>`
-              : ''
-          }
         </div>`
       )
       .join('')}</div>`;
+  }
 
-    fieldList.querySelectorAll('[data-edit-field]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const key = button.getAttribute('data-edit-field');
-        if (key) openFieldModal(key);
-      });
+  function renderProfileEditMode() {
+    const ports = detail.voyageConfig?.ports || [];
+    const vesselNames = detail.voyageConfig?.vesselNames || [];
+    const vesselClasses = detail.voyageConfig?.vesselClasses || [];
+    const vesselCallsigns = detail.voyageConfig?.vesselCallsigns || [];
+    const oowName = (detail.employees || []).find((row) => Number(row.id) === Number(profileDraft.officerOfWatchEmployeeId))?.roblox_username || 'None';
+    fieldList.innerHTML = `<div class="voyage-profile-grid profile-edit-grid">
+      <div class="voyage-field-row voyage-field-row-departure">
+        <div>
+          <p class="voyage-field-label">Port of Departure</p>
+          <select id="profileDepartureSelect">${toOptions(ports, profileDraft.departurePort)}</select>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-destination">
+        <div>
+          <p class="voyage-field-label">Port of Destination</p>
+          <select id="profileDestinationSelect">${toOptions(ports, profileDraft.destinationPort)}</select>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-vessel-name">
+        <div>
+          <p class="voyage-field-label">Vessel Name</p>
+          <select id="profileVesselNameSelect">${toOptions(vesselNames, profileDraft.vesselName)}</select>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-vessel-class">
+        <div>
+          <p class="voyage-field-label">Vessel Class</p>
+          <select id="profileVesselClassSelect">${toOptions(vesselClasses, profileDraft.vesselClass)}</select>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-vessel-callsign">
+        <div>
+          <p class="voyage-field-label">Vessel Callsign</p>
+          <select id="profileVesselCallsignSelect">${toOptions(vesselCallsigns, profileDraft.vesselCallsign)}</select>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-oow">
+        <div>
+          <p class="voyage-field-label">Officer of the Watch</p>
+          <div class="combobox-wrap">
+            <input id="profileOowSearch" type="text" autocomplete="off" placeholder="Search username..." />
+            <div id="profileOowResults" class="autocomplete-list"></div>
+          </div>
+          <p id="profileOowSelected" class="muted">Selected: ${text(oowName)}</p>
+          <div id="profileOowError" class="inline-feedback hidden"></div>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-crew">
+        <div>
+          <p class="voyage-field-label">Crew Complement</p>
+          <div class="combobox-wrap combobox-wrap-multi">
+            <div id="profileCrewSelected" class="pill-list"></div>
+            <input id="profileCrewSearch" type="text" autocomplete="off" placeholder="Search username..." />
+            <div id="profileCrewResults" class="autocomplete-list"></div>
+          </div>
+          <div id="profileCrewError" class="inline-feedback hidden"></div>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-state">
+        <div>
+          <p class="voyage-field-label">Voyage State</p>
+          <p class="voyage-field-value">${text(detail.voyage.status)}</p>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-started">
+        <div>
+          <p class="voyage-field-label">Started</p>
+          <p class="voyage-field-value">${formatWhen(detail.voyage.started_at)}</p>
+        </div>
+      </div>
+      <div class="voyage-field-row voyage-field-row-ended">
+        <div>
+          <p class="voyage-field-label">Ended</p>
+          <p class="voyage-field-value">${detail.voyage.status === 'ENDED' ? formatWhen(detail.voyage.ended_at) : 'N/A'}</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="profileSaveBtn" class="btn btn-primary" type="button">Save Changes</button>
+      <button id="profileCancelBtn" class="btn btn-secondary" type="button">Cancel</button>
+    </div>`;
+
+    const departureSelect = fieldList.querySelector('#profileDepartureSelect');
+    const destinationSelect = fieldList.querySelector('#profileDestinationSelect');
+    const vesselNameSelect = fieldList.querySelector('#profileVesselNameSelect');
+    const vesselClassSelect = fieldList.querySelector('#profileVesselClassSelect');
+    const vesselCallsignSelect = fieldList.querySelector('#profileVesselCallsignSelect');
+    departureSelect?.addEventListener('change', () => (profileDraft.departurePort = String(departureSelect.value || '')));
+    destinationSelect?.addEventListener('change', () => (profileDraft.destinationPort = String(destinationSelect.value || '')));
+    vesselNameSelect?.addEventListener('change', () => (profileDraft.vesselName = String(vesselNameSelect.value || '')));
+    vesselClassSelect?.addEventListener('change', () => (profileDraft.vesselClass = String(vesselClassSelect.value || '')));
+    vesselCallsignSelect?.addEventListener('change', () => (profileDraft.vesselCallsign = String(vesselCallsignSelect.value || '')));
+
+    const oowSearch = fieldList.querySelector('#profileOowSearch');
+    const oowResults = fieldList.querySelector('#profileOowResults');
+    const oowSelected = fieldList.querySelector('#profileOowSelected');
+    const oowError = fieldList.querySelector('#profileOowError');
+    setupEmployeeCombobox({
+      input: oowSearch,
+      results: oowResults,
+      onSearch: (query) => lookupEmployees('username', query),
+      onSelect: (row) => {
+        const id = Number(row.id);
+        const username = text(row.roblox_username || `#${id}`);
+        profileDraft.officerOfWatchEmployeeId = id;
+        profileDraft.crewComplementIds = profileDraft.crewComplementIds.filter((crewId) => crewId !== id);
+        oowSelected.textContent = `Selected: ${username}`;
+        oowSearch.value = '';
+        renderCrewPills();
+      },
+      errorTarget: oowError
     });
+
+    const crewSearch = fieldList.querySelector('#profileCrewSearch');
+    const crewResults = fieldList.querySelector('#profileCrewResults');
+    const crewSelected = fieldList.querySelector('#profileCrewSelected');
+    const crewError = fieldList.querySelector('#profileCrewError');
+
+    const renderCrewPills = () => {
+      if (!crewSelected) return;
+      if (!profileDraft.crewComplementIds.length) {
+        crewSelected.innerHTML = '<span class="muted">No crew selected.</span>';
+        return;
+      }
+      crewSelected.innerHTML = profileDraft.crewComplementIds
+        .map((id) => {
+          const employee = (detail.employees || []).find((row) => Number(row.id) === Number(id));
+          return `<span class="pill">${text(employee?.roblox_username || `#${id}`)} <button class="pill-close" type="button" data-remove-crew-id="${id}">x</button></span>`;
+        })
+        .join('');
+      crewSelected.querySelectorAll('[data-remove-crew-id]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = Number(btn.getAttribute('data-remove-crew-id'));
+          profileDraft.crewComplementIds = profileDraft.crewComplementIds.filter((crewId) => crewId !== id);
+          renderCrewPills();
+        });
+      });
+    };
+
+    setupEmployeeCombobox({
+      input: crewSearch,
+      results: crewResults,
+      onSearch: async (query) =>
+        (await lookupEmployees('username', query))
+          .filter((row) => Number(row.id) !== Number(profileDraft.officerOfWatchEmployeeId))
+          .filter((row) => !profileDraft.crewComplementIds.includes(Number(row.id))),
+      onSelect: (row) => {
+        const id = Number(row.id);
+        if (!profileDraft.crewComplementIds.includes(id)) profileDraft.crewComplementIds.push(id);
+        crewSearch.value = '';
+        renderCrewPills();
+      },
+      errorTarget: crewError
+    });
+
+    renderCrewPills();
+
+    fieldList.querySelector('#profileSaveBtn')?.addEventListener('click', saveProfileEdits);
+    fieldList.querySelector('#profileCancelBtn')?.addEventListener('click', cancelProfileEdits);
+  }
+
+  function renderFieldList() {
+    clearComboboxCleanup();
+    if (profileEditMode && canEdit()) renderProfileEditMode();
+    else renderProfileReadOnly();
+  }
+
+  function enterProfileEditMode() {
+    if (!canEdit()) return;
+    setInlineMessage(profileFeedback, '');
+    profileEditMode = true;
+    buildProfileDraft();
+    profileEditToggleBtn.classList.add('hidden');
+    renderFieldList();
+  }
+
+  function cancelProfileEdits() {
+    profileEditMode = false;
+    profileDraft = null;
+    setInlineMessage(profileFeedback, '');
+    profileEditToggleBtn.classList.toggle('hidden', !canEdit());
+    renderFieldList();
+  }
+
+  async function saveProfileEdits() {
+    if (!profileDraft) return;
+    if (!profileDraft.departurePort || !profileDraft.destinationPort || !profileDraft.vesselName || !profileDraft.vesselClass || !profileDraft.vesselCallsign) {
+      setInlineMessage(profileFeedback, 'All voyage fields are required.');
+      return;
+    }
+    if (!Number.isInteger(profileDraft.officerOfWatchEmployeeId) || profileDraft.officerOfWatchEmployeeId <= 0) {
+      setInlineMessage(profileFeedback, 'Officer of the Watch is required.');
+      return;
+    }
+    profileDraft.crewComplementIds = profileDraft.crewComplementIds.filter((id) => Number(id) !== Number(profileDraft.officerOfWatchEmployeeId));
+    const payload = {
+      departurePort: profileDraft.departurePort,
+      destinationPort: profileDraft.destinationPort,
+      vesselName: profileDraft.vesselName,
+      vesselClass: profileDraft.vesselClass,
+      vesselCallsign: profileDraft.vesselCallsign,
+      officerOfWatchEmployeeId: profileDraft.officerOfWatchEmployeeId,
+      crewComplementIds: profileDraft.crewComplementIds
+    };
+    try {
+      await updateVoyageDetails(voyageId, payload);
+      profileEditMode = false;
+      profileDraft = null;
+      setInlineMessage(profileFeedback, '');
+      await Promise.all([loadSummary(), loadLogs()]);
+      profileEditToggleBtn.classList.toggle('hidden', !canEdit());
+      renderFieldList();
+    } catch (error) {
+      setInlineMessage(profileFeedback, error.message || 'Unable to save profile changes.');
+    }
   }
 
   function renderManifest() {
@@ -563,7 +787,12 @@ export async function initVoyageDetails(config) {
 
   async function loadSummary() {
     detail = await getVoyage(voyageId, { includeSetup: true, includeManifest: false, includeLogs: false });
+    if (!canEdit()) {
+      profileEditMode = false;
+      profileDraft = null;
+    }
     heading.textContent = `${text(detail.voyage.vessel_name)} | ${text(detail.voyage.vessel_callsign)} | ${text(detail.voyage.status)}`;
+    profileEditToggleBtn.classList.toggle('hidden', !canEdit());
     renderStatusControls();
     renderFieldList();
     const ongoing = isOngoing();
@@ -700,148 +929,6 @@ export async function initVoyageDetails(config) {
     });
   }
 
-  function openFieldModal(fieldKey) {
-    clearComboboxCleanup();
-    updateFieldKey.value = fieldKey;
-    const voyage = detail.voyage;
-    const ports = detail.voyageConfig?.ports || [];
-    const vesselNames = detail.voyageConfig?.vesselNames || [];
-    const vesselClasses = detail.voyageConfig?.vesselClasses || [];
-    const vesselCallsigns = detail.voyageConfig?.vesselCallsigns || [];
-
-    if (fieldKey === 'departurePort' || fieldKey === 'destinationPort') {
-      const current = fieldKey === 'departurePort' ? voyage.departure_port : voyage.destination_port;
-      updateFieldTitle.textContent = fieldKey === 'departurePort' ? 'Update Port of Departure' : 'Update Port of Destination';
-      updateFieldControls.innerHTML = `<label>Port</label><select name="value">${ports
-        .map((entry) => `<option value="${entry.value}" ${entry.value === current ? 'selected' : ''}>${entry.value}</option>`)
-        .join('')}</select>`;
-    } else if (fieldKey === 'vesselName' || fieldKey === 'vesselClass' || fieldKey === 'vesselCallsign') {
-      const map = {
-        vesselName: { title: 'Update Vessel Name', current: voyage.vessel_name, items: vesselNames },
-        vesselClass: { title: 'Update Vessel Class', current: voyage.vessel_class, items: vesselClasses },
-        vesselCallsign: { title: 'Update Vessel Callsign', current: voyage.vessel_callsign, items: vesselCallsigns }
-      };
-      const info = map[fieldKey];
-      updateFieldTitle.textContent = info.title;
-      updateFieldControls.innerHTML = `<label>Value</label><select name="value">${info.items
-        .map((entry) => `<option value="${entry.value}" ${entry.value === info.current ? 'selected' : ''}>${entry.value}</option>`)
-        .join('')}</select>`;
-    } else if (fieldKey === 'officerOfWatchEmployeeId') {
-      updateFieldTitle.textContent = 'Update Officer of the Watch';
-      updateFieldControls.innerHTML = `
-        <label>Search Roblox Username</label>
-        <div class="combobox-wrap">
-          <input id="pickerOowSearch" type="text" autocomplete="off" placeholder="Type username..." />
-          <div id="pickerOowResults" class="autocomplete-list"></div>
-        </div>
-        <div id="pickerOowError" class="inline-feedback hidden"></div>
-        <input id="pickerOowSelectedId" type="hidden" value="${voyage.officer_of_watch_employee_id}" />
-        <p id="pickerOowSelected" class="muted">Selected: ${text(voyage.officer_name)}</p>`;
-      const search = updateFieldControls.querySelector('#pickerOowSearch');
-      const results = updateFieldControls.querySelector('#pickerOowResults');
-      const error = updateFieldControls.querySelector('#pickerOowError');
-      const selectedId = updateFieldControls.querySelector('#pickerOowSelectedId');
-      const selectedText = updateFieldControls.querySelector('#pickerOowSelected');
-
-      setupEmployeeCombobox({
-        input: search,
-        results,
-        onSearch: (query) => lookupEmployees('username', query),
-        onSelect: (row) => {
-          const id = Number(row.id);
-          selectedId.value = String(id);
-          selectedText.textContent = `Selected: ${text(row.roblox_username || `#${id}`)}`;
-          search.value = '';
-        },
-        errorTarget: error
-      });
-    } else if (fieldKey === 'crewComplementIds') {
-      updateFieldTitle.textContent = 'Update Crew Complement';
-      const selectedCrew = new Set((detail.crew || []).map((row) => Number(row.id)));
-      const oowId = Number(detail.voyage.officer_of_watch_employee_id || 0);
-      updateFieldControls.innerHTML = `
-        <label>Search Roblox Username</label>
-        <div class="combobox-wrap combobox-wrap-multi">
-          <div id="pickerCrewSelected" class="pill-list"></div>
-          <input id="pickerCrewSearch" type="text" autocomplete="off" placeholder="Type username..." />
-          <div id="pickerCrewResults" class="autocomplete-list"></div>
-        </div>`;
-      updateFieldControls.insertAdjacentHTML('beforeend', '<div id="pickerCrewError" class="inline-feedback hidden"></div>');
-      const search = updateFieldControls.querySelector('#pickerCrewSearch');
-      const results = updateFieldControls.querySelector('#pickerCrewResults');
-      const selected = updateFieldControls.querySelector('#pickerCrewSelected');
-      const error = updateFieldControls.querySelector('#pickerCrewError');
-
-      const renderSelected = () => {
-        updateFieldControls.setAttribute('data-crew-values', JSON.stringify([...selectedCrew]));
-        if (!selectedCrew.size) {
-          selected.innerHTML = '<span class="muted">No crew selected.</span>';
-          return;
-        }
-        selected.innerHTML = [...selectedCrew]
-          .map((id) => {
-            const employee = (detail.employees || []).find((row) => Number(row.id) === id);
-            return `<span class="pill">${text(employee?.roblox_username || `#${id}`)} <button class="pill-close" type="button" data-remove-id="${id}">x</button></span>`;
-          })
-          .join('');
-        selected.querySelectorAll('[data-remove-id]').forEach((button) => {
-          button.addEventListener('click', () => {
-            const id = Number(button.getAttribute('data-remove-id'));
-            selectedCrew.delete(id);
-            renderSelected();
-          });
-        });
-      };
-
-      setupEmployeeCombobox({
-        input: search,
-        results,
-        onSearch: async (query) =>
-          (await lookupEmployees('username', query))
-            .filter((row) => Number(row.id) !== oowId)
-            .filter((row) => !selectedCrew.has(Number(row.id))),
-        onSelect: (row) => {
-          const id = Number(row.id);
-          selectedCrew.add(id);
-          search.value = '';
-          renderSelected();
-        },
-        errorTarget: error
-      });
-      renderSelected();
-    }
-
-    openModal('updateFieldModal');
-  }
-
-  async function saveFieldModal() {
-    const fieldKey = String(updateFieldKey.value || '').trim();
-    if (!fieldKey) return;
-    const payload = {};
-    if (fieldKey === 'departurePort') payload.departurePort = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
-    if (fieldKey === 'destinationPort') payload.destinationPort = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
-    if (fieldKey === 'vesselName') payload.vesselName = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
-    if (fieldKey === 'vesselClass') payload.vesselClass = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
-    if (fieldKey === 'vesselCallsign') payload.vesselCallsign = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
-    if (fieldKey === 'officerOfWatchEmployeeId') payload.officerOfWatchEmployeeId = Number(updateFieldControls.querySelector('#pickerOowSelectedId')?.value || 0);
-    if (fieldKey === 'crewComplementIds') payload.crewComplementIds = JSON.parse(String(updateFieldControls.getAttribute('data-crew-values') || '[]'));
-
-    await updateVoyageDetails(voyageId, payload);
-    clearComboboxCleanup();
-    closeModal('updateFieldModal');
-    await Promise.all([loadSummary(), loadLogs()]);
-    showMessage(feedback, 'Voyage profile updated.', 'success');
-  }
-
-  updateFieldForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    try {
-      await saveFieldModal();
-    } catch (error) {
-      showMessage(feedback, error.message || 'Unable to update field.', 'error');
-    }
-  });
-
   shipUnderwayBtn.addEventListener('click', async () => {
     if (!canEdit()) return;
     try {
@@ -866,6 +953,10 @@ export async function initVoyageDetails(config) {
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to update ship status.', 'error');
     }
+  });
+
+  profileEditToggleBtn.addEventListener('click', () => {
+    if (!profileEditMode) enterProfileEditMode();
   });
 
   addCargoBtn.addEventListener('click', () => openModal('addCargoModal'));
@@ -967,7 +1058,6 @@ export async function initVoyageDetails(config) {
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
       const modalId = button.getAttribute('data-close-modal');
-      if (modalId === 'updateFieldModal') clearComboboxCleanup();
       if (modalId === 'endVoyageModal') setInlineMessage(endFeedback, '');
       if (modalId) closeModal(modalId);
     });
