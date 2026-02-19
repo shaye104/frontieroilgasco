@@ -11,12 +11,10 @@ initIntranetPageGuard({
   if (!session) return;
 
   const employeesLink = document.querySelector('#adminLinkEmployees');
-  const requestsLink = document.querySelector('#adminLinkRequests');
   const configLink = document.querySelector('#adminLinkConfig');
   const rolesLink = document.querySelector('#adminLinkRoles');
 
   if (employeesLink && hasPermission(session, 'employees.read')) employeesLink.classList.remove('hidden');
-  if (requestsLink && hasPermission(session, 'employees.access_requests.review')) requestsLink.classList.remove('hidden');
   if (configLink && hasPermission(session, 'config.manage')) configLink.classList.remove('hidden');
   if (rolesLink && hasPermission(session, 'roles.manage')) rolesLink.classList.remove('hidden');
 });

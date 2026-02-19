@@ -10,8 +10,7 @@ Static, modular website for Frontier Oil & Gas Company:
 - `my-details.html`: employee HR profile page
 - `admin-panel.html`: admin-only operations hub
 - `manage-employees.html`: admin employee management
-- `access-requests.html`: admin access request approvals/denials
-- `admin-config.html`: admin system configuration (statuses/types/ranks/grades/intranet roles)
+- `admin-config.html`: admin system configuration (statuses/types/ranks/grades)
 
 ## Project Structure
 

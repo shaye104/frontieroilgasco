@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T17:33:35.381Z
+Generated: 2026-02-19T17:40:41.982Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -7,7 +7,6 @@ PROJECT PURPOSE
 - Built for Cloudflare Pages with optional Pages Functions for authenticated intranet access.
 
 SITE STRUCTURE
-- access-requests.html | title: Frontier Oil & Gas Company | Access Requests | primary heading: Access Requests
 - admin-config.html | title: Frontier Oil & Gas Company | System Config | primary heading: System Config
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
@@ -29,7 +28,6 @@ SITE STRUCTURE
 - voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
 
 JAVASCRIPT MODULES
-- assets/js/modules/access-requests.js | exports: No public exports
 - assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createAdminRole, createConfigValue, createEmployee, createFormAdmin, createFormCategory, deleteAdminRole, deleteConfigValue, deleteFormAdmin, deleteFormCategory, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, listAccessRequests, listAccessibleFormResponses, listAvailableForms, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, processAccessRequest, reorderAdminRole, submitFormResponse, updateAdminRole, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory
 - assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
@@ -50,7 +48,6 @@ JAVASCRIPT MODULES
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/roles-admin.js | exports: No public exports
 - assets/js/modules/year.js | exports: initializeYear
-- assets/js/pages/access-requests-page.js | exports: No public exports
 - assets/js/pages/admin-config-page.js | exports: No public exports
 - assets/js/pages/admin-panel-page.js | exports: No public exports
 - assets/js/pages/application-page.js | exports: No public exports
