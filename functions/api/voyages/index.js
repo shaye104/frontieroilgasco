@@ -21,22 +21,47 @@ function valueSet(items) {
 }
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { env, request } = context;
   const { errorResponse, session, employee } = await requireVoyagePermission(context, 'voyages.read');
   if (errorResponse) return errorResponse;
 
+  const url = new URL(request.url);
+  const includeSetup = url.searchParams.get('includeSetup') === '1';
+  const statusFilterRaw = String(url.searchParams.get('status') || '').trim().toUpperCase();
+  const statusFilter = statusFilterRaw === 'ONGOING' || statusFilterRaw === 'ENDED' ? statusFilterRaw : '';
+  const hasPaging = url.searchParams.has('page') || url.searchParams.has('pageSize') || Boolean(statusFilter);
+  const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize')) || 20));
+  const offset = (page - 1) * pageSize;
+
+  let whereSql = '';
+  const whereBindings = [];
+  if (statusFilter) {
+    whereSql = 'WHERE v.status = ?';
+    whereBindings.push(statusFilter);
+  }
+
   const rows = await env.DB
     .prepare(
-      `SELECT v.id, v.status, v.owner_employee_id, v.departure_port, v.destination_port, v.vessel_name, v.vessel_class, v.vessel_callsign,
+      `SELECT v.id, v.status, v.ship_status, v.owner_employee_id, v.departure_port, v.destination_port, v.vessel_name, v.vessel_class, v.vessel_callsign,
               v.officer_of_watch_employee_id, v.started_at, v.ended_at, v.buy_total, v.effective_sell, v.profit, v.company_share,
               ow.roblox_username AS officer_name,
               owner.roblox_username AS owner_name
        FROM voyages v
        LEFT JOIN employees ow ON ow.id = v.officer_of_watch_employee_id
        LEFT JOIN employees owner ON owner.id = v.owner_employee_id
-       ORDER BY CASE WHEN v.status = 'ONGOING' THEN 0 ELSE 1 END, COALESCE(v.started_at, v.created_at) DESC, v.id DESC`
+       ${whereSql}
+       ORDER BY CASE WHEN v.status = 'ONGOING' THEN 0 ELSE 1 END, COALESCE(v.started_at, v.created_at) DESC, v.id DESC
+       ${hasPaging ? 'LIMIT ? OFFSET ?' : ''}`
     )
+    .bind(...whereBindings, ...(hasPaging ? [pageSize, offset] : []))
     .all();
+
+  const totalRow = await env.DB
+    .prepare(`SELECT COUNT(*) AS total FROM voyages v ${whereSql}`)
+    .bind(...whereBindings)
+    .first();
+  const total = Number(totalRow?.total || 0);
 
   const voyages = (rows?.results || []).map((voyage) => ({
     ...voyage,
@@ -44,21 +69,23 @@ export async function onRequestGet(context) {
     isOngoing: String(voyage.status) === 'ONGOING'
   }));
 
-  const [employees, ports, vesselNames, vesselClasses, vesselCallsigns] = await Promise.all([
-    hasPermission(session, 'voyages.create')
-      ? (
-          await env.DB
-            .prepare(
-              'SELECT id, roblox_username, serial_number, rank, grade FROM employees ORDER BY roblox_username ASC, id ASC'
-            )
-            .all()
-        )?.results || []
-      : [],
-    listConfigValues(env, 'config_voyage_ports'),
-    listConfigValues(env, 'config_vessel_names'),
-    listConfigValues(env, 'config_vessel_classes'),
-    listConfigValues(env, 'config_vessel_callsigns')
-  ]);
+  const [employees, ports, vesselNames, vesselClasses, vesselCallsigns] = includeSetup
+    ? await Promise.all([
+        hasPermission(session, 'voyages.create')
+          ? (
+              await env.DB
+                .prepare(
+                  'SELECT id, roblox_username, serial_number, rank, grade FROM employees ORDER BY roblox_username ASC, id ASC'
+                )
+                .all()
+            )?.results || []
+          : [],
+        listConfigValues(env, 'config_voyage_ports'),
+        listConfigValues(env, 'config_vessel_names'),
+        listConfigValues(env, 'config_vessel_classes'),
+        listConfigValues(env, 'config_vessel_callsigns')
+      ])
+    : [[], [], [], [], []];
 
   return json({
     voyages,
@@ -70,6 +97,12 @@ export async function onRequestGet(context) {
       vesselNames,
       vesselClasses,
       vesselCallsigns
+    },
+    pagination: {
+      page: hasPaging ? page : 1,
+      pageSize: hasPaging ? pageSize : total,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize))
     },
     permissions: {
       canCreate: hasPermission(session, 'voyages.create'),
@@ -107,6 +140,9 @@ export async function onRequestPost(context) {
   }
   if (!crewComplementIds.length) {
     return json({ error: 'Crew complement requires at least one employee.' }, 400);
+  }
+  if (crewComplementIds.includes(officerOfWatchEmployeeId)) {
+    return json({ error: 'Officer of the Watch cannot be added to crew.' }, 400);
   }
 
   const [ports, vesselNames, vesselClasses, vesselCallsigns] = await Promise.all([
@@ -161,8 +197,8 @@ export async function onRequestPost(context) {
     insert = await env.DB
       .prepare(
         `INSERT INTO voyages
-         (status, owner_employee_id, departure_port, destination_port, vessel_name, vessel_class, vessel_callsign, officer_of_watch_employee_id, started_at, updated_at)
-         VALUES ('ONGOING', ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+         (status, ship_status, owner_employee_id, departure_port, destination_port, vessel_name, vessel_class, vessel_callsign, officer_of_watch_employee_id, started_at, updated_at)
+         VALUES ('ONGOING', 'IN_PORT', ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
       )
       .bind(employee.id, departurePort, destinationPort, vesselName, vesselClass, vesselCallsign, officerOfWatchEmployeeId)
       .run();

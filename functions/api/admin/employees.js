@@ -3,17 +3,35 @@ import { requirePermission } from './_lib/admin-auth.js';
 import { normalizeDiscordUserId } from '../_lib/db.js';
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { env, request } = context;
   const { errorResponse } = await requirePermission(context, ['employees.read']);
   if (errorResponse) return errorResponse;
 
-  const result = await env.DB.prepare(
-    `SELECT id, discord_user_id, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, hire_date, updated_at
-     FROM employees
-     ORDER BY id DESC`
-  ).all();
+  const url = new URL(request.url);
+  const hasPaging = url.searchParams.has('page') || url.searchParams.has('pageSize');
+  const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+  const pageSize = Math.min(200, Math.max(1, Number(url.searchParams.get('pageSize')) || 100));
+  const offset = (page - 1) * pageSize;
 
-  return json({ employees: result?.results || [] });
+  const sql = hasPaging
+    ? `SELECT id, discord_user_id, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, hire_date, updated_at
+       FROM employees
+       ORDER BY id DESC
+       LIMIT ? OFFSET ?`
+    : `SELECT id, discord_user_id, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, hire_date, updated_at
+       FROM employees
+       ORDER BY id DESC`;
+  const result = hasPaging ? await env.DB.prepare(sql).bind(pageSize, offset).all() : await env.DB.prepare(sql).all();
+  const totalRow = await env.DB.prepare(`SELECT COUNT(*) AS total FROM employees`).first();
+
+  return json({
+    employees: result?.results || [],
+    pagination: {
+      page: hasPaging ? page : 1,
+      pageSize: hasPaging ? pageSize : Number(totalRow?.total || 0),
+      total: Number(totalRow?.total || 0)
+    }
+  });
 }
 
 export async function onRequestPost(context) {

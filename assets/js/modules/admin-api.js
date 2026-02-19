@@ -69,8 +69,12 @@ export function deleteConfigValue(type, id) {
   });
 }
 
-export function listEmployees() {
-  return requestJson('/api/admin/employees', { method: 'GET' });
+export function listEmployees(options = {}) {
+  const params = new URLSearchParams();
+  if (options.page) params.set('page', String(options.page));
+  if (options.pageSize) params.set('pageSize', String(options.pageSize));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/admin/employees${suffix}`, { method: 'GET' });
 }
 
 export function createEmployee(employee) {
@@ -193,6 +197,8 @@ export function listFormResponses(filters = {}) {
   if (filters.employeeId) params.set('employeeId', String(filters.employeeId));
   if (filters.dateFrom) params.set('dateFrom', String(filters.dateFrom));
   if (filters.dateTo) params.set('dateTo', String(filters.dateTo));
+  if (filters.page) params.set('page', String(filters.page));
+  if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
   const suffix = params.toString() ? `?${params.toString()}` : '';
   return requestJson(`/api/admin/forms/responses${suffix}`, { method: 'GET' });
 }
@@ -208,6 +214,8 @@ export function listAccessibleFormResponses(filters = {}) {
   if (filters.employeeId) params.set('employeeId', String(filters.employeeId));
   if (filters.dateFrom) params.set('dateFrom', String(filters.dateFrom));
   if (filters.dateTo) params.set('dateTo', String(filters.dateTo));
+  if (filters.page) params.set('page', String(filters.page));
+  if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
   const suffix = params.toString() ? `?${params.toString()}` : '';
   return requestJson(`/api/forms/responses${suffix}`, { method: 'GET' });
 }
@@ -216,8 +224,14 @@ export function getAccessibleFormResponse(responseId) {
   return requestJson(`/api/forms/responses/${responseId}`, { method: 'GET' });
 }
 
-export function listVoyages() {
-  return requestJson('/api/voyages', { method: 'GET' });
+export function listVoyages(options = {}) {
+  const params = new URLSearchParams();
+  if (options.status) params.set('status', String(options.status));
+  if (options.page) params.set('page', String(options.page));
+  if (options.pageSize) params.set('pageSize', String(options.pageSize));
+  if (options.includeSetup) params.set('includeSetup', '1');
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/voyages${suffix}`, { method: 'GET' });
 }
 
 export function startVoyage(payload) {
@@ -227,8 +241,13 @@ export function startVoyage(payload) {
   });
 }
 
-export function getVoyage(voyageId) {
-  return requestJson(`/api/voyages/${voyageId}`, { method: 'GET' });
+export function getVoyage(voyageId, options = {}) {
+  const params = new URLSearchParams();
+  if (options.includeSetup) params.set('includeSetup', '1');
+  if (options.includeManifest) params.set('includeManifest', '1');
+  if (options.includeLogs) params.set('includeLogs', '1');
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/voyages/${voyageId}${suffix}`, { method: 'GET' });
 }
 
 export function updateVoyageManifest(voyageId, lines) {
@@ -236,6 +255,10 @@ export function updateVoyageManifest(voyageId, lines) {
     method: 'PUT',
     body: JSON.stringify({ lines })
   });
+}
+
+export function getVoyageManifest(voyageId) {
+  return requestJson(`/api/voyages/${voyageId}/manifest`, { method: 'GET' });
 }
 
 export function updateVoyageDetails(voyageId, payload) {
@@ -252,6 +275,14 @@ export function createVoyageLog(voyageId, message) {
   });
 }
 
+export function listVoyageLogs(voyageId, options = {}) {
+  const params = new URLSearchParams();
+  if (options.page) params.set('page', String(options.page));
+  if (options.pageSize) params.set('pageSize', String(options.pageSize));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/voyages/${voyageId}/logs${suffix}`, { method: 'GET' });
+}
+
 export function updateVoyageLog(voyageId, logId, message) {
   return requestJson(`/api/voyages/${voyageId}/logs/${logId}`, {
     method: 'PUT',
@@ -264,6 +295,22 @@ export function endVoyage(voyageId, payload) {
     method: 'POST',
     body: JSON.stringify(payload)
   });
+}
+
+export function updateVoyageShipStatus(voyageId, shipStatus) {
+  return requestJson(`/api/voyages/${voyageId}/ship-status`, {
+    method: 'PUT',
+    body: JSON.stringify({ shipStatus })
+  });
+}
+
+export function searchEmployees(options = {}) {
+  const params = new URLSearchParams();
+  if (options.username) params.set('username', String(options.username));
+  if (options.serial) params.set('serial', String(options.serial));
+  if (options.limit) params.set('limit', String(options.limit));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/employees/search${suffix}`, { method: 'GET' });
 }
 
 export function listCargoTypes(includeInactive = false) {

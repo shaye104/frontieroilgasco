@@ -171,6 +171,7 @@ export async function ensureCoreSchema(env) {
     `CREATE TABLE IF NOT EXISTS voyages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       status TEXT NOT NULL DEFAULT 'ONGOING',
+      ship_status TEXT NOT NULL DEFAULT 'IN_PORT',
       owner_employee_id INTEGER NOT NULL,
       departure_port TEXT NOT NULL,
       destination_port TEXT NOT NULL,
@@ -294,6 +295,12 @@ export async function ensureCoreSchema(env) {
   ];
 
   await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
+
+  const voyageColumns = await env.DB.prepare(`PRAGMA table_info(voyages)`).all();
+  const voyageColumnNames = new Set((voyageColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!voyageColumnNames.has('ship_status')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN ship_status TEXT NOT NULL DEFAULT 'IN_PORT'`).run();
+  }
 
   await env.DB.batch(
     permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>

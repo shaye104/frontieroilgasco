@@ -12,7 +12,7 @@ initIntranetPageGuard({
   initVoyageDetails({
     feedbackSelector: '#voyageDetailFeedback',
     headingSelector: '#voyageHeading',
-    metaSelector: '#voyageMeta',
+    fieldListSelector: '#voyageFieldList',
     manifestBodySelector: '#manifestTableBody',
     buyTotalSelector: '#buyTotalText',
     saveManifestButtonSelector: '#saveManifestBtn',
@@ -21,22 +21,16 @@ initIntranetPageGuard({
     logListSelector: '#shipLogList',
     endFormSelector: '#endVoyageForm',
     cargoLostEditorSelector: '#cargoLostEditor',
-    detailsFormSelector: '#voyageDetailsForm',
     addCargoButtonSelector: '#openAddCargoBtn',
     addCargoFormSelector: '#addCargoForm',
     addCargoTypeSelector: '#addCargoTypeSelect',
-    editDepartureSelector: '#editDeparturePort',
-    editDestinationSelector: '#editDestinationPort',
-    editVesselNameSelector: '#editVesselName',
-    editVesselClassSelector: '#editVesselClass',
-    editVesselCallsignSelector: '#editVesselCallsign',
-    editOowSearchSelector: '#editOowSerialSearch',
-    editOowResultsSelector: '#editOowResults',
-    editOowHiddenSelector: '#editOowHidden',
-    editOowSelectedSelector: '#editOowSelected',
-    editCrewSearchSelector: '#editCrewSerialSearch',
-    editCrewResultsSelector: '#editCrewResults',
-    editCrewSelectedSelector: '#editCrewSelected'
+    shipStatusControlsSelector: '#shipStatusControls',
+    shipInPortSelector: '#shipInPortBtn',
+    shipUnderwaySelector: '#shipUnderwayBtn',
+    updateFieldFormSelector: '#updateFieldForm',
+    updateFieldTitleSelector: '#updateFieldTitle',
+    updateFieldKeySelector: '#updateFieldKey',
+    updateFieldControlsSelector: '#updateFieldControls'
   });
 });
 

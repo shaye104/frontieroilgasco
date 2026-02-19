@@ -1,4 +1,4 @@
-import { listVoyages, startVoyage } from './admin-api.js';
+import { listVoyages, searchEmployees, startVoyage, updateVoyageShipStatus } from './admin-api.js';
 import { hasPermission } from './intranet-page-guard.js';
 import { clearMessage, showMessage } from './notice.js';
 
@@ -9,6 +9,14 @@ function text(value) {
 
 function normalize(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+function debounce(fn, wait = 300) {
+  let timer = null;
+  return (...args) => {
+    if (timer) window.clearTimeout(timer);
+    timer = window.setTimeout(() => fn(...args), wait);
+  };
 }
 
 function formatWhen(value) {
@@ -32,31 +40,6 @@ function closeModal(modalId) {
   modal.setAttribute('aria-hidden', 'true');
 }
 
-function renderVoyageCards(target, voyages, isOngoing) {
-  if (!target) return;
-  if (!voyages.length) {
-    target.innerHTML = `<p>${isOngoing ? 'No ongoing voyages.' : 'No archived voyages.'}</p>`;
-    return;
-  }
-
-  target.innerHTML = voyages
-    .map(
-      (voyage) => `
-        <article class="panel voyage-card">
-          <div class="modal-header">
-            <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
-            <span class="voyage-status ${isOngoing ? 'voyage-status-active' : ''}">${isOngoing ? 'Underway' : 'Ended'}</span>
-          </div>
-          <p><strong>Route:</strong> ${text(voyage.departure_port)} -> ${text(voyage.destination_port)}</p>
-          <p><strong>Officer of the Watch:</strong> ${text(voyage.officer_name)}</p>
-          <p><strong>${isOngoing ? 'Started' : 'Ended'}:</strong> ${formatWhen(isOngoing ? voyage.started_at : voyage.ended_at)}</p>
-          <a class="btn btn-secondary" href="voyage-details.html?voyageId=${voyage.id}">Open</a>
-        </article>
-      `
-    )
-    .join('');
-}
-
 function fillSelect(select, items, placeholder) {
   if (!select) return;
   const current = select.value;
@@ -65,10 +48,47 @@ function fillSelect(select, items, placeholder) {
   if (current) select.value = current;
 }
 
-function employeeSearchMatches(employee, query) {
-  if (!query) return true;
-  const serial = normalize(employee.serial_number);
-  return serial.includes(query);
+function renderVoyageCards(target, voyages, isOngoing, canStatusChange, onStatusChange) {
+  if (!target) return;
+  if (!voyages.length) {
+    target.innerHTML = `<p>${isOngoing ? 'No ongoing voyages.' : 'No archived voyages.'}</p>`;
+    return;
+  }
+
+  target.innerHTML = voyages
+    .map((voyage) => {
+      const shipStatusLabel = voyage.ship_status === 'UNDERWAY' ? 'Ship Underway' : 'Ship In Port';
+      return `
+        <article class="panel voyage-card">
+          <div class="modal-header">
+            <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
+            <span class="voyage-status ${isOngoing ? 'voyage-status-active' : ''}">${isOngoing ? shipStatusLabel : 'Ended'}</span>
+          </div>
+          <p><strong>Route:</strong> ${text(voyage.departure_port)} -> ${text(voyage.destination_port)}</p>
+          <p><strong>Officer of the Watch:</strong> ${text(voyage.officer_name)}</p>
+          <p><strong>${isOngoing ? 'Started' : 'Ended'}:</strong> ${formatWhen(isOngoing ? voyage.started_at : voyage.ended_at)}</p>
+          <div class="modal-actions">
+            <a class="btn btn-secondary" href="voyage-details.html?voyageId=${voyage.id}">Open</a>
+            ${
+              isOngoing && canStatusChange && voyage.isOwner
+                ? `<button class="btn btn-secondary" type="button" data-ship-status="${voyage.id}:IN_PORT">Ship In Port</button>
+                   <button class="btn btn-accent" type="button" data-ship-status="${voyage.id}:UNDERWAY">Ship Underway</button>`
+                : ''
+            }
+          </div>
+        </article>
+      `;
+    })
+    .join('');
+
+  target.querySelectorAll('[data-ship-status]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const [idValue, shipStatus] = String(button.getAttribute('data-ship-status') || '').split(':');
+      const voyageId = Number(idValue);
+      if (!Number.isInteger(voyageId) || !shipStatus) return;
+      await onStatusChange(voyageId, shipStatus, button);
+    });
+  });
 }
 
 export async function initVoyageTracker(config, session) {
@@ -113,12 +133,43 @@ export async function initVoyageTracker(config, session) {
   }
 
   let employees = [];
+  let ongoing = [];
+  let archived = [];
   let ongoingKeys = new Set();
   let selectedCrewIds = new Set();
+  const searchCache = new Map();
+  const canStatusChange = hasPermission(session, 'voyages.edit');
 
-  function renderOowResults() {
-    const query = normalize(oowSearch.value);
-    const matches = employees.filter((employee) => employeeSearchMatches(employee, query)).slice(0, 8);
+  async function lookupEmployees(queryKind, queryValue) {
+    const query = normalize(queryValue);
+    if (!query) return [];
+    const key = `${queryKind}:${query}`;
+    if (searchCache.has(key)) return searchCache.get(key);
+    const payload = await searchEmployees(queryKind === 'serial' ? { serial: query, limit: 12 } : { username: query, limit: 12 });
+    const results = payload.employees || [];
+    searchCache.set(key, results);
+    return results;
+  }
+
+  async function handleStatusChange(voyageId, shipStatus, button) {
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Saving...';
+    try {
+      await updateVoyageShipStatus(voyageId, shipStatus);
+      const item = ongoing.find((voyage) => Number(voyage.id) === Number(voyageId));
+      if (item) item.ship_status = shipStatus;
+      renderVoyageCards(ongoingRoot, ongoing, true, canStatusChange, handleStatusChange);
+    } catch (error) {
+      showMessage(feedback, error.message || 'Unable to update ship status.', 'error');
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+
+  async function renderOowResults() {
+    const matches = await lookupEmployees('serial', oowSearch.value);
     oowResults.innerHTML = matches
       .map(
         (employee) => `<button class="autocomplete-item" type="button" data-oow-id="${employee.id}">
@@ -135,6 +186,11 @@ export async function initVoyageTracker(config, session) {
         if (!selected) return;
         oowHidden.value = String(selected.id);
         oowSelected.textContent = `Selected OOW: ${text(selected.roblox_username)}`;
+        if (selectedCrewIds.has(selectedId)) {
+          selectedCrewIds.delete(selectedId);
+          renderCrewSelected();
+          showMessage(feedback, 'Officer of the Watch cannot be added to crew.', 'error');
+        }
         oowResults.innerHTML = '';
         oowSearch.value = '';
       });
@@ -168,12 +224,13 @@ export async function initVoyageTracker(config, session) {
     });
   }
 
-  function renderCrewResults() {
-    const query = normalize(crewSearch.value);
-    const matches = employees
+  async function renderCrewResults() {
+    const oowId = Number(oowHidden.value || 0);
+    const matches = (await lookupEmployees('username', crewSearch.value))
       .filter((employee) => !selectedCrewIds.has(Number(employee.id)))
-      .filter((employee) => employeeSearchMatches(employee, query))
+      .filter((employee) => Number(employee.id) !== oowId)
       .slice(0, 10);
+
     crewResults.innerHTML = matches
       .map(
         (employee) => `<button class="autocomplete-item" type="button" data-crew-id="${employee.id}">
@@ -186,9 +243,13 @@ export async function initVoyageTracker(config, session) {
     crewResults.querySelectorAll('[data-crew-id]').forEach((button) => {
       button.addEventListener('click', () => {
         const selectedId = Number(button.getAttribute('data-crew-id'));
+        if (selectedId === oowId) {
+          showMessage(feedback, 'Officer of the Watch cannot be added to crew.', 'error');
+          return;
+        }
         selectedCrewIds.add(selectedId);
         crewSearch.value = '';
-        renderCrewResults();
+        void renderCrewResults();
         renderCrewSelected();
       });
     });
@@ -207,23 +268,26 @@ export async function initVoyageTracker(config, session) {
   }
 
   async function refreshBoard() {
-    const payload = await listVoyages();
-    employees = payload.employees || [];
-    ongoingKeys = new Set(
-      (payload.ongoing || []).map((voyage) => `${normalize(voyage.vessel_name)}::${normalize(voyage.vessel_callsign)}`)
-    );
+    const [ongoingPayload, archivedPayload] = await Promise.all([
+      listVoyages({ includeSetup: true, status: 'ONGOING', page: 1, pageSize: 100 }),
+      listVoyages({ status: 'ENDED', page: 1, pageSize: 20 })
+    ]);
+    employees = ongoingPayload.employees || [];
+    ongoing = ongoingPayload.voyages || ongoingPayload.ongoing || [];
+    archived = archivedPayload.voyages || archivedPayload.archived || [];
+    ongoingKeys = new Set(ongoing.map((voyage) => `${normalize(voyage.vessel_name)}::${normalize(voyage.vessel_callsign)}`));
 
     if (hasPermission(session, 'voyages.create')) startBtn.classList.remove('hidden');
     else startBtn.classList.add('hidden');
 
-    fillSelect(departureSelect, payload.voyageConfig?.ports || [], 'Select departure port');
-    fillSelect(destinationSelect, payload.voyageConfig?.ports || [], 'Select destination port');
-    fillSelect(vesselNameSelect, payload.voyageConfig?.vesselNames || [], 'Select vessel name');
-    fillSelect(vesselClassSelect, payload.voyageConfig?.vesselClasses || [], 'Select vessel class');
-    fillSelect(vesselCallsignSelect, payload.voyageConfig?.vesselCallsigns || [], 'Select vessel callsign');
+    fillSelect(departureSelect, ongoingPayload.voyageConfig?.ports || [], 'Select departure port');
+    fillSelect(destinationSelect, ongoingPayload.voyageConfig?.ports || [], 'Select destination port');
+    fillSelect(vesselNameSelect, ongoingPayload.voyageConfig?.vesselNames || [], 'Select vessel name');
+    fillSelect(vesselClassSelect, ongoingPayload.voyageConfig?.vesselClasses || [], 'Select vessel class');
+    fillSelect(vesselCallsignSelect, ongoingPayload.voyageConfig?.vesselCallsigns || [], 'Select vessel callsign');
     renderCrewSelected();
-    renderVoyageCards(ongoingRoot, payload.ongoing || [], true);
-    renderVoyageCards(archivedRoot, payload.archived || [], false);
+    renderVoyageCards(ongoingRoot, ongoing, true, canStatusChange, handleStatusChange);
+    renderVoyageCards(archivedRoot, archived, false, canStatusChange, handleStatusChange);
   }
 
   startBtn.addEventListener('click', () => openModal('startVoyageModal'));
@@ -234,10 +298,10 @@ export async function initVoyageTracker(config, session) {
     });
   });
 
-  oowSearch.addEventListener('input', renderOowResults);
-  oowSearch.addEventListener('focus', renderOowResults);
-  crewSearch.addEventListener('input', renderCrewResults);
-  crewSearch.addEventListener('focus', renderCrewResults);
+  oowSearch.addEventListener('input', debounce(() => void renderOowResults(), 250));
+  oowSearch.addEventListener('focus', () => void renderOowResults());
+  crewSearch.addEventListener('input', debounce(() => void renderCrewResults(), 250));
+  crewSearch.addEventListener('focus', () => void renderCrewResults());
 
   startForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -252,9 +316,17 @@ export async function initVoyageTracker(config, session) {
       return;
     }
 
-    const crewComplementIds = data.getAll('crewComplementIds').map((value) => Number(value)).filter((value) => Number.isInteger(value));
+    const officerOfWatchEmployeeId = Number(data.get('officerOfWatchEmployeeId'));
+    const crewComplementIds = data
+      .getAll('crewComplementIds')
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value));
     if (!crewComplementIds.length) {
       showMessage(feedback, 'Crew complement requires at least one employee.', 'error');
+      return;
+    }
+    if (crewComplementIds.includes(officerOfWatchEmployeeId)) {
+      showMessage(feedback, 'Officer of the Watch cannot be added to crew.', 'error');
       return;
     }
 
@@ -265,7 +337,7 @@ export async function initVoyageTracker(config, session) {
         vesselName,
         vesselClass: text(data.get('vesselClass')),
         vesselCallsign,
-        officerOfWatchEmployeeId: Number(data.get('officerOfWatchEmployeeId')),
+        officerOfWatchEmployeeId,
         crewComplementIds
       });
 

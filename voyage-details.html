@@ -45,32 +45,12 @@
 
         <section id="protectedContent" class="panel hidden employee-page-grid">
           <section class="employee-page-panel">
-            <h2>Voyage Details</h2>
-            <div id="voyageMeta"></div>
-            <form id="voyageDetailsForm" class="hidden">
-              <label>Port of Departure</label>
-              <select name="departurePort" id="editDeparturePort" required></select>
-              <label>Port of Destination</label>
-              <select name="destinationPort" id="editDestinationPort" required></select>
-              <label>Vessel Name</label>
-              <select name="vesselName" id="editVesselName" required></select>
-              <label>Vessel Class</label>
-              <select name="vesselClass" id="editVesselClass" required></select>
-              <label>Vessel Callsign</label>
-              <select name="vesselCallsign" id="editVesselCallsign" required></select>
-              <label>Officer of the Watch</label>
-              <input id="editOowSerialSearch" type="text" placeholder="Search by serial number" autocomplete="off" />
-              <input type="hidden" name="officerOfWatchEmployeeId" id="editOowHidden" required />
-              <p id="editOowSelected" class="muted">No officer selected.</p>
-              <div id="editOowResults" class="autocomplete-list"></div>
-              <label>Crew Complement</label>
-              <input id="editCrewSerialSearch" type="text" placeholder="Search by serial number" autocomplete="off" />
-              <div id="editCrewResults" class="autocomplete-list"></div>
-              <div id="editCrewSelected" class="pill-list"></div>
-              <div class="modal-actions">
-                <button class="btn btn-primary" type="submit">Save Voyage Details</button>
-              </div>
-            </form>
+            <h2>Voyage Profile</h2>
+            <div id="shipStatusControls" class="modal-actions hidden">
+              <button id="shipInPortBtn" class="btn btn-secondary" type="button">Ship In Port</button>
+              <button id="shipUnderwayBtn" class="btn btn-accent" type="button">Ship Underway</button>
+            </div>
+            <div id="voyageFieldList" class="voyage-field-list"></div>
 
             <h3>Cargo Manifest</h3>
             <div class="modal-actions">
@@ -90,7 +70,7 @@
                 <tbody id="manifestTableBody"></tbody>
               </table>
             </div>
-            <p><strong>Total Freight Value:</strong> <span id="buyTotalText">0</span></p>
+            <p><strong>Total Freight Value:</strong> <span id="buyTotalText">ƒ 0</span></p>
             <div class="modal-actions">
               <button id="saveManifestBtn" class="btn btn-primary hidden" type="button">Save Manifest</button>
               <button id="endVoyageBtn" class="btn btn-danger hidden" type="button">End Voyage</button>
@@ -113,6 +93,23 @@
         </section>
       </div>
     </main>
+
+    <section id="updateFieldModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="updateFieldTitle">Update Field</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="updateFieldModal">Close</button>
+        </div>
+        <form id="updateFieldForm">
+          <input id="updateFieldKey" name="fieldKey" type="hidden" />
+          <div id="updateFieldControls"></div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="updateFieldModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
     <section id="endVoyageModal" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal-card">

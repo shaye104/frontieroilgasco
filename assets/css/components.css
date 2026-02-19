@@ -590,6 +590,38 @@ textarea:focus {
   z-index: 2;
 }
 
+.voyage-field-list {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: var(--space-3);
+}
+
+.voyage-field-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  align-items: center;
+  border-bottom: 1px solid #edf2f6;
+  padding: 0.5rem 0;
+}
+
+.voyage-field-label {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.84rem;
+}
+
+.voyage-field-value {
+  margin: 0;
+  color: var(--color-ink-soft);
+}
+
+.btn-pencil {
+  min-height: 30px;
+  min-width: 34px;
+  padding: 0.2rem 0.35rem;
+}
+
 .voyage-status {
   display: inline-flex;
   align-items: center;

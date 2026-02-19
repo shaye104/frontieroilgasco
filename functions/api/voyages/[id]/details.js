@@ -42,13 +42,27 @@ export async function onRequestPut(context) {
     return json({ error: 'Invalid JSON payload.' }, 400);
   }
 
-  const departurePort = text(payload?.departurePort);
-  const destinationPort = text(payload?.destinationPort);
-  const vesselName = text(payload?.vesselName);
-  const vesselClass = text(payload?.vesselClass);
-  const vesselCallsign = text(payload?.vesselCallsign);
-  const officerOfWatchEmployeeId = Number(payload?.officerOfWatchEmployeeId);
-  const crewComplementIds = asEmployeeIds(payload?.crewComplementIds);
+  const currentCrewRows = await env.DB
+    .prepare(
+      `SELECT e.id, e.roblox_username
+       FROM voyage_crew_members vcm
+       INNER JOIN employees e ON e.id = vcm.employee_id
+       WHERE vcm.voyage_id = ?
+       ORDER BY e.roblox_username ASC, e.id ASC`
+    )
+    .bind(voyageId)
+    .all();
+  const currentCrew = currentCrewRows?.results || [];
+
+  const departurePort = text(payload?.departurePort) || text(voyage.departure_port);
+  const destinationPort = text(payload?.destinationPort) || text(voyage.destination_port);
+  const vesselName = text(payload?.vesselName) || text(voyage.vessel_name);
+  const vesselClass = text(payload?.vesselClass) || text(voyage.vessel_class);
+  const vesselCallsign = text(payload?.vesselCallsign) || text(voyage.vessel_callsign);
+  const officerOfWatchEmployeeId = Number(payload?.officerOfWatchEmployeeId || voyage.officer_of_watch_employee_id);
+  let crewComplementIds = Array.isArray(payload?.crewComplementIds)
+    ? asEmployeeIds(payload?.crewComplementIds)
+    : currentCrew.map((row) => Number(row.id));
 
   if (!departurePort || !destinationPort || !vesselName || !vesselClass || !vesselCallsign) {
     return json({ error: 'All voyage detail fields are required.' }, 400);
@@ -56,8 +70,8 @@ export async function onRequestPut(context) {
   if (!Number.isInteger(officerOfWatchEmployeeId) || officerOfWatchEmployeeId <= 0) {
     return json({ error: 'Officer of the Watch is required.' }, 400);
   }
-  if (!crewComplementIds.length) {
-    return json({ error: 'Crew complement requires at least one employee.' }, 400);
+  if (crewComplementIds.includes(officerOfWatchEmployeeId)) {
+    crewComplementIds = crewComplementIds.filter((id) => id !== officerOfWatchEmployeeId);
   }
 
   const [ports, vesselNames, vesselClasses, vesselCallsigns] = await Promise.all([
@@ -103,17 +117,6 @@ export async function onRequestPut(context) {
     return json({ error: 'Selected crew members must exist.' }, 400);
   }
 
-  const currentCrewRows = await env.DB
-    .prepare(
-      `SELECT e.id, e.roblox_username
-       FROM voyage_crew_members vcm
-       INNER JOIN employees e ON e.id = vcm.employee_id
-       WHERE vcm.voyage_id = ?
-       ORDER BY e.roblox_username ASC, e.id ASC`
-    )
-    .bind(voyageId)
-    .all();
-  const currentCrew = currentCrewRows?.results || [];
   const currentCrewIds = new Set(currentCrew.map((row) => Number(row.id)));
   const nextCrewIds = new Set(crewComplementIds);
 
@@ -129,6 +132,9 @@ export async function onRequestPut(context) {
   const nextOow = String(employeeMap.get(officerOfWatchEmployeeId)?.roblox_username || 'N/A');
   if (Number(voyage.officer_of_watch_employee_id) !== officerOfWatchEmployeeId) {
     logs.push(changeLine('Officer of the Watch', oldOow, nextOow));
+    if (currentCrewIds.has(officerOfWatchEmployeeId)) {
+      logs.push(`Crew Complement auto-update: removed ${nextOow} because Officer of the Watch cannot be in crew.`);
+    }
   }
 
   const crewChanged =

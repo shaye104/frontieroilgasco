@@ -2,6 +2,46 @@ import { json } from '../../auth/_lib/auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
 import { getVoyageBase, requireVoyagePermission } from '../../_lib/voyages.js';
 
+export async function onRequestGet(context) {
+  const { env, params, request } = context;
+  const { errorResponse } = await requireVoyagePermission(context, 'voyages.read');
+  if (errorResponse) return errorResponse;
+
+  const voyageId = Number(params.id);
+  if (!Number.isInteger(voyageId) || voyageId <= 0) return json({ error: 'Invalid voyage id.' }, 400);
+
+  const voyage = await getVoyageBase(env, voyageId);
+  if (!voyage) return json({ error: 'Voyage not found.' }, 404);
+
+  const url = new URL(request.url);
+  const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+  const pageSize = Math.min(200, Math.max(1, Number(url.searchParams.get('pageSize')) || 50));
+  const offset = (page - 1) * pageSize;
+
+  const logs = await env.DB
+    .prepare(
+      `SELECT vl.id, vl.message, vl.created_at, vl.updated_at,
+              e.id AS author_employee_id, e.roblox_username AS author_name
+       FROM voyage_logs vl
+       INNER JOIN employees e ON e.id = vl.author_employee_id
+       WHERE vl.voyage_id = ?
+       ORDER BY vl.created_at DESC, vl.id DESC
+       LIMIT ? OFFSET ?`
+    )
+    .bind(voyageId, pageSize, offset)
+    .all();
+  const totalRow = await env.DB.prepare(`SELECT COUNT(*) AS total FROM voyage_logs WHERE voyage_id = ?`).bind(voyageId).first();
+
+  return json({
+    logs: logs?.results || [],
+    pagination: {
+      page,
+      pageSize,
+      total: Number(totalRow?.total || 0)
+    }
+  });
+}
+
 export async function onRequestPost(context) {
   const { env, params } = context;
   const { errorResponse, employee, session } = await requireVoyagePermission(context, 'voyages.edit');

@@ -13,6 +13,34 @@ function normalizeManifestLines(lines) {
     .filter((line) => Number.isInteger(line.cargoTypeId) && line.cargoTypeId > 0);
 }
 
+export async function onRequestGet(context) {
+  const { env, params } = context;
+  const { errorResponse } = await requireVoyagePermission(context, 'voyages.read');
+  if (errorResponse) return errorResponse;
+
+  const voyageId = Number(params.id);
+  if (!Number.isInteger(voyageId) || voyageId <= 0) return json({ error: 'Invalid voyage id.' }, 400);
+
+  const voyage = await getVoyageBase(env, voyageId);
+  if (!voyage) return json({ error: 'Voyage not found.' }, 404);
+
+  const lines = await env.DB
+    .prepare(
+      `SELECT vml.id, vml.cargo_type_id, ct.name AS cargo_name, ct.active, ct.default_price,
+              vml.quantity, vml.buy_price, vml.line_total, vml.updated_at
+       FROM voyage_manifest_lines vml
+       INNER JOIN cargo_types ct ON ct.id = vml.cargo_type_id
+       WHERE vml.voyage_id = ?
+       ORDER BY ct.name ASC, ct.id ASC`
+    )
+    .bind(voyageId)
+    .all();
+
+  const manifest = lines?.results || [];
+  const buyTotal = toMoney(manifest.reduce((acc, line) => acc + Number(line.line_total || 0), 0));
+  return json({ manifest, buyTotal });
+}
+
 export async function onRequestPut(context) {
   const { env, params } = context;
   const { errorResponse, employee, session } = await requireVoyagePermission(context, 'voyages.edit');

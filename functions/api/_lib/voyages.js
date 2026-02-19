@@ -47,9 +47,11 @@ export async function getVoyageBase(env, voyageId) {
     .first();
 }
 
-export async function getVoyageDetail(env, voyageId) {
+export async function getVoyageDetail(env, voyageId, options = {}) {
   const voyage = await getVoyageBase(env, voyageId);
   if (!voyage) return null;
+  const includeManifest = options.includeManifest !== false;
+  const includeLogs = options.includeLogs !== false;
 
   const [crewRows, manifestRows, logRows] = await Promise.all([
     env.DB
@@ -62,28 +64,32 @@ export async function getVoyageDetail(env, voyageId) {
       )
       .bind(voyageId)
       .all(),
-    env.DB
-      .prepare(
-        `SELECT vml.id, vml.cargo_type_id, ct.name AS cargo_name, ct.active, ct.default_price,
-                vml.quantity, vml.buy_price, vml.line_total, vml.updated_at
-         FROM voyage_manifest_lines vml
-         INNER JOIN cargo_types ct ON ct.id = vml.cargo_type_id
-         WHERE vml.voyage_id = ?
-         ORDER BY ct.name ASC, ct.id ASC`
-      )
-      .bind(voyageId)
-      .all(),
-    env.DB
-      .prepare(
-        `SELECT vl.id, vl.message, vl.created_at, vl.updated_at,
-                e.id AS author_employee_id, e.roblox_username AS author_name
-         FROM voyage_logs vl
-         INNER JOIN employees e ON e.id = vl.author_employee_id
-         WHERE vl.voyage_id = ?
-         ORDER BY vl.created_at ASC, vl.id ASC`
-      )
-      .bind(voyageId)
-      .all()
+    includeManifest
+      ? env.DB
+          .prepare(
+            `SELECT vml.id, vml.cargo_type_id, ct.name AS cargo_name, ct.active, ct.default_price,
+                    vml.quantity, vml.buy_price, vml.line_total, vml.updated_at
+             FROM voyage_manifest_lines vml
+             INNER JOIN cargo_types ct ON ct.id = vml.cargo_type_id
+             WHERE vml.voyage_id = ?
+             ORDER BY ct.name ASC, ct.id ASC`
+          )
+          .bind(voyageId)
+          .all()
+      : Promise.resolve({ results: [] }),
+    includeLogs
+      ? env.DB
+          .prepare(
+            `SELECT vl.id, vl.message, vl.created_at, vl.updated_at,
+                    e.id AS author_employee_id, e.roblox_username AS author_name
+             FROM voyage_logs vl
+             INNER JOIN employees e ON e.id = vl.author_employee_id
+             WHERE vl.voyage_id = ?
+             ORDER BY vl.created_at DESC, vl.id DESC`
+          )
+          .bind(voyageId)
+          .all()
+      : Promise.resolve({ results: [] })
   ]);
 
   const manifest = manifestRows?.results || [];

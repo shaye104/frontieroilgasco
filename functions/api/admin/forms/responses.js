@@ -12,6 +12,10 @@ export async function onRequestGet(context) {
   const employeeId = Number(url.searchParams.get('employeeId'));
   const dateFrom = String(url.searchParams.get('dateFrom') || '').trim();
   const dateTo = String(url.searchParams.get('dateTo') || '').trim();
+  const hasPaging = url.searchParams.has('page') || url.searchParams.has('pageSize');
+  const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
+  const pageSize = Math.min(200, Math.max(1, Number(url.searchParams.get('pageSize')) || 50));
+  const offset = (page - 1) * pageSize;
 
   let sql = `SELECT r.id, r.form_id, r.employee_id, r.respondent_discord_user_id, r.submitted_at,
                     f.title AS form_title, f.category_id, c.name AS category_name,
@@ -49,11 +53,26 @@ export async function onRequestGet(context) {
     bindings.push(dateTo);
   }
 
+  const countSql = `SELECT COUNT(*) AS total FROM (${sql}) q`;
   sql += ' ORDER BY r.submitted_at DESC, r.id DESC';
+  if (hasPaging) {
+    sql += ' LIMIT ? OFFSET ?';
+    bindings.push(pageSize, offset);
+  }
 
   let query = env.DB.prepare(sql);
   if (bindings.length) query = query.bind(...bindings);
   const result = await query.all();
+  const countQuery = env.DB.prepare(countSql);
+  const countBinds = hasPaging ? bindings.slice(0, -2) : bindings;
+  const totalRow = countBinds.length ? await countQuery.bind(...countBinds).first() : await countQuery.first();
 
-  return json({ responses: result?.results || [] });
+  return json({
+    responses: result?.results || [],
+    pagination: {
+      page: hasPaging ? page : 1,
+      pageSize: hasPaging ? pageSize : Number(totalRow?.total || 0),
+      total: Number(totalRow?.total || 0)
+    }
+  });
 }
