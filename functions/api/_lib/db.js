@@ -85,7 +85,10 @@ export async function ensureCoreSchema(env) {
 
 export async function getEmployeeByDiscordUserId(env, discordUserId) {
   await ensureCoreSchema(env);
-  const result = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(discordUserId).first();
+  const normalized = normalizeDiscordUserId(discordUserId);
+  if (!/^\d{6,30}$/.test(normalized)) return null;
+
+  const result = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(normalized).first();
   return result || null;
 }
 
@@ -97,6 +100,8 @@ export async function getEmployeeById(env, employeeId) {
 
 export async function createOrRefreshAccessRequest(env, { discordUserId, displayName }) {
   await ensureCoreSchema(env);
+  const normalized = normalizeDiscordUserId(discordUserId);
+  if (!/^\d{6,30}$/.test(normalized)) return;
 
   await env.DB.batch([
     env.DB
@@ -104,15 +109,26 @@ export async function createOrRefreshAccessRequest(env, { discordUserId, display
         `INSERT OR IGNORE INTO access_requests (discord_user_id, discord_display_name, status, requested_at)
          VALUES (?, ?, 'pending', CURRENT_TIMESTAMP)`
       )
-      .bind(discordUserId, displayName),
+      .bind(normalized, displayName),
     env.DB
       .prepare(
         `UPDATE access_requests
          SET discord_display_name = ?, status = 'pending', requested_at = CURRENT_TIMESTAMP, reviewed_at = NULL, reviewed_by = NULL, review_note = NULL
          WHERE discord_user_id = ? AND status != 'approved'`
       )
-      .bind(displayName, discordUserId)
+      .bind(displayName, normalized)
   ]);
+}
+
+export function normalizeDiscordUserId(value) {
+  const raw = String(value ?? '').trim();
+  if (/^\d{6,30}$/.test(raw)) return raw;
+
+  // Allow pasted mention-like values such as <@123...> by extracting the snowflake digits.
+  const digits = raw.replace(/\D/g, '');
+  if (/^\d{6,30}$/.test(digits)) return digits;
+
+  return raw;
 }
 
 export function calculateTenureDays(hireDateText) {

@@ -1,5 +1,6 @@
 import { json } from '../auth/_lib/auth.js';
 import { requireAdmin } from './_lib/admin-auth.js';
+import { normalizeDiscordUserId } from '../_lib/db.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -27,7 +28,7 @@ export async function onRequestPost(context) {
     return json({ error: 'Invalid JSON payload.' }, 400);
   }
 
-  const discordUserId = String(payload?.discordUserId || '').trim();
+  const discordUserId = normalizeDiscordUserId(payload?.discordUserId);
   if (!/^\d{6,30}$/.test(discordUserId)) {
     return json({ error: 'discordUserId is required and must be a Discord snowflake.' }, 400);
   }

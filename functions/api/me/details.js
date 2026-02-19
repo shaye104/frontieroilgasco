@@ -15,20 +15,20 @@ export async function onRequestGet(context) {
     return json({ error: error.message || 'Database unavailable.' }, 500);
   }
 
-  if (session.isAdmin) {
-    return json({
-      loggedIn: true,
-      isAdmin: true,
-      accessPending: false,
-      employee: null,
-      activeDisciplinaryRecords: [],
-      disciplinaryHistory: []
-    });
-  }
-
   const employee = await getEmployeeByDiscordUserId(env, session.userId);
 
   if (!employee) {
+    if (session.isAdmin) {
+      return json({
+        loggedIn: true,
+        isAdmin: true,
+        accessPending: false,
+        employee: null,
+        activeDisciplinaryRecords: [],
+        disciplinaryHistory: []
+      });
+    }
+
     await createOrRefreshAccessRequest(env, {
       discordUserId: session.userId,
       displayName: session.displayName
@@ -61,7 +61,7 @@ export async function onRequestGet(context) {
 
   return json({
     loggedIn: true,
-    isAdmin: false,
+    isAdmin: Boolean(session.isAdmin),
     accessPending: false,
     employee: {
       id: employee.id,
