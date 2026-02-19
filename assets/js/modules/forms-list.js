@@ -21,7 +21,7 @@ function renderForms(target, forms) {
           <h3>${text(form.title)}</h3>
           <p>${text(form.description || form.instructions || 'No description provided.')}</p>
           <p><strong>Category:</strong> ${text(form.category_name || 'Uncategorized')}</p>
-          <a class="btn btn-primary" href="/forms/fill?formId=${form.id}">Open</a>
+          <a class="btn btn-primary" href="form-fill.html?formId=${form.id}">Open</a>
         </article>
       `
     )
