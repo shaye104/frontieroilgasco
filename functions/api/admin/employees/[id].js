@@ -1,6 +1,28 @@
 import { json } from '../../auth/_lib/auth.js';
 import { requireAdmin } from '../_lib/admin-auth.js';
 
+function valueText(value) {
+  const text = String(value ?? '').trim();
+  return text || 'Unset';
+}
+
+function buildChangeEntries(previous, next) {
+  const tracked = [
+    { key: 'rank', label: 'Rank changed' },
+    { key: 'grade', label: 'Grade changed' },
+    { key: 'employee_status', label: 'Status changed' },
+    { key: 'serial_number', label: 'Serial Number changed' },
+    { key: 'hire_date', label: 'Hire Date changed' }
+  ];
+
+  return tracked
+    .filter(({ key }) => String(previous?.[key] || '').trim() !== String(next?.[key] || '').trim())
+    .map(({ key, label }) => ({
+      actionType: label,
+      details: `${valueText(previous?.[key])} -> ${valueText(next?.[key])}`
+    }));
+}
+
 export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse } = await requireAdmin(context);
@@ -35,7 +57,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPut(context) {
   const { env, params } = context;
-  const { errorResponse } = await requireAdmin(context);
+  const { errorResponse, session } = await requireAdmin(context);
   if (errorResponse) return errorResponse;
 
   const employeeId = Number(params.id);
@@ -47,6 +69,9 @@ export async function onRequestPut(context) {
   } catch {
     return json({ error: 'Invalid JSON payload.' }, 400);
   }
+
+  const existing = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
+  if (!existing) return json({ error: 'Employee not found.' }, 404);
 
   await env.DB.prepare(
     `UPDATE employees
@@ -74,6 +99,18 @@ export async function onRequestPut(context) {
 
   const employee = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
   if (!employee) return json({ error: 'Employee not found.' }, 404);
+
+  const actor = session.displayName || session.userId;
+  const changes = buildChangeEntries(existing, employee);
+  if (changes.length) {
+    await env.DB.batch(
+      changes.map((entry) =>
+        env.DB
+          .prepare('INSERT INTO employee_notes (employee_id, note, authored_by) VALUES (?, ?, ?)')
+          .bind(employeeId, `[Activity] ${entry.actionType}: ${entry.details}`, actor)
+      )
+    );
+  }
 
   return json({ employee });
 }

@@ -35,10 +35,19 @@ function closeModal(id) {
   modal.setAttribute('aria-hidden', 'true');
 }
 
-function renderRecords(target, records, format) {
+function calculateTenureDays(hireDateText) {
+  if (!hireDateText) return 'N/A';
+  const hireDate = new Date(hireDateText);
+  if (Number.isNaN(hireDate.getTime())) return 'N/A';
+  const now = new Date();
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return String(Math.max(0, Math.floor((now.getTime() - hireDate.getTime()) / msPerDay)));
+}
+
+function renderRecords(target, records, format, emptyMessage = 'None.') {
   if (!target) return;
   if (!records.length) {
-    target.innerHTML = '<li class="role-item"><span class="role-id">None.</span></li>';
+    target.innerHTML = `<li class="role-item"><span class="role-id">${emptyMessage}</span></li>`;
     return;
   }
 
@@ -93,6 +102,13 @@ function renderEmployeeTable(target, employees, onOpen) {
   });
 }
 
+function getActiveDisciplinaries(records) {
+  return (records || []).filter((item) => {
+    const status = String(item.record_status || '').toLowerCase();
+    return status === 'open' || status === 'active';
+  });
+}
+
 export async function initManageEmployees(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const tableBody = document.querySelector(config.employeeTableBodySelector);
@@ -108,10 +124,11 @@ export async function initManageEmployees(config) {
   const editForm = document.querySelector(config.editFormSelector);
   const disciplinaryForm = document.querySelector(config.disciplinaryFormSelector);
   const noteForm = document.querySelector(config.noteFormSelector);
-  const disciplinaryList = document.querySelector(config.disciplinaryListSelector);
-  const notesList = document.querySelector(config.notesListSelector);
+  const activeDisciplinaryList = document.querySelector(config.activeDisciplinaryListSelector);
+  const activityList = document.querySelector(config.activityListSelector);
   const openDisciplinaryModalBtn = document.querySelector(config.openDisciplinaryModalBtnSelector);
   const openNoteModalBtn = document.querySelector(config.openNoteModalBtnSelector);
+  const tenureDaysInput = document.querySelector(config.tenureDaysSelector);
 
   if (
     !feedback ||
@@ -121,8 +138,8 @@ export async function initManageEmployees(config) {
     !editForm ||
     !disciplinaryForm ||
     !noteForm ||
-    !disciplinaryList ||
-    !notesList
+    !activeDisciplinaryList ||
+    !activityList
   ) {
     return;
   }
@@ -166,7 +183,7 @@ export async function initManageEmployees(config) {
     fillOptions(editForm.querySelector('[name="rank"]'), cfg.ranks, 'Select');
     fillOptions(editForm.querySelector('[name="grade"]'), cfg.grades, 'Select');
 
-    fillOptions(disciplinaryForm.querySelector('[name="recordType"]'), cfg.disciplinary_types, 'Select');
+    fillOptions(disciplinaryForm.querySelector('[name="actionType"]'), cfg.disciplinary_types, 'Select Action');
   }
 
   async function refreshEmployees() {
@@ -189,14 +206,23 @@ export async function initManageEmployees(config) {
     editForm.querySelector('[name="serialNumber"]').value = employee.serial_number || '';
     editForm.querySelector('[name="employeeStatus"]').value = employee.employee_status || '';
     editForm.querySelector('[name="hireDate"]').value = employee.hire_date || '';
+    if (tenureDaysInput) tenureDaysInput.value = calculateTenureDays(employee.hire_date);
+
+    const activeDisciplinaries = getActiveDisciplinaries(payload.disciplinaries || []);
 
     renderRecords(
-      disciplinaryList,
-      payload.disciplinaries || [],
-      (item) => `${text(item.record_type)} | ${text(item.record_status)} | ${text(item.record_date)} | ${text(item.notes)} | ${text(item.issued_by)}`
+      activeDisciplinaryList,
+      activeDisciplinaries,
+      (item) => `${text(item.record_type)} | ${text(item.record_status)} | ${text(item.record_date)} | ${text(item.notes)} | ${text(item.issued_by)}`,
+      'No active disciplinary records.'
     );
 
-    renderRecords(notesList, payload.notes || [], (item) => `${text(item.created_at)} | ${text(item.authored_by)} | ${text(item.note)}`);
+    renderRecords(
+      activityList,
+      payload.notes || [],
+      (item) => `${text(item.created_at)} | ${text(item.authored_by)} | ${text(item.note)}`,
+      'No activity yet.'
+    );
 
     openModal('employeeDetailModal');
   }
@@ -213,6 +239,11 @@ export async function initManageEmployees(config) {
   [filterRank, filterGrade, filterSerial, filterUsername].forEach((input) => {
     input?.addEventListener('input', refreshTable);
     input?.addEventListener('change', refreshTable);
+  });
+
+  editForm.querySelector('[name="hireDate"]')?.addEventListener('change', (event) => {
+    if (!tenureDaysInput) return;
+    tenureDaysInput.value = calculateTenureDays(event.target.value);
   });
 
   createForm.addEventListener('submit', async (event) => {
@@ -301,16 +332,22 @@ export async function initManageEmployees(config) {
 
     try {
       await addDisciplinary(selectedEmployeeId, {
-        recordType: String(data.get('recordType') || '').trim(),
+        actionType: String(data.get('actionType') || '').trim(),
+        recordType: String(data.get('actionType') || '').trim(),
         recordDate: String(data.get('recordDate') || '').trim(),
         recordStatus: String(data.get('recordStatus') || '').trim(),
+        reason: String(data.get('reason') || '').trim(),
+        severity: String(data.get('severity') || '').trim(),
+        effectiveFrom: String(data.get('effectiveFrom') || '').trim(),
+        effectiveTo: String(data.get('effectiveTo') || '').trim(),
         notes: String(data.get('notes') || '').trim()
       });
 
       disciplinaryForm.reset();
+      disciplinaryForm.querySelector('[name="recordStatus"]').value = 'open';
       closeModal('disciplinaryModal');
       await openEmployee(selectedEmployeeId);
-      showMessage(feedback, 'Disciplinary record added.', 'success');
+      showMessage(feedback, 'Disciplinary action added.', 'success');
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to add disciplinary record.', 'error');
     }
@@ -329,6 +366,7 @@ export async function initManageEmployees(config) {
 
     try {
       await addEmployeeNote(selectedEmployeeId, {
+        category: String(data.get('category') || '').trim(),
         note: String(data.get('note') || '').trim()
       });
 

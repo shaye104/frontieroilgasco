@@ -23,8 +23,9 @@ initIntranetPageGuard({
     editFormSelector: '#editEmployeeForm',
     disciplinaryFormSelector: '#disciplinaryForm',
     noteFormSelector: '#noteForm',
-    disciplinaryListSelector: '#disciplinaryList',
-    notesListSelector: '#notesList',
+    activeDisciplinaryListSelector: '#activeDisciplinaryList',
+    activityListSelector: '#activityList',
+    tenureDaysSelector: '#tenureDays',
     openDisciplinaryModalBtnSelector: '#openDisciplinaryModalBtn',
     openNoteModalBtnSelector: '#openNoteModalBtn'
   });

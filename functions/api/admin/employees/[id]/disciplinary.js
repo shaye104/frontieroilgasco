@@ -16,18 +16,35 @@ export async function onRequestPost(context) {
     return json({ error: 'Invalid JSON payload.' }, 400);
   }
 
-  const recordType = String(payload?.recordType || '').trim();
+  const recordType = String(payload?.recordType || payload?.actionType || '').trim();
   const recordStatus = String(payload?.recordStatus || '').trim() || 'open';
   const recordDate = String(payload?.recordDate || '').trim() || new Date().toISOString().slice(0, 10);
+  const reason = String(payload?.reason || '').trim();
+  const severity = String(payload?.severity || '').trim();
+  const effectiveFrom = String(payload?.effectiveFrom || '').trim();
+  const effectiveTo = String(payload?.effectiveTo || '').trim();
   const notes = String(payload?.notes || '').trim();
 
   if (!recordType) return json({ error: 'recordType is required.' }, 400);
+
+  const composedNotes = [notes, reason ? `Reason: ${reason}` : '', severity ? `Severity: ${severity}` : '', effectiveFrom ? `Effective From: ${effectiveFrom}` : '', effectiveTo ? `Effective To: ${effectiveTo}` : '']
+    .filter(Boolean)
+    .join(' | ');
 
   await env.DB.prepare(
     `INSERT INTO disciplinary_records (employee_id, record_type, record_date, record_status, notes, issued_by)
      VALUES (?, ?, ?, ?, ?, ?)`
   )
-    .bind(employeeId, recordType, recordDate, recordStatus, notes, session.displayName || session.userId)
+    .bind(employeeId, recordType, recordDate, recordStatus, composedNotes, session.displayName || session.userId)
+    .run();
+
+  const actor = session.displayName || session.userId;
+  await env.DB.prepare('INSERT INTO employee_notes (employee_id, note, authored_by) VALUES (?, ?, ?)')
+    .bind(
+      employeeId,
+      `[Activity] Disciplinary action recorded: ${recordType} (${recordStatus}) on ${recordDate}${reason ? ` | Reason: ${reason}` : ''}`,
+      actor
+    )
     .run();
 
   const records = await env.DB.prepare(

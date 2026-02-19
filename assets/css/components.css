@@ -42,6 +42,17 @@
   border-color: var(--color-primary-strong);
 }
 
+.btn-danger {
+  background: #c62828;
+  color: #ffffff;
+  border-color: #c62828;
+}
+
+.btn-danger:hover {
+  background: #a91f1f;
+  border-color: #a91f1f;
+}
+
 .btn-secondary {
   background: #fff;
   color: #3f5967;
@@ -252,11 +263,33 @@ textarea:focus {
   padding: 1rem;
 }
 
+.modal-card-wide {
+  width: min(1200px, 100%);
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
+}
+
+.employee-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.employee-modal-panel {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.9rem;
+  background: #ffffff;
+}
+
+.employee-modal-panel h3,
+.employee-modal-panel h4 {
+  margin-bottom: var(--space-2);
 }
 
 .modal-actions {
@@ -308,6 +341,10 @@ textarea:focus {
   .button-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .employee-modal-grid {
+    grid-template-columns: 1fr;
   }
 
   .details-split {

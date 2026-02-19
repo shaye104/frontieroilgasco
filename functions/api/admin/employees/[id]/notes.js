@@ -17,10 +17,13 @@ export async function onRequestPost(context) {
   }
 
   const note = String(payload?.note || '').trim();
+  const category = String(payload?.category || '').trim();
   if (!note) return json({ error: 'note is required.' }, 400);
 
+  const finalNote = category ? `[${category}] ${note}` : note;
+
   await env.DB.prepare('INSERT INTO employee_notes (employee_id, note, authored_by) VALUES (?, ?, ?)')
-    .bind(employeeId, note, session.displayName || session.userId)
+    .bind(employeeId, finalNote, session.displayName || session.userId)
     .run();
 
   const notes = await env.DB.prepare(
