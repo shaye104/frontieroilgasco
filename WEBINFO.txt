@@ -1,10 +1,10 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T02:35:22.321Z
+Generated: 2026-02-19T02:40:35.471Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
 - Includes two key user paths: job application submission and employee intranet login.
-- Built as static files for direct hosting on Namecheap or GitHub Pages.
+- Built for Cloudflare Pages with optional Pages Functions for authenticated intranet access.
 
 SITE STRUCTURE
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
@@ -14,7 +14,7 @@ SITE STRUCTURE
 JAVASCRIPT MODULES
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/company-data.js | exports: companyProfile
-- assets/js/modules/intranet-login.js | exports: initIntranetLogin
+- assets/js/modules/intranet-auth.js | exports: initIntranetAuth
 - assets/js/modules/notice.js | exports: clearMessage, showMessage
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/year.js | exports: initializeYear
@@ -31,7 +31,8 @@ CSS MODULES
 DATA FLOW
 - Landing page imports company data from `assets/js/modules/company-data.js` and renders cards/stats via `renderHomeContent`.
 - Application form validates client-side inputs, displays status messages, and stores submissions in localStorage as `frontierApplications`.
-- Intranet login performs front-end demo authentication using local credentials in `assets/js/modules/intranet-login.js`.
+- Intranet login starts Discord OAuth2 at `/api/auth/discord/start` and enforces access by Discord role membership.
+- Cloudflare Pages Functions in `functions/api/auth/*` exchange Discord auth code, verify guild roles, and issue a signed session cookie.
 - Shared feedback UI is handled in `assets/js/modules/notice.js`.
 
 MAINTENANCE WORKFLOW
@@ -41,9 +42,10 @@ MAINTENANCE WORKFLOW
 
 DEPLOYMENT NOTES
 - Primary repo target: https://github.com/shaye104/frontieroilgasco
-- Cloudflare deployment command: `npx wrangler pages deploy`.
+- Cloudflare deployment command: `echo ok` when using Git-connected Pages deployments.
 - Static hosting is configured in `wrangler.jsonc` with `pages_build_output_dir` set to `.`.
+- Pages Functions auto-deploy with site code from `functions/`.
 - After deploy, attach your custom domain in Cloudflare and complete DNS routing.
 
 SECURITY NOTE
-- The intranet page is front-end demo logic only. Replace demo auth with a real backend identity service before production use.
+- Configure secure environment variables before production OAuth use: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_GUILD_ID, DISCORD_BOT_TOKEN, DISCORD_ALLOWED_ROLE_IDS, SESSION_SECRET, and optional DISCORD_REDIRECT_URI.

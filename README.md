@@ -4,13 +4,14 @@ Static, modular website for Frontier Oil & Gas Company with three pages:
 
 - `index.html`: public landing page and company details
 - `application.html`: candidate application form
-- `intranet.html`: employee intranet login (demo front-end behavior)
+- `intranet.html`: employee intranet login via Discord OAuth2 role-based access
 
 ## Project Structure
 
 - `assets/css/`: design tokens, base styles, reusable components, page layouts
 - `assets/js/modules/`: reusable JavaScript modules
 - `assets/js/pages/`: page entry scripts
+- `functions/api/auth/`: Cloudflare Pages Functions for Discord OAuth2 + session handling
 - `scripts/update-webinfo.mjs`: auto-generates `WEBINFO.txt`
 - `.githooks/pre-commit`: updates `WEBINFO.txt` before commits
 
@@ -42,12 +43,20 @@ git push -u origin main
 ## Cloudflare Deployment
 
 1. Push updated code to GitHub.
-2. If your Cloudflare flow requires a deploy command, use either:
+2. In a Git-connected Pages project, use:
+   - Build command: `echo static`
+   - Build output directory: `.`
+   - Deploy command (if required by your UI): `echo ok`
+3. In Cloudflare, connect your custom domain and complete DNS routing.
 
-```bash
-npx wrangler pages deploy
-```
+## Discord OAuth2 Environment Variables (Pages Project)
 
-3. This works because `wrangler.jsonc` is configured for Pages with:
-   - `pages_build_output_dir = "."`
-4. In Cloudflare, connect your custom domain and complete DNS routing.
+Set these in Cloudflare Pages project settings:
+
+- `DISCORD_CLIENT_ID`
+- `DISCORD_CLIENT_SECRET`
+- `DISCORD_GUILD_ID`
+- `DISCORD_BOT_TOKEN`
+- `DISCORD_ALLOWED_ROLE_IDS` (comma-separated Discord role IDs)
+- `SESSION_SECRET` (long random secret string)
+- `DISCORD_REDIRECT_URI` (optional override, default is `/api/auth/discord/callback`)

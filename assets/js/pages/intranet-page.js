@@ -1,8 +1,9 @@
-import { initIntranetLogin } from '../modules/intranet-login.js';
+import { initIntranetAuth } from '../modules/intranet-auth.js';
 import { initializeYear } from '../modules/year.js';
 
-initIntranetLogin({
-  formSelector: '#intranetLoginForm',
+initIntranetAuth({
+  loginButtonSelector: '#discordLoginBtn',
+  logoutButtonSelector: '#logoutBtn',
   feedbackSelector: '#loginFeedback',
   panelSelector: '#intranetPanel',
   welcomeSelector: '#welcomeText'

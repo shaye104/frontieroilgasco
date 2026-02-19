@@ -36,24 +36,18 @@
           <p class="eyebrow">Employees</p>
           <h1>Intranet Login</h1>
           <p class="lead">
-            Access internal tools and operations resources. This demo page uses local credentials for front-end behavior only.
+            Access internal tools and operations resources using Discord OAuth2. Intranet access is granted only for approved
+            Discord roles.
           </p>
 
-          <form id="intranetLoginForm" novalidate>
-            <label for="employeeId">Employee ID</label>
-            <input id="employeeId" name="employeeId" type="text" required />
-
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password" required />
-
-            <button class="btn btn-primary btn-block" type="submit">Sign In</button>
-          </form>
+          <button id="discordLoginBtn" class="btn btn-primary btn-block" type="button">Sign In with Discord</button>
           <div id="loginFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
         <section id="intranetPanel" class="panel hidden" aria-live="polite">
           <h2>Employee Dashboard</h2>
           <p id="welcomeText"></p>
+          <button id="logoutBtn" class="btn btn-secondary" type="button">Log Out</button>
           <ul class="link-list">
             <li><a href="#">Operations Schedule</a></li>
             <li><a href="#">Safety Documentation</a></li>
