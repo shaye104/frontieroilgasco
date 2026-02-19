@@ -412,6 +412,22 @@ export async function initVoyageDetails(config) {
     archivedBreakdownCompanyShare.textContent = formatGuilders(companyShare);
   }
 
+  function removeArchivedControlsFromDom() {
+    const toRemove = [
+      shipStatusControls,
+      profileEditToggleBtn,
+      openEndVoyageBtn,
+      addCargoBtn,
+      addLogForm,
+      document.getElementById('addCargoModal'),
+      document.getElementById('endVoyageModal'),
+      document.getElementById('editVoyageModal')
+    ];
+    toRemove.forEach((node) => {
+      if (node && node.parentNode) node.parentNode.removeChild(node);
+    });
+  }
+
   function toOptions(items, value) {
     return items
       .map((entry) => {
@@ -452,46 +468,49 @@ export async function initVoyageDetails(config) {
   }
 
   function renderManifest() {
+    const editable = canEdit();
     manifestBody.innerHTML = manifest
       .map(
         (line) => `<tr data-cargo-id="${line.cargo_type_id}">
           <td>${text(line.cargo_name)}</td>
-          <td><input data-field="quantity" type="number" min="0" step="1" value="${Number(line.quantity || 0)}" ${canEdit() ? '' : 'disabled'} /></td>
-          <td><input data-field="buyPrice" type="number" min="0" step="0.01" value="${Number(line.buy_price || 0)}" ${canEdit() ? '' : 'disabled'} /></td>
+          <td>${editable ? `<input data-field="quantity" type="number" min="0" step="1" value="${Number(line.quantity || 0)}" />` : Number(line.quantity || 0)}</td>
+          <td>${editable ? `<input data-field="buyPrice" type="number" min="0" step="0.01" value="${Number(line.buy_price || 0)}" />` : formatGuilders(line.buy_price)}</td>
           <td>${formatGuilders(line.line_total)}</td>
-          <td>${canEdit() ? `<button class="btn btn-secondary" type="button" data-remove-line="${line.cargo_type_id}">Remove</button>` : '-'}</td>
+          <td>${editable ? `<button class="btn btn-secondary" type="button" data-remove-line="${line.cargo_type_id}">Remove</button>` : '—'}</td>
         </tr>`
       )
       .join('');
 
-    manifestBody.querySelectorAll('[data-remove-line]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const cargoId = Number(button.getAttribute('data-remove-line'));
-        manifest = manifest.filter((line) => Number(line.cargo_type_id) !== cargoId);
-        renderManifest();
-        renderCargoLostEditor();
-        syncBreakdown();
-        queueManifestAutoSave();
+    if (editable) {
+      manifestBody.querySelectorAll('[data-remove-line]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const cargoId = Number(button.getAttribute('data-remove-line'));
+          manifest = manifest.filter((line) => Number(line.cargo_type_id) !== cargoId);
+          renderManifest();
+          renderCargoLostEditor();
+          syncBreakdown();
+          queueManifestAutoSave();
+        });
       });
-    });
 
-    manifestBody.querySelectorAll('tr[data-cargo-id]').forEach((row) => {
-      const quantityInput = row.querySelector('input[data-field="quantity"]');
-      const buyPriceInput = row.querySelector('input[data-field="buyPrice"]');
-      const lineTotalCell = row.querySelector('td:nth-child(4)');
-      const refreshRow = () => {
-        const quantity = Math.max(0, Math.floor(Number(quantityInput?.value || 0)));
-        const buyPrice = Math.max(0, Number(buyPriceInput?.value || 0));
-        if (quantityInput && String(quantityInput.value) !== String(quantity)) quantityInput.value = String(quantity);
-        if (lineTotalCell) lineTotalCell.textContent = formatGuilders(toMoney(quantity * buyPrice));
-        syncBreakdown();
-        queueManifestAutoSave();
-      };
-      quantityInput?.addEventListener('input', refreshRow);
-      buyPriceInput?.addEventListener('input', refreshRow);
-    });
+      manifestBody.querySelectorAll('tr[data-cargo-id]').forEach((row) => {
+        const quantityInput = row.querySelector('input[data-field="quantity"]');
+        const buyPriceInput = row.querySelector('input[data-field="buyPrice"]');
+        const lineTotalCell = row.querySelector('td:nth-child(4)');
+        const refreshRow = () => {
+          const quantity = Math.max(0, Math.floor(Number(quantityInput?.value || 0)));
+          const buyPrice = Math.max(0, Number(buyPriceInput?.value || 0));
+          if (quantityInput && String(quantityInput.value) !== String(quantity)) quantityInput.value = String(quantity);
+          if (lineTotalCell) lineTotalCell.textContent = formatGuilders(toMoney(quantity * buyPrice));
+          syncBreakdown();
+          queueManifestAutoSave();
+        };
+        quantityInput?.addEventListener('input', refreshRow);
+        buyPriceInput?.addEventListener('input', refreshRow);
+      });
+    }
 
-    addCargoBtn.classList.toggle('hidden', !canEdit());
+    if (addCargoBtn?.classList) addCargoBtn.classList.toggle('hidden', !editable);
     syncBreakdown();
   }
 
@@ -619,19 +638,31 @@ export async function initVoyageDetails(config) {
     detail = await getVoyage(voyageId, { includeSetup: true, includeManifest: false, includeLogs: false });
     heading.textContent = `${text(detail.voyage.vessel_name)} | ${text(detail.voyage.vessel_callsign)} | ${text(detail.voyage.status)}`;
     const protectedContent = document.getElementById('protectedContent');
+    const isArchived = String(detail.voyage.status) === 'ENDED';
     if (protectedContent) {
-      protectedContent.classList.toggle('archived-voyage', String(detail.voyage.status) === 'ENDED');
+      protectedContent.classList.toggle('archived-voyage', isArchived);
     }
-    profileEditToggleBtn.classList.toggle('hidden', !canEdit());
+    if (!isArchived) {
+      profileEditToggleBtn.classList.toggle('hidden', !canEdit());
+    }
     renderStatusControls();
     renderFieldList();
     renderArchivedBreakdown();
     const ongoing = isOngoing();
-    openEndVoyageBtn.classList.toggle('hidden', !(detail.permissions?.canEnd && ongoing));
-    addLogForm.classList.toggle('hidden', !(detail.permissions?.canEdit && ongoing));
+    if (!isArchived) {
+      openEndVoyageBtn.classList.toggle('hidden', !(detail.permissions?.canEnd && ongoing));
+      addLogForm.classList.toggle('hidden', !(detail.permissions?.canEdit && ongoing));
+    }
     const cargoTypes = detail.voyageConfig?.cargoTypes || [];
     addCargoTypeSelect.innerHTML = ['<option value="">Select cargo type</option>', ...cargoTypes.map((item) => `<option value="${item.id}">${item.name}</option>`)].join('');
-    if (!ongoing) {
+    if (isArchived) {
+      removeArchivedControlsFromDom();
+      closeModal('addCargoModal');
+      closeModal('endVoyageModal');
+      closeModal('editVoyageModal');
+      finaliseHoldBtn.disabled = true;
+      cancelHoldBtn.disabled = true;
+    } else if (!ongoing) {
       finaliseHoldBtn.disabled = true;
       cancelHoldBtn.disabled = true;
       closeModal('endVoyageModal');

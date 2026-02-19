@@ -379,6 +379,13 @@ textarea:focus {
   grid-template-columns: minmax(0, 0.7fr) minmax(0, 0.3fr);
 }
 
+.voyage-right-column {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  min-height: 0;
+}
+
 .employee-page-panel {
   border: 1px solid var(--color-border);
   border-radius: 12px;
@@ -400,20 +407,15 @@ textarea:focus {
   padding-right: 0.25rem;
 }
 
-.archived-voyage .employee-page-panel-activity {
-  display: grid;
-  grid-template-rows: auto auto auto;
-  gap: var(--space-2);
-}
-
 .archived-voyage .employee-page-panel-activity .employee-activity-scroll {
   flex: 0 0 auto;
-  max-height: min(34vh, 320px);
+  max-height: min(30vh, 300px);
   overflow-y: auto;
 }
 
 .archived-breakdown-panel {
   padding: 0.9rem 1rem;
+  align-self: start;
 }
 
 .archived-breakdown-panel h3 {
@@ -428,6 +430,10 @@ textarea:focus {
 
 .voyage-detail-grid .employee-page-panel {
   overflow-y: auto;
+}
+
+.voyage-detail-grid .voyage-right-column .employee-page-panel {
+  overflow: hidden;
 }
 
 .modal-actions {
@@ -1006,6 +1012,10 @@ textarea:focus {
 
   .employee-page-panel {
     overflow: visible;
+  }
+
+  .voyage-right-column {
+    grid-template-rows: auto;
   }
 
   .end-voyage-layout {

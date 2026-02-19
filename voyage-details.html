@@ -90,19 +90,21 @@
             </div>
           </section>
 
-          <section class="employee-page-panel employee-page-panel-activity">
-            <h2>Ship Log</h2>
-            <form id="addLogForm" class="hidden">
-              <label>New Log Entry</label>
-              <textarea name="message" rows="3"></textarea>
-              <div class="modal-actions">
-                <button class="btn btn-accent" type="submit">Add Entry</button>
+          <div class="voyage-right-column">
+            <section class="employee-page-panel employee-page-panel-activity">
+              <h2>Ship Log</h2>
+              <form id="addLogForm" class="hidden">
+                <label>New Log Entry</label>
+                <textarea name="message" rows="3"></textarea>
+                <div class="modal-actions">
+                  <button class="btn btn-accent" type="submit">Add Entry</button>
+                </div>
+              </form>
+              <div class="employee-activity-scroll">
+                <ul id="shipLogList" class="role-list"></ul>
               </div>
-            </form>
-            <div class="employee-activity-scroll">
-              <ul id="shipLogList" class="role-list"></ul>
-            </div>
-            <section id="archivedBreakdownSection" class="section-surface hidden archived-breakdown-panel">
+            </section>
+            <section id="archivedBreakdownSection" class="employee-page-panel hidden archived-breakdown-panel">
               <h3>Financial Breakdown</h3>
               <p><strong>Total Freight Value:</strong> <span id="archivedBreakdownFreight">ƒ 0</span></p>
               <p><strong>Total Revenue:</strong> <span id="archivedBreakdownRevenue">ƒ 0</span></p>
@@ -110,7 +112,7 @@
               <p><strong>Profit:</strong> <span id="archivedBreakdownProfit">ƒ 0</span></p>
               <p><strong>Company Share (10%):</strong> <span id="archivedBreakdownCompanyShare">ƒ 0</span></p>
             </section>
-          </section>
+          </div>
         </section>
       </div>
     </main>
