@@ -265,6 +265,10 @@ textarea:focus {
 
 .modal-card-wide {
   width: min(1200px, 100%);
+  max-height: min(90vh, 900px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -278,6 +282,9 @@ textarea:focus {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .employee-modal-panel {
@@ -285,11 +292,29 @@ textarea:focus {
   border-radius: 10px;
   padding: 0.9rem;
   background: #ffffff;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .employee-modal-panel h3,
 .employee-modal-panel h4 {
   margin-bottom: var(--space-2);
+}
+
+.employee-modal-panel-activity {
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-activity-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+#selectedEmployee {
+  margin: 0 0 var(--space-2);
 }
 
 .modal-actions {
@@ -345,6 +370,7 @@ textarea:focus {
 
   .employee-modal-grid {
     grid-template-columns: 1fr;
+    overflow: auto;
   }
 
   .details-split {
