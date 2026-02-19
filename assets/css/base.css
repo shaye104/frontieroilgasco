@@ -38,7 +38,7 @@ p {
 }
 
 .container {
-  width: min(100% - 3rem, var(--container-max));
+  width: min(100% - 4rem, var(--container-max));
   margin-inline: auto;
 }
 
@@ -148,7 +148,7 @@ p {
 
 @media (max-width: 1439px) {
   .container {
-    width: min(100% - 2.5rem, 1320px);
+    width: min(100% - 3rem, 1280px);
   }
 }
 
