@@ -1,6 +1,6 @@
 # Frontier Oil & Gas Company Website
 
-Static, modular website for Frontier Oil & Gas Company with three pages:
+Static, modular website for Frontier Oil & Gas Company:
 
 - `index.html`: public landing page and company details
 - `application.html`: candidate application form
@@ -8,6 +8,7 @@ Static, modular website for Frontier Oil & Gas Company with three pages:
 - `voyage-tracker.html`: intranet placeholder page (protected)
 - `my-fleet.html`: intranet placeholder page (protected)
 - `my-details.html`: intranet placeholder page (protected)
+- `admin-panel.html`: admin-only intranet configuration page for allowed Discord access roles
 
 ## Project Structure
 

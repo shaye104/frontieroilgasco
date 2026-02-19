@@ -106,7 +106,7 @@ async function buildWebinfo() {
     '- Application form validates client-side inputs, displays status messages, and stores submissions in localStorage as `frontierApplications`.',
     '- Intranet login starts Discord OAuth2 at `/api/auth/discord/start` and enforces access by Discord role membership.',
     '- Cloudflare Pages Functions in `functions/api/auth/*` exchange Discord auth code, verify guild roles, and issue a signed session cookie with admin flag.',
-    '- Admin role configuration is managed in the intranet dashboard and persisted in D1 via `functions/api/admin/roles.js`.',
+    '- Admin role configuration is managed on `admin-panel.html` and persisted in D1 via `functions/api/admin/roles.js`.',
     '- Protected intranet subpages (`voyage-tracker.html`, `my-fleet.html`, `my-details.html`) verify active session via `/api/auth/session` before rendering content.',
     '- Shared feedback UI is handled in `assets/js/modules/notice.js`.',
     '',

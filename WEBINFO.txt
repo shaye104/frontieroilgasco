@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T03:05:24.774Z
+Generated: 2026-02-19T03:11:19.684Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -7,14 +7,16 @@ PROJECT PURPOSE
 - Built for Cloudflare Pages with optional Pages Functions for authenticated intranet access.
 
 SITE STRUCTURE
+- admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
-- intranet.html | title: Frontier Oil & Gas Company | Employee Intranet | primary heading: Intranet Login
+- intranet.html | title: Frontier Oil & Gas Company | Employee Intranet | primary heading: Employee Intranet
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
 - my-fleet.html | title: Frontier Oil & Gas Company | My Fleet | primary heading: My Fleet
 - voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
 
 JAVASCRIPT MODULES
+- assets/js/modules/admin-role-config.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
@@ -22,6 +24,7 @@ JAVASCRIPT MODULES
 - assets/js/modules/notice.js | exports: clearMessage, showMessage
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/year.js | exports: initializeYear
+- assets/js/pages/admin-panel-page.js | exports: No public exports
 - assets/js/pages/application-page.js | exports: No public exports
 - assets/js/pages/home.js | exports: No public exports
 - assets/js/pages/intranet-page.js | exports: No public exports
@@ -40,7 +43,7 @@ DATA FLOW
 - Application form validates client-side inputs, displays status messages, and stores submissions in localStorage as `frontierApplications`.
 - Intranet login starts Discord OAuth2 at `/api/auth/discord/start` and enforces access by Discord role membership.
 - Cloudflare Pages Functions in `functions/api/auth/*` exchange Discord auth code, verify guild roles, and issue a signed session cookie with admin flag.
-- Admin role configuration is managed in the intranet dashboard and persisted in D1 via `functions/api/admin/roles.js`.
+- Admin role configuration is managed on `admin-panel.html` and persisted in D1 via `functions/api/admin/roles.js`.
 - Protected intranet subpages (`voyage-tracker.html`, `my-fleet.html`, `my-details.html`) verify active session via `/api/auth/session` before rendering content.
 - Shared feedback UI is handled in `assets/js/modules/notice.js`.
 
