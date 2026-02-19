@@ -181,7 +181,7 @@ export async function initFormsBuilderAdmin(config) {
         const created = await createFormAdmin(payload);
         selectedFormId = created?.form?.id || selectedFormId;
       }
-      window.location.href = '/forms/config/forms';
+      window.location.href = 'forms-manage.html';
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to save form.', 'error');
     }
@@ -191,7 +191,7 @@ export async function initFormsBuilderAdmin(config) {
     if (!selectedFormId) return;
     try {
       await deleteFormAdmin(selectedFormId);
-      window.location.href = '/forms/config/forms';
+      window.location.href = 'forms-manage.html';
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to delete form.', 'error');
     }

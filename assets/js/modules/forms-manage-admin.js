@@ -26,7 +26,7 @@ export async function initFormsManageAdmin(config) {
         (form) => `
           <li class="role-item">
             <span class="role-id">#${form.id} | ${text(form.title)} | ${text(form.status)} | ${text(form.category_name || 'Uncategorized')}</span>
-            <a class="btn btn-secondary" href="/forms/config/forms/${form.id}">Open</a>
+            <a class="btn btn-secondary" href="forms-builder.html?formId=${form.id}">Open</a>
           </li>
         `
       )
