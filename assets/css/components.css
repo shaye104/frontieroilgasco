@@ -13,8 +13,9 @@
 
 .btn {
   border: 1px solid transparent;
-  border-radius: 10px;
-  padding: 0.6rem 1rem;
+  border-radius: 11px;
+  min-height: 40px;
+  padding: 0.55rem 1rem;
   font-weight: 700;
   font-family: var(--font-body);
   display: inline-flex;
@@ -53,14 +54,26 @@
 }
 
 .btn-secondary {
-  background: #fff;
-  color: #3f5967;
-  border: 1px solid #dddddd;
+  background: var(--color-surface-soft);
+  color: var(--color-ink-soft);
+  border: 1px solid var(--color-border);
 }
 
 .btn-secondary:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: color-mix(in srgb, var(--color-secondary) 45%, white);
+  background: color-mix(in srgb, var(--color-secondary) 12%, white);
+  color: var(--color-secondary);
+}
+
+.btn-accent {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: #ffffff;
+}
+
+.btn-accent:hover {
+  background: color-mix(in srgb, var(--color-secondary) 86%, black);
+  border-color: color-mix(in srgb, var(--color-secondary) 86%, black);
 }
 
 .btn-block {
@@ -86,7 +99,7 @@
 
 .detail-card p {
   margin-bottom: 0;
-  color: var(--color-ink-soft);
+  color: var(--color-muted);
 }
 
 .stat-list {
@@ -107,6 +120,7 @@ label {
   display: block;
   font-weight: 600;
   margin-bottom: 0.3rem;
+  color: var(--color-ink-soft);
 }
 
 input,
@@ -117,6 +131,8 @@ textarea {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   margin-bottom: var(--space-3);
+  background: #ffffff;
+  color: var(--color-ink-soft);
   font: inherit;
 }
 
@@ -165,7 +181,7 @@ textarea:focus {
   border: none;
   border-radius: 10px;
   background: #f8fbfe;
-  color: #1f3550;
+  color: var(--color-ink-soft);
   font-weight: 600;
 }
 
@@ -200,8 +216,9 @@ textarea:focus {
 }
 
 .role-id {
-  font-family: var(--font-heading);
+  font-family: var(--font-body);
   font-size: 0.95rem;
+  color: var(--color-ink-soft);
 }
 
 .filter-row {
@@ -214,9 +231,10 @@ textarea:focus {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  border: 1px solid #dddddd;
-  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
   background: #ffffff;
+  box-shadow: var(--shadow-soft);
 }
 
 .data-table {
@@ -227,7 +245,7 @@ textarea:focus {
 
 .data-table th,
 .data-table td {
-  border-bottom: 1px solid #eeeeee;
+  border-bottom: 1px solid var(--color-border);
   padding: 0.65rem 0.75rem;
   text-align: left;
   vertical-align: top;
@@ -235,8 +253,8 @@ textarea:focus {
 }
 
 .data-table th {
-  background: #f8faff;
-  color: #1f3550;
+  background: var(--color-surface-soft);
+  color: var(--color-ink);
   font-weight: 700;
 }
 
@@ -263,9 +281,10 @@ textarea:focus {
   max-height: 90vh;
   overflow: auto;
   background: #ffffff;
-  border: 1px solid #dddddd;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 1rem;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
 }
 
 .modal-card-wide {
@@ -293,9 +312,9 @@ textarea:focus {
 }
 
 .employee-modal-panel {
-  border: 1px solid #edf2f6;
-  border-radius: 10px;
-  padding: 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
   background: #fbfdff;
   min-height: 0;
   overflow: hidden;
@@ -330,8 +349,8 @@ textarea:focus {
 }
 
 .employee-page-panel {
-  border: 1px solid #edf2f6;
-  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
   padding: 1rem;
   background: #fbfdff;
   min-height: 0;
@@ -384,11 +403,11 @@ textarea:focus {
 
 .details-grid dt {
   font-weight: 600;
-  color: #39505f;
+  color: var(--color-ink-soft);
 }
 
 .details-grid dd {
-  color: #1f3550;
+  color: var(--color-ink);
 }
 
 .details-subhead {
@@ -467,8 +486,8 @@ textarea:focus {
 
 .permissions-group {
   padding: 0.8rem;
-  border: 1px solid #edf2f6;
-  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
   background: #fbfdff;
 }
 

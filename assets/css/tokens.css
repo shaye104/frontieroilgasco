@@ -1,16 +1,17 @@
 :root {
-  --font-heading: "Lexend", "Avenir Next", "Segoe UI", sans-serif;
-  --font-body: "Lexend", "Trebuchet MS", sans-serif;
+  --font-heading: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --color-bg: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-soft: #f6fafb;
-  --color-ink: #0f2530;
-  --color-ink-soft: #3f5967;
-  --color-primary: #1155cc;
-  --color-primary-strong: #3c78d8;
-  --color-secondary: #6d9eeb;
-  --color-border: #d5e1e8;
+  --color-surface-soft: #f8fafc;
+  --color-ink: #0f172a;
+  --color-ink-soft: #334155;
+  --color-muted: #64748b;
+  --color-primary: #253475;
+  --color-primary-strong: #1f2b60;
+  --color-secondary: #5776b7;
+  --color-border: #e2e8f0;
   --color-success: #167e62;
   --color-danger: #b43f3f;
 
@@ -18,7 +19,7 @@
   --radius-md: 16px;
   --radius-lg: 22px;
 
-  --shadow-soft: 0 10px 30px rgba(14, 41, 54, 0.08);
+  --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.05);
 
   --space-1: 0.5rem;
   --space-2: 0.75rem;

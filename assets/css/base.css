@@ -12,7 +12,7 @@ body {
   font-family: var(--font-body);
   color: var(--color-ink);
   background: #ffffff;
-  line-height: 1.5;
+  line-height: 1.58;
 }
 
 a {
@@ -31,10 +31,12 @@ h3 {
   font-family: var(--font-heading);
   letter-spacing: -0.02em;
   line-height: 1.15;
+  color: var(--color-ink);
 }
 
 p {
   margin: 0 0 var(--space-3);
+  color: var(--color-ink-soft);
 }
 
 .container {
@@ -57,7 +59,7 @@ p {
 }
 
 .lead {
-  color: var(--color-ink-soft);
+  color: var(--color-muted);
   font-size: 1.1rem;
   max-width: 60ch;
 }
@@ -71,8 +73,8 @@ p {
   top: 0;
   z-index: 10;
   background: #ffffff;
-  border-bottom: 1px solid #dddddd;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: none;
 }
 
 .header-row {
@@ -97,7 +99,7 @@ p {
   border-radius: 8px;
   display: inline-grid;
   place-items: center;
-  background: linear-gradient(160deg, var(--color-primary), var(--color-primary-strong));
+  background: linear-gradient(160deg, var(--color-primary), var(--color-secondary));
   color: #fff;
   font-family: var(--font-heading);
   font-size: 0.78rem;
@@ -117,18 +119,29 @@ p {
 }
 
 .site-nav a:not(.btn) {
-  color: #3f5967;
+  color: var(--color-ink-soft);
   font-weight: 600;
+  text-decoration: none;
+  padding: 0.3rem 0.1rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.18s ease, border-color 0.18s ease;
 }
 
 .site-nav a:not(.btn):hover {
-  color: var(--color-primary);
+  color: var(--color-secondary);
+  border-bottom-color: color-mix(in srgb, var(--color-secondary) 55%, white);
   text-decoration: none;
+}
+
+.site-nav a.is-active:not(.btn),
+.site-nav a[aria-current='page']:not(.btn) {
+  color: var(--color-secondary);
+  border-bottom-color: var(--color-secondary);
 }
 
 .site-footer {
   border-top: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.8);
+  background: #ffffff;
 }
 
 .footer-row {
