@@ -7,7 +7,6 @@ import {
   listVoyageLogs,
   searchEmployees,
   updateVoyageDetails,
-  updateVoyageLog,
   updateVoyageManifest,
   updateVoyageShipStatus
 } from './admin-api.js';
@@ -30,16 +29,21 @@ function debounce(fn, wait = 300) {
   };
 }
 
+function formatWhen(value) {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? text(value) : date.toLocaleString();
+}
+
 function formatGuilders(value) {
   const num = Number(value || 0);
   if (!Number.isFinite(num)) return 'ƒ 0';
   return `ƒ ${num.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-function formatWhen(value) {
-  if (!value) return 'N/A';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? text(value) : date.toLocaleString();
+function toNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
 }
 
 function parseVoyageId() {
@@ -66,53 +70,64 @@ export async function initVoyageDetails(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const heading = document.querySelector(config.headingSelector);
   const fieldList = document.querySelector(config.fieldListSelector);
+  const shipStatusControls = document.querySelector(config.shipStatusControlsSelector);
+  const shipUnderwayBtn = document.querySelector(config.shipUnderwaySelector);
+  const shipInPortBtn = document.querySelector(config.shipInPortSelector);
   const manifestBody = document.querySelector(config.manifestBodySelector);
   const buyTotalText = document.querySelector(config.buyTotalSelector);
   const saveManifestBtn = document.querySelector(config.saveManifestButtonSelector);
-  const endVoyageBtn = document.querySelector(config.endButtonSelector);
-  const addLogForm = document.querySelector(config.addLogFormSelector);
-  const logList = document.querySelector(config.logListSelector);
-  const endForm = document.querySelector(config.endFormSelector);
-  const cargoLostEditor = document.querySelector(config.cargoLostEditorSelector);
   const addCargoBtn = document.querySelector(config.addCargoButtonSelector);
   const addCargoForm = document.querySelector(config.addCargoFormSelector);
   const addCargoTypeSelect = document.querySelector(config.addCargoTypeSelector);
-  const shipStatusControls = document.querySelector(config.shipStatusControlsSelector);
-  const shipInPortBtn = document.querySelector(config.shipInPortSelector);
-  const shipUnderwayBtn = document.querySelector(config.shipUnderwaySelector);
+  const addLogForm = document.querySelector(config.addLogFormSelector);
+  const logList = document.querySelector(config.logListSelector);
+  const endSection = document.querySelector(config.endVoyageSectionSelector);
+  const endForm = document.querySelector(config.endFormSelector);
+  const cargoLostEditor = document.querySelector(config.cargoLostEditorSelector);
+  const finaliseHoldBtn = document.querySelector(config.finaliseHoldButtonSelector);
+  const cancelHoldBtn = document.querySelector(config.cancelVoyageHoldButtonSelector);
+  const breakdownBuyTotal = document.querySelector(config.breakdownBuyTotalSelector);
+  const breakdownProfit = document.querySelector(config.breakdownProfitSelector);
+  const breakdownCompanyShare = document.querySelector(config.breakdownCompanyShareSelector);
+  const breakdownHint = document.querySelector(config.breakdownHintSelector);
+  const sellMultiplierInput = document.querySelector(config.sellMultiplierSelector);
+  const baseSellPriceInput = document.querySelector(config.baseSellPriceSelector);
+
   const updateFieldForm = document.querySelector(config.updateFieldFormSelector);
   const updateFieldTitle = document.querySelector(config.updateFieldTitleSelector);
   const updateFieldKey = document.querySelector(config.updateFieldKeySelector);
   const updateFieldControls = document.querySelector(config.updateFieldControlsSelector);
-  const cancelVoyageWrap = document.querySelector(config.cancelVoyageWrapSelector);
-  const cancelVoyageHoldBtn = document.querySelector(config.cancelVoyageHoldButtonSelector);
-  const cancelVoyageProgress = document.querySelector(config.cancelVoyageProgressSelector);
 
   if (
     !feedback ||
     !heading ||
     !fieldList ||
+    !shipStatusControls ||
+    !shipUnderwayBtn ||
+    !shipInPortBtn ||
     !manifestBody ||
     !buyTotalText ||
     !saveManifestBtn ||
-    !endVoyageBtn ||
-    !addLogForm ||
-    !logList ||
-    !endForm ||
-    !cargoLostEditor ||
     !addCargoBtn ||
     !addCargoForm ||
     !addCargoTypeSelect ||
-    !shipStatusControls ||
-    !shipInPortBtn ||
-    !shipUnderwayBtn ||
+    !addLogForm ||
+    !logList ||
+    !endSection ||
+    !endForm ||
+    !cargoLostEditor ||
+    !finaliseHoldBtn ||
+    !cancelHoldBtn ||
+    !breakdownBuyTotal ||
+    !breakdownProfit ||
+    !breakdownCompanyShare ||
+    !breakdownHint ||
+    !sellMultiplierInput ||
+    !baseSellPriceInput ||
     !updateFieldForm ||
     !updateFieldTitle ||
     !updateFieldKey ||
-    !updateFieldControls ||
-    !cancelVoyageWrap ||
-    !cancelVoyageHoldBtn ||
-    !cancelVoyageProgress
+    !updateFieldControls
   ) {
     return;
   }
@@ -127,41 +142,100 @@ export async function initVoyageDetails(config) {
   let manifest = [];
   let logs = [];
   const searchCache = new Map();
-  let cancelHoldTimer = null;
-  let cancelHoldStart = 0;
-  let cancelHoldRaf = null;
+  let holdTimer = null;
+  let holdAnimation = null;
+  let activeHoldButton = null;
+  let holdStartedAt = 0;
 
-  async function lookupEmployees(queryKind, query) {
-    const clean = normalize(query);
-    if (!clean) return [];
-    const key = `${queryKind}:${clean}`;
-    if (searchCache.has(key)) return searchCache.get(key);
-    const payload = await searchEmployees(queryKind === 'serial' ? { serial: clean, limit: 12 } : { username: clean, limit: 12 });
-    const results = payload.employees || [];
-    searchCache.set(key, results);
-    return results;
+  function isOngoing() {
+    return String(detail?.voyage?.status || '') === 'ONGOING';
   }
 
-  function getCurrentCrewIds() {
-    return (detail?.crew || []).map((member) => Number(member.id)).filter((id) => Number.isInteger(id));
+  function canEdit() {
+    return Boolean(detail?.permissions?.canEdit) && isOngoing();
+  }
+
+  function stopHoldEffect() {
+    if (holdTimer) {
+      window.clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+    if (holdAnimation) {
+      window.cancelAnimationFrame(holdAnimation);
+      holdAnimation = null;
+    }
+    if (activeHoldButton) {
+      activeHoldButton.style.boxShadow = '';
+      activeHoldButton = null;
+    }
+    holdStartedAt = 0;
+  }
+
+  function startHoldAction(button, action) {
+    if (!canEdit()) return;
+    stopHoldEffect();
+    activeHoldButton = button;
+    holdStartedAt = Date.now();
+    const tick = () => {
+      const pct = Math.min(1, (Date.now() - holdStartedAt) / 3000);
+      button.style.boxShadow = `inset 0 0 0 999px rgba(0, 0, 0, ${0.28 * pct})`;
+      if (pct < 1) holdAnimation = window.requestAnimationFrame(tick);
+    };
+    holdAnimation = window.requestAnimationFrame(tick);
+    holdTimer = window.setTimeout(async () => {
+      stopHoldEffect();
+      await action();
+    }, 3000);
+  }
+
+  function bindHoldButton(button, action) {
+    const start = () => startHoldAction(button, action);
+    const end = () => stopHoldEffect();
+    button.addEventListener('pointerdown', start);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((eventName) => button.addEventListener(eventName, end));
+  }
+
+  async function lookupEmployees(mode, query) {
+    const clean = normalize(query);
+    if (!clean) return [];
+    const key = `${mode}:${clean}`;
+    if (searchCache.has(key)) return searchCache.get(key);
+    const payload = await searchEmployees(mode === 'username' ? { username: clean, limit: 12 } : { serial: clean, limit: 12 });
+    const rows = payload.employees || [];
+    searchCache.set(key, rows);
+    return rows;
+  }
+
+  function syncBreakdown() {
+    const buyTotal = manifest.reduce((sum, line) => sum + Number(line.line_total || Number(line.quantity || 0) * Number(line.buy_price || 0)), 0);
+    breakdownBuyTotal.textContent = formatGuilders(buyTotal);
+    buyTotalText.textContent = formatGuilders(buyTotal);
+
+    const sellMultiplier = toNumber(sellMultiplierInput.value);
+    const baseSellPrice = toNumber(baseSellPriceInput.value);
+    if (sellMultiplier === null || baseSellPrice === null) {
+      breakdownProfit.textContent = '—';
+      breakdownCompanyShare.textContent = '—';
+      breakdownHint.textContent = 'Enter sell details in End Voyage to calculate.';
+      return;
+    }
+
+    const profit = sellMultiplier * baseSellPrice - buyTotal;
+    const companyShare = Math.max(profit, 0) * 0.1;
+    breakdownProfit.textContent = formatGuilders(profit);
+    breakdownCompanyShare.textContent = formatGuilders(companyShare);
+    breakdownHint.textContent = '';
   }
 
   function renderStatusControls() {
-    if (String(detail.voyage.status) !== 'ONGOING') {
-      shipStatusControls.classList.add('hidden');
-      return;
-    }
-    shipStatusControls.classList.remove('hidden');
-    const canEdit = Boolean(detail.permissions?.canEdit);
-    const status = String(detail.voyage.ship_status || 'IN_PORT');
-    shipInPortBtn.disabled = !canEdit || status === 'IN_PORT';
-    shipUnderwayBtn.disabled = !canEdit || status === 'UNDERWAY';
+    const underway = String(detail.voyage.ship_status || 'IN_PORT') === 'UNDERWAY';
+    shipUnderwayBtn.disabled = !canEdit() || underway;
+    shipInPortBtn.disabled = !canEdit() || !underway;
   }
 
   function renderFieldList() {
     const voyage = detail.voyage;
     const crewNames = (detail.crew || []).map((entry) => text(entry.roblox_username)).join(', ') || 'N/A';
-    const canEdit = Boolean(detail.permissions?.canEdit);
     const rows = [
       { key: 'departurePort', label: 'Port of Departure', value: text(voyage.departure_port) },
       { key: 'destinationPort', label: 'Port of Destination', value: text(voyage.destination_port) },
@@ -176,6 +250,8 @@ export async function initVoyageDetails(config) {
       { key: 'endedAt', label: 'Ended', value: voyage.status === 'ENDED' ? formatWhen(voyage.ended_at) : 'N/A' }
     ];
 
+    const editableKeys = new Set(['departurePort', 'destinationPort', 'vesselName', 'vesselClass', 'vesselCallsign', 'officerOfWatchEmployeeId', 'crewComplementIds']);
+
     fieldList.innerHTML = rows
       .map(
         (row) => `<div class="voyage-field-row">
@@ -184,10 +260,7 @@ export async function initVoyageDetails(config) {
             <p class="voyage-field-value">${row.value}</p>
           </div>
           ${
-            canEdit &&
-            ['departurePort', 'destinationPort', 'vesselName', 'vesselClass', 'vesselCallsign', 'officerOfWatchEmployeeId', 'crewComplementIds'].includes(
-              row.key
-            )
+            canEdit() && editableKeys.has(row.key)
               ? `<button class="btn btn-secondary btn-pencil" type="button" data-edit-field="${row.key}" aria-label="Edit ${row.label}">✏</button>`
               : ''
           }
@@ -197,22 +270,21 @@ export async function initVoyageDetails(config) {
 
     fieldList.querySelectorAll('[data-edit-field]').forEach((button) => {
       button.addEventListener('click', () => {
-        const fieldKey = button.getAttribute('data-edit-field');
-        if (fieldKey) openFieldModal(fieldKey);
+        const key = button.getAttribute('data-edit-field');
+        if (key) openFieldModal(key);
       });
     });
   }
 
   function renderManifest() {
-    const canEdit = Boolean(detail.permissions?.canEdit);
     manifestBody.innerHTML = manifest
       .map(
         (line) => `<tr data-cargo-id="${line.cargo_type_id}">
           <td>${text(line.cargo_name)}</td>
-          <td><input data-field="quantity" type="number" min="0" step="1" value="${Number(line.quantity || 0)}" ${canEdit ? '' : 'disabled'} /></td>
-          <td><input data-field="buyPrice" type="number" min="0" step="0.01" value="${Number(line.buy_price || 0)}" ${canEdit ? '' : 'disabled'} /></td>
+          <td><input data-field="quantity" type="number" min="0" step="1" value="${Number(line.quantity || 0)}" ${canEdit() ? '' : 'disabled'} /></td>
+          <td><input data-field="buyPrice" type="number" min="0" step="0.01" value="${Number(line.buy_price || 0)}" ${canEdit() ? '' : 'disabled'} /></td>
           <td>${formatGuilders(line.line_total)}</td>
-          <td>${canEdit ? `<button class="btn btn-secondary" type="button" data-remove-line="${line.cargo_type_id}">Remove</button>` : '-'}</td>
+          <td>${canEdit() ? `<button class="btn btn-secondary" type="button" data-remove-line="${line.cargo_type_id}">Remove</button>` : '-'}</td>
         </tr>`
       )
       .join('');
@@ -223,60 +295,13 @@ export async function initVoyageDetails(config) {
         manifest = manifest.filter((line) => Number(line.cargo_type_id) !== cargoId);
         renderManifest();
         renderCargoLostEditor();
+        syncBreakdown();
       });
     });
 
-    const buyTotal = manifest.reduce((acc, line) => acc + Number(line.line_total || Number(line.quantity || 0) * Number(line.buy_price || 0)), 0);
-    buyTotalText.textContent = formatGuilders(buyTotal);
-    if (canEdit) {
-      saveManifestBtn.classList.remove('hidden');
-      addCargoBtn.classList.remove('hidden');
-    } else {
-      saveManifestBtn.classList.add('hidden');
-      addCargoBtn.classList.add('hidden');
-    }
-  }
-
-  function renderLogs() {
-    if (!logs.length) {
-      logList.innerHTML = '<li class="role-item"><span class="role-id">No ship log entries yet.</span></li>';
-      return;
-    }
-
-    const canEdit = Boolean(detail.permissions?.canEdit);
-    logList.innerHTML = logs
-      .map(
-        (entry) => `<li class="role-item">
-          <span class="role-id">${formatWhen(entry.created_at)} | ${text(entry.author_name)} | ${
-            String(entry.log_type || 'manual') === 'system' ? '[System] ' : ''
-          }${text(entry.message)}</span>
-          ${
-            canEdit && String(entry.log_type || 'manual') === 'manual'
-              ? `<button class="btn btn-secondary" type="button" data-edit-log="${entry.id}" data-current-message="${encodeURIComponent(
-                  entry.message || ''
-                )}">Edit</button>`
-              : ''
-          }
-        </li>`
-      )
-      .join('');
-
-    if (canEdit) {
-      logList.querySelectorAll('[data-edit-log]').forEach((button) => {
-        button.addEventListener('click', async () => {
-          const logId = Number(button.getAttribute('data-edit-log'));
-          const current = decodeURIComponent(button.getAttribute('data-current-message') || '');
-          const next = window.prompt('Edit ship log entry', current);
-          if (!next || !next.trim()) return;
-          try {
-            await updateVoyageLog(voyageId, logId, next.trim());
-            await loadLogs();
-          } catch (error) {
-            showMessage(feedback, error.message || 'Unable to edit ship log entry.', 'error');
-          }
-        });
-      });
-    }
+    addCargoBtn.classList.toggle('hidden', !canEdit());
+    saveManifestBtn.classList.toggle('hidden', !canEdit());
+    syncBreakdown();
   }
 
   function renderCargoLostEditor() {
@@ -284,10 +309,45 @@ export async function initVoyageDetails(config) {
       .map(
         (line) => `<div>
           <label>${text(line.cargo_name)} (max ${Number(line.quantity || 0)})</label>
-          <input type="number" min="0" max="${Number(line.quantity || 0)}" step="1" data-loss-cargo-id="${line.cargo_type_id}" value="0" />
+          <input type="number" min="0" max="${Number(line.quantity || 0)}" step="1" data-loss-cargo-id="${line.cargo_type_id}" value="0" ${canEdit() ? '' : 'disabled'} />
         </div>`
       )
       .join('');
+  }
+
+  function renderLogs() {
+    if (!logs.length) {
+      logList.innerHTML = '<li class="role-item"><span class="role-id">No ship log entries yet.</span></li>';
+      return;
+    }
+    logList.innerHTML = logs
+      .map(
+        (entry) => `<li class="role-item">
+          <span class="role-id">${formatWhen(entry.created_at)} | ${text(entry.author_name)} | ${
+            String(entry.log_type || 'manual') === 'system' ? '[System] ' : ''
+          }${text(entry.message)}</span>
+        </li>`
+      )
+      .join('');
+  }
+
+  async function loadSummary() {
+    detail = await getVoyage(voyageId, { includeSetup: true, includeManifest: false, includeLogs: false });
+    heading.textContent = `${text(detail.voyage.vessel_name)} | ${text(detail.voyage.vessel_callsign)} | ${text(detail.voyage.status)}`;
+    renderStatusControls();
+    renderFieldList();
+    const ongoing = isOngoing();
+    endSection.classList.toggle('hidden', !(detail.permissions?.canEnd && ongoing));
+    addLogForm.classList.toggle('hidden', !(detail.permissions?.canEdit && ongoing));
+    const cargoTypes = detail.voyageConfig?.cargoTypes || [];
+    addCargoTypeSelect.innerHTML = ['<option value="">Select cargo type</option>', ...cargoTypes.map((item) => `<option value="${item.id}">${item.name}</option>`)].join('');
+    if (!ongoing) {
+      finaliseHoldBtn.disabled = true;
+      cancelHoldBtn.disabled = true;
+    } else {
+      finaliseHoldBtn.disabled = !detail.permissions?.canEnd;
+      cancelHoldBtn.disabled = !detail.permissions?.canEnd;
+    }
   }
 
   async function loadManifest() {
@@ -298,27 +358,9 @@ export async function initVoyageDetails(config) {
   }
 
   async function loadLogs() {
-    const payload = await listVoyageLogs(voyageId, { page: 1, pageSize: 80 });
+    const payload = await listVoyageLogs(voyageId, { page: 1, pageSize: 120 });
     logs = payload.logs || [];
     renderLogs();
-  }
-
-  async function refreshSummary() {
-    detail = await getVoyage(voyageId, { includeSetup: true, includeManifest: false, includeLogs: false });
-    heading.textContent = `${text(detail.voyage.vessel_name)} | ${text(detail.voyage.vessel_callsign)} | ${text(detail.voyage.status)}`;
-    renderStatusControls();
-    renderFieldList();
-
-    const availableCargo = detail.voyageConfig?.cargoTypes || [];
-    addCargoTypeSelect.innerHTML = ['<option value="">Select cargo type</option>', ...availableCargo.map((cargo) => `<option value="${cargo.id}">${cargo.name}</option>`)].join('');
-
-    if (detail.permissions?.canEnd) endVoyageBtn.classList.remove('hidden');
-    else endVoyageBtn.classList.add('hidden');
-    if (detail.permissions?.canEdit) addLogForm.classList.remove('hidden');
-    else addLogForm.classList.add('hidden');
-    if (detail.permissions?.canEnd && String(detail.voyage.status) === 'ONGOING') cancelVoyageWrap.classList.remove('hidden');
-    else cancelVoyageWrap.classList.add('hidden');
-    cancelVoyageHoldBtn.disabled = !(detail.permissions?.canEnd && String(detail.voyage.status) === 'ONGOING');
   }
 
   function openFieldModal(fieldKey) {
@@ -331,47 +373,47 @@ export async function initVoyageDetails(config) {
 
     if (fieldKey === 'departurePort' || fieldKey === 'destinationPort') {
       const current = fieldKey === 'departurePort' ? voyage.departure_port : voyage.destination_port;
-      updateFieldTitle.textContent = `Update ${fieldKey === 'departurePort' ? 'Port of Departure' : 'Port of Destination'}`;
-      updateFieldControls.innerHTML = `<label>Port</label><select name="value" required>${ports
-        .map((item) => `<option value="${item.value}" ${item.value === current ? 'selected' : ''}>${item.value}</option>`)
+      updateFieldTitle.textContent = fieldKey === 'departurePort' ? 'Update Port of Departure' : 'Update Port of Destination';
+      updateFieldControls.innerHTML = `<label>Port</label><select name="value">${ports
+        .map((entry) => `<option value="${entry.value}" ${entry.value === current ? 'selected' : ''}>${entry.value}</option>`)
         .join('')}</select>`;
     } else if (fieldKey === 'vesselName' || fieldKey === 'vesselClass' || fieldKey === 'vesselCallsign') {
       const map = {
-        vesselName: { label: 'Vessel Name', items: vesselNames, current: voyage.vessel_name },
-        vesselClass: { label: 'Vessel Class', items: vesselClasses, current: voyage.vessel_class },
-        vesselCallsign: { label: 'Vessel Callsign', items: vesselCallsigns, current: voyage.vessel_callsign }
+        vesselName: { title: 'Update Vessel Name', current: voyage.vessel_name, items: vesselNames },
+        vesselClass: { title: 'Update Vessel Class', current: voyage.vessel_class, items: vesselClasses },
+        vesselCallsign: { title: 'Update Vessel Callsign', current: voyage.vessel_callsign, items: vesselCallsigns }
       };
       const info = map[fieldKey];
-      updateFieldTitle.textContent = `Update ${info.label}`;
-      updateFieldControls.innerHTML = `<label>${info.label}</label><select name="value" required>${info.items
-        .map((item) => `<option value="${item.value}" ${item.value === info.current ? 'selected' : ''}>${item.value}</option>`)
+      updateFieldTitle.textContent = info.title;
+      updateFieldControls.innerHTML = `<label>Value</label><select name="value">${info.items
+        .map((entry) => `<option value="${entry.value}" ${entry.value === info.current ? 'selected' : ''}>${entry.value}</option>`)
         .join('')}</select>`;
     } else if (fieldKey === 'officerOfWatchEmployeeId') {
       updateFieldTitle.textContent = 'Update Officer of the Watch';
       updateFieldControls.innerHTML = `
-        <label>Roblox Username Search</label>
-        <input name="search" id="fieldOowSearch" type="text" autocomplete="off" placeholder="Search by Roblox username" />
-        <input name="selectedId" id="fieldOowSelectedId" type="hidden" value="${voyage.officer_of_watch_employee_id}" />
-        <p id="fieldOowSelected" class="muted">Selected: ${text(voyage.officer_name)}</p>
-        <div id="fieldOowResults" class="autocomplete-list"></div>`;
-      const search = updateFieldControls.querySelector('#fieldOowSearch');
-      const results = updateFieldControls.querySelector('#fieldOowResults');
-      const selectedId = updateFieldControls.querySelector('#fieldOowSelectedId');
-      const selectedText = updateFieldControls.querySelector('#fieldOowSelected');
+        <label>Search Roblox Username</label>
+        <input id="pickerOowSearch" type="text" autocomplete="off" placeholder="Type username..." />
+        <input id="pickerOowSelectedId" type="hidden" value="${voyage.officer_of_watch_employee_id}" />
+        <p id="pickerOowSelected" class="muted">Selected: ${text(voyage.officer_name)}</p>
+        <div id="pickerOowResults" class="autocomplete-list"></div>`;
+      const search = updateFieldControls.querySelector('#pickerOowSearch');
+      const results = updateFieldControls.querySelector('#pickerOowResults');
+      const selectedId = updateFieldControls.querySelector('#pickerOowSelectedId');
+      const selectedText = updateFieldControls.querySelector('#pickerOowSelected');
+
       const runSearch = debounce(async () => {
-        const items = await lookupEmployees('username', search.value);
-        results.innerHTML = items
+        const rows = await lookupEmployees('username', search.value);
+        results.innerHTML = rows
           .map(
-            (employee) => `<button class="autocomplete-item" type="button" data-pick-id="${employee.id}">
-              <span>${text(employee.roblox_username)}</span>
-              <small>${text(employee.serial_number)}</small>
+            (row) => `<button class="autocomplete-item" type="button" data-pick-id="${row.id}">
+              <span>${text(row.roblox_username)}</span><small>${text(row.serial_number)}</small>
             </button>`
           )
           .join('');
         results.querySelectorAll('[data-pick-id]').forEach((button) => {
           button.addEventListener('click', () => {
             const id = Number(button.getAttribute('data-pick-id'));
-            const employee = (detail.employees || []).find((entry) => Number(entry.id) === id);
+            const employee = (detail.employees || []).find((row) => Number(row.id) === id);
             selectedId.value = String(id);
             selectedText.textContent = `Selected: ${text(employee?.roblox_username || `#${id}`)}`;
             search.value = '';
@@ -383,23 +425,16 @@ export async function initVoyageDetails(config) {
       search.addEventListener('focus', runSearch);
     } else if (fieldKey === 'crewComplementIds') {
       updateFieldTitle.textContent = 'Update Crew Complement';
-      const currentCrewIds = getCurrentCrewIds();
-      const currentCrewHtml = currentCrewIds
-        .map((id) => {
-          const employee = (detail.employees || []).find((entry) => Number(entry.id) === id);
-          return `<span class="pill">${text(employee?.roblox_username || `#${id}`)} <button class="pill-close" type="button" data-remove-crew="${id}">x</button></span>`;
-        })
-        .join('');
-      updateFieldControls.innerHTML = `
-        <label>Username Search</label>
-        <input id="fieldCrewSearch" type="text" autocomplete="off" placeholder="Search by Roblox username" />
-        <div id="fieldCrewResults" class="autocomplete-list"></div>
-        <div id="fieldCrewSelected" class="pill-list">${currentCrewHtml || '<span class="muted">No crew selected.</span>'}</div>`;
-      const selectedCrew = new Set(currentCrewIds);
-      const search = updateFieldControls.querySelector('#fieldCrewSearch');
-      const results = updateFieldControls.querySelector('#fieldCrewResults');
-      const selected = updateFieldControls.querySelector('#fieldCrewSelected');
+      const selectedCrew = new Set((detail.crew || []).map((row) => Number(row.id)));
       const oowId = Number(detail.voyage.officer_of_watch_employee_id || 0);
+      updateFieldControls.innerHTML = `
+        <label>Search Roblox Username</label>
+        <input id="pickerCrewSearch" type="text" autocomplete="off" placeholder="Type username..." />
+        <div id="pickerCrewResults" class="autocomplete-list"></div>
+        <div id="pickerCrewSelected" class="pill-list"></div>`;
+      const search = updateFieldControls.querySelector('#pickerCrewSearch');
+      const results = updateFieldControls.querySelector('#pickerCrewResults');
+      const selected = updateFieldControls.querySelector('#pickerCrewSelected');
 
       const renderSelected = () => {
         updateFieldControls.setAttribute('data-crew-values', JSON.stringify([...selectedCrew]));
@@ -409,37 +444,33 @@ export async function initVoyageDetails(config) {
         }
         selected.innerHTML = [...selectedCrew]
           .map((id) => {
-            const employee = (detail.employees || []).find((entry) => Number(entry.id) === id);
-            return `<span class="pill">${text(employee?.roblox_username || `#${id}`)} <button class="pill-close" type="button" data-remove-crew="${id}">x</button></span>`;
+            const employee = (detail.employees || []).find((row) => Number(row.id) === id);
+            return `<span class="pill">${text(employee?.roblox_username || `#${id}`)} <button class="pill-close" type="button" data-remove-id="${id}">x</button></span>`;
           })
           .join('');
-        selected.querySelectorAll('[data-remove-crew]').forEach((button) => {
+        selected.querySelectorAll('[data-remove-id]').forEach((button) => {
           button.addEventListener('click', () => {
-            const id = Number(button.getAttribute('data-remove-crew'));
+            const id = Number(button.getAttribute('data-remove-id'));
             selectedCrew.delete(id);
             renderSelected();
           });
         });
       };
+
       const runSearch = debounce(async () => {
-        const items = (await lookupEmployees('username', search.value))
-          .filter((employee) => !selectedCrew.has(Number(employee.id)))
-          .filter((employee) => Number(employee.id) !== oowId);
-        results.innerHTML = items
+        const rows = (await lookupEmployees('username', search.value))
+          .filter((row) => Number(row.id) !== oowId)
+          .filter((row) => !selectedCrew.has(Number(row.id)));
+        results.innerHTML = rows
           .map(
-            (employee) => `<button class="autocomplete-item" type="button" data-pick-id="${employee.id}">
-              <span>${text(employee.roblox_username)}</span>
-              <small>Serial: ${text(employee.serial_number)}</small>
+            (row) => `<button class="autocomplete-item" type="button" data-pick-id="${row.id}">
+              <span>${text(row.roblox_username)}</span><small>${text(row.serial_number)}</small>
             </button>`
           )
           .join('');
         results.querySelectorAll('[data-pick-id]').forEach((button) => {
           button.addEventListener('click', () => {
             const id = Number(button.getAttribute('data-pick-id'));
-            if (id === oowId) {
-              showMessage(feedback, 'Officer of the Watch cannot be added to crew.', 'error');
-              return;
-            }
             selectedCrew.add(id);
             search.value = '';
             results.innerHTML = '';
@@ -459,24 +490,18 @@ export async function initVoyageDetails(config) {
     const fieldKey = String(updateFieldKey.value || '').trim();
     if (!fieldKey) return;
     const payload = {};
-
     if (fieldKey === 'departurePort') payload.departurePort = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
     if (fieldKey === 'destinationPort') payload.destinationPort = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
     if (fieldKey === 'vesselName') payload.vesselName = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
     if (fieldKey === 'vesselClass') payload.vesselClass = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
     if (fieldKey === 'vesselCallsign') payload.vesselCallsign = String(updateFieldControls.querySelector('[name="value"]')?.value || '');
-    if (fieldKey === 'officerOfWatchEmployeeId') {
-      payload.officerOfWatchEmployeeId = Number(updateFieldControls.querySelector('#fieldOowSelectedId')?.value || 0);
-    }
-    if (fieldKey === 'crewComplementIds') {
-      const raw = String(updateFieldControls.getAttribute('data-crew-values') || '[]');
-      payload.crewComplementIds = JSON.parse(raw);
-    }
+    if (fieldKey === 'officerOfWatchEmployeeId') payload.officerOfWatchEmployeeId = Number(updateFieldControls.querySelector('#pickerOowSelectedId')?.value || 0);
+    if (fieldKey === 'crewComplementIds') payload.crewComplementIds = JSON.parse(String(updateFieldControls.getAttribute('data-crew-values') || '[]'));
 
     await updateVoyageDetails(voyageId, payload);
     closeModal('updateFieldModal');
-    await refreshSummary();
-    showMessage(feedback, 'Voyage detail updated.', 'success');
+    await Promise.all([loadSummary(), loadLogs()]);
+    showMessage(feedback, 'Voyage profile updated.', 'success');
   }
 
   updateFieldForm.addEventListener('submit', async (event) => {
@@ -488,53 +513,38 @@ export async function initVoyageDetails(config) {
     }
   });
 
-  function stopCancelHold() {
-    if (cancelHoldTimer) {
-      window.clearTimeout(cancelHoldTimer);
-      cancelHoldTimer = null;
-    }
-    if (cancelHoldRaf) {
-      window.cancelAnimationFrame(cancelHoldRaf);
-      cancelHoldRaf = null;
-    }
-    cancelHoldStart = 0;
-    cancelVoyageProgress.style.width = '0%';
-  }
-
-  async function confirmCancelVoyage() {
+  shipUnderwayBtn.addEventListener('click', async () => {
+    if (!canEdit()) return;
     try {
-      await cancelVoyage(voyageId);
-      window.location.href = 'voyage-tracker.html';
+      await updateVoyageShipStatus(voyageId, 'UNDERWAY');
+      detail.voyage.ship_status = 'UNDERWAY';
+      renderStatusControls();
+      renderFieldList();
+      await loadLogs();
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to cancel voyage.', 'error');
-      stopCancelHold();
+      showMessage(feedback, error.message || 'Unable to update ship status.', 'error');
     }
-  }
+  });
 
-  function startCancelHold() {
-    if (String(detail?.voyage?.status) !== 'ONGOING' || !detail?.permissions?.canEnd) return;
-    stopCancelHold();
-    cancelHoldStart = Date.now();
-    const tick = () => {
-      const elapsed = Date.now() - cancelHoldStart;
-      const pct = Math.min(100, Math.round((elapsed / 3000) * 100));
-      cancelVoyageProgress.style.width = `${pct}%`;
-      if (pct < 100) cancelHoldRaf = window.requestAnimationFrame(tick);
-    };
-    cancelHoldRaf = window.requestAnimationFrame(tick);
-    cancelHoldTimer = window.setTimeout(() => {
-      cancelHoldTimer = null;
-      void confirmCancelVoyage();
-    }, 3000);
-  }
+  shipInPortBtn.addEventListener('click', async () => {
+    if (!canEdit()) return;
+    try {
+      await updateVoyageShipStatus(voyageId, 'IN_PORT');
+      detail.voyage.ship_status = 'IN_PORT';
+      renderStatusControls();
+      renderFieldList();
+      await loadLogs();
+    } catch (error) {
+      showMessage(feedback, error.message || 'Unable to update ship status.', 'error');
+    }
+  });
 
   saveManifestBtn.addEventListener('click', async () => {
-    const lines = [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => {
-      const cargoTypeId = Number(row.getAttribute('data-cargo-id'));
-      const quantity = Number(row.querySelector('input[data-field="quantity"]')?.value || 0);
-      const buyPrice = Number(row.querySelector('input[data-field="buyPrice"]')?.value || 0);
-      return { cargoTypeId, quantity, buyPrice };
-    });
+    const lines = [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => ({
+      cargoTypeId: Number(row.getAttribute('data-cargo-id')),
+      quantity: Number(row.querySelector('input[data-field="quantity"]')?.value || 0),
+      buyPrice: Number(row.querySelector('input[data-field="buyPrice"]')?.value || 0)
+    }));
     try {
       await updateVoyageManifest(voyageId, lines);
       await loadManifest();
@@ -552,8 +562,7 @@ export async function initVoyageDetails(config) {
     const quantity = Number(data.get('quantity'));
     const buyPrice = Number(data.get('buyPrice'));
     if (!Number.isInteger(cargoTypeId) || cargoTypeId <= 0) return;
-    const cargoType = (detail.voyageConfig?.cargoTypes || []).find((entry) => Number(entry.id) === cargoTypeId);
-    const existing = manifest.find((line) => Number(line.cargo_type_id) === cargoTypeId);
+    const cargoType = (detail.voyageConfig?.cargoTypes || []).find((row) => Number(row.id) === cargoTypeId);
     const next = {
       cargo_type_id: cargoTypeId,
       cargo_name: cargoType?.name || `Cargo #${cargoTypeId}`,
@@ -561,7 +570,8 @@ export async function initVoyageDetails(config) {
       buy_price: buyPrice,
       line_total: quantity * buyPrice
     };
-    manifest = existing ? manifest.map((line) => (Number(line.cargo_type_id) === cargoTypeId ? next : line)) : [...manifest, next];
+    const exists = manifest.some((line) => Number(line.cargo_type_id) === cargoTypeId);
+    manifest = exists ? manifest.map((line) => (Number(line.cargo_type_id) === cargoTypeId ? next : line)) : [...manifest, next];
     renderManifest();
     renderCargoLostEditor();
     closeModal('addCargoModal');
@@ -571,8 +581,10 @@ export async function initVoyageDetails(config) {
   addLogForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(addLogForm);
+    const message = String(data.get('message') || '').trim();
+    if (!message) return;
     try {
-      await createVoyageLog(voyageId, String(data.get('message') || '').trim());
+      await createVoyageLog(voyageId, message);
       addLogForm.reset();
       await loadLogs();
       showMessage(feedback, 'Ship log entry added.', 'success');
@@ -581,35 +593,30 @@ export async function initVoyageDetails(config) {
     }
   });
 
-  shipInPortBtn.addEventListener('click', async () => {
-    try {
-      await updateVoyageShipStatus(voyageId, 'IN_PORT');
-      detail.voyage.ship_status = 'IN_PORT';
-      renderStatusControls();
-      renderFieldList();
-      await loadLogs();
-    } catch (error) {
-      showMessage(feedback, error.message || 'Unable to update ship status.', 'error');
-    }
-  });
-  shipUnderwayBtn.addEventListener('click', async () => {
-    try {
-      await updateVoyageShipStatus(voyageId, 'UNDERWAY');
-      detail.voyage.ship_status = 'UNDERWAY';
-      renderStatusControls();
-      renderFieldList();
-      await loadLogs();
-    } catch (error) {
-      showMessage(feedback, error.message || 'Unable to update ship status.', 'error');
-    }
+  bindHoldButton(finaliseHoldBtn, async () => {
+    const data = new FormData(endForm);
+    const cargoLost = [...cargoLostEditor.querySelectorAll('[data-loss-cargo-id]')].map((input) => ({
+      cargoTypeId: Number(input.getAttribute('data-loss-cargo-id')),
+      lostQuantity: Number(input.value || 0)
+    }));
+    await endVoyage(voyageId, {
+      sellMultiplier: Number(data.get('sellMultiplier') || 0),
+      baseSellPrice: Number(data.get('baseSellPrice') || 0),
+      cargoLost
+    });
+    await Promise.all([loadSummary(), loadManifest(), loadLogs()]);
+    showMessage(feedback, 'Voyage finalized and archived.', 'success');
   });
 
-  endVoyageBtn.addEventListener('click', () => openModal('endVoyageModal'));
-  cancelVoyageHoldBtn.addEventListener('mousedown', startCancelHold);
-  cancelVoyageHoldBtn.addEventListener('touchstart', startCancelHold, { passive: true });
-  ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach((eventName) => {
-    cancelVoyageHoldBtn.addEventListener(eventName, stopCancelHold);
+  bindHoldButton(cancelHoldBtn, async () => {
+    await cancelVoyage(voyageId);
+    window.location.href = 'voyage-tracker.html';
   });
+
+  [sellMultiplierInput, baseSellPriceInput].forEach((input) => {
+    input.addEventListener('input', syncBreakdown);
+  });
+
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
       const modalId = button.getAttribute('data-close-modal');
@@ -617,34 +624,8 @@ export async function initVoyageDetails(config) {
     });
   });
 
-  endForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    stopCancelHold();
-    const data = new FormData(endForm);
-    const cargoLost = [...cargoLostEditor.querySelectorAll('[data-loss-cargo-id]')].map((input) => ({
-      cargoTypeId: Number(input.getAttribute('data-loss-cargo-id')),
-      lostQuantity: Number(input.value || 0)
-    }));
-    try {
-      await endVoyage(voyageId, {
-        sellMultiplier: Number(data.get('sellMultiplier')),
-        baseSellPrice: Number(data.get('baseSellPrice')),
-        cargoLost
-      });
-      closeModal('endVoyageModal');
-      endForm.reset();
-      await refreshSummary();
-      await loadManifest();
-      await loadLogs();
-      showMessage(feedback, 'Voyage ended and archived.', 'success');
-    } catch (error) {
-      showMessage(feedback, error.message || 'Unable to end voyage.', 'error');
-    }
-  });
-
   try {
-    await refreshSummary();
-    await Promise.all([loadManifest(), loadLogs()]);
+    await Promise.all([loadSummary(), loadManifest(), loadLogs()]);
     clearMessage(feedback);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load voyage details.', 'error');
