@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier intranet admin panel." />
-    <title>Frontier Oil & Gas Company | Admin Panel</title>
+    <meta name="description" content="Frontier forms categories management." />
+    <title>Frontier Oil & Gas Company | Manage Categories</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -34,17 +34,45 @@
     <main class="section">
       <div class="container intranet-layout">
         <section class="panel">
-          <h1>Admin Panel</h1>
+          <div class="modal-header">
+            <h1>Manage Categories</h1>
+            <a class="btn btn-secondary" href="/forms/config">&larr; Back to Forms Config</a>
+          </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="categoriesFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="panel hidden">
-          <h2>Administration</h2>
-          <ul class="link-list">
-            <li><a href="manage-employees.html">Manage Employees</a></li>
-            <li><a href="access-requests.html">Access Requests</a></li>
-            <li><a href="admin-config.html">System Config</a></li>
-          </ul>
+        <section id="protectedContent" class="hidden">
+          <article class="panel">
+            <div class="modal-header">
+              <h2>Categories</h2>
+              <button id="openCategoryFormBtn" class="btn btn-primary" type="button">+ New Category</button>
+            </div>
+            <ul id="categoryList" class="role-list"></ul>
+          </article>
+
+          <article id="categoryEditor" class="panel hidden">
+            <h2>Category Editor</h2>
+            <form id="categoryForm" class="two-column">
+              <input name="id" type="hidden" />
+              <div>
+                <label>Name</label>
+                <input name="name" type="text" required />
+              </div>
+              <div>
+                <label>Sort Order</label>
+                <input name="sortOrder" type="number" value="0" />
+              </div>
+              <div>
+                <label>Description</label>
+                <input name="description" type="text" />
+              </div>
+            </form>
+            <div class="modal-actions">
+              <button id="saveCategoryBtn" class="btn btn-primary" type="button">Save Category</button>
+              <button id="cancelCategoryBtn" class="btn btn-secondary" type="button">Cancel</button>
+            </div>
+          </article>
         </section>
       </div>
     </main>
@@ -55,6 +83,6 @@
       </div>
     </footer>
 
-    <script type="module" src="assets/js/pages/admin-panel-page.js"></script>
+    <script type="module" src="assets/js/pages/forms-categories-page.js"></script>
   </body>
 </html>

@@ -16,6 +16,7 @@ export async function initIntranetPageGuard(config) {
   const navLogoutButton = document.querySelector(config.navLogoutButtonSelector || '#navLogoutBtn');
   const adminNavLink = document.querySelector(config.adminNavLinkSelector || '#adminNavLink');
   const requireAdmin = Boolean(config.requireAdmin);
+  const requireFormsAdmin = Boolean(config.requireFormsAdmin);
   const requireEmployee = Boolean(config.requireEmployee);
 
   if (!feedback || !protectedContent) return null;
@@ -29,6 +30,11 @@ export async function initIntranetPageGuard(config) {
     }
 
     if (requireAdmin && !session.isAdmin) {
+      window.location.href = '/intranet.html?auth=denied&reason=admin_required';
+      return null;
+    }
+
+    if (requireFormsAdmin && !session.hasFormsAdmin) {
       window.location.href = '/intranet.html?auth=denied&reason=admin_required';
       return null;
     }

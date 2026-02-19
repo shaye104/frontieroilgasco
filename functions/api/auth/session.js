@@ -1,6 +1,13 @@
 import { json, readSessionFromRequest } from './_lib/auth.js';
 import { createOrRefreshAccessRequest, getEmployeeByDiscordUserId } from '../_lib/db.js';
 
+function getFormsAdminRoleIds(env) {
+  return String(env.FORMS_ADMIN_ROLE_IDS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => /^\d{6,30}$/.test(value));
+}
+
 export async function onRequest(context) {
   const { env, request } = context;
   if (!env.SESSION_SECRET) {
@@ -34,6 +41,11 @@ export async function onRequest(context) {
     displayName: payload.displayName,
     roles: payload.roles,
     isAdmin: Boolean(payload.isAdmin),
+    hasFormsAdmin: Boolean(
+      payload.isAdmin ||
+        (Array.isArray(payload.roles) &&
+          getFormsAdminRoleIds(env).some((roleId) => payload.roles.map((r) => String(r)).includes(roleId)))
+    ),
     hasEmployee: payload.isAdmin ? true : Boolean(employee),
     accessPending: payload.isAdmin ? false : !employee
   });

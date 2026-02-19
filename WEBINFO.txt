@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T14:19:44.168Z
+Generated: 2026-02-19T14:30:19.613Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -14,6 +14,10 @@ SITE STRUCTURE
 - employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
 - form-fill.html | title: Frontier Oil & Gas Company | Fill Form | primary heading: Form
 - forms-admin.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
+- forms-builder.html | title: Frontier Oil & Gas Company | Form Builder | primary heading: Form Builder
+- forms-categories.html | title: Frontier Oil & Gas Company | Manage Categories | primary heading: Manage Categories
+- forms-config.html | title: Frontier Oil & Gas Company | Forms Config | primary heading: Forms Config
+- forms-manage.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
 - forms-responses.html | title: Frontier Oil & Gas Company | Form Responses | primary heading: Form Responses
 - forms.html | title: Frontier Oil & Gas Company | Forms | primary heading: Forms
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
@@ -32,7 +36,10 @@ JAVASCRIPT MODULES
 - assets/js/modules/employee-profile.js | exports: No public exports
 - assets/js/modules/form-fill.js | exports: No public exports
 - assets/js/modules/forms-admin.js | exports: No public exports
+- assets/js/modules/forms-builder-admin.js | exports: No public exports
+- assets/js/modules/forms-categories-admin.js | exports: No public exports
 - assets/js/modules/forms-list.js | exports: No public exports
+- assets/js/modules/forms-manage-admin.js | exports: No public exports
 - assets/js/modules/forms-responses.js | exports: No public exports
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
 - assets/js/modules/intranet-page-guard.js | exports: No public exports
@@ -48,6 +55,10 @@ JAVASCRIPT MODULES
 - assets/js/pages/employee-profile-page.js | exports: No public exports
 - assets/js/pages/form-fill-page.js | exports: No public exports
 - assets/js/pages/forms-admin-page.js | exports: No public exports
+- assets/js/pages/forms-builder-page.js | exports: No public exports
+- assets/js/pages/forms-categories-page.js | exports: No public exports
+- assets/js/pages/forms-config-page.js | exports: No public exports
+- assets/js/pages/forms-manage-page.js | exports: No public exports
 - assets/js/pages/forms-page.js | exports: No public exports
 - assets/js/pages/forms-responses-page.js | exports: No public exports
 - assets/js/pages/home.js | exports: No public exports

@@ -1,10 +1,10 @@
 import { json } from '../../auth/_lib/auth.js';
-import { requireAdmin } from '../_lib/admin-auth.js';
+import { requireFormsAdmin } from '../../_lib/forms.js';
 import { getFormDetail, saveFormRelations } from '../../_lib/forms.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
-  const { errorResponse } = await requireAdmin(context);
+  const { errorResponse } = await requireFormsAdmin(context);
   if (errorResponse) return errorResponse;
 
   const forms = await env.DB
@@ -21,7 +21,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env } = context;
-  const { errorResponse, session } = await requireAdmin(context);
+  const { errorResponse, session } = await requireFormsAdmin(context);
   if (errorResponse) return errorResponse;
 
   let payload;

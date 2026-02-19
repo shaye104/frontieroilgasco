@@ -26,6 +26,30 @@ export async function requireAuthenticated(context) {
   return { errorResponse: null, session, employee };
 }
 
+function getFormsAdminRoleIds(env) {
+  return String(env.FORMS_ADMIN_ROLE_IDS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => /^\d{6,30}$/.test(value));
+}
+
+export function hasFormsAdminAccess(env, session) {
+  if (!session) return false;
+  if (session.isAdmin) return true;
+  const sessionRoles = Array.isArray(session.roles) ? session.roles.map((r) => String(r).trim()) : [];
+  const allowed = getFormsAdminRoleIds(env);
+  return allowed.some((roleId) => sessionRoles.includes(roleId));
+}
+
+export async function requireFormsAdmin(context) {
+  const auth = await requireAuthenticated(context);
+  if (auth.errorResponse) return auth;
+  if (!hasFormsAdminAccess(context.env, auth.session)) {
+    return { errorResponse: json({ error: 'Forbidden. Forms admin access required.' }, 403), session: null, employee: null };
+  }
+  return auth;
+}
+
 export function normalizeQuestion(input, index = 0) {
   const label = String(input?.label || '').trim();
   const questionType = String(input?.questionType || input?.type || '').trim();

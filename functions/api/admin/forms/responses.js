@@ -1,9 +1,9 @@
 import { json } from '../../auth/_lib/auth.js';
-import { requireAdmin } from '../_lib/admin-auth.js';
+import { requireFormsAdmin } from '../../_lib/forms.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const { errorResponse } = await requireAdmin(context);
+  const { errorResponse } = await requireFormsAdmin(context);
   if (errorResponse) return errorResponse;
 
   const url = new URL(request.url);
