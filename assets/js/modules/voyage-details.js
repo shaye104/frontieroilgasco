@@ -76,12 +76,12 @@ export async function initVoyageDetails(config) {
   const manifestBody = document.querySelector(config.manifestBodySelector);
   const buyTotalText = document.querySelector(config.buyTotalSelector);
   const saveManifestBtn = document.querySelector(config.saveManifestButtonSelector);
+  const openEndVoyageBtn = document.querySelector(config.openEndVoyageButtonSelector);
   const addCargoBtn = document.querySelector(config.addCargoButtonSelector);
   const addCargoForm = document.querySelector(config.addCargoFormSelector);
   const addCargoTypeSelect = document.querySelector(config.addCargoTypeSelector);
   const addLogForm = document.querySelector(config.addLogFormSelector);
   const logList = document.querySelector(config.logListSelector);
-  const endSection = document.querySelector(config.endVoyageSectionSelector);
   const endForm = document.querySelector(config.endFormSelector);
   const cargoLostEditor = document.querySelector(config.cargoLostEditorSelector);
   const finaliseHoldBtn = document.querySelector(config.finaliseHoldButtonSelector);
@@ -89,7 +89,7 @@ export async function initVoyageDetails(config) {
   const breakdownBuyTotal = document.querySelector(config.breakdownBuyTotalSelector);
   const breakdownProfit = document.querySelector(config.breakdownProfitSelector);
   const breakdownCompanyShare = document.querySelector(config.breakdownCompanyShareSelector);
-  const breakdownHint = document.querySelector(config.breakdownHintSelector);
+  const breakdownContainer = document.querySelector(config.breakdownContainerSelector);
   const sellMultiplierInput = document.querySelector(config.sellMultiplierSelector);
   const baseSellPriceInput = document.querySelector(config.baseSellPriceSelector);
 
@@ -108,12 +108,12 @@ export async function initVoyageDetails(config) {
     !manifestBody ||
     !buyTotalText ||
     !saveManifestBtn ||
+    !openEndVoyageBtn ||
     !addCargoBtn ||
     !addCargoForm ||
     !addCargoTypeSelect ||
     !addLogForm ||
     !logList ||
-    !endSection ||
     !endForm ||
     !cargoLostEditor ||
     !finaliseHoldBtn ||
@@ -121,7 +121,7 @@ export async function initVoyageDetails(config) {
     !breakdownBuyTotal ||
     !breakdownProfit ||
     !breakdownCompanyShare ||
-    !breakdownHint ||
+    !breakdownContainer ||
     !sellMultiplierInput ||
     !baseSellPriceInput ||
     !updateFieldForm ||
@@ -146,6 +146,7 @@ export async function initVoyageDetails(config) {
   let holdAnimation = null;
   let activeHoldButton = null;
   let holdStartedAt = 0;
+  let holdLock = false;
 
   function isOngoing() {
     return String(detail?.voyage?.status || '') === 'ONGOING';
@@ -165,20 +166,22 @@ export async function initVoyageDetails(config) {
       holdAnimation = null;
     }
     if (activeHoldButton) {
-      activeHoldButton.style.boxShadow = '';
+      activeHoldButton.style.setProperty('--hold-pct', '0%');
       activeHoldButton = null;
     }
     holdStartedAt = 0;
+    holdLock = false;
   }
 
   function startHoldAction(button, action) {
-    if (!canEdit()) return;
+    if (!canEdit() || holdLock) return;
     stopHoldEffect();
+    holdLock = true;
     activeHoldButton = button;
     holdStartedAt = Date.now();
     const tick = () => {
       const pct = Math.min(1, (Date.now() - holdStartedAt) / 3000);
-      button.style.boxShadow = `inset 0 0 0 999px rgba(0, 0, 0, ${0.28 * pct})`;
+      button.style.setProperty('--hold-pct', `${Math.floor(pct * 100)}%`);
       if (pct < 1) holdAnimation = window.requestAnimationFrame(tick);
     };
     holdAnimation = window.requestAnimationFrame(tick);
@@ -216,18 +219,23 @@ export async function initVoyageDetails(config) {
     if (sellMultiplier === null || baseSellPrice === null) {
       breakdownProfit.textContent = '—';
       breakdownCompanyShare.textContent = '—';
-      breakdownHint.textContent = 'Enter sell details in End Voyage to calculate.';
+      breakdownContainer.classList.add('hidden');
       return;
     }
+    breakdownContainer.classList.remove('hidden');
 
     const profit = sellMultiplier * baseSellPrice - buyTotal;
     const companyShare = Math.max(profit, 0) * 0.1;
     breakdownProfit.textContent = formatGuilders(profit);
     breakdownCompanyShare.textContent = formatGuilders(companyShare);
-    breakdownHint.textContent = '';
   }
 
   function renderStatusControls() {
+    if (!isOngoing()) {
+      shipStatusControls.classList.add('hidden');
+      return;
+    }
+    shipStatusControls.classList.remove('hidden');
     const underway = String(detail.voyage.ship_status || 'IN_PORT') === 'UNDERWAY';
     shipUnderwayBtn.disabled = !canEdit() || underway;
     shipInPortBtn.disabled = !canEdit() || !underway;
@@ -337,13 +345,14 @@ export async function initVoyageDetails(config) {
     renderStatusControls();
     renderFieldList();
     const ongoing = isOngoing();
-    endSection.classList.toggle('hidden', !(detail.permissions?.canEnd && ongoing));
+    openEndVoyageBtn.classList.toggle('hidden', !(detail.permissions?.canEnd && ongoing));
     addLogForm.classList.toggle('hidden', !(detail.permissions?.canEdit && ongoing));
     const cargoTypes = detail.voyageConfig?.cargoTypes || [];
     addCargoTypeSelect.innerHTML = ['<option value="">Select cargo type</option>', ...cargoTypes.map((item) => `<option value="${item.id}">${item.name}</option>`)].join('');
     if (!ongoing) {
       finaliseHoldBtn.disabled = true;
       cancelHoldBtn.disabled = true;
+      closeModal('endVoyageModal');
     } else {
       finaliseHoldBtn.disabled = !detail.permissions?.canEnd;
       cancelHoldBtn.disabled = !detail.permissions?.canEnd;
@@ -593,6 +602,12 @@ export async function initVoyageDetails(config) {
     }
   });
 
+  openEndVoyageBtn.addEventListener('click', () => {
+    if (!detail?.permissions?.canEnd || !isOngoing()) return;
+    syncBreakdown();
+    openModal('endVoyageModal');
+  });
+
   bindHoldButton(finaliseHoldBtn, async () => {
     const data = new FormData(endForm);
     const cargoLost = [...cargoLostEditor.querySelectorAll('[data-loss-cargo-id]')].map((input) => ({
@@ -604,6 +619,7 @@ export async function initVoyageDetails(config) {
       baseSellPrice: Number(data.get('baseSellPrice') || 0),
       cargoLost
     });
+    closeModal('endVoyageModal');
     await Promise.all([loadSummary(), loadManifest(), loadLogs()]);
     showMessage(feedback, 'Voyage finalized and archived.', 'success');
   });

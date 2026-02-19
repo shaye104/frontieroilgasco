@@ -75,31 +75,8 @@
             <p><strong>Total Freight Value:</strong> <span id="buyTotalText">ƒ 0</span></p>
             <div class="modal-actions">
               <button id="saveManifestBtn" class="btn btn-primary hidden" type="button">Save Manifest</button>
+              <button id="openEndVoyageBtn" class="btn btn-danger hidden" type="button">End Voyage</button>
             </div>
-
-            <section id="financialBreakdown" class="section-surface">
-              <h3>Live Financial Breakdown</h3>
-              <p><strong>Total Freight Value:</strong> <span id="breakdownBuyTotal">ƒ 0</span></p>
-              <p><strong>Profit (Estimated):</strong> <span id="breakdownProfit">—</span></p>
-              <p><strong>Company Share (10%):</strong> <span id="breakdownCompanyShare">—</span></p>
-              <p id="breakdownHint" class="muted">Enter sell details in End Voyage to calculate.</p>
-            </section>
-
-            <section id="endVoyageSection" class="section-surface hidden">
-              <h3>End Voyage</h3>
-              <form id="endVoyageForm">
-                <label>Sell Multiplier</label>
-                <input name="sellMultiplier" id="sellMultiplierInput" type="number" min="0" step="0.01" />
-                <label>Base Sell Price</label>
-                <input name="baseSellPrice" id="baseSellPriceInput" type="number" min="0" step="0.01" />
-                <h4>Cargo Lost (Informational)</h4>
-                <div id="cargoLostEditor"></div>
-                <div class="modal-actions end-actions-row">
-                  <button id="finaliseVoyageHoldBtn" class="btn btn-danger" type="button">Finalise Voyage</button>
-                  <button id="cancelVoyageHoldBtn" class="btn btn-warning" type="button">Cancel Voyage</button>
-                </div>
-              </form>
-            </section>
           </section>
 
           <section class="employee-page-panel employee-page-panel-activity">
@@ -152,6 +129,38 @@
           <div class="modal-actions">
             <button class="btn btn-primary" type="submit">Add Cargo Line</button>
             <button class="btn btn-secondary" type="button" data-close-modal="addCargoModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="endVoyageModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card modal-card-wide">
+        <div class="modal-header">
+          <h2>End Voyage</h2>
+          <button id="closeEndVoyageBtnTop" class="btn btn-secondary" type="button" data-close-modal="endVoyageModal">Close</button>
+        </div>
+        <form id="endVoyageForm" class="end-voyage-layout">
+          <section>
+            <label>Sell Multiplier</label>
+            <input name="sellMultiplier" id="sellMultiplierInput" type="number" min="0" step="0.01" />
+            <label>Base Sell Price</label>
+            <input name="baseSellPrice" id="baseSellPriceInput" type="number" min="0" step="0.01" />
+            <h4>Cargo Lost (Informational)</h4>
+            <div id="cargoLostEditor"></div>
+          </section>
+          <section id="financialBreakdown" class="section-surface hidden">
+            <h3>Live Financial Breakdown</h3>
+            <p><strong>Total Freight Value:</strong> <span id="breakdownBuyTotal">ƒ 0</span></p>
+            <p><strong>Profit:</strong> <span id="breakdownProfit">—</span></p>
+            <p><strong>Company Share (10%):</strong> <span id="breakdownCompanyShare">—</span></p>
+          </section>
+          <div class="end-actions-row">
+            <button id="finaliseVoyageHoldBtn" class="btn btn-submit-hold hold-sweep" type="button">Submit Voyage</button>
+            <div class="end-actions-right">
+              <button id="cancelVoyageHoldBtn" class="btn btn-cancel-hold hold-sweep" type="button">Cancel Voyage</button>
+              <button id="closeEndVoyageBtn" class="btn btn-secondary" type="button" data-close-modal="endVoyageModal">Close</button>
+            </div>
           </div>
         </form>
       </div>

@@ -306,6 +306,22 @@ textarea:focus {
   flex-direction: column;
 }
 
+.end-voyage-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.92fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.end-voyage-layout > section {
+  min-height: 0;
+}
+
+.end-voyage-layout .section-surface {
+  border-radius: 12px;
+  padding: 1rem;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -642,7 +658,17 @@ textarea:focus {
 }
 
 .end-actions-row {
+  grid-column: 1 / -1;
+  display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.end-actions-right {
+  display: flex;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -678,21 +704,41 @@ textarea:focus {
   padding: 0.2rem 0.35rem;
 }
 
-.hold-progress {
-  width: 100%;
-  height: 8px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  margin-top: 0.5rem;
-  overflow: hidden;
+.hold-sweep {
+  --hold-pct: 0%;
+  transition: filter 0.16s ease;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
 
-.hold-progress span {
-  display: block;
-  width: 0%;
-  height: 100%;
-  background: #f2b544;
-  transition: width 0.08s linear;
+.btn-submit-hold {
+  color: #ffffff;
+  border-color: #2e7d32;
+  background-color: #43a047;
+  background-image: linear-gradient(
+    to right,
+    #2e7d32 0 var(--hold-pct),
+    #43a047 var(--hold-pct) 100%
+  );
+}
+
+.btn-submit-hold:hover {
+  filter: brightness(0.98);
+}
+
+.btn-cancel-hold {
+  color: #1f2937;
+  border-color: #dd9f33;
+  background-color: #f2b544;
+  background-image: linear-gradient(
+    to right,
+    #c98d28 0 var(--hold-pct),
+    #f2b544 var(--hold-pct) 100%
+  );
+}
+
+.btn-cancel-hold:hover {
+  filter: brightness(0.98);
 }
 
 .voyage-status {
@@ -742,6 +788,10 @@ textarea:focus {
 
   .employee-page-panel {
     overflow: visible;
+  }
+
+  .end-voyage-layout {
+    grid-template-columns: 1fr;
   }
 
   .voyage-grid {
