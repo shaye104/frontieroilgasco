@@ -6,6 +6,7 @@ import {
   serializeCookie,
   verifyStateToken
 } from '../_lib/auth.js';
+import { getConfiguredRoleIds } from '../_lib/roles-store.js';
 
 function toIntranetUrl(requestUrl, params) {
   const source = new URL(requestUrl);
@@ -14,13 +15,6 @@ function toIntranetUrl(requestUrl, params) {
     if (v) target.searchParams.set(k, v);
   });
   return target.toString();
-}
-
-function getAllowedRoleIds(env) {
-  return String(env.DISCORD_ALLOWED_ROLE_IDS || '')
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
 }
 
 async function fetchDiscordUser(accessToken) {
@@ -46,7 +40,8 @@ export async function onRequest(context) {
     'DISCORD_CLIENT_SECRET',
     'DISCORD_GUILD_ID',
     'DISCORD_BOT_TOKEN',
-    'DISCORD_ALLOWED_ROLE_IDS',
+    'ADMIN_DISCORD_USER_ID',
+    'DB',
     'SESSION_SECRET'
   ]);
 
@@ -94,12 +89,20 @@ export async function onRequest(context) {
     return redirect(toIntranetUrl(request.url, { auth: 'error' }));
   }
 
+  const isAdminUser = user.id === String(env.ADMIN_DISCORD_USER_ID).trim();
   const member = await fetchGuildMember(env, user.id);
   const memberRoles = Array.isArray(member?.roles) ? member.roles : [];
-  const allowedRoleIds = getAllowedRoleIds(env);
-  const hasAllowedRole = allowedRoleIds.some((roleId) => memberRoles.includes(roleId));
+  let allowedRoleIds = [];
 
-  if (!hasAllowedRole) {
+  try {
+    allowedRoleIds = await getConfiguredRoleIds(env);
+  } catch {
+    return redirect(toIntranetUrl(request.url, { auth: 'error' }));
+  }
+
+  const hasAllowedRole = allowedRoleIds.length > 0 && allowedRoleIds.some((roleId) => memberRoles.includes(roleId));
+
+  if (!isAdminUser && !hasAllowedRole) {
     const clearStateCookie = serializeCookie('fog_oauth_state', '', {
       path: '/',
       httpOnly: true,
@@ -116,6 +119,7 @@ export async function onRequest(context) {
     userId: user.id,
     displayName,
     roles: memberRoles,
+    isAdmin: isAdminUser,
     exp: Date.now() + 8 * 60 * 60 * 1000
   });
 

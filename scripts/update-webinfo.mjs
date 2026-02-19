@@ -105,7 +105,8 @@ async function buildWebinfo() {
     '- Landing page imports company data from `assets/js/modules/company-data.js` and renders cards/stats via `renderHomeContent`.',
     '- Application form validates client-side inputs, displays status messages, and stores submissions in localStorage as `frontierApplications`.',
     '- Intranet login starts Discord OAuth2 at `/api/auth/discord/start` and enforces access by Discord role membership.',
-    '- Cloudflare Pages Functions in `functions/api/auth/*` exchange Discord auth code, verify guild roles, and issue a signed session cookie.',
+    '- Cloudflare Pages Functions in `functions/api/auth/*` exchange Discord auth code, verify guild roles, and issue a signed session cookie with admin flag.',
+    '- Admin role configuration is managed in the intranet dashboard and persisted in D1 via `functions/api/admin/roles.js`.',
     '- Shared feedback UI is handled in `assets/js/modules/notice.js`.',
     '',
     'MAINTENANCE WORKFLOW',
@@ -118,10 +119,11 @@ async function buildWebinfo() {
     '- Cloudflare deployment command: `echo ok` when using Git-connected Pages deployments.',
     '- Static hosting is configured in `wrangler.jsonc` with `pages_build_output_dir` set to `.`.',
     '- Pages Functions auto-deploy with site code from `functions/`.',
+    '- Bind your D1 database as `DB` in Cloudflare Pages project settings.',
     '- After deploy, attach your custom domain in Cloudflare and complete DNS routing.',
     '',
     'SECURITY NOTE',
-    '- Configure secure environment variables before production OAuth use: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_GUILD_ID, DISCORD_BOT_TOKEN, DISCORD_ALLOWED_ROLE_IDS, SESSION_SECRET, and optional DISCORD_REDIRECT_URI.',
+    '- Configure secure environment variables before production OAuth use: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_GUILD_ID, DISCORD_BOT_TOKEN, ADMIN_DISCORD_USER_ID, SESSION_SECRET, and optional DISCORD_REDIRECT_URI.',
     ''
   ].join('\n');
 

@@ -57,6 +57,8 @@ Set these in Cloudflare Pages project settings:
 - `DISCORD_CLIENT_SECRET`
 - `DISCORD_GUILD_ID`
 - `DISCORD_BOT_TOKEN`
-- `DISCORD_ALLOWED_ROLE_IDS` (comma-separated Discord role IDs)
+- `ADMIN_DISCORD_USER_ID` (Discord user ID that can manage intranet role access)
 - `SESSION_SECRET` (long random secret string)
 - `DISCORD_REDIRECT_URI` (optional override, default is `/api/auth/discord/callback`)
+
+Also bind a D1 database to the Pages project as `DB`. The admin dashboard stores allowed Discord role IDs in D1.

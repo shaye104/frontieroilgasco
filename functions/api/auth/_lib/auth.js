@@ -96,6 +96,12 @@ export async function verifySessionToken(secret, token) {
   }
 }
 
+export async function readSessionFromRequest(env, request) {
+  if (!env?.SESSION_SECRET) return null;
+  const cookies = parseCookies(request.headers.get('Cookie'));
+  return verifySessionToken(env.SESSION_SECRET, cookies.fog_session);
+}
+
 export function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,

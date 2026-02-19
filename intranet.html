@@ -54,6 +54,21 @@
             <li><a href="#">Maintenance Tickets</a></li>
           </ul>
         </section>
+
+        <section id="adminPanel" class="panel hidden" aria-live="polite">
+          <h2>Admin Access Roles</h2>
+          <p class="section-copy">Set Discord role IDs that are allowed to access the intranet.</p>
+
+          <label for="roleIdInput">Discord Role ID</label>
+          <input id="roleIdInput" type="text" inputmode="numeric" placeholder="Enter role ID" />
+          <div class="button-row">
+            <button id="addRoleBtn" class="btn btn-primary" type="button">Add Role</button>
+            <button id="saveRolesBtn" class="btn btn-secondary" type="button">Save Roles</button>
+          </div>
+
+          <ul id="roleList" class="role-list"></ul>
+          <div id="adminFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
       </div>
     </main>
 

@@ -6,7 +6,13 @@ initIntranetAuth({
   logoutButtonSelector: '#logoutBtn',
   feedbackSelector: '#loginFeedback',
   panelSelector: '#intranetPanel',
-  welcomeSelector: '#welcomeText'
+  welcomeSelector: '#welcomeText',
+  adminPanelSelector: '#adminPanel',
+  adminFeedbackSelector: '#adminFeedback',
+  roleInputSelector: '#roleIdInput',
+  addRoleButtonSelector: '#addRoleBtn',
+  saveRolesButtonSelector: '#saveRolesBtn',
+  roleListSelector: '#roleList'
 });
 
 initializeYear();

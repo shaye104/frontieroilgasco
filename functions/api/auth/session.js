@@ -1,4 +1,4 @@
-import { json, parseCookies, verifySessionToken } from './_lib/auth.js';
+import { json, readSessionFromRequest } from './_lib/auth.js';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -6,8 +6,7 @@ export async function onRequest(context) {
     return json({ loggedIn: false, error: 'SESSION_SECRET is not configured.' }, 500);
   }
 
-  const cookies = parseCookies(request.headers.get('Cookie'));
-  const payload = await verifySessionToken(env.SESSION_SECRET, cookies.fog_session);
+  const payload = await readSessionFromRequest(env, request);
 
   if (!payload) {
     return json({ loggedIn: false });
@@ -15,7 +14,9 @@ export async function onRequest(context) {
 
   return json({
     loggedIn: true,
+    userId: payload.userId,
     displayName: payload.displayName,
-    roles: payload.roles
+    roles: payload.roles,
+    isAdmin: Boolean(payload.isAdmin)
   });
 }
