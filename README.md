@@ -39,9 +39,14 @@ git commit -m "Initial modular website scaffold"
 git push -u origin main
 ```
 
-## Namecheap Deployment
+## Cloudflare Deployment
 
 1. Push updated code to GitHub.
-2. In Namecheap cPanel, open File Manager and upload repo contents into `public_html`.
-3. Or use cPanel Git Version Control (if enabled) to pull from your GitHub repo into `public_html`.
-4. Confirm your domain DNS points to the hosting account and load the site.
+2. In Cloudflare dashboard, open **Workers & Pages** and create a new **Pages** project.
+3. Connect GitHub and select `shaye104/frontieroilgasco`.
+4. Build settings:
+   - Framework preset: `None`
+   - Build command: *(leave blank)*
+   - Build output directory: `.`
+5. Deploy the project.
+6. In the Pages project, add your custom domain and complete DNS routing in Cloudflare.
