@@ -202,12 +202,13 @@ textarea:focus {
 
 .filter-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: var(--space-2);
 }
 
 .table-wrap {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   border: 1px solid #dddddd;
   border-radius: 10px;
@@ -217,7 +218,7 @@ textarea:focus {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 880px;
+  min-width: 760px;
 }
 
 .data-table th,
@@ -280,7 +281,7 @@ textarea:focus {
 
 .employee-modal-grid {
   display: grid;
-  grid-template-columns: 0.78fr 1fr;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
   gap: var(--space-3);
   min-height: 0;
   flex: 1;
@@ -319,9 +320,9 @@ textarea:focus {
 
 .employee-page-grid {
   display: grid;
-  grid-template-columns: 0.78fr 1fr;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
   gap: var(--space-3);
-  min-height: min(70vh, 760px);
+  min-height: clamp(620px, 72vh, 860px);
 }
 
 .employee-page-panel {
@@ -330,11 +331,19 @@ textarea:focus {
   padding: 0.9rem;
   background: #ffffff;
   min-height: 0;
+  overflow: hidden;
 }
 
 .employee-page-panel-activity {
   display: flex;
   flex-direction: column;
+}
+
+.employee-page-panel-activity .employee-activity-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
 }
 
 .modal-actions {
@@ -393,20 +402,22 @@ textarea:focus {
   gap: var(--space-3);
 }
 
+@media (max-width: 1023px) {
+  .employee-modal-grid,
+  .employee-page-grid {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .employee-page-panel {
+    overflow: visible;
+  }
+}
+
 @media (max-width: 760px) {
   .button-row {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .employee-modal-grid {
-    grid-template-columns: 1fr;
-    overflow: auto;
-  }
-
-  .employee-page-grid {
-    grid-template-columns: 1fr;
-    min-height: 0;
   }
 
   .details-split {
@@ -425,5 +436,9 @@ textarea:focus {
 
   .details-grid dt:first-child {
     margin-top: 0;
+  }
+
+  .data-table {
+    min-width: 680px;
   }
 }

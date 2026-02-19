@@ -38,13 +38,14 @@ p {
 }
 
 .container {
-  width: auto;
+  width: 100%;
   max-width: var(--container-max);
-  margin-inline: max(40px, calc((100% - var(--container-max)) / 2));
+  margin-inline: auto;
+  padding-inline: 32px;
 }
 
 .section {
-  padding: var(--space-6) 0;
+  padding: clamp(2.25rem, 3vw, 3.5rem) 0;
 }
 
 .eyebrow {
@@ -147,14 +148,28 @@ p {
   }
 }
 
-@media (max-width: 1023px) {
+@media (min-width: 1920px) {
   .container {
-    margin-inline: 20px;
+    max-width: 1780px;
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 1439px) {
   .container {
-    margin-inline: 16px;
+    max-width: 1360px;
+    padding-inline: 24px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .container {
+    max-width: 100%;
+    padding-inline: 24px;
+  }
+}
+
+@media (max-width: 639px) {
+  .container {
+    padding-inline: 16px;
   }
 }
