@@ -14,7 +14,8 @@ initIntranetPageGuard({
       feedbackSelector: '#formsFeedback',
       categoriesSelector: '#formsCategories',
       uncategorizedSelector: '#formsUncategorized',
-      adminActionsSelector: '#formsAdminActions'
+      adminActionsSelector: '#formsAdminActions',
+      responsesButtonSelector: '#formsResponsesBtn'
     },
     session
   );

@@ -5,10 +5,9 @@ import { initializeYear } from '../modules/year.js';
 initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
-  adminNavLinkSelector: '#adminNavLink',
-  requireFormsAdmin: true
+  adminNavLinkSelector: '#adminNavLink'
 }).then((session) => {
-  if (!session?.hasFormsAdmin) return;
+  if (!session) return;
 
   initFormsResponses({
     feedbackSelector: '#formsResponsesFeedback',
@@ -20,7 +19,7 @@ initIntranetPageGuard({
     applyFiltersBtnSelector: '#applyResponseFiltersBtn',
     tableBodySelector: '#responsesTableBody',
     detailSelector: '#responseDetail'
-  });
+  }, session);
 });
 
 initializeYear();

@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T14:38:03.385Z
+Generated: 2026-02-19T14:44:57.693Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -29,7 +29,7 @@ SITE STRUCTURE
 
 JAVASCRIPT MODULES
 - assets/js/modules/access-requests.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createConfigValue, createEmployee, createFormAdmin, createFormCategory, deleteConfigValue, deleteFormAdmin, deleteFormCategory, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, listAccessRequests, listAvailableForms, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, processAccessRequest, saveAdminRoles, submitFormResponse, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory
+- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createConfigValue, createEmployee, createFormAdmin, createFormCategory, deleteConfigValue, deleteFormAdmin, deleteFormCategory, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, listAccessRequests, listAccessibleFormResponses, listAvailableForms, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, processAccessRequest, saveAdminRoles, submitFormResponse, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory
 - assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/company-data.js | exports: companyProfile

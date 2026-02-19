@@ -1,4 +1,11 @@
-import { getFormResponse, listEmployees, listFormCategories, listFormResponses, listFormsAdmin } from './admin-api.js';
+import {
+  getAccessibleFormResponse,
+  listAccessibleFormResponses,
+  listAvailableForms,
+  listEmployees,
+  listFormCategories,
+  listFormsAdmin
+} from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
@@ -65,7 +72,7 @@ function renderDetail(target, payload) {
   `;
 }
 
-export async function initFormsResponses(config) {
+export async function initFormsResponses(config, session) {
   const feedback = document.querySelector(config.feedbackSelector);
   const formFilter = document.querySelector(config.formFilterSelector);
   const categoryFilter = document.querySelector(config.categoryFilterSelector);
@@ -75,22 +82,40 @@ export async function initFormsResponses(config) {
   const applyFiltersBtn = document.querySelector(config.applyFiltersBtnSelector);
   const tableBody = document.querySelector(config.tableBodySelector);
   const detailRoot = document.querySelector(config.detailSelector);
+  const employeeFilterContainer = employeeFilter?.closest('div');
 
   if (!feedback || !tableBody || !detailRoot) return;
 
   async function loadFilters() {
-    const [formsPayload, categoriesPayload, employeesPayload] = await Promise.all([listFormsAdmin(), listFormCategories(), listEmployees()]);
+    const [formsPayload, categoriesPayload] = await Promise.all([
+      session?.hasFormsAdmin ? listFormsAdmin() : listAvailableForms(),
+      listFormCategories()
+    ]);
 
-    fillSelect(formFilter, formsPayload.forms || [], 'id', (item) => item.title, 'All Forms');
+    const forms = session?.hasFormsAdmin
+      ? formsPayload.forms || []
+      : [
+          ...(formsPayload.uncategorized || []),
+          ...((formsPayload.categories || []).flatMap((category) => category.forms || []))
+        ];
+    fillSelect(formFilter, forms, 'id', (item) => item.title, 'All Forms');
     fillSelect(categoryFilter, categoriesPayload.categories || [], 'id', (item) => item.name, 'All Categories');
-    fillSelect(employeeFilter, employeesPayload.employees || [], 'id', (item) => item.roblox_username || `Employee #${item.id}`, 'All Respondents');
+
+    if (session?.hasFormsAdmin) {
+      const employeesPayload = await listEmployees();
+      fillSelect(employeeFilter, employeesPayload.employees || [], 'id', (item) => item.roblox_username || `Employee #${item.id}`, 'All Respondents');
+      employeeFilterContainer?.classList.remove('hidden');
+    } else {
+      if (employeeFilter) employeeFilter.innerHTML = '<option value="">Me</option>';
+      employeeFilterContainer?.classList.add('hidden');
+    }
   }
 
   async function loadResponses() {
-    const payload = await listFormResponses({
+    const payload = await listAccessibleFormResponses({
       formId: formFilter?.value || '',
       categoryId: categoryFilter?.value || '',
-      employeeId: employeeFilter?.value || '',
+      employeeId: session?.hasFormsAdmin ? employeeFilter?.value || '' : '',
       dateFrom: dateFromFilter?.value || '',
       dateTo: dateToFilter?.value || ''
     });
@@ -102,7 +127,7 @@ export async function initFormsResponses(config) {
       button.addEventListener('click', async () => {
         const responseId = Number(button.getAttribute('data-open-response'));
         try {
-          const detail = await getFormResponse(responseId);
+          const detail = await getAccessibleFormResponse(responseId);
           renderDetail(detailRoot, detail);
         } catch (error) {
           showMessage(feedback, error.message || 'Unable to load response detail.', 'error');

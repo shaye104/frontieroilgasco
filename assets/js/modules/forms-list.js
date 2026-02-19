@@ -33,6 +33,7 @@ export async function initFormsList(config, session) {
   const categoriesRoot = document.querySelector(config.categoriesSelector);
   const uncategorizedRoot = document.querySelector(config.uncategorizedSelector);
   const adminActions = document.querySelector(config.adminActionsSelector);
+  const responsesBtn = document.querySelector(config.responsesButtonSelector);
 
   if (!feedback || !categoriesRoot || !uncategorizedRoot) return;
 
@@ -44,6 +45,12 @@ export async function initFormsList(config, session) {
 
     const categories = payload.categories || [];
     const uncategorized = payload.uncategorized || [];
+    const accessibleFormCount =
+      uncategorized.length + categories.reduce((acc, category) => acc + ((category.forms || []).length || 0), 0);
+    if (responsesBtn) {
+      if (accessibleFormCount > 0) responsesBtn.classList.remove('hidden');
+      else responsesBtn.classList.add('hidden');
+    }
 
     if (!categories.length) {
       categoriesRoot.innerHTML = '<h2>Categories</h2><p>No categories configured.</p>';

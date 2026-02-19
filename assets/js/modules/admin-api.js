@@ -180,3 +180,18 @@ export function listFormResponses(filters = {}) {
 export function getFormResponse(responseId) {
   return requestJson(`/api/admin/forms/responses/${responseId}`, { method: 'GET' });
 }
+
+export function listAccessibleFormResponses(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.formId) params.set('formId', String(filters.formId));
+  if (filters.categoryId) params.set('categoryId', String(filters.categoryId));
+  if (filters.employeeId) params.set('employeeId', String(filters.employeeId));
+  if (filters.dateFrom) params.set('dateFrom', String(filters.dateFrom));
+  if (filters.dateTo) params.set('dateTo', String(filters.dateTo));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/forms/responses${suffix}`, { method: 'GET' });
+}
+
+export function getAccessibleFormResponse(responseId) {
+  return requestJson(`/api/forms/responses/${responseId}`, { method: 'GET' });
+}
