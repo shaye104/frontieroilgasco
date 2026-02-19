@@ -77,7 +77,8 @@ export async function onRequestPost(context) {
       const quantity = Math.max(0, Math.floor(Number(line.quantity || 0)));
       const lostQuantity = Math.max(0, Math.floor(Number(cargoLostMap.get(Number(line.cargo_type_id)) || 0)));
       const netQuantity = Math.max(quantity - lostQuantity, 0);
-      return sum + trueSellUnitPrice * netQuantity;
+      const revenueLine = toMoney(trueSellUnitPrice * netQuantity);
+      return sum + revenueLine;
     }, 0)
   );
   const profit = toMoney(totalRevenue - totalCost);

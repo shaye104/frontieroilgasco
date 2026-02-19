@@ -5,7 +5,7 @@ import { enrichSessionWithPermissions, hasPermission } from './permissions.js';
 export function toMoney(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return 0;
-  return Math.round(number * 100) / 100;
+  return Math.round(number);
 }
 
 export async function requireVoyagePermission(context, permissionKey) {

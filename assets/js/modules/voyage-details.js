@@ -38,7 +38,7 @@ function formatWhen(value) {
 function formatGuilders(value) {
   const num = Number(value || 0);
   if (!Number.isFinite(num)) return 'ƒ 0';
-  return `ƒ ${num.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  return `ƒ ${Math.round(num).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
 function toNumber(value) {
@@ -49,7 +49,7 @@ function toNumber(value) {
 function toMoney(value) {
   const num = Number(value || 0);
   if (!Number.isFinite(num)) return 0;
-  return Math.round(num * 100) / 100;
+  return Math.round(num);
 }
 
 function parseVoyageId() {
@@ -82,6 +82,12 @@ export async function initVoyageDetails(config) {
   const shipStatusToggle = document.querySelector(config.shipStatusToggleSelector);
   const manifestBody = document.querySelector(config.manifestBodySelector);
   const buyTotalText = document.querySelector(config.buyTotalSelector);
+  const archivedBreakdownSection = document.querySelector(config.archivedBreakdownSectionSelector);
+  const archivedBreakdownFreight = document.querySelector(config.archivedBreakdownFreightSelector);
+  const archivedBreakdownRevenue = document.querySelector(config.archivedBreakdownRevenueSelector);
+  const archivedBreakdownCost = document.querySelector(config.archivedBreakdownCostSelector);
+  const archivedBreakdownProfit = document.querySelector(config.archivedBreakdownProfitSelector);
+  const archivedBreakdownCompanyShare = document.querySelector(config.archivedBreakdownCompanyShareSelector);
   const manifestSaveState = document.querySelector(config.manifestSaveStateSelector);
   const manifestFeedback = document.querySelector(config.manifestFeedbackSelector);
   const openEndVoyageBtn = document.querySelector(config.openEndVoyageButtonSelector);
@@ -132,6 +138,12 @@ export async function initVoyageDetails(config) {
     !shipStatusToggle ||
     !manifestBody ||
     !buyTotalText ||
+    !archivedBreakdownSection ||
+    !archivedBreakdownFreight ||
+    !archivedBreakdownRevenue ||
+    !archivedBreakdownCost ||
+    !archivedBreakdownProfit ||
+    !archivedBreakdownCompanyShare ||
     !manifestSaveState ||
     !manifestFeedback ||
     !openEndVoyageBtn ||
@@ -358,7 +370,8 @@ export async function initVoyageDetails(config) {
       lines.reduce((sum, row) => {
         const lost = Math.min(row.quantity, Math.max(0, Number(lossMap.get(Number(row.line.cargo_type_id)) || 0)));
         const netQty = Math.max(row.quantity - lost, 0);
-        return sum + trueSellUnitPrice * netQty;
+        const revenueLine = toMoney(trueSellUnitPrice * netQty);
+        return sum + revenueLine;
       }, 0)
     );
     const profit = toMoney(totalRevenue - totalCost);
@@ -381,6 +394,22 @@ export async function initVoyageDetails(config) {
     const underway = String(detail.voyage.ship_status || 'IN_PORT') === 'UNDERWAY';
     shipStatusToggle.checked = underway;
     shipStatusToggle.disabled = !canEdit();
+  }
+
+  function renderArchivedBreakdown() {
+    if (!detail?.voyage) return;
+    const ended = String(detail.voyage.status || '') === 'ENDED';
+    archivedBreakdownSection.classList.toggle('hidden', !ended);
+    if (!ended) return;
+    const totalCost = toMoney(detail.voyage.buy_total ?? detail.buyTotal ?? 0);
+    const totalRevenue = toMoney(detail.voyage.effective_sell ?? 0);
+    const profit = toMoney(detail.voyage.profit ?? totalRevenue - totalCost);
+    const companyShare = toMoney(detail.voyage.company_share ?? Math.max(profit, 0) * 0.1);
+    archivedBreakdownFreight.textContent = formatGuilders(totalCost);
+    archivedBreakdownRevenue.textContent = formatGuilders(totalRevenue);
+    archivedBreakdownCost.textContent = formatGuilders(totalCost);
+    archivedBreakdownProfit.textContent = formatGuilders(profit);
+    archivedBreakdownCompanyShare.textContent = formatGuilders(companyShare);
   }
 
   function toOptions(items, value) {
@@ -592,6 +621,7 @@ export async function initVoyageDetails(config) {
     profileEditToggleBtn.classList.toggle('hidden', !canEdit());
     renderStatusControls();
     renderFieldList();
+    renderArchivedBreakdown();
     const ongoing = isOngoing();
     openEndVoyageBtn.classList.toggle('hidden', !(detail.permissions?.canEnd && ongoing));
     addLogForm.classList.toggle('hidden', !(detail.permissions?.canEdit && ongoing));
@@ -614,6 +644,7 @@ export async function initVoyageDetails(config) {
     setInlineMessage(manifestFeedback, '');
     renderManifest();
     renderCargoLostEditor();
+    renderArchivedBreakdown();
   }
 
   async function loadLogs() {

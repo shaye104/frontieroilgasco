@@ -567,12 +567,15 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--color-muted);
 }
 
 .status-switch {
   position: relative;
-  width: 46px;
-  height: 24px;
+  width: 40px;
+  height: 22px;
   display: inline-flex;
 }
 
@@ -597,8 +600,8 @@ textarea:focus {
   position: absolute;
   left: 2px;
   top: 2px;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 999px;
   background: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
@@ -611,7 +614,7 @@ textarea:focus {
 }
 
 .status-switch input:checked + .status-slider::before {
-  transform: translateX(22px);
+  transform: translateX(18px);
 }
 
 .status-switch input:disabled + .status-slider {
