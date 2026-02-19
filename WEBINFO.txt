@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T01:40:18.812Z
+Generated: 2026-02-19T01:41:44.796Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -41,8 +41,8 @@ MAINTENANCE WORKFLOW
 
 DEPLOYMENT NOTES
 - Primary repo target: https://github.com/shaye104/frontieroilgasco
-- Cloudflare deployment command: `npx wrangler pages deploy` (or `npx wrangler deploy`).
-- Static hosting is configured in `wrangler.jsonc` with `pages_build_output_dir` and `assets.directory` both set to `.`.
+- Cloudflare deployment command: `npx wrangler pages deploy`.
+- Static hosting is configured in `wrangler.jsonc` with `pages_build_output_dir` set to `.`.
 - After deploy, attach your custom domain in Cloudflare and complete DNS routing.
 
 SECURITY NOTE

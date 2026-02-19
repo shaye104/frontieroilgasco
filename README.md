@@ -48,13 +48,6 @@ git push -u origin main
 npx wrangler pages deploy
 ```
 
-or:
-
-```bash
-npx wrangler deploy
-```
-
-3. This works because `wrangler.jsonc` is configured for both flows:
-   - `pages_build_output_dir = "."` for `wrangler pages deploy`
-   - `assets.directory = "."` for `wrangler deploy`
+3. This works because `wrangler.jsonc` is configured for Pages with:
+   - `pages_build_output_dir = "."`
 4. In Cloudflare, connect your custom domain and complete DNS routing.
