@@ -38,7 +38,7 @@ p {
 }
 
 .container {
-  width: min(100% - 4rem, var(--container-max));
+  width: min(calc(100% - 40px), var(--container-max));
   margin-inline: auto;
 }
 
@@ -146,14 +146,8 @@ p {
   }
 }
 
-@media (max-width: 1439px) {
-  .container {
-    width: min(100% - 3rem, 1280px);
-  }
-}
-
 @media (max-width: 1023px) {
   .container {
-    width: min(100% - 2rem, 100%);
+    width: min(calc(100% - 32px), var(--container-max));
   }
 }
