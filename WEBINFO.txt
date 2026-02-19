@@ -1,0 +1,47 @@
+WEBINFO - Frontier Oil & Gas Company
+Generated: 2026-02-19T01:19:20.356Z
+
+PROJECT PURPOSE
+- Public-facing landing website for Frontier Oil & Gas Company.
+- Includes two key user paths: job application submission and employee intranet login.
+- Built as static files for direct hosting on Namecheap or GitHub Pages.
+
+SITE STRUCTURE
+- application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
+- index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
+- intranet.html | title: Frontier Oil & Gas Company | Employee Intranet | primary heading: Intranet Login
+
+JAVASCRIPT MODULES
+- assets/js/modules/application-form.js | exports: initApplicationForm
+- assets/js/modules/company-data.js | exports: companyProfile
+- assets/js/modules/intranet-login.js | exports: initIntranetLogin
+- assets/js/modules/notice.js | exports: clearMessage, showMessage
+- assets/js/modules/render-company.js | exports: renderHomeContent
+- assets/js/modules/year.js | exports: initializeYear
+- assets/js/pages/application-page.js | exports: No public exports
+- assets/js/pages/home.js | exports: No public exports
+- assets/js/pages/intranet-page.js | exports: No public exports
+
+CSS MODULES
+- assets/css/base.css | stylesheet module
+- assets/css/components.css | stylesheet module
+- assets/css/pages.css | stylesheet module
+- assets/css/tokens.css | stylesheet module
+
+DATA FLOW
+- Landing page imports company data from `assets/js/modules/company-data.js` and renders cards/stats via `renderHomeContent`.
+- Application form validates client-side inputs, displays status messages, and stores submissions in localStorage as `frontierApplications`.
+- Intranet login performs front-end demo authentication using local credentials in `assets/js/modules/intranet-login.js`.
+- Shared feedback UI is handled in `assets/js/modules/notice.js`.
+
+MAINTENANCE WORKFLOW
+- Regenerate this file at any time using: `npm run webinfo`.
+- If git hooks are enabled, this file auto-updates on every commit through `.githooks/pre-commit`.
+- For AI handoff, read this file first, then inspect referenced module files.
+
+DEPLOYMENT NOTES
+- Primary repo target: https://github.com/shaye104/frontieroilgasco
+- Namecheap deployment: upload project root contents to the domain web root (`public_html`) or deploy via cPanel Git if available.
+
+SECURITY NOTE
+- The intranet page is front-end demo logic only. Replace demo auth with a real backend identity service before production use.

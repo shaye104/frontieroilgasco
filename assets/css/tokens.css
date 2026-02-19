@@ -1,0 +1,31 @@
+:root {
+  --font-heading: "Sora", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Source Sans 3", "Trebuchet MS", sans-serif;
+
+  --color-bg: #eef3f6;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f6fafb;
+  --color-ink: #0f2530;
+  --color-ink-soft: #3f5967;
+  --color-primary: #0a6a86;
+  --color-primary-strong: #084f67;
+  --color-secondary: #d07a20;
+  --color-border: #d5e1e8;
+  --color-success: #167e62;
+  --color-danger: #b43f3f;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+
+  --shadow-soft: 0 10px 30px rgba(14, 41, 54, 0.08);
+
+  --space-1: 0.5rem;
+  --space-2: 0.75rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+  --space-6: 3rem;
+
+  --container-max: 1120px;
+}

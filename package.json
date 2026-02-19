@@ -1,0 +1,9 @@
+{
+  "name": "frontier-oil-gas-company-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static modular website for Frontier Oil & Gas Company",
+  "scripts": {
+    "webinfo": "node scripts/update-webinfo.mjs"
+  }
+}

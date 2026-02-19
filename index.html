@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Frontier Oil & Gas Company: safe, efficient, and accountable field operations across exploration, production, and transport."
+    />
+    <title>Frontier Oil & Gas Company | Landing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages.css" />
+  </head>
+  <body class="page page-home">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="index.html" aria-label="Frontier Oil & Gas Company home">
+          <span class="brand-mark" aria-hidden="true">FOG</span>
+          <span class="brand-text">Frontier Oil & Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary">
+          <a href="#about">About</a>
+          <a href="#operations">Operations</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero section">
+        <div class="container hero-grid">
+          <div>
+            <p class="eyebrow">Energy Operations</p>
+            <h1>Reliable production built on safety, precision, and accountability.</h1>
+            <p class="lead">
+              Frontier Oil & Gas Company supports responsible exploration and production with teams focused on field reliability,
+              regulatory alignment, and measurable operational performance.
+            </p>
+            <div class="button-row">
+              <a class="btn btn-primary" href="application.html">Open Application Form</a>
+              <a class="btn btn-secondary" href="intranet.html">Employee Intranet Login</a>
+            </div>
+          </div>
+          <aside class="panel" id="heroStats" aria-label="Company snapshot"></aside>
+        </div>
+      </section>
+
+      <section class="section" id="about">
+        <div class="container">
+          <h2>Company Details</h2>
+          <p class="section-copy">
+            We run integrated operations from field evaluation through delivery planning. Our teams prioritize safety culture,
+            predictable uptime, and clear communication across projects.
+          </p>
+          <div id="detailCards" class="card-grid" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="section section-surface" id="operations">
+        <div class="container action-panel">
+          <div>
+            <h2>Work With Frontier</h2>
+            <p>
+              Interested in joining operations, engineering, logistics, or compliance teams? Submit your application and include
+              relevant certifications.
+            </p>
+          </div>
+          <a class="btn btn-primary" href="application.html">Apply Now</a>
+        </div>
+      </section>
+
+      <section class="section" id="contact">
+        <div class="container two-column">
+          <article class="panel">
+            <h3>Office</h3>
+            <p>Frontier Oil & Gas Company</p>
+            <p>1450 Basin Loop, Houston, TX 77002</p>
+          </article>
+          <article class="panel">
+            <h3>Contact</h3>
+            <p>Email: operations@frontieroilgasco.com</p>
+            <p>Phone: (713) 555-0184</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <p>Copyright <span id="currentYear"></span> Frontier Oil & Gas Company. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="assets/js/pages/home.js"></script>
+  </body>
+</html>
