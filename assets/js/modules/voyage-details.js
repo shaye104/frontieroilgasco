@@ -618,6 +618,10 @@ export async function initVoyageDetails(config) {
   async function loadSummary() {
     detail = await getVoyage(voyageId, { includeSetup: true, includeManifest: false, includeLogs: false });
     heading.textContent = `${text(detail.voyage.vessel_name)} | ${text(detail.voyage.vessel_callsign)} | ${text(detail.voyage.status)}`;
+    const protectedContent = document.getElementById('protectedContent');
+    if (protectedContent) {
+      protectedContent.classList.toggle('archived-voyage', String(detail.voyage.status) === 'ENDED');
+    }
     profileEditToggleBtn.classList.toggle('hidden', !canEdit());
     renderStatusControls();
     renderFieldList();
