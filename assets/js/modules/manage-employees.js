@@ -64,7 +64,7 @@ function renderEmployeeTable(target, employees) {
           <td>${text(emp.serial_number)}</td>
           <td>${text(emp.employee_status)}</td>
           <td>${text(emp.hire_date)}</td>
-          <td><a class="btn btn-secondary" href="/admin/employees/${emp.id}">Open</a></td>
+          <td><a class="btn btn-secondary" href="/admin/employees/${emp.id}?employeeId=${emp.id}">Open</a></td>
         </tr>
       `
     )

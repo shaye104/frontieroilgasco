@@ -54,8 +54,15 @@ function getActiveDisciplinaries(records) {
 }
 
 function parseEmployeeIdFromUrl() {
-  const pathMatch = window.location.pathname.match(/\/admin\/employees\/(\d+)\/?$/);
-  if (pathMatch) return Number(pathMatch[1]);
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const employeesIndex = pathParts.findIndex((part) => part === 'employees');
+  if (employeesIndex >= 0) {
+    const candidate = pathParts[employeesIndex + 1];
+    if (/^\d+$/.test(String(candidate || ''))) return Number(candidate);
+  }
+
+  const pathMatch = window.location.pathname.match(/\/admin\/employees\/(\d+)(?:\/|$)/);
+  if (pathMatch?.[1]) return Number(pathMatch[1]);
 
   const fromQuery = new URLSearchParams(window.location.search).get('employeeId');
   if (/^\d+$/.test(String(fromQuery || ''))) return Number(fromQuery);
