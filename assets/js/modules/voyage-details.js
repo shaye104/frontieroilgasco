@@ -801,10 +801,25 @@ export async function initVoyageDetails(config) {
     if (!Number.isFinite(sellMultiplier) || sellMultiplier < 0) throw new Error('Sell multiplier must be >= 0.');
     if (!Number.isFinite(baseSellPrice) || baseSellPrice < 0) throw new Error('Base sell price must be >= 0.');
 
-    const cargoLost = [...cargoLostEditor.querySelectorAll('[data-loss-cargo-id]')].map((input) => ({
-      cargoTypeId: Number(input.getAttribute('data-loss-cargo-id')),
-      lostQuantity: Math.max(0, Math.floor(Number(input.value || 0)))
+    const lines = [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => ({
+      cargoTypeId: Number(row.getAttribute('data-cargo-id')),
+      quantity: Math.max(0, Math.floor(Number(row.querySelector('input[data-field="quantity"]')?.value || 0))),
+      buyPrice: Math.max(0, Number(row.querySelector('input[data-field="buyPrice"]')?.value || 0))
     }));
+    await updateVoyageManifest(voyageId, lines);
+
+    const manifestQtyByCargo = new Map(lines.map((line) => [Number(line.cargoTypeId), Number(line.quantity)]));
+    const cargoLost = [...cargoLostEditor.querySelectorAll('[data-loss-cargo-id]')]
+      .map((input) => ({
+        cargoTypeId: Number(input.getAttribute('data-loss-cargo-id')),
+        lostQuantity: Math.max(0, Math.floor(Number(input.value || 0)))
+      }))
+      .filter((entry) => manifestQtyByCargo.has(Number(entry.cargoTypeId)))
+      .map((entry) => ({
+        cargoTypeId: entry.cargoTypeId,
+        lostQuantity: Math.min(entry.lostQuantity, manifestQtyByCargo.get(Number(entry.cargoTypeId)) || 0)
+      }));
+
     await endVoyage(voyageId, {
       sellMultiplier,
       baseSellPrice,
