@@ -1,11 +1,12 @@
 import { json } from '../auth/_lib/auth.js';
 import { getFormDetail, requireAuthenticated } from '../_lib/forms.js';
+import { hasPermission } from '../_lib/permissions.js';
 
 async function canAccessForm(env, session, employee, formId) {
-  if (session.isAdmin) return true;
+  if (hasPermission(session, 'forms.manage')) return true;
   if (!employee) return false;
 
-  const roles = Array.isArray(session.roles) ? session.roles.map((r) => String(r)) : [];
+  const roles = Array.isArray(session.appRoleIds) ? session.appRoleIds.map((r) => String(r)) : [];
   let sql = `SELECT 1
              FROM forms f
              LEFT JOIN form_access_employees fae ON fae.form_id = f.id
@@ -28,6 +29,7 @@ export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse, session, employee } = await requireAuthenticated(context);
   if (errorResponse) return errorResponse;
+  if (!hasPermission(session, 'forms.read')) return json({ error: 'Forbidden. Missing required permission.' }, 403);
 
   const formId = Number(params.id);
   if (!Number.isInteger(formId) || formId <= 0) return json({ error: 'Invalid form id.' }, 400);
@@ -35,7 +37,7 @@ export async function onRequestGet(context) {
   const detail = await getFormDetail(env, formId);
   if (!detail) return json({ error: 'Form not found.' }, 404);
 
-  if (!session.isAdmin) {
+  if (!hasPermission(session, 'forms.manage')) {
     const allowed = await canAccessForm(env, session, employee, formId);
     if (!allowed) return json({ error: 'You do not have access to this form.' }, 403);
   }

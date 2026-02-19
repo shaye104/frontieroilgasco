@@ -1,5 +1,6 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
-import { ensureCoreSchema, getEmployeeByDiscordUserId } from './db.js';
+import { ensureCoreSchema } from './db.js';
+import { enrichSessionWithPermissions, hasPermission } from './permissions.js';
 
 export const ALLOWED_QUESTION_TYPES = new Set([
   'short_text',
@@ -13,7 +14,8 @@ export const ALLOWED_QUESTION_TYPES = new Set([
 ]);
 
 export async function requireAuthenticated(context) {
-  const session = await readSessionFromRequest(context.env, context.request);
+  const rawSession = await readSessionFromRequest(context.env, context.request);
+  const session = rawSession ? await enrichSessionWithPermissions(context.env, rawSession) : null;
   if (!session) return { errorResponse: json({ error: 'Authentication required.' }, 401), session: null, employee: null };
 
   try {
@@ -22,23 +24,12 @@ export async function requireAuthenticated(context) {
     return { errorResponse: json({ error: error.message || 'Database unavailable.' }, 500), session: null, employee: null };
   }
 
-  const employee = await getEmployeeByDiscordUserId(context.env, session.userId);
+  const employee = session.employee || null;
   return { errorResponse: null, session, employee };
 }
 
-function getFormsAdminRoleIds(env) {
-  return String(env.FORMS_ADMIN_ROLE_IDS || '')
-    .split(',')
-    .map((value) => value.trim())
-    .filter((value) => /^\d{6,30}$/.test(value));
-}
-
 export function hasFormsAdminAccess(env, session) {
-  if (!session) return false;
-  if (session.isAdmin) return true;
-  const sessionRoles = Array.isArray(session.roles) ? session.roles.map((r) => String(r).trim()) : [];
-  const allowed = getFormsAdminRoleIds(env);
-  return allowed.some((roleId) => sessionRoles.includes(roleId));
+  return hasPermission(session, 'forms.manage');
 }
 
 export async function requireFormsAdmin(context) {
@@ -103,7 +94,7 @@ export function normalizeRoleList(value) {
         .map((v) => v.trim())
         .filter(Boolean);
 
-  return [...new Set(source.map((v) => String(v).trim()).filter((v) => /^\d{6,30}$/.test(v)))];
+  return [...new Set(source.map((v) => String(v).trim()).filter((v) => /^\d+$/.test(v)))];
 }
 
 export async function saveFormRelations(env, formId, payload) {

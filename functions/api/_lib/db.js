@@ -1,5 +1,31 @@
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
+  const permissionSeed = [
+    ['super.admin', 'roles', 'Super Admin', 'Global bypass permission.'],
+    ['admin.access', 'general', 'Admin Panel Access', 'View the admin panel entry points.'],
+    ['dashboard.view', 'general', 'Dashboard View', 'Access the intranet dashboard.'],
+    ['my_details.view', 'general', 'My Details View', 'View employee self-service details.'],
+    ['employees.read', 'employees', 'View Employees', 'View employee lists and employee profiles.'],
+    ['employees.create', 'employees', 'Create Employees', 'Create employee records.'],
+    ['employees.edit', 'employees', 'Edit Employees', 'Edit employee profile fields.'],
+    ['employees.discipline', 'employees', 'Manage Discipline', 'Create and update disciplinary records.'],
+    ['employees.notes', 'employees', 'Manage Notes', 'Add employee notes and activity log entries.'],
+    ['employees.access_requests.review', 'employees', 'Review Access Requests', 'Approve or deny access requests.'],
+    ['config.manage', 'config', 'Manage Config', 'Manage statuses, ranks, grades, and disciplinary types.'],
+    ['roles.read', 'roles', 'View Roles', 'View role definitions and permissions.'],
+    ['roles.manage', 'roles', 'Manage Roles', 'Create, edit, delete, and reorder roles.'],
+    ['forms.read', 'forms', 'View Forms', 'View forms list and form details.'],
+    ['forms.submit', 'forms', 'Submit Forms', 'Submit form responses.'],
+    ['forms.manage', 'forms', 'Manage Forms', 'Create/edit forms, categories, and question builders.'],
+    ['forms.responses.read', 'forms', 'View Form Responses', 'Read form responses.'],
+    ['forms.responses.manage', 'forms', 'Manage Form Responses', 'Manage/export/delete responses.'],
+    ['voyages.read', 'voyages', 'View Voyages', 'View voyage tracker.'],
+    ['voyages.create', 'voyages', 'Create Voyages', 'Create voyage entries.'],
+    ['voyages.edit', 'voyages', 'Edit Voyages', 'Edit voyage entries.'],
+    ['voyages.delete', 'voyages', 'Delete Voyages', 'Delete voyage entries.'],
+    ['fleet.read', 'voyages', 'View Fleet', 'View fleet information.'],
+    ['fleet.manage', 'voyages', 'Manage Fleet', 'Manage fleet assignments/settings.']
+  ];
 
   const statements = [
     `CREATE TABLE IF NOT EXISTS intranet_allowed_roles (
@@ -67,6 +93,46 @@ export async function ensureCoreSchema(env) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       value TEXT NOT NULL UNIQUE,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS app_permissions (
+      permission_key TEXT PRIMARY KEY,
+      permission_group TEXT NOT NULL,
+      label TEXT NOT NULL,
+      description TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS app_roles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      role_key TEXT UNIQUE,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      is_system INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS app_role_permissions (
+      role_id INTEGER NOT NULL,
+      permission_key TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(role_id, permission_key),
+      FOREIGN KEY(role_id) REFERENCES app_roles(id),
+      FOREIGN KEY(permission_key) REFERENCES app_permissions(permission_key)
+    )`,
+    `CREATE TABLE IF NOT EXISTS employee_role_assignments (
+      employee_id INTEGER NOT NULL,
+      role_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(employee_id, role_id),
+      FOREIGN KEY(employee_id) REFERENCES employees(id),
+      FOREIGN KEY(role_id) REFERENCES app_roles(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS auth_role_mappings (
+      discord_role_id TEXT NOT NULL,
+      role_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(discord_role_id, role_id),
+      FOREIGN KEY(role_id) REFERENCES app_roles(id)
     )`,
     `CREATE TABLE IF NOT EXISTS form_categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -137,6 +203,17 @@ export async function ensureCoreSchema(env) {
 
   await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
 
+  await env.DB.batch(
+    permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>
+      env.DB
+        .prepare(
+          `INSERT OR IGNORE INTO app_permissions (permission_key, permission_group, label, description)
+           VALUES (?, ?, ?, ?)`
+        )
+        .bind(permissionKey, permissionGroup, label, description)
+    )
+  );
+
   await env.DB.batch([
     env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Active'),
     env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('On Leave'),
@@ -146,6 +223,65 @@ export async function ensureCoreSchema(env) {
     env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Final Warning'),
     env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Suspension')
   ]);
+
+  await env.DB.batch([
+    env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO app_roles (role_key, name, description, sort_order, is_system)
+         VALUES ('owner', 'Owner', 'System owner role with full access.', 1, 1)`
+      ),
+    env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO app_roles (role_key, name, description, sort_order, is_system)
+         VALUES ('employee', 'Employee', 'Default employee intranet access.', 100, 1)`
+      )
+  ]);
+
+  const ownerRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'owner'`).first();
+  const employeeRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'employee'`).first();
+
+  if (ownerRole?.id) {
+    await env.DB.batch([
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'super.admin')`)
+        .bind(ownerRole.id)
+    ]);
+  }
+
+  if (employeeRole?.id) {
+    await env.DB.batch([
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'dashboard.view')`)
+        .bind(employeeRole.id),
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'my_details.view')`)
+        .bind(employeeRole.id),
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'forms.read')`)
+        .bind(employeeRole.id),
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'forms.submit')`)
+        .bind(employeeRole.id),
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'forms.responses.read')`)
+        .bind(employeeRole.id),
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'voyages.read')`)
+        .bind(employeeRole.id),
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'fleet.read')`)
+        .bind(employeeRole.id)
+    ]);
+
+    await env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO employee_role_assignments (employee_id, role_id)
+         SELECT e.id, ?
+         FROM employees e`
+      )
+      .bind(employeeRole.id)
+      .run();
+  }
 }
 
 export async function getEmployeeByDiscordUserId(env, discordUserId) {

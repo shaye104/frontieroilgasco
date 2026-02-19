@@ -1,9 +1,9 @@
 import { json } from '../../../auth/_lib/auth.js';
-import { requireAdmin } from '../../_lib/admin-auth.js';
+import { requirePermission } from '../../_lib/admin-auth.js';
 
 export async function onRequestPost(context) {
   const { env, params } = context;
-  const { errorResponse, session } = await requireAdmin(context);
+  const { errorResponse, session } = await requirePermission(context, ['employees.notes']);
   if (errorResponse) return errorResponse;
 
   const employeeId = Number(params.id);

@@ -1,4 +1,5 @@
 import { addDisciplinary, addEmployeeNote, getConfig, getEmployee, updateEmployee } from './admin-api.js';
+import { hasPermission } from './intranet-page-guard.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
@@ -77,7 +78,7 @@ function parseEmployeeIdFromUrl() {
   return null;
 }
 
-export async function initEmployeeProfilePage(config) {
+export async function initEmployeeProfilePage(config, session) {
   const feedback = document.querySelector(config.feedbackSelector);
   const employeeHeading = document.querySelector(config.employeeHeadingSelector);
 
@@ -92,6 +93,7 @@ export async function initEmployeeProfilePage(config) {
   const openNoteModalBtn = document.querySelector(config.openNoteModalBtnSelector);
   const resetButton = document.querySelector(config.resetButtonSelector);
   const tenureDaysInput = document.querySelector(config.tenureDaysSelector);
+  const roleOptions = document.querySelector('#employeeRoleOptions');
 
   if (!feedback || !employeeHeading || !editForm || !disciplinaryForm || !noteForm || !activeDisciplinaryList || !activityList) return;
 
@@ -102,6 +104,9 @@ export async function initEmployeeProfilePage(config) {
   }
 
   let currentEmployee = null;
+  let availableRoles = [];
+  let assignedRoleIds = [];
+  const canManageRoles = hasPermission(session, 'roles.manage');
 
   async function refreshConfig() {
     const [statuses, ranks, grades, disciplinaryTypes] = await Promise.all([
@@ -128,12 +133,29 @@ export async function initEmployeeProfilePage(config) {
     editForm.querySelector('[name="serialNumber"]').value = employee.serial_number || '';
     editForm.querySelector('[name="employeeStatus"]').value = employee.employee_status || '';
     editForm.querySelector('[name="hireDate"]').value = employee.hire_date || '';
+    if (roleOptions) {
+      const selected = new Set(assignedRoleIds.map((value) => Number(value)));
+      roleOptions.innerHTML = availableRoles.length
+        ? availableRoles
+            .map(
+              (role) => `<label class="permissions-item">
+          <input type="checkbox" data-role-id="${role.id}" ${selected.has(Number(role.id)) ? 'checked' : ''} ${
+                canManageRoles ? '' : 'disabled'
+              } />
+          <span><strong>${text(role.name)}</strong><br /><small>${text(role.description || '')}</small></span>
+        </label>`
+            )
+            .join('')
+        : '<p>No roles available.</p>';
+    }
 
     if (tenureDaysInput) tenureDaysInput.value = calculateTenureDays(employee.hire_date);
   }
 
   async function loadEmployee() {
     const payload = await getEmployee(employeeId);
+    availableRoles = payload.availableRoles || [];
+    assignedRoleIds = (payload.assignedRoles || []).map((role) => Number(role.id)).filter((value) => Number.isInteger(value) && value > 0);
     applyEmployeeToForm(payload.employee);
 
     const activeDisciplinaries = getActiveDisciplinaries(payload.disciplinaries || []);
@@ -188,7 +210,12 @@ export async function initEmployeeProfilePage(config) {
         grade: String(data.get('grade') || '').trim(),
         serialNumber: String(data.get('serialNumber') || '').trim(),
         employeeStatus: String(data.get('employeeStatus') || '').trim(),
-        hireDate: String(data.get('hireDate') || '').trim()
+        hireDate: String(data.get('hireDate') || '').trim(),
+        roleIds: canManageRoles
+          ? [...editForm.querySelectorAll('[data-role-id]:checked')]
+              .map((input) => Number(input.getAttribute('data-role-id')))
+              .filter((value) => Number.isInteger(value) && value > 0)
+          : assignedRoleIds
       });
 
       await loadEmployee();

@@ -402,9 +402,66 @@ textarea:focus {
   gap: var(--space-3);
 }
 
+.roles-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.34fr) minmax(0, 0.66fr);
+  gap: var(--space-3);
+}
+
+.roles-list-panel,
+.roles-details-panel {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.9rem;
+  background: #ffffff;
+}
+
+.role-row {
+  align-items: flex-start;
+}
+
+.role-row-main {
+  display: grid;
+  gap: 0.1rem;
+  text-align: left;
+  width: 100%;
+}
+
+.role-row-selected {
+  border-color: var(--color-primary);
+}
+
+.permissions-grid {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.permissions-group {
+  padding: 0.8rem;
+}
+
+.permissions-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.permissions-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+.permissions-item input {
+  width: auto;
+  margin: 0.2rem 0 0;
+}
+
 @media (max-width: 1023px) {
   .employee-modal-grid,
-  .employee-page-grid {
+  .employee-page-grid,
+  .roles-layout {
     grid-template-columns: 1fr;
     min-height: 0;
   }

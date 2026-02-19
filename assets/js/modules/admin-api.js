@@ -18,10 +18,30 @@ export function getAdminRoles() {
   return requestJson('/api/admin/roles', { method: 'GET' });
 }
 
-export function saveAdminRoles(roleIds) {
+export function createAdminRole(payload) {
+  return requestJson('/api/admin/roles', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateAdminRole(payload) {
   return requestJson('/api/admin/roles', {
     method: 'PUT',
-    body: JSON.stringify({ roleIds })
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteAdminRole(roleId) {
+  return requestJson(`/api/admin/roles?id=${encodeURIComponent(String(roleId))}`, {
+    method: 'DELETE'
+  });
+}
+
+export function reorderAdminRole(payload) {
+  return requestJson('/api/admin/roles/reorder', {
+    method: 'POST',
+    body: JSON.stringify(payload)
   });
 }
 

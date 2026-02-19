@@ -6,8 +6,8 @@ import {
   serializeCookie,
   verifyStateToken
 } from '../_lib/auth.js';
-import { getConfiguredRoleIds } from '../_lib/roles-store.js';
-import { createOrRefreshAccessRequest, getEmployeeByDiscordUserId } from '../../_lib/db.js';
+import { createOrRefreshAccessRequest } from '../../_lib/db.js';
+import { buildPermissionContext, hasPermission } from '../../_lib/permissions.js';
 
 function toIntranetUrl(requestUrl, params) {
   const source = new URL(requestUrl);
@@ -93,17 +93,23 @@ export async function onRequest(context) {
   const isAdminUser = user.id === String(env.ADMIN_DISCORD_USER_ID).trim();
   const member = await fetchGuildMember(env, user.id);
   const memberRoles = Array.isArray(member?.roles) ? member.roles : [];
-  let allowedRoleIds = [];
+  const displayName = user.global_name || user.username || 'Employee';
+  let employee = null;
+  let permissionContext = null;
 
   try {
-    allowedRoleIds = await getConfiguredRoleIds(env);
+    permissionContext = await buildPermissionContext(env, {
+      discordUserId: user.id,
+      discordRoleIds: memberRoles,
+      isSuperAdmin: isAdminUser
+    });
+    employee = permissionContext.employee;
   } catch {
     return redirect(toIntranetUrl(request.url, { auth: 'error' }));
   }
 
-  const hasAllowedRole = allowedRoleIds.length > 0 && allowedRoleIds.some((roleId) => memberRoles.includes(roleId));
-
-  if (!isAdminUser && !hasAllowedRole) {
+  const hasEntryPermission = hasPermission({ permissions: permissionContext.permissions }, 'dashboard.view');
+  if (!isAdminUser && !hasEntryPermission) {
     const clearStateCookie = serializeCookie('fog_oauth_state', '', {
       path: '/',
       httpOnly: true,
@@ -111,22 +117,15 @@ export async function onRequest(context) {
       sameSite: 'Lax',
       maxAge: 0
     });
-
     return redirect(toIntranetUrl(request.url, { auth: 'denied', reason: 'missing_role' }), [clearStateCookie]);
   }
 
-  const displayName = user.global_name || user.username || 'Employee';
-  let employee = null;
-
-  if (!isAdminUser) {
+  if (!isAdminUser && !employee) {
     try {
-      employee = await getEmployeeByDiscordUserId(env, user.id);
-      if (!employee) {
-        await createOrRefreshAccessRequest(env, {
-          discordUserId: user.id,
-          displayName
-        });
-      }
+      await createOrRefreshAccessRequest(env, {
+        discordUserId: user.id,
+        displayName
+      });
     } catch {
       return redirect(toIntranetUrl(request.url, { auth: 'error' }));
     }
@@ -135,7 +134,10 @@ export async function onRequest(context) {
   const sessionToken = await createSessionToken(env.SESSION_SECRET, {
     userId: user.id,
     displayName,
+    discordRoles: memberRoles,
     roles: memberRoles,
+    appRoleIds: permissionContext.appRoleIds || [],
+    permissions: permissionContext.permissions || [],
     isAdmin: isAdminUser,
     hasEmployee: Boolean(employee),
     accessPending: !isAdminUser && !employee,

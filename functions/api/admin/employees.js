@@ -1,10 +1,10 @@
 import { json } from '../auth/_lib/auth.js';
-import { requireAdmin } from './_lib/admin-auth.js';
+import { requirePermission } from './_lib/admin-auth.js';
 import { normalizeDiscordUserId } from '../_lib/db.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
-  const { errorResponse } = await requireAdmin(context);
+  const { errorResponse } = await requirePermission(context, ['employees.read']);
   if (errorResponse) return errorResponse;
 
   const result = await env.DB.prepare(
@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env } = context;
-  const { errorResponse } = await requireAdmin(context);
+  const { errorResponse } = await requirePermission(context, ['employees.create']);
   if (errorResponse) return errorResponse;
 
   let payload;
@@ -34,7 +34,7 @@ export async function onRequestPost(context) {
   }
 
   try {
-    await env.DB.prepare(
+    const insert = await env.DB.prepare(
       `INSERT INTO employees
        (discord_user_id, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, hire_date, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
@@ -50,6 +50,28 @@ export async function onRequestPost(context) {
         String(payload?.hireDate || '').trim()
       )
       .run();
+
+    const employeeId = Number(insert?.meta?.last_row_id);
+    if (employeeId > 0) {
+      const providedRoleIds = Array.isArray(payload?.roleIds)
+        ? [...new Set(payload.roleIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))]
+        : [];
+      const rolesToAssign = [];
+      if (providedRoleIds.length) {
+        rolesToAssign.push(...providedRoleIds);
+      } else {
+        const employeeRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'employee'`).first();
+        if (employeeRole?.id) rolesToAssign.push(Number(employeeRole.id));
+      }
+
+      if (rolesToAssign.length) {
+        await env.DB.batch(
+          rolesToAssign.map((roleId) =>
+            env.DB.prepare('INSERT OR IGNORE INTO employee_role_assignments (employee_id, role_id) VALUES (?, ?)').bind(employeeId, roleId)
+          )
+        );
+      }
+    }
   } catch (error) {
     return json({ error: error.message || 'Unable to create employee.' }, 500);
   }

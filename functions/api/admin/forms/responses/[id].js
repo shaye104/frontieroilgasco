@@ -1,9 +1,9 @@
 import { json } from '../../../auth/_lib/auth.js';
-import { requireFormsAdmin } from '../../../_lib/forms.js';
+import { requirePermission } from '../../_lib/admin-auth.js';
 
 export async function onRequestGet(context) {
   const { env, params } = context;
-  const { errorResponse } = await requireFormsAdmin(context);
+  const { errorResponse } = await requirePermission(context, ['forms.responses.read']);
   if (errorResponse) return errorResponse;
 
   const responseId = Number(params.id);

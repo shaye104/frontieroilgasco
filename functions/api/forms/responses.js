@@ -1,5 +1,6 @@
 import { json } from '../auth/_lib/auth.js';
 import { hasFormsAdminAccess, requireAuthenticated } from '../_lib/forms.js';
+import { hasPermission } from '../_lib/permissions.js';
 
 function parseFilters(url) {
   return {
@@ -15,6 +16,9 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   const { errorResponse, session, employee } = await requireAuthenticated(context);
   if (errorResponse) return errorResponse;
+  if (!hasPermission(session, 'forms.responses.read')) {
+    return json({ error: 'Forbidden. Missing required permission.' }, 403);
+  }
 
   const isFormsAdmin = hasFormsAdminAccess(env, session);
   const filters = parseFilters(new URL(request.url));
@@ -32,7 +36,7 @@ export async function onRequestGet(context) {
 
   if (!isFormsAdmin) {
     if (!employee) return json({ responses: [] });
-    const roles = Array.isArray(session.roles) ? session.roles.map((r) => String(r)) : [];
+    const roles = Array.isArray(session.appRoleIds) ? session.appRoleIds.map((r) => String(r)) : [];
 
     sql += ` AND r.respondent_discord_user_id = ?
              AND (

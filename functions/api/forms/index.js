@@ -1,10 +1,12 @@
 import { json } from '../auth/_lib/auth.js';
 import { requireAuthenticated } from '../_lib/forms.js';
+import { hasPermission } from '../_lib/permissions.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
   const { errorResponse, session, employee } = await requireAuthenticated(context);
   if (errorResponse) return errorResponse;
+  if (!hasPermission(session, 'forms.read')) return json({ error: 'Forbidden. Missing required permission.' }, 403);
 
   const categoriesResult = await env.DB
     .prepare('SELECT id, name, description, sort_order FROM form_categories ORDER BY sort_order ASC, name ASC')
@@ -13,7 +15,7 @@ export async function onRequestGet(context) {
 
   let forms = [];
 
-  if (session.isAdmin) {
+  if (hasPermission(session, 'forms.manage')) {
     const result = await env.DB
       .prepare(
         `SELECT f.id, f.title, f.description, f.instructions, f.category_id, c.name AS category_name, f.status, f.updated_at
@@ -27,7 +29,7 @@ export async function onRequestGet(context) {
   } else {
     if (!employee) return json({ error: 'Employee profile is required for forms access.' }, 403);
 
-    const roles = Array.isArray(session.roles) ? session.roles.map((r) => String(r)) : [];
+    const roles = Array.isArray(session.appRoleIds) ? session.appRoleIds.map((r) => String(r)) : [];
 
     let sql = `SELECT DISTINCT f.id, f.title, f.description, f.instructions, f.category_id, c.name AS category_name, f.status, f.updated_at
                FROM forms f

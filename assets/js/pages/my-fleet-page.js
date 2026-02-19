@@ -5,7 +5,7 @@ initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
-  requireAdmin: true
+  requiredPermissions: ['fleet.read']
 });
 
 initializeYear();

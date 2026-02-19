@@ -1,10 +1,14 @@
 import { json } from '../../auth/_lib/auth.js';
 import { hasFormsAdminAccess, requireAuthenticated } from '../../_lib/forms.js';
+import { hasPermission } from '../../_lib/permissions.js';
 
 export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse, session, employee } = await requireAuthenticated(context);
   if (errorResponse) return errorResponse;
+  if (!hasPermission(session, 'forms.responses.read')) {
+    return json({ error: 'Forbidden. Missing required permission.' }, 403);
+  }
 
   const responseId = Number(params.id);
   if (!Number.isInteger(responseId) || responseId <= 0) return json({ error: 'Invalid response id.' }, 400);

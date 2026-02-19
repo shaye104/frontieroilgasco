@@ -6,9 +6,9 @@ initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
-  requireAdmin: true
+  requiredPermissions: ['admin.access', 'config.manage']
 }).then((session) => {
-  if (!session || !session.isAdmin) return;
+  if (!session) return;
 
   initAdminConfigMenu({
     feedbackSelector: '#configFeedback'

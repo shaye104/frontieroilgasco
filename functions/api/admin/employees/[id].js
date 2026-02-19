@@ -1,5 +1,6 @@
 import { json } from '../../auth/_lib/auth.js';
-import { requireAdmin } from '../_lib/admin-auth.js';
+import { requirePermission } from '../_lib/admin-auth.js';
+import { hasPermission } from '../../_lib/permissions.js';
 
 function valueText(value) {
   const text = String(value ?? '').trim();
@@ -25,7 +26,7 @@ function buildChangeEntries(previous, next) {
 
 export async function onRequestGet(context) {
   const { env, params } = context;
-  const { errorResponse } = await requireAdmin(context);
+  const { errorResponse } = await requirePermission(context, ['employees.read']);
   if (errorResponse) return errorResponse;
 
   const employeeId = Number(params.id);
@@ -52,12 +53,33 @@ export async function onRequestGet(context) {
     .bind(employeeId)
     .all();
 
-  return json({ employee, disciplinaries: disciplinaries?.results || [], notes: notes?.results || [] });
+  const roleAssignments = await env.DB
+    .prepare(
+      `SELECT ar.id, ar.name, ar.description, ar.sort_order
+       FROM employee_role_assignments era
+       INNER JOIN app_roles ar ON ar.id = era.role_id
+       WHERE era.employee_id = ?
+       ORDER BY ar.sort_order ASC, ar.id ASC`
+    )
+    .bind(employeeId)
+    .all();
+
+  const availableRoles = await env.DB
+    .prepare('SELECT id, name, description, sort_order, is_system FROM app_roles ORDER BY sort_order ASC, id ASC')
+    .all();
+
+  return json({
+    employee,
+    disciplinaries: disciplinaries?.results || [],
+    notes: notes?.results || [],
+    assignedRoles: roleAssignments?.results || [],
+    availableRoles: availableRoles?.results || []
+  });
 }
 
 export async function onRequestPut(context) {
   const { env, params } = context;
-  const { errorResponse, session } = await requireAdmin(context);
+  const { errorResponse, session } = await requirePermission(context, ['employees.edit']);
   if (errorResponse) return errorResponse;
 
   const employeeId = Number(params.id);
@@ -96,6 +118,21 @@ export async function onRequestPut(context) {
       employeeId
     )
     .run();
+
+  const roleIds = Array.isArray(payload?.roleIds)
+    ? [...new Set(payload.roleIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))]
+    : null;
+  if (roleIds) {
+    if (!hasPermission(session, 'roles.manage')) {
+      return json({ error: 'Forbidden. Missing required permission.' }, 403);
+    }
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM employee_role_assignments WHERE employee_id = ?').bind(employeeId),
+      ...roleIds.map((roleId) =>
+        env.DB.prepare('INSERT OR IGNORE INTO employee_role_assignments (employee_id, role_id) VALUES (?, ?)').bind(employeeId, roleId)
+      )
+    ]);
+  }
 
   const employee = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
   if (!employee) return json({ error: 'Employee not found.' }, 404);

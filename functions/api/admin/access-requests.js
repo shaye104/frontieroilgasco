@@ -1,9 +1,9 @@
 import { json } from '../auth/_lib/auth.js';
-import { requireAdmin } from './_lib/admin-auth.js';
+import { requirePermission } from './_lib/admin-auth.js';
 
 export async function onRequestGet(context) {
   const { env } = context;
-  const { errorResponse } = await requireAdmin(context);
+  const { errorResponse } = await requirePermission(context, ['employees.access_requests.review']);
   if (errorResponse) return errorResponse;
 
   const url = new URL(context.request.url);
@@ -32,7 +32,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env } = context;
-  const { errorResponse, session } = await requireAdmin(context);
+  const { errorResponse, session } = await requirePermission(context, ['employees.access_requests.review']);
   if (errorResponse) return errorResponse;
 
   let payload;

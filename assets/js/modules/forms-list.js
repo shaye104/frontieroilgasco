@@ -1,5 +1,6 @@
 import { listAvailableForms } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
+import { hasPermission } from './intranet-page-guard.js';
 
 function text(value) {
   const output = String(value ?? '').trim();
@@ -41,14 +42,14 @@ export async function initFormsList(config, session) {
     const payload = await listAvailableForms();
     clearMessage(feedback);
 
-    if (adminActions && session?.hasFormsAdmin) adminActions.classList.remove('hidden');
+    if (adminActions && hasPermission(session, 'forms.manage')) adminActions.classList.remove('hidden');
 
     const categories = payload.categories || [];
     const uncategorized = payload.uncategorized || [];
     const accessibleFormCount =
       uncategorized.length + categories.reduce((acc, category) => acc + ((category.forms || []).length || 0), 0);
     if (responsesBtn) {
-      if (accessibleFormCount > 0) responsesBtn.classList.remove('hidden');
+      if (accessibleFormCount > 0 && hasPermission(session, 'forms.responses.read')) responsesBtn.classList.remove('hidden');
       else responsesBtn.classList.add('hidden');
     }
 

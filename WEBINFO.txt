@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T15:26:35.676Z
+Generated: 2026-02-19T15:52:31.208Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -25,11 +25,12 @@ SITE STRUCTURE
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
 - my-fleet.html | title: Frontier Oil & Gas Company | My Fleet | primary heading: My Fleet
+- roles.html | title: Frontier Oil & Gas Company | Role Management | primary heading: Role Management
 - voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
 
 JAVASCRIPT MODULES
 - assets/js/modules/access-requests.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createConfigValue, createEmployee, createFormAdmin, createFormCategory, deleteConfigValue, deleteFormAdmin, deleteFormCategory, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, listAccessRequests, listAccessibleFormResponses, listAvailableForms, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, processAccessRequest, saveAdminRoles, submitFormResponse, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory
+- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createAdminRole, createConfigValue, createEmployee, createFormAdmin, createFormCategory, deleteAdminRole, deleteConfigValue, deleteFormAdmin, deleteFormCategory, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, listAccessRequests, listAccessibleFormResponses, listAvailableForms, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, processAccessRequest, reorderAdminRole, submitFormResponse, updateAdminRole, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory
 - assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/company-data.js | exports: companyProfile
@@ -42,11 +43,12 @@ JAVASCRIPT MODULES
 - assets/js/modules/forms-manage-admin.js | exports: No public exports
 - assets/js/modules/forms-responses.js | exports: No public exports
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
-- assets/js/modules/intranet-page-guard.js | exports: No public exports
+- assets/js/modules/intranet-page-guard.js | exports: hasPermission
 - assets/js/modules/manage-employees.js | exports: No public exports
 - assets/js/modules/my-details-panel.js | exports: No public exports
 - assets/js/modules/notice.js | exports: clearMessage, showMessage
 - assets/js/modules/render-company.js | exports: renderHomeContent
+- assets/js/modules/roles-admin.js | exports: No public exports
 - assets/js/modules/year.js | exports: initializeYear
 - assets/js/pages/access-requests-page.js | exports: No public exports
 - assets/js/pages/admin-config-page.js | exports: No public exports
@@ -66,6 +68,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/manage-employees-page.js | exports: No public exports
 - assets/js/pages/my-details-page.js | exports: No public exports
 - assets/js/pages/my-fleet-page.js | exports: No public exports
+- assets/js/pages/roles-page.js | exports: No public exports
 - assets/js/pages/voyage-tracker-page.js | exports: No public exports
 
 CSS MODULES

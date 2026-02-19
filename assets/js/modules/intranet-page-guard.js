@@ -1,5 +1,11 @@
 import { showMessage } from './notice.js';
 
+export function hasPermission(session, permissionKey) {
+  if (!session || !permissionKey) return false;
+  const permissions = Array.isArray(session.permissions) ? session.permissions : [];
+  return permissions.includes('super.admin') || permissions.includes(permissionKey);
+}
+
 async function fetchSession() {
   const response = await fetch('/api/auth/session', {
     method: 'GET',
@@ -18,6 +24,7 @@ export async function initIntranetPageGuard(config) {
   const requireAdmin = Boolean(config.requireAdmin);
   const requireFormsAdmin = Boolean(config.requireFormsAdmin);
   const requireEmployee = Boolean(config.requireEmployee);
+  const requiredPermissions = Array.isArray(config.requiredPermissions) ? config.requiredPermissions : [];
 
   if (!feedback || !protectedContent) return null;
 
@@ -29,12 +36,17 @@ export async function initIntranetPageGuard(config) {
       return null;
     }
 
-    if (requireAdmin && !session.isAdmin) {
+    if (requireAdmin && !hasPermission(session, 'admin.access')) {
       window.location.href = '/intranet.html?auth=denied&reason=admin_required';
       return null;
     }
 
-    if (requireFormsAdmin && !session.hasFormsAdmin) {
+    if (requireFormsAdmin && !hasPermission(session, 'forms.manage')) {
+      window.location.href = '/intranet.html?auth=denied&reason=admin_required';
+      return null;
+    }
+
+    if (requiredPermissions.length && !requiredPermissions.every((permission) => hasPermission(session, permission))) {
       window.location.href = '/intranet.html?auth=denied&reason=admin_required';
       return null;
     }
@@ -53,7 +65,7 @@ export async function initIntranetPageGuard(config) {
     }
 
     if (adminNavLink) {
-      if (session.isAdmin) adminNavLink.classList.remove('hidden');
+      if (hasPermission(session, 'admin.access')) adminNavLink.classList.remove('hidden');
       else adminNavLink.classList.add('hidden');
     }
 

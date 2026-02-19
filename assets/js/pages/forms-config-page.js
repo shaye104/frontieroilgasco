@@ -5,7 +5,7 @@ initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
-  requireFormsAdmin: true
+  requiredPermissions: ['admin.access', 'forms.manage']
 });
 
 initializeYear();

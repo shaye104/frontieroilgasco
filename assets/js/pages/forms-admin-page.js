@@ -6,9 +6,9 @@ initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
-  requireAdmin: true
+  requiredPermissions: ['admin.access', 'forms.manage']
 }).then((session) => {
-  if (!session?.isAdmin) return;
+  if (!session) return;
 
   initFormsAdmin({
     feedbackSelector: '#formsAdminFeedback',

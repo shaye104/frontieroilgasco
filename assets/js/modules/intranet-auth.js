@@ -14,7 +14,7 @@ function getAuthMessageFromUrl() {
   if (auth === 'denied') {
     if (reason === 'login_required') return { text: 'Please sign in to access the intranet.', type: 'error' };
     if (reason === 'admin_required') return { text: 'Admin access is required for that section.', type: 'error' };
-    if (reason === 'missing_role') return { text: 'Access denied. Your Discord role is not authorized for intranet access.', type: 'error' };
+    if (reason === 'missing_role') return { text: 'Access denied. Your account is not authorized for intranet access.', type: 'error' };
     return { text: 'Login failed.', type: 'error' };
   }
 
@@ -76,7 +76,7 @@ export function initIntranetAuth(config) {
       panel.classList.remove('hidden');
       clearMessage(feedback);
 
-      if (session.isAdmin) {
+      if (session.canAccessAdminPanel) {
         if (adminNavLink) adminNavLink.classList.remove('hidden');
         if (adminPanelLinkRow) adminPanelLinkRow.classList.remove('hidden');
         if (pendingPanel) pendingPanel.classList.add('hidden');

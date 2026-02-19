@@ -1,10 +1,10 @@
 import { json } from '../../../auth/_lib/auth.js';
-import { requireFormsAdmin } from '../../../_lib/forms.js';
+import { requirePermission } from '../../_lib/admin-auth.js';
 import { getFormDetail, saveFormRelations } from '../../../_lib/forms.js';
 
 export async function onRequestGet(context) {
   const { env, params } = context;
-  const { errorResponse } = await requireFormsAdmin(context);
+  const { errorResponse } = await requirePermission(context, ['forms.manage']);
   if (errorResponse) return errorResponse;
 
   const formId = Number(params.id);
@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPut(context) {
   const { env, params } = context;
-  const { errorResponse } = await requireFormsAdmin(context);
+  const { errorResponse } = await requirePermission(context, ['forms.manage']);
   if (errorResponse) return errorResponse;
 
   const formId = Number(params.id);
@@ -64,7 +64,7 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { env, params } = context;
-  const { errorResponse } = await requireFormsAdmin(context);
+  const { errorResponse } = await requirePermission(context, ['forms.manage']);
   if (errorResponse) return errorResponse;
 
   const formId = Number(params.id);

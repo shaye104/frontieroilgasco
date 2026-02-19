@@ -6,6 +6,7 @@ import {
   listFormCategories,
   listFormsAdmin
 } from './admin-api.js';
+import { hasPermission } from './intranet-page-guard.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
@@ -88,11 +89,11 @@ export async function initFormsResponses(config, session) {
 
   async function loadFilters() {
     const [formsPayload, categoriesPayload] = await Promise.all([
-      session?.hasFormsAdmin ? listFormsAdmin() : listAvailableForms(),
+      hasPermission(session, 'forms.manage') ? listFormsAdmin() : listAvailableForms(),
       listFormCategories()
     ]);
 
-    const forms = session?.hasFormsAdmin
+    const forms = hasPermission(session, 'forms.manage')
       ? formsPayload.forms || []
       : [
           ...(formsPayload.uncategorized || []),
@@ -101,7 +102,7 @@ export async function initFormsResponses(config, session) {
     fillSelect(formFilter, forms, 'id', (item) => item.title, 'All Forms');
     fillSelect(categoryFilter, categoriesPayload.categories || [], 'id', (item) => item.name, 'All Categories');
 
-    if (session?.hasFormsAdmin) {
+    if (hasPermission(session, 'forms.manage')) {
       const employeesPayload = await listEmployees();
       fillSelect(employeeFilter, employeesPayload.employees || [], 'id', (item) => item.roblox_username || `Employee #${item.id}`, 'All Respondents');
       employeeFilterContainer?.classList.remove('hidden');
@@ -115,7 +116,7 @@ export async function initFormsResponses(config, session) {
     const payload = await listAccessibleFormResponses({
       formId: formFilter?.value || '',
       categoryId: categoryFilter?.value || '',
-      employeeId: session?.hasFormsAdmin ? employeeFilter?.value || '' : '',
+      employeeId: hasPermission(session, 'forms.manage') ? employeeFilter?.value || '' : '',
       dateFrom: dateFromFilter?.value || '',
       dateTo: dateToFilter?.value || ''
     });

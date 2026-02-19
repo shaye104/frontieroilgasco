@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier role management." />
+    <title>Frontier Oil & Gas Company | Role Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/tokens.css" />
+    <link rel="stylesheet" href="assets/css/base.css" />
+    <link rel="stylesheet" href="assets/css/components.css" />
+    <link rel="stylesheet" href="assets/css/pages.css" />
+  </head>
+  <body class="page page-intranet">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">FOG</span>
+          <span class="brand-text">Frontier Oil & Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary">
+          <a href="intranet.html">Dashboard</a>
+          <a href="my-details.html">My Details</a>
+          <a href="voyage-tracker.html">Voyage Tracker</a>
+          <a href="my-fleet.html">My Fleet</a>
+          <a href="forms.html">Forms</a>
+          <a id="adminNavLink" class="hidden" href="admin-panel.html">Admin Panel</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel">
+          <div class="modal-header">
+            <h1>Role Management</h1>
+            <a class="btn btn-secondary" href="admin-panel.html">&larr; Back to Admin Panel</a>
+          </div>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="rolesFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="hidden">
+          <article class="panel roles-layout">
+            <section class="roles-list-panel">
+              <div class="modal-header">
+                <h2>Roles</h2>
+                <button id="openCreateRoleBtn" class="btn btn-primary" type="button">+ Create Role</button>
+              </div>
+              <ul id="rolesList" class="role-list"></ul>
+            </section>
+
+            <section class="roles-details-panel">
+              <h2>Role Details</h2>
+              <p id="selectedRoleHint">Select a role to edit permissions.</p>
+              <form id="roleDetailsForm" class="hidden">
+                <input type="hidden" name="id" />
+                <label>Role Name</label>
+                <input name="name" type="text" required />
+                <label>Description</label>
+                <textarea name="description" rows="3"></textarea>
+
+                <h3>Permissions</h3>
+                <div id="permissionsEditor" class="permissions-grid"></div>
+
+                <div class="modal-actions">
+                  <button class="btn btn-primary" type="submit">Save Changes</button>
+                  <button id="cloneRoleBtn" class="btn btn-secondary" type="button">Clone Role</button>
+                  <button id="deleteRoleBtn" class="btn btn-danger" type="button">Delete Role</button>
+                </div>
+              </form>
+            </section>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <section id="createRoleModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Create Role</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="createRoleModal">Close</button>
+        </div>
+        <form id="createRoleForm">
+          <label>Role Name</label>
+          <input name="name" type="text" required />
+          <label>Description</label>
+          <textarea name="description" rows="3"></textarea>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit">Create Role</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="createRoleModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <p>Copyright <span id="currentYear"></span> Frontier Oil & Gas Company. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script type="module" src="assets/js/pages/roles-page.js"></script>
+  </body>
+</html>
