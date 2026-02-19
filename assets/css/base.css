@@ -38,7 +38,7 @@ p {
 }
 
 .container {
-  width: min(100% - 2rem, var(--container-max));
+  width: min(100% - 3rem, var(--container-max));
   margin-inline: auto;
 }
 
@@ -143,5 +143,17 @@ p {
   .site-nav {
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+@media (max-width: 1439px) {
+  .container {
+    width: min(100% - 2.5rem, 1320px);
+  }
+}
+
+@media (max-width: 1023px) {
+  .container {
+    width: min(100% - 2rem, 100%);
   }
 }

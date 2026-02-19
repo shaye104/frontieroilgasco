@@ -280,7 +280,7 @@ textarea:focus {
 
 .employee-modal-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 0.78fr 1fr;
   gap: var(--space-3);
   min-height: 0;
   flex: 1;
@@ -319,7 +319,7 @@ textarea:focus {
 
 .employee-page-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 0.78fr 1fr;
   gap: var(--space-3);
   min-height: min(70vh, 760px);
 }
