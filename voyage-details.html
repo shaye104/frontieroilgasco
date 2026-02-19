@@ -47,12 +47,16 @@
           <section class="employee-page-panel">
             <div class="modal-header">
               <h2>Voyage Profile</h2>
+              <div id="shipStatusControls" class="ship-status-toggle-wrap">
+                <span class="muted">Ship Underway</span>
+                <label class="status-switch" for="shipStatusToggle">
+                  <input id="shipStatusToggle" type="checkbox" />
+                  <span class="status-slider" aria-hidden="true"></span>
+                </label>
+                <span class="muted">Ship In Port</span>
+              </div>
               <div class="modal-actions">
                 <button id="profileEditToggleBtn" class="btn btn-secondary hidden" type="button" aria-label="Edit Voyage Profile">✏</button>
-              </div>
-              <div id="shipStatusControls" class="modal-actions">
-                <button id="shipUnderwayBtn" class="btn btn-accent" type="button">Ship Underway</button>
-                <button id="shipInPortBtn" class="btn btn-secondary" type="button">Ship In Port</button>
               </div>
             </div>
             <div id="voyageFieldList" class="voyage-field-list"></div>
@@ -154,6 +158,50 @@
               <button id="cancelVoyageHoldBtn" class="btn btn-cancel-hold hold-sweep" type="button">Cancel Voyage</button>
               <button id="closeEndVoyageBtn" class="btn btn-secondary" type="button" data-close-modal="endVoyageModal">Close</button>
             </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="editVoyageModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Edit Voyage Details</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="editVoyageModal">Close</button>
+        </div>
+        <form id="editVoyageForm">
+          <div id="editVoyageFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
+          <label>Port of Departure</label>
+          <select id="editDeparturePort" required></select>
+          <label>Port of Destination</label>
+          <select id="editDestinationPort" required></select>
+          <label>Vessel Name</label>
+          <select id="editVesselName" required></select>
+          <label>Vessel Class</label>
+          <select id="editVesselClass" required></select>
+          <label>Vessel Callsign</label>
+          <select id="editVesselCallsign" required></select>
+
+          <label>Officer of the Watch</label>
+          <div class="combobox-wrap">
+            <input id="editOowSearch" type="text" autocomplete="off" placeholder="Search username..." />
+            <div id="editOowResults" class="autocomplete-list"></div>
+          </div>
+          <p id="editOowSelected" class="muted">Selected: None</p>
+          <div id="editOowError" class="inline-feedback hidden"></div>
+
+          <label>Crew Complement</label>
+          <div class="combobox-wrap combobox-wrap-multi">
+            <div id="editCrewSelected" class="pill-list"></div>
+            <input id="editCrewSearch" type="text" autocomplete="off" placeholder="Search username..." />
+            <div id="editCrewResults" class="autocomplete-list"></div>
+          </div>
+          <div id="editCrewInfo" class="inline-feedback hidden"></div>
+          <div id="editCrewError" class="inline-feedback hidden"></div>
+
+          <div class="modal-actions">
+            <button id="saveEditVoyageBtn" class="btn btn-primary" type="button">Save Changes</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="editVoyageModal">Cancel</button>
           </div>
         </form>
       </div>

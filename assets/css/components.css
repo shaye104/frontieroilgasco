@@ -559,8 +559,63 @@ textarea:focus {
 
 .voyage-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+.ship-status-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-switch {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  display: inline-flex;
+}
+
+.status-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.status-slider {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #d8e2ef;
+  border: 1px solid #c8d5e6;
+  transition: background-color 0.2s ease;
+}
+
+.status-slider::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.status-switch input:checked + .status-slider {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+.status-switch input:checked + .status-slider::before {
+  transform: translateX(22px);
+}
+
+.status-switch input:disabled + .status-slider {
+  opacity: 0.6;
 }
 
 .autocomplete-list {
@@ -821,6 +876,11 @@ textarea:focus {
   grid-column: span 2;
 }
 
+.voyage-field-row-started,
+.voyage-field-row-ended {
+  grid-column: span 3;
+}
+
 .voyage-field-label {
   margin: 0;
   color: var(--color-muted);
@@ -938,7 +998,7 @@ textarea:focus {
   }
 
   .voyage-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
