@@ -1,4 +1,11 @@
-import { createVoyageLog, endVoyage, getVoyage, updateVoyageLog, updateVoyageManifest } from './admin-api.js';
+import {
+  createVoyageLog,
+  endVoyage,
+  getVoyage,
+  updateVoyageDetails,
+  updateVoyageLog,
+  updateVoyageManifest
+} from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
@@ -6,9 +13,14 @@ function text(value) {
   return output || 'N/A';
 }
 
-function money(value) {
+function normalize(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function formatGuilders(value) {
   const num = Number(value || 0);
-  return Number.isFinite(num) ? num.toLocaleString(undefined, { style: 'currency', currency: 'USD' }) : '$0.00';
+  if (!Number.isFinite(num)) return 'ƒ 0';
+  return `ƒ ${num.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
 function formatWhen(value) {
@@ -37,6 +49,19 @@ function closeModal(id) {
   target.setAttribute('aria-hidden', 'true');
 }
 
+function fillSelect(select, items, placeholder) {
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = [`<option value="">${placeholder}</option>`, ...items.map((item) => `<option value="${item.value}">${item.value}</option>`)]
+    .join('');
+  if (current) select.value = current;
+}
+
+function employeeSearchMatches(employee, query) {
+  if (!query) return true;
+  return normalize(employee.serial_number).includes(query);
+}
+
 export async function initVoyageDetails(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const heading = document.querySelector(config.headingSelector);
@@ -49,8 +74,55 @@ export async function initVoyageDetails(config) {
   const logList = document.querySelector(config.logListSelector);
   const endForm = document.querySelector(config.endFormSelector);
   const cargoLostEditor = document.querySelector(config.cargoLostEditorSelector);
+  const detailsForm = document.querySelector(config.detailsFormSelector);
+  const addCargoBtn = document.querySelector(config.addCargoButtonSelector);
+  const addCargoForm = document.querySelector(config.addCargoFormSelector);
+  const addCargoTypeSelect = document.querySelector(config.addCargoTypeSelector);
 
-  if (!feedback || !heading || !metaRoot || !manifestBody || !buyTotalText || !saveManifestBtn || !endVoyageBtn || !addLogForm || !logList || !endForm || !cargoLostEditor) return;
+  const editDeparture = document.querySelector(config.editDepartureSelector);
+  const editDestination = document.querySelector(config.editDestinationSelector);
+  const editVesselName = document.querySelector(config.editVesselNameSelector);
+  const editVesselClass = document.querySelector(config.editVesselClassSelector);
+  const editVesselCallsign = document.querySelector(config.editVesselCallsignSelector);
+  const editOowSearch = document.querySelector(config.editOowSearchSelector);
+  const editOowResults = document.querySelector(config.editOowResultsSelector);
+  const editOowHidden = document.querySelector(config.editOowHiddenSelector);
+  const editOowSelected = document.querySelector(config.editOowSelectedSelector);
+  const editCrewSearch = document.querySelector(config.editCrewSearchSelector);
+  const editCrewResults = document.querySelector(config.editCrewResultsSelector);
+  const editCrewSelected = document.querySelector(config.editCrewSelectedSelector);
+
+  if (
+    !feedback ||
+    !heading ||
+    !metaRoot ||
+    !manifestBody ||
+    !buyTotalText ||
+    !saveManifestBtn ||
+    !endVoyageBtn ||
+    !addLogForm ||
+    !logList ||
+    !endForm ||
+    !cargoLostEditor ||
+    !detailsForm ||
+    !addCargoBtn ||
+    !addCargoForm ||
+    !addCargoTypeSelect ||
+    !editDeparture ||
+    !editDestination ||
+    !editVesselName ||
+    !editVesselClass ||
+    !editVesselCallsign ||
+    !editOowSearch ||
+    !editOowResults ||
+    !editOowHidden ||
+    !editOowSelected ||
+    !editCrewSearch ||
+    !editCrewResults ||
+    !editCrewSelected
+  ) {
+    return;
+  }
 
   const voyageId = parseVoyageId();
   if (!voyageId) {
@@ -59,13 +131,18 @@ export async function initVoyageDetails(config) {
   }
 
   let detail = null;
+  let selectedCrewIds = new Set();
 
-  function manifestPayloadFromTable() {
-    return [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => ({
-      cargoTypeId: Number(row.getAttribute('data-cargo-id')),
-      quantity: Number(row.querySelector('input[data-field="quantity"]')?.value || 0),
-      buyPrice: Number(row.querySelector('input[data-field="buyPrice"]')?.value || 0)
-    }));
+  function currentManifestLines() {
+    return [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => {
+      const qtyInput = row.querySelector('input[data-field="quantity"]');
+      const buyInput = row.querySelector('input[data-field="buyPrice"]');
+      return {
+        cargoTypeId: Number(row.getAttribute('data-cargo-id')),
+        quantity: Number(qtyInput?.value || 0),
+        buyPrice: Number(buyInput?.value || 0)
+      };
+    });
   }
 
   function renderMeta() {
@@ -80,30 +157,61 @@ export async function initVoyageDetails(config) {
       <p><strong>Started:</strong> ${formatWhen(voyage.started_at)}</p>
       ${voyage.status === 'ENDED' ? `<p><strong>Ended:</strong> ${formatWhen(voyage.ended_at)}</p>` : ''}
     `;
+
+    if (voyage.status === 'ENDED') {
+      const cargoLost = Array.isArray(detail.cargoLost) ? detail.cargoLost : [];
+      const lossLines = cargoLost.length
+        ? cargoLost.map((item) => `<li>${text(item.cargoName)} | Lost ${item.lostQuantity} of ${item.manifestQuantity}</li>`).join('')
+        : '<li>No cargo loss recorded.</li>';
+      metaRoot.insertAdjacentHTML(
+        'beforeend',
+        `<p><strong>Buy Total:</strong> ${formatGuilders(voyage.buy_total)}</p>
+         <p><strong>Effective Sell:</strong> ${formatGuilders(voyage.effective_sell)}</p>
+         <p><strong>Profit:</strong> ${formatGuilders(voyage.profit)}</p>
+         <p><strong>Company Share (10%):</strong> ${formatGuilders(voyage.company_share)}</p>
+         <p><strong>Cargo Lost Summary:</strong></p>
+         <ul>${lossLines}</ul>`
+      );
+    }
   }
 
   function renderManifest() {
     const canEdit = Boolean(detail.permissions?.canEdit);
     manifestBody.innerHTML = (detail.manifest || [])
-      .map((line) => {
-        return `
-          <tr data-cargo-id="${line.cargo_type_id}">
-            <td>${text(line.cargo_name)}</td>
-            <td><input data-field="quantity" type="number" min="0" step="1" value="${Number(line.quantity || 0)}" ${
-              canEdit ? '' : 'disabled'
-            } /></td>
-            <td><input data-field="buyPrice" type="number" min="0" step="0.01" value="${Number(line.buy_price || 0)}" ${
-              canEdit ? '' : 'disabled'
-            } /></td>
-            <td>${money(line.line_total)}</td>
-          </tr>
-        `;
-      })
+      .map(
+        (line) => `<tr data-cargo-id="${line.cargo_type_id}">
+          <td>${text(line.cargo_name)}</td>
+          <td><input data-field="quantity" type="number" min="0" step="1" value="${Number(line.quantity || 0)}" ${
+            canEdit ? '' : 'disabled'
+          } /></td>
+          <td><input data-field="buyPrice" type="number" min="0" step="0.01" value="${Number(line.buy_price || 0)}" ${
+            canEdit ? '' : 'disabled'
+          } /></td>
+          <td>${formatGuilders(line.line_total)}</td>
+          <td>${
+            canEdit ? `<button class="btn btn-secondary" type="button" data-remove-line="${line.cargo_type_id}">Remove</button>` : '-'
+          }</td>
+        </tr>`
+      )
       .join('');
 
-    buyTotalText.textContent = money(detail.buyTotal);
-    if (canEdit) saveManifestBtn.classList.remove('hidden');
-    else saveManifestBtn.classList.add('hidden');
+    manifestBody.querySelectorAll('[data-remove-line]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const cargoId = Number(button.getAttribute('data-remove-line'));
+        detail.manifest = (detail.manifest || []).filter((line) => Number(line.cargo_type_id) !== cargoId);
+        renderManifest();
+        renderCargoLostEditor();
+      });
+    });
+
+    buyTotalText.textContent = formatGuilders(detail.buyTotal);
+    if (canEdit) {
+      saveManifestBtn.classList.remove('hidden');
+      addCargoBtn.classList.remove('hidden');
+    } else {
+      saveManifestBtn.classList.add('hidden');
+      addCargoBtn.classList.add('hidden');
+    }
 
     if (detail.permissions?.canEnd) endVoyageBtn.classList.remove('hidden');
     else endVoyageBtn.classList.add('hidden');
@@ -149,28 +257,116 @@ export async function initVoyageDetails(config) {
     }
   }
 
+  function renderCrewSelected() {
+    if (!selectedCrewIds.size) {
+      editCrewSelected.innerHTML = '<span class="muted">No crew selected.</span>';
+      return;
+    }
+
+    editCrewSelected.innerHTML = [...selectedCrewIds]
+      .map((employeeId) => {
+        const employee = (detail.employees || []).find((item) => Number(item.id) === Number(employeeId));
+        if (!employee) return '';
+        return `<span class="pill">
+            ${text(employee.roblox_username)}
+            <button type="button" class="pill-close" data-remove-crew="${employee.id}" aria-label="Remove crew member">x</button>
+            <input type="hidden" name="crewComplementIds" value="${employee.id}" />
+          </span>`;
+      })
+      .join('');
+
+    editCrewSelected.querySelectorAll('[data-remove-crew]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = Number(button.getAttribute('data-remove-crew'));
+        selectedCrewIds.delete(id);
+        renderCrewSelected();
+      });
+    });
+  }
+
+  function renderOowResults() {
+    const query = normalize(editOowSearch.value);
+    const matches = (detail.employees || []).filter((employee) => employeeSearchMatches(employee, query)).slice(0, 8);
+    editOowResults.innerHTML = matches
+      .map(
+        (employee) => `<button class="autocomplete-item" type="button" data-oow-id="${employee.id}">
+          <span>${text(employee.roblox_username)}</span>
+          <small>Serial: ${text(employee.serial_number)}</small>
+        </button>`
+      )
+      .join('');
+
+    editOowResults.querySelectorAll('[data-oow-id]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const selectedId = Number(button.getAttribute('data-oow-id'));
+        const selected = (detail.employees || []).find((employee) => Number(employee.id) === selectedId);
+        if (!selected) return;
+        editOowHidden.value = String(selected.id);
+        editOowSelected.textContent = `Selected OOW: ${text(selected.roblox_username)}`;
+        editOowResults.innerHTML = '';
+        editOowSearch.value = '';
+      });
+    });
+  }
+
+  function renderCrewResults() {
+    const query = normalize(editCrewSearch.value);
+    const matches = (detail.employees || [])
+      .filter((employee) => !selectedCrewIds.has(Number(employee.id)))
+      .filter((employee) => employeeSearchMatches(employee, query))
+      .slice(0, 10);
+    editCrewResults.innerHTML = matches
+      .map(
+        (employee) => `<button class="autocomplete-item" type="button" data-crew-id="${employee.id}">
+          <span>${text(employee.roblox_username)}</span>
+          <small>Serial: ${text(employee.serial_number)}</small>
+        </button>`
+      )
+      .join('');
+
+    editCrewResults.querySelectorAll('[data-crew-id]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const selectedId = Number(button.getAttribute('data-crew-id'));
+        selectedCrewIds.add(selectedId);
+        editCrewSearch.value = '';
+        renderCrewResults();
+        renderCrewSelected();
+      });
+    });
+  }
+
+  function renderDetailsEditor() {
+    const canEdit = Boolean(detail.permissions?.canEdit);
+    if (!canEdit) {
+      detailsForm.classList.add('hidden');
+      return;
+    }
+    detailsForm.classList.remove('hidden');
+
+    fillSelect(editDeparture, detail.voyageConfig?.ports || [], 'Select departure port');
+    fillSelect(editDestination, detail.voyageConfig?.ports || [], 'Select destination port');
+    fillSelect(editVesselName, detail.voyageConfig?.vesselNames || [], 'Select vessel name');
+    fillSelect(editVesselClass, detail.voyageConfig?.vesselClasses || [], 'Select vessel class');
+    fillSelect(editVesselCallsign, detail.voyageConfig?.vesselCallsigns || [], 'Select vessel callsign');
+
+    editDeparture.value = detail.voyage.departure_port || '';
+    editDestination.value = detail.voyage.destination_port || '';
+    editVesselName.value = detail.voyage.vessel_name || '';
+    editVesselClass.value = detail.voyage.vessel_class || '';
+    editVesselCallsign.value = detail.voyage.vessel_callsign || '';
+    editOowHidden.value = String(detail.voyage.officer_of_watch_employee_id || '');
+    editOowSelected.textContent = `Selected OOW: ${text(detail.voyage.officer_name)}`;
+    selectedCrewIds = new Set((detail.crew || []).map((member) => Number(member.id)));
+    renderCrewSelected();
+
+    const availableCargo = detail.voyageConfig?.cargoTypes || [];
+    addCargoTypeSelect.innerHTML = ['<option value="">Select cargo type</option>', ...availableCargo.map((cargo) => `<option value="${cargo.id}">${cargo.name}</option>`)].join('');
+  }
+
   function renderEndSection() {
     const canEdit = Boolean(detail.permissions?.canEdit);
     if (canEdit) addLogForm.classList.remove('hidden');
     else addLogForm.classList.add('hidden');
-
-    if (detail.voyage.status === 'ENDED') {
-      const cargoLost = Array.isArray(detail.cargoLost) ? detail.cargoLost : [];
-      const lossLines = cargoLost.length
-        ? cargoLost.map((item) => `<li>${text(item.cargoName)} | Lost ${item.lostQuantity} of ${item.manifestQuantity}</li>`).join('')
-        : '<li>No cargo loss recorded.</li>';
-
-      metaRoot.insertAdjacentHTML(
-        'beforeend',
-        `<hr />
-         <p><strong>Buy Total:</strong> ${money(detail.voyage.buy_total)}</p>
-         <p><strong>Effective Sell:</strong> ${money(detail.voyage.effective_sell)}</p>
-         <p><strong>Profit:</strong> ${money(detail.voyage.profit)}</p>
-         <p><strong>Company Share (10%):</strong> ${money(detail.voyage.company_share)}</p>
-         <p><strong>Cargo Lost Summary:</strong></p>
-         <ul>${lossLines}</ul>`
-      );
-    }
   }
 
   function renderCargoLostEditor() {
@@ -190,18 +386,89 @@ export async function initVoyageDetails(config) {
     renderMeta();
     renderManifest();
     renderLogs();
+    renderDetailsEditor();
     renderEndSection();
     renderCargoLostEditor();
   }
 
+  detailsForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(detailsForm);
+    const crewIds = data
+      .getAll('crewComplementIds')
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0);
+
+    try {
+      await updateVoyageDetails(voyageId, {
+        departurePort: text(data.get('departurePort')),
+        destinationPort: text(data.get('destinationPort')),
+        vesselName: text(data.get('vesselName')),
+        vesselClass: text(data.get('vesselClass')),
+        vesselCallsign: text(data.get('vesselCallsign')),
+        officerOfWatchEmployeeId: Number(data.get('officerOfWatchEmployeeId')),
+        crewComplementIds: crewIds
+      });
+      await refresh();
+      showMessage(feedback, 'Voyage details saved and logged.', 'success');
+    } catch (error) {
+      showMessage(feedback, error.message || 'Unable to save voyage details.', 'error');
+    }
+  });
+
   saveManifestBtn.addEventListener('click', async () => {
     try {
-      await updateVoyageManifest(voyageId, manifestPayloadFromTable());
+      await updateVoyageManifest(voyageId, currentManifestLines());
       await refresh();
       showMessage(feedback, 'Manifest saved.', 'success');
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to save manifest.', 'error');
     }
+  });
+
+  addCargoBtn.addEventListener('click', () => openModal('addCargoModal'));
+  addCargoForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const data = new FormData(addCargoForm);
+    const cargoTypeId = Number(data.get('cargoTypeId'));
+    const quantity = Number(data.get('quantity'));
+    const buyPrice = Number(data.get('buyPrice'));
+    const cargoType = (detail.voyageConfig?.cargoTypes || []).find((cargo) => Number(cargo.id) === cargoTypeId);
+    if (!cargoType || !Number.isInteger(cargoTypeId) || cargoTypeId <= 0) {
+      showMessage(feedback, 'Select a valid cargo type.', 'error');
+      return;
+    }
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      showMessage(feedback, 'Quantity must be an integer >= 0.', 'error');
+      return;
+    }
+    if (!Number.isFinite(buyPrice) || buyPrice < 0) {
+      showMessage(feedback, 'Buy price must be >= 0.', 'error');
+      return;
+    }
+
+    const existing = (detail.manifest || []).find((line) => Number(line.cargo_type_id) === cargoTypeId);
+    if (existing) {
+      existing.quantity = quantity;
+      existing.buy_price = buyPrice;
+      existing.line_total = quantity * buyPrice;
+    } else {
+      detail.manifest = [
+        ...(detail.manifest || []),
+        {
+          cargo_type_id: cargoTypeId,
+          cargo_name: cargoType.name,
+          quantity,
+          buy_price: buyPrice,
+          line_total: quantity * buyPrice
+        }
+      ];
+    }
+
+    renderManifest();
+    renderCargoLostEditor();
+    closeModal('addCargoModal');
+    addCargoForm.reset();
   });
 
   addLogForm.addEventListener('submit', async (event) => {
@@ -224,6 +491,11 @@ export async function initVoyageDetails(config) {
       if (modalId) closeModal(modalId);
     });
   });
+
+  editOowSearch.addEventListener('input', renderOowResults);
+  editOowSearch.addEventListener('focus', renderOowResults);
+  editCrewSearch.addEventListener('input', renderCrewResults);
+  editCrewSearch.addEventListener('focus', renderCrewResults);
 
   endForm.addEventListener('submit', async (event) => {
     event.preventDefault();

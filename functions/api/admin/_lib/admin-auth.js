@@ -1,6 +1,6 @@
 import { json, readSessionFromRequest } from '../../auth/_lib/auth.js';
 import { ensureCoreSchema } from '../../_lib/db.js';
-import { enrichSessionWithPermissions, hasAnyPermission } from '../../_lib/permissions.js';
+import { enrichSessionWithPermissions, hasAnyPermission, hasPermission } from '../../_lib/permissions.js';
 
 export async function requirePermission(context, permissionKeys = []) {
   const { env, request } = context;
@@ -11,7 +11,9 @@ export async function requirePermission(context, permissionKeys = []) {
     return { errorResponse: json({ error: 'Authentication required.' }, 401), session: null };
   }
 
-  if (!hasAnyPermission(session, ['admin.access', ...permissionKeys])) {
+  const hasAdminAccess = hasPermission(session, 'admin.access');
+  const hasTargetPermission = permissionKeys.length ? hasAnyPermission(session, permissionKeys) : true;
+  if (!hasAdminAccess || !hasTargetPermission) {
     return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null };
   }
 

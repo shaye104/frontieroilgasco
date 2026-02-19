@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier cargo management." />
-    <title>Frontier Oil & Gas Company | Cargo Management</title>
+    <meta name="description" content="Frontier voyage configuration." />
+    <title>Frontier Oil & Gas Company | Voyage Config</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -34,28 +34,71 @@
     <main class="section">
       <div class="container intranet-layout">
         <section class="panel">
-          <div class="modal-header">
-            <h1>Cargo Management</h1>
-            <button id="openCargoModalBtn" class="btn btn-primary" type="button">+ New Cargo Type</button>
-          </div>
+          <h1>Voyage Config</h1>
+          <p class="muted">Manage predefined voyage lists and active cargo options.</p>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="cargoFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
         <section id="protectedContent" class="panel hidden">
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Active</th>
-                  <th>Default Price</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="cargoTableBody"></tbody>
-            </table>
-          </div>
+          <article id="voyageConfigLists" class="panel hidden">
+            <h2>Voyage Lists</h2>
+            <div class="forms-category-stack">
+              <section class="section-surface">
+                <h3>Ports</h3>
+                <form class="modal-actions" data-config-create="ports">
+                  <input name="value" type="text" placeholder="Add port" required />
+                  <button class="btn btn-primary" type="submit">Add</button>
+                </form>
+                <ul id="listPorts" class="role-list"></ul>
+              </section>
+
+              <section class="section-surface">
+                <h3>Vessel Names</h3>
+                <form class="modal-actions" data-config-create="vessel_names">
+                  <input name="value" type="text" placeholder="Add vessel name" required />
+                  <button class="btn btn-primary" type="submit">Add</button>
+                </form>
+                <ul id="listVesselNames" class="role-list"></ul>
+              </section>
+
+              <section class="section-surface">
+                <h3>Vessel Classes</h3>
+                <form class="modal-actions" data-config-create="vessel_classes">
+                  <input name="value" type="text" placeholder="Add vessel class" required />
+                  <button class="btn btn-primary" type="submit">Add</button>
+                </form>
+                <ul id="listVesselClasses" class="role-list"></ul>
+              </section>
+
+              <section class="section-surface">
+                <h3>Vessel Callsigns</h3>
+                <form class="modal-actions" data-config-create="vessel_callsigns">
+                  <input name="value" type="text" placeholder="Add vessel callsign" required />
+                  <button class="btn btn-primary" type="submit">Add</button>
+                </form>
+                <ul id="listVesselCallsigns" class="role-list"></ul>
+              </section>
+            </div>
+          </article>
+
+          <article id="cargoTypeSection" class="panel hidden">
+            <h2>Cargo Types</h2>
+            <button id="openCargoModalBtn" class="btn btn-primary" type="button">+ New Cargo Type</button>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Active</th>
+                    <th>Default Price</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="cargoTableBody"></tbody>
+              </table>
+            </div>
+          </article>
         </section>
       </div>
     </main>
@@ -70,7 +113,7 @@
           <input name="id" type="hidden" />
           <label>Name</label>
           <input name="name" type="text" required />
-          <label>Default Price (optional)</label>
+          <label>Default Price (guilders, optional)</label>
           <input name="defaultPrice" type="number" min="0" step="0.01" />
           <label>
             <input name="active" type="checkbox" checked />

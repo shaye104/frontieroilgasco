@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T18:26:06.874Z
+Generated: 2026-02-19T18:52:56.657Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -10,7 +10,7 @@ SITE STRUCTURE
 - admin-config.html | title: Frontier Oil & Gas Company | System Config | primary heading: System Config
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
-- cargo-admin.html | title: Frontier Oil & Gas Company | Cargo Management | primary heading: Cargo Management
+- cargo-admin.html | title: Frontier Oil & Gas Company | Voyage Config | primary heading: Voyage Config
 - employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
 - form-fill.html | title: Frontier Oil & Gas Company | Fill Form | primary heading: Form
 - forms-admin.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
@@ -30,7 +30,7 @@ SITE STRUCTURE
 - voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
 
 JAVASCRIPT MODULES
-- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createAdminRole, createCargoType, createConfigValue, createEmployee, createFormAdmin, createFormCategory, createVoyageLog, deleteAdminRole, deleteCargoType, deleteConfigValue, deleteFormAdmin, deleteFormCategory, endVoyage, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, getVoyage, listAccessRequests, listAccessibleFormResponses, listAvailableForms, listCargoTypes, listCargoTypesAdmin, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, listVoyages, processAccessRequest, reorderAdminRole, startVoyage, submitFormResponse, updateAdminRole, updateCargoType, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory, updateVoyageLog, updateVoyageManifest
+- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createAdminRole, createCargoType, createConfigValue, createEmployee, createFormAdmin, createFormCategory, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteCargoType, deleteConfigValue, deleteFormAdmin, deleteFormCategory, deleteVoyageConfigValue, endVoyage, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, getVoyage, listAccessRequests, listAccessibleFormResponses, listAvailableForms, listCargoTypes, listCargoTypesAdmin, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, listVoyageConfig, listVoyageConfigAdmin, listVoyages, processAccessRequest, reorderAdminRole, startVoyage, submitFormResponse, updateAdminRole, updateCargoType, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest
 - assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/cargo-admin.js | exports: No public exports

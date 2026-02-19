@@ -516,6 +516,80 @@ textarea:focus {
   padding: 1rem;
 }
 
+.voyage-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.autocomplete-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: -0.2rem 0 0.8rem;
+}
+
+.autocomplete-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.autocomplete-item:hover {
+  border-color: color-mix(in srgb, var(--color-secondary) 38%, white);
+  background: color-mix(in srgb, var(--color-secondary) 8%, white);
+}
+
+.autocomplete-item small {
+  color: var(--color-muted);
+}
+
+.pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: var(--space-3);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  background: #ffffff;
+  color: var(--color-ink-soft);
+}
+
+.pill-close {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.manifest-table-wrap {
+  max-height: min(44vh, 520px);
+  overflow: auto;
+}
+
+.manifest-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
 .voyage-status {
   display: inline-flex;
   align-items: center;
@@ -564,6 +638,10 @@ textarea:focus {
   .employee-page-panel {
     overflow: visible;
   }
+
+  .voyage-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -592,5 +670,9 @@ textarea:focus {
 
   .data-table {
     min-width: 680px;
+  }
+
+  .voyage-grid {
+    grid-template-columns: 1fr;
   }
 }

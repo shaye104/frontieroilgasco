@@ -16,8 +16,18 @@ initIntranetPageGuard({
       archivedSelector: '#archivedVoyages',
       startButtonSelector: '#openStartVoyageBtn',
       startFormSelector: '#startVoyageForm',
-      officerSelector: '#voyageOowSelect',
-      crewSelector: '#voyageCrewSelect'
+      departureSelector: '#voyageDepartureSelect',
+      destinationSelector: '#voyageDestinationSelect',
+      vesselNameSelector: '#voyageVesselNameSelect',
+      vesselClassSelector: '#voyageVesselClassSelect',
+      vesselCallsignSelector: '#voyageVesselCallsignSelect',
+      officerSearchSelector: '#voyageOowSerialSearch',
+      officerResultsSelector: '#voyageOowResults',
+      officerHiddenSelector: '#voyageOowHidden',
+      officerSelectedSelector: '#voyageOowSelected',
+      crewSearchSelector: '#voyageCrewSerialSearch',
+      crewResultsSelector: '#voyageCrewResults',
+      crewSelectedSelector: '#voyageCrewSelected'
     },
     session
   );

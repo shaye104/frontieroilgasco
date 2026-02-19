@@ -23,6 +23,7 @@ export async function ensureCoreSchema(env) {
     ['voyages.create', 'voyages', 'Create Voyages', 'Create voyage entries.'],
     ['voyages.edit', 'voyages', 'Edit Voyages', 'Edit voyage entries.'],
     ['voyages.end', 'voyages', 'End Voyages', 'End voyages and finalize voyage accounting.'],
+    ['voyages.config.manage', 'voyages', 'Manage Voyage Config', 'Manage voyage config lists for ports and vessels.'],
     ['cargo.manage', 'voyages', 'Manage Cargo', 'Manage cargo type definitions for manifests.'],
     ['fleet.read', 'voyages', 'View Fleet', 'View fleet information.'],
     ['fleet.manage', 'voyages', 'Manage Fleet', 'Manage fleet assignments/settings.']
@@ -143,6 +144,30 @@ export async function ensureCoreSchema(env) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,
+    `CREATE TABLE IF NOT EXISTS config_voyage_ports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      value TEXT NOT NULL UNIQUE,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS config_vessel_names (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      value TEXT NOT NULL UNIQUE,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS config_vessel_classes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      value TEXT NOT NULL UNIQUE,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS config_vessel_callsigns (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      value TEXT NOT NULL UNIQUE,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
     `CREATE TABLE IF NOT EXISTS voyages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       status TEXT NOT NULL DEFAULT 'ONGOING',
@@ -198,6 +223,9 @@ export async function ensureCoreSchema(env) {
       FOREIGN KEY(voyage_id) REFERENCES voyages(id),
       FOREIGN KEY(author_employee_id) REFERENCES employees(id)
     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS ux_voyages_active_vessel_callsign
+     ON voyages (LOWER(vessel_name), LOWER(vessel_callsign))
+     WHERE status = 'ONGOING'`,
     `CREATE TABLE IF NOT EXISTS form_categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,

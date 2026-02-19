@@ -1,6 +1,6 @@
 import { json } from '../auth/_lib/auth.js';
 import { hasPermission } from '../_lib/permissions.js';
-import { requireVoyagePermission, toMoney } from '../_lib/voyages.js';
+import { requireVoyagePermission } from '../_lib/voyages.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -9,6 +9,15 @@ function text(value) {
 function asEmployeeIds(input) {
   if (!Array.isArray(input)) return [];
   return [...new Set(input.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))];
+}
+
+async function listConfigValues(env, tableName) {
+  const rows = await env.DB.prepare(`SELECT id, value FROM ${tableName} ORDER BY value ASC, id ASC`).all();
+  return rows?.results || [];
+}
+
+function valueSet(items) {
+  return new Set((items || []).map((item) => String(item.value || '').trim().toLowerCase()).filter(Boolean));
 }
 
 export async function onRequestGet(context) {
@@ -35,19 +44,33 @@ export async function onRequestGet(context) {
     isOngoing: String(voyage.status) === 'ONGOING'
   }));
 
-  const employees = hasPermission(session, 'voyages.create')
-    ? (
-        await env.DB
-          .prepare('SELECT id, roblox_username, rank, grade FROM employees ORDER BY roblox_username ASC, id ASC')
-          .all()
-      )?.results || []
-    : [];
+  const [employees, ports, vesselNames, vesselClasses, vesselCallsigns] = await Promise.all([
+    hasPermission(session, 'voyages.create')
+      ? (
+          await env.DB
+            .prepare(
+              'SELECT id, roblox_username, serial_number, rank, grade FROM employees ORDER BY roblox_username ASC, id ASC'
+            )
+            .all()
+        )?.results || []
+      : [],
+    listConfigValues(env, 'config_voyage_ports'),
+    listConfigValues(env, 'config_vessel_names'),
+    listConfigValues(env, 'config_vessel_classes'),
+    listConfigValues(env, 'config_vessel_callsigns')
+  ]);
 
   return json({
     voyages,
     ongoing: voyages.filter((voyage) => voyage.isOngoing),
     archived: voyages.filter((voyage) => !voyage.isOngoing),
     employees,
+    voyageConfig: {
+      ports,
+      vesselNames,
+      vesselClasses,
+      vesselCallsigns
+    },
     permissions: {
       canCreate: hasPermission(session, 'voyages.create'),
       canEdit: hasPermission(session, 'voyages.edit'),
@@ -86,6 +109,40 @@ export async function onRequestPost(context) {
     return json({ error: 'Crew complement requires at least one employee.' }, 400);
   }
 
+  const [ports, vesselNames, vesselClasses, vesselCallsigns] = await Promise.all([
+    listConfigValues(env, 'config_voyage_ports'),
+    listConfigValues(env, 'config_vessel_names'),
+    listConfigValues(env, 'config_vessel_classes'),
+    listConfigValues(env, 'config_vessel_callsigns')
+  ]);
+  const allowedPorts = valueSet(ports);
+  const allowedNames = valueSet(vesselNames);
+  const allowedClasses = valueSet(vesselClasses);
+  const allowedCallsigns = valueSet(vesselCallsigns);
+
+  if (
+    !allowedPorts.has(departurePort.toLowerCase()) ||
+    !allowedPorts.has(destinationPort.toLowerCase()) ||
+    !allowedNames.has(vesselName.toLowerCase()) ||
+    !allowedClasses.has(vesselClass.toLowerCase()) ||
+    !allowedCallsigns.has(vesselCallsign.toLowerCase())
+  ) {
+    return json({ error: 'Voyage must use configured ports and vessel values.' }, 400);
+  }
+
+  const duplicateOngoing = await env.DB
+    .prepare(
+      `SELECT id
+       FROM voyages
+       WHERE status = 'ONGOING' AND LOWER(vessel_name) = LOWER(?) AND LOWER(vessel_callsign) = LOWER(?)
+       LIMIT 1`
+    )
+    .bind(vesselName, vesselCallsign)
+    .first();
+  if (duplicateOngoing) {
+    return json({ error: 'An ongoing voyage already exists for that vessel and callsign.' }, 400);
+  }
+
   const employeeRows = await env.DB
     .prepare(
       `SELECT id
@@ -99,14 +156,22 @@ export async function onRequestPost(context) {
     return json({ error: 'Selected crew members must exist.' }, 400);
   }
 
-  const insert = await env.DB
-    .prepare(
-      `INSERT INTO voyages
-       (status, owner_employee_id, departure_port, destination_port, vessel_name, vessel_class, vessel_callsign, officer_of_watch_employee_id, started_at, updated_at)
-       VALUES ('ONGOING', ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-    )
-    .bind(employee.id, departurePort, destinationPort, vesselName, vesselClass, vesselCallsign, officerOfWatchEmployeeId)
-    .run();
+  let insert;
+  try {
+    insert = await env.DB
+      .prepare(
+        `INSERT INTO voyages
+         (status, owner_employee_id, departure_port, destination_port, vessel_name, vessel_class, vessel_callsign, officer_of_watch_employee_id, started_at, updated_at)
+         VALUES ('ONGOING', ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+      )
+      .bind(employee.id, departurePort, destinationPort, vesselName, vesselClass, vesselCallsign, officerOfWatchEmployeeId)
+      .run();
+  } catch (error) {
+    if (String(error?.message || '').toLowerCase().includes('ux_voyages_active_vessel_callsign')) {
+      return json({ error: 'An ongoing voyage already exists for that vessel and callsign.' }, 400);
+    }
+    throw error;
+  }
   const voyageId = Number(insert?.meta?.last_row_id);
 
   await env.DB.batch(
@@ -114,23 +179,6 @@ export async function onRequestPost(context) {
       env.DB.prepare('INSERT OR IGNORE INTO voyage_crew_members (voyage_id, employee_id) VALUES (?, ?)').bind(voyageId, crewId)
     )
   );
-
-  const activeCargo = await env.DB
-    .prepare('SELECT id, default_price FROM cargo_types WHERE active = 1 ORDER BY name ASC, id ASC')
-    .all();
-  if ((activeCargo?.results || []).length) {
-    await env.DB.batch(
-      activeCargo.results.map((cargo) => {
-        const buyPrice = toMoney(cargo.default_price || 0);
-        return env.DB
-          .prepare(
-            `INSERT INTO voyage_manifest_lines (voyage_id, cargo_type_id, quantity, buy_price, line_total, updated_at)
-             VALUES (?, ?, 0, ?, 0, CURRENT_TIMESTAMP)`
-          )
-          .bind(voyageId, cargo.id, buyPrice);
-      })
-    );
-  }
 
   const created = await env.DB.prepare('SELECT id FROM voyages WHERE id = ?').bind(voyageId).first();
   return json({ voyageId: created?.id || voyageId }, 201);

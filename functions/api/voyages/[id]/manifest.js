@@ -8,7 +8,7 @@ function normalizeManifestLines(lines) {
     .map((line) => ({
       cargoTypeId: Number(line?.cargoTypeId),
       quantity: Number(line?.quantity),
-      buyPrice: Number(line?.buyPrice)
+      buyPrice: line?.buyPrice === '' || line?.buyPrice === null || line?.buyPrice === undefined ? NaN : Number(line?.buyPrice)
     }))
     .filter((line) => Number.isInteger(line.cargoTypeId) && line.cargoTypeId > 0);
 }
@@ -36,7 +36,6 @@ export async function onRequestPut(context) {
   }
 
   const lines = normalizeManifestLines(payload?.lines);
-  if (!lines.length) return json({ error: 'Manifest lines are required.' }, 400);
 
   const activeCargoRows = await env.DB.prepare('SELECT id FROM cargo_types WHERE active = 1').all();
   const allowedCargo = new Set((activeCargoRows?.results || []).map((row) => Number(row.id)));
@@ -44,13 +43,16 @@ export async function onRequestPut(context) {
   for (const line of lines) {
     if (!allowedCargo.has(line.cargoTypeId)) return json({ error: 'Manifest can only include active cargo types.' }, 400);
     if (!Number.isInteger(line.quantity) || line.quantity < 0) return json({ error: 'Quantity must be an integer >= 0.' }, 400);
-    if (!Number.isFinite(line.buyPrice) || line.buyPrice < 0) return json({ error: 'Buy price must be a number >= 0.' }, 400);
     if (line.quantity > 0 && !Number.isFinite(line.buyPrice)) return json({ error: 'Buy price is required when quantity > 0.' }, 400);
+    if (Number.isFinite(line.buyPrice) && line.buyPrice < 0) return json({ error: 'Buy price must be a number >= 0.' }, 400);
   }
 
-  await env.DB.batch(
-    lines.map((line) => {
-      const buyPrice = toMoney(line.buyPrice);
+  await env.DB.batch([
+    env.DB
+      .prepare('DELETE FROM voyage_manifest_lines WHERE voyage_id = ?')
+      .bind(voyageId),
+    ...lines.map((line) => {
+      const buyPrice = Number.isFinite(line.buyPrice) ? toMoney(line.buyPrice) : 0;
       const lineTotal = toMoney(line.quantity * buyPrice);
       return env.DB
         .prepare(
@@ -61,7 +63,7 @@ export async function onRequestPut(context) {
         )
         .bind(voyageId, line.cargoTypeId, line.quantity, buyPrice, lineTotal);
     })
-  );
+  ]);
 
   const detail = await getVoyageDetail(env, voyageId);
   return json({ manifest: detail?.manifest || [], buyTotal: detail?.buyTotal || 0 });

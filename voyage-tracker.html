@@ -45,7 +45,7 @@
         <section id="protectedContent" class="panel hidden">
           <article class="panel">
             <h2>Ongoing Voyages</h2>
-            <div id="ongoingVoyages" class="card-grid"></div>
+            <div id="ongoingVoyages" class="voyage-grid"></div>
           </article>
 
           <article class="panel">
@@ -64,19 +64,24 @@
         </div>
         <form id="startVoyageForm">
           <label>Port of Departure</label>
-          <input name="departurePort" type="text" required />
+          <select name="departurePort" id="voyageDepartureSelect" required></select>
           <label>Port of Destination</label>
-          <input name="destinationPort" type="text" required />
+          <select name="destinationPort" id="voyageDestinationSelect" required></select>
           <label>Vessel Name</label>
-          <input name="vesselName" type="text" required />
+          <select name="vesselName" id="voyageVesselNameSelect" required></select>
           <label>Vessel Class</label>
-          <input name="vesselClass" type="text" required />
+          <select name="vesselClass" id="voyageVesselClassSelect" required></select>
           <label>Vessel Callsign</label>
-          <input name="vesselCallsign" type="text" required />
+          <select name="vesselCallsign" id="voyageVesselCallsignSelect" required></select>
           <label>Officer of the Watch</label>
-          <select name="officerOfWatchEmployeeId" id="voyageOowSelect" required></select>
+          <input id="voyageOowSerialSearch" type="text" placeholder="Search by serial number" autocomplete="off" />
+          <input type="hidden" name="officerOfWatchEmployeeId" id="voyageOowHidden" required />
+          <p id="voyageOowSelected" class="muted">No officer selected.</p>
+          <div id="voyageOowResults" class="autocomplete-list"></div>
           <label>Crew Complement</label>
-          <select name="crewComplementIds" id="voyageCrewSelect" multiple size="8" required></select>
+          <input id="voyageCrewSerialSearch" type="text" placeholder="Search by serial number" autocomplete="off" />
+          <div id="voyageCrewResults" class="autocomplete-list"></div>
+          <div id="voyageCrewSelected" class="pill-list"></div>
           <div class="modal-actions">
             <button class="btn btn-primary" type="submit">Start</button>
             <button class="btn btn-secondary" type="button" data-close-modal="startVoyageModal">Cancel</button>

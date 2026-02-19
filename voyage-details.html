@@ -45,16 +45,46 @@
 
         <section id="protectedContent" class="panel hidden employee-page-grid">
           <section class="employee-page-panel">
-            <h2>Voyage Manifest</h2>
+            <h2>Voyage Details</h2>
             <div id="voyageMeta"></div>
-            <div class="table-wrap">
-              <table class="data-table">
+            <form id="voyageDetailsForm" class="hidden">
+              <label>Port of Departure</label>
+              <select name="departurePort" id="editDeparturePort" required></select>
+              <label>Port of Destination</label>
+              <select name="destinationPort" id="editDestinationPort" required></select>
+              <label>Vessel Name</label>
+              <select name="vesselName" id="editVesselName" required></select>
+              <label>Vessel Class</label>
+              <select name="vesselClass" id="editVesselClass" required></select>
+              <label>Vessel Callsign</label>
+              <select name="vesselCallsign" id="editVesselCallsign" required></select>
+              <label>Officer of the Watch</label>
+              <input id="editOowSerialSearch" type="text" placeholder="Search by serial number" autocomplete="off" />
+              <input type="hidden" name="officerOfWatchEmployeeId" id="editOowHidden" required />
+              <p id="editOowSelected" class="muted">No officer selected.</p>
+              <div id="editOowResults" class="autocomplete-list"></div>
+              <label>Crew Complement</label>
+              <input id="editCrewSerialSearch" type="text" placeholder="Search by serial number" autocomplete="off" />
+              <div id="editCrewResults" class="autocomplete-list"></div>
+              <div id="editCrewSelected" class="pill-list"></div>
+              <div class="modal-actions">
+                <button class="btn btn-primary" type="submit">Save Voyage Details</button>
+              </div>
+            </form>
+
+            <h3>Cargo Manifest</h3>
+            <div class="modal-actions">
+              <button id="openAddCargoBtn" class="btn btn-secondary hidden" type="button">+ Add Cargo</button>
+            </div>
+            <div class="table-wrap manifest-table-wrap">
+              <table class="data-table manifest-table">
                 <thead>
                   <tr>
-                    <th>Cargo Name</th>
+                    <th>Cargo Type</th>
                     <th>Quantity</th>
                     <th>Buy Price</th>
                     <th>Line Total</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody id="manifestTableBody"></tbody>
@@ -100,6 +130,27 @@
           <div class="modal-actions">
             <button class="btn btn-danger" type="submit">Finalize Voyage</button>
             <button class="btn btn-secondary" type="button" data-close-modal="endVoyageModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="addCargoModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Add Cargo</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="addCargoModal">Close</button>
+        </div>
+        <form id="addCargoForm">
+          <label>Cargo Type</label>
+          <select name="cargoTypeId" id="addCargoTypeSelect" required></select>
+          <label>Quantity</label>
+          <input name="quantity" type="number" min="0" step="1" required />
+          <label>Buy Price (guilders)</label>
+          <input name="buyPrice" type="number" min="0" step="0.01" required />
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit">Add Cargo Line</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="addCargoModal">Cancel</button>
           </div>
         </form>
       </div>

@@ -15,11 +15,29 @@ export async function onRequestGet(context) {
 
   const cargoLost = detail.voyage.cargo_lost_json ? JSON.parse(detail.voyage.cargo_lost_json) : [];
   const isOwner = Number(detail.voyage.owner_employee_id) === Number(employee.id);
+  const [employees, ports, vesselNames, vesselClasses, vesselCallsigns, cargoTypes] = await Promise.all([
+    context.env.DB
+      .prepare('SELECT id, roblox_username, serial_number, rank, grade FROM employees ORDER BY roblox_username ASC, id ASC')
+      .all(),
+    context.env.DB.prepare('SELECT id, value FROM config_voyage_ports ORDER BY value ASC, id ASC').all(),
+    context.env.DB.prepare('SELECT id, value FROM config_vessel_names ORDER BY value ASC, id ASC').all(),
+    context.env.DB.prepare('SELECT id, value FROM config_vessel_classes ORDER BY value ASC, id ASC').all(),
+    context.env.DB.prepare('SELECT id, value FROM config_vessel_callsigns ORDER BY value ASC, id ASC').all(),
+    context.env.DB.prepare('SELECT id, name, default_price FROM cargo_types WHERE active = 1 ORDER BY name ASC, id ASC').all()
+  ]);
 
   return json({
     ...detail,
     cargoLost,
     isOwner,
+    employees: employees?.results || [],
+    voyageConfig: {
+      ports: ports?.results || [],
+      vesselNames: vesselNames?.results || [],
+      vesselClasses: vesselClasses?.results || [],
+      vesselCallsigns: vesselCallsigns?.results || [],
+      cargoTypes: cargoTypes?.results || []
+    },
     permissions: {
       canRead: hasPermission(session, 'voyages.read'),
       canEdit: hasPermission(session, 'voyages.edit') && isOwner && detail.voyage.status === 'ONGOING',

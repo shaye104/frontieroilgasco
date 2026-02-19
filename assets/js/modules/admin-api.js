@@ -238,6 +238,13 @@ export function updateVoyageManifest(voyageId, lines) {
   });
 }
 
+export function updateVoyageDetails(voyageId, payload) {
+  return requestJson(`/api/voyages/${voyageId}/details`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
 export function createVoyageLog(voyageId, message) {
   return requestJson(`/api/voyages/${voyageId}/logs`, {
     method: 'POST',
@@ -261,6 +268,34 @@ export function endVoyage(voyageId, payload) {
 
 export function listCargoTypes(includeInactive = false) {
   return requestJson(`/api/cargo-types${includeInactive ? '?includeInactive=1' : ''}`, { method: 'GET' });
+}
+
+export function listVoyageConfig() {
+  return requestJson('/api/voyage-config', { method: 'GET' });
+}
+
+export function listVoyageConfigAdmin(type) {
+  return requestJson(`/api/admin/voyage-config/${encodeURIComponent(type)}`, { method: 'GET' });
+}
+
+export function createVoyageConfigValue(type, value) {
+  return requestJson(`/api/admin/voyage-config/${encodeURIComponent(type)}`, {
+    method: 'POST',
+    body: JSON.stringify({ value })
+  });
+}
+
+export function updateVoyageConfigValue(type, id, value) {
+  return requestJson(`/api/admin/voyage-config/${encodeURIComponent(type)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ id, value })
+  });
+}
+
+export function deleteVoyageConfigValue(type, id) {
+  return requestJson(`/api/admin/voyage-config/${encodeURIComponent(type)}?id=${encodeURIComponent(String(id))}`, {
+    method: 'DELETE'
+  });
 }
 
 export function listCargoTypesAdmin() {

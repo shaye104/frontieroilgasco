@@ -20,7 +20,23 @@ initIntranetPageGuard({
     addLogFormSelector: '#addLogForm',
     logListSelector: '#shipLogList',
     endFormSelector: '#endVoyageForm',
-    cargoLostEditorSelector: '#cargoLostEditor'
+    cargoLostEditorSelector: '#cargoLostEditor',
+    detailsFormSelector: '#voyageDetailsForm',
+    addCargoButtonSelector: '#openAddCargoBtn',
+    addCargoFormSelector: '#addCargoForm',
+    addCargoTypeSelector: '#addCargoTypeSelect',
+    editDepartureSelector: '#editDeparturePort',
+    editDestinationSelector: '#editDestinationPort',
+    editVesselNameSelector: '#editVesselName',
+    editVesselClassSelector: '#editVesselClass',
+    editVesselCallsignSelector: '#editVesselCallsign',
+    editOowSearchSelector: '#editOowSerialSearch',
+    editOowResultsSelector: '#editOowResults',
+    editOowHiddenSelector: '#editOowHidden',
+    editOowSelectedSelector: '#editOowSelected',
+    editCrewSearchSelector: '#editCrewSerialSearch',
+    editCrewResultsSelector: '#editCrewResults',
+    editCrewSelectedSelector: '#editCrewSelected'
   });
 });
 

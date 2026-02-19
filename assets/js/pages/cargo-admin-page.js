@@ -6,7 +6,7 @@ initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
-  requiredPermissions: ['admin.access', 'cargo.manage']
+  requiredPermissions: ['admin.access']
 }).then((session) => {
   if (!session) return;
   initCargoAdmin({
@@ -14,8 +14,14 @@ initIntranetPageGuard({
     tableBodySelector: '#cargoTableBody',
     openModalButtonSelector: '#openCargoModalBtn',
     formSelector: '#cargoForm',
-    modalTitleSelector: '#cargoModalTitle'
-  });
+    modalTitleSelector: '#cargoModalTitle',
+    voyageConfigSectionSelector: '#voyageConfigLists',
+    cargoSectionSelector: '#cargoTypeSection',
+    listPortsSelector: '#listPorts',
+    listVesselNamesSelector: '#listVesselNames',
+    listVesselClassesSelector: '#listVesselClasses',
+    listVesselCallsignsSelector: '#listVesselCallsigns'
+  }, session);
 });
 
 initializeYear();

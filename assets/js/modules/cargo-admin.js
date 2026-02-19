@@ -1,9 +1,18 @@
-import { createCargoType, deleteCargoType, listCargoTypesAdmin, updateCargoType } from './admin-api.js';
+import {
+  createCargoType,
+  createVoyageConfigValue,
+  deleteCargoType,
+  deleteVoyageConfigValue,
+  listCargoTypesAdmin,
+  listVoyageConfigAdmin,
+  updateCargoType,
+  updateVoyageConfigValue
+} from './admin-api.js';
+import { hasPermission } from './intranet-page-guard.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
-  const output = String(value ?? '').trim();
-  return output || '';
+  return String(value ?? '').trim();
 }
 
 function openModal(id) {
@@ -20,17 +29,106 @@ function closeModal(id) {
   modal.setAttribute('aria-hidden', 'true');
 }
 
-export async function initCargoAdmin(config) {
+function renderConfigList(target, type, items, feedback, refresh) {
+  if (!target) return;
+  if (!items.length) {
+    target.innerHTML = '<li class="role-item"><span class="role-id">No entries configured.</span></li>';
+    return;
+  }
+
+  target.innerHTML = items
+    .map(
+      (item) => `<li class="role-item">
+        <span class="role-id">${text(item.value)}</span>
+        <span class="modal-actions">
+          <button class="btn btn-secondary" type="button" data-edit-config="${type}:${item.id}">Edit</button>
+          <button class="btn btn-danger" type="button" data-delete-config="${type}:${item.id}">Delete</button>
+        </span>
+      </li>`
+    )
+    .join('');
+
+  target.querySelectorAll('[data-edit-config]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const [entryType, idValue] = String(button.getAttribute('data-edit-config') || '').split(':');
+      const id = Number(idValue);
+      const existing = items.find((row) => Number(row.id) === id);
+      const next = window.prompt('Update value', existing?.value || '');
+      if (!next || !next.trim()) return;
+      try {
+        await updateVoyageConfigValue(entryType, id, next.trim());
+        await refresh();
+        showMessage(feedback, 'Config updated.', 'success');
+      } catch (error) {
+        showMessage(feedback, error.message || 'Unable to update config.', 'error');
+      }
+    });
+  });
+
+  target.querySelectorAll('[data-delete-config]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const [entryType, idValue] = String(button.getAttribute('data-delete-config') || '').split(':');
+      const id = Number(idValue);
+      if (!window.confirm('Delete this config item?')) return;
+      try {
+        await deleteVoyageConfigValue(entryType, id);
+        await refresh();
+        showMessage(feedback, 'Config deleted.', 'success');
+      } catch (error) {
+        showMessage(feedback, error.message || 'Unable to delete config.', 'error');
+      }
+    });
+  });
+}
+
+export async function initCargoAdmin(config, session) {
   const feedback = document.querySelector(config.feedbackSelector);
   const tableBody = document.querySelector(config.tableBodySelector);
   const openModalBtn = document.querySelector(config.openModalButtonSelector);
   const form = document.querySelector(config.formSelector);
   const modalTitle = document.querySelector(config.modalTitleSelector);
-  if (!feedback || !tableBody || !openModalBtn || !form || !modalTitle) return;
+  const configListsRoot = document.querySelector(config.voyageConfigSectionSelector);
+  const cargoSection = document.querySelector(config.cargoSectionSelector);
+  const listPorts = document.querySelector(config.listPortsSelector);
+  const listNames = document.querySelector(config.listVesselNamesSelector);
+  const listClasses = document.querySelector(config.listVesselClassesSelector);
+  const listCallsigns = document.querySelector(config.listVesselCallsignsSelector);
+
+  if (
+    !feedback ||
+    !tableBody ||
+    !openModalBtn ||
+    !form ||
+    !modalTitle ||
+    !configListsRoot ||
+    !cargoSection ||
+    !listPorts ||
+    !listNames ||
+    !listClasses ||
+    !listCallsigns
+  ) {
+    return;
+  }
+
+  const canManageVoyageConfig = hasPermission(session, 'voyages.config.manage') || hasPermission(session, 'config.manage');
+  const canManageCargo = hasPermission(session, 'cargo.manage');
+
+  if (!canManageVoyageConfig && !canManageCargo) {
+    showMessage(feedback, 'Missing permission to manage voyage configuration.', 'error');
+    return;
+  }
+
+  if (canManageVoyageConfig) configListsRoot.classList.remove('hidden');
+  if (canManageCargo) cargoSection.classList.remove('hidden');
 
   let cargoTypes = [];
+  let listData = { ports: [], vessel_names: [], vessel_classes: [], vessel_callsigns: [] };
 
-  function renderTable() {
+  function renderCargoTable() {
+    if (!canManageCargo) {
+      tableBody.innerHTML = '<tr><td colspan="4">No cargo permission.</td></tr>';
+      return;
+    }
     if (!cargoTypes.length) {
       tableBody.innerHTML = '<tr><td colspan="4">No cargo types configured.</td></tr>';
       return;
@@ -40,7 +138,7 @@ export async function initCargoAdmin(config) {
         (cargo) => `<tr>
           <td>${text(cargo.name)}</td>
           <td>${Number(cargo.active) === 1 ? 'Yes' : 'No'}</td>
-          <td>${cargo.default_price === null || cargo.default_price === undefined ? 'N/A' : Number(cargo.default_price).toFixed(2)}</td>
+          <td>${cargo.default_price === null || cargo.default_price === undefined ? 'N/A' : `ƒ ${Number(cargo.default_price).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}</td>
           <td>
             <button class="btn btn-secondary" type="button" data-edit-cargo="${cargo.id}">Edit</button>
             <button class="btn btn-danger" type="button" data-delete-cargo="${cargo.id}">Delete</button>
@@ -79,10 +177,42 @@ export async function initCargoAdmin(config) {
     });
   }
 
+  function renderConfigLists() {
+    renderConfigList(listPorts, 'ports', listData.ports, feedback, refresh);
+    renderConfigList(listNames, 'vessel_names', listData.vessel_names, feedback, refresh);
+    renderConfigList(listClasses, 'vessel_classes', listData.vessel_classes, feedback, refresh);
+    renderConfigList(listCallsigns, 'vessel_callsigns', listData.vessel_callsigns, feedback, refresh);
+  }
+
   async function refresh() {
-    const payload = await listCargoTypesAdmin();
-    cargoTypes = payload.cargoTypes || [];
-    renderTable();
+    const tasks = [];
+    if (canManageCargo) tasks.push(listCargoTypesAdmin());
+    else tasks.push(Promise.resolve({ cargoTypes: [] }));
+    if (canManageVoyageConfig) {
+      tasks.push(
+        Promise.all([
+          listVoyageConfigAdmin('ports'),
+          listVoyageConfigAdmin('vessel_names'),
+          listVoyageConfigAdmin('vessel_classes'),
+          listVoyageConfigAdmin('vessel_callsigns')
+        ])
+      );
+    } else {
+      tasks.push(Promise.resolve([{ items: [] }, { items: [] }, { items: [] }, { items: [] }]));
+    }
+
+    const [cargoPayload, configPayloads] = await Promise.all(tasks);
+    cargoTypes = cargoPayload.cargoTypes || [];
+    const [ports, names, classes, callsigns] = configPayloads;
+    listData = {
+      ports: ports.items || [],
+      vessel_names: names.items || [],
+      vessel_classes: classes.items || [],
+      vessel_callsigns: callsigns.items || []
+    };
+
+    renderCargoTable();
+    renderConfigLists();
   }
 
   openModalBtn.addEventListener('click', () => {
@@ -121,10 +251,30 @@ export async function initCargoAdmin(config) {
     }
   });
 
+  if (canManageVoyageConfig) {
+    document.querySelectorAll('[data-config-create]').forEach((formNode) => {
+      formNode.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const type = formNode.getAttribute('data-config-create');
+        const data = new FormData(formNode);
+        const value = text(data.get('value'));
+        if (!type || !value) return;
+        try {
+          await createVoyageConfigValue(type, value);
+          formNode.reset();
+          await refresh();
+          showMessage(feedback, 'Config item added.', 'success');
+        } catch (error) {
+          showMessage(feedback, error.message || 'Unable to add config item.', 'error');
+        }
+      });
+    });
+  }
+
   try {
     await refresh();
     clearMessage(feedback);
   } catch (error) {
-    showMessage(feedback, error.message || 'Unable to initialize cargo management.', 'error');
+    showMessage(feedback, error.message || 'Unable to initialize voyage config.', 'error');
   }
 }
