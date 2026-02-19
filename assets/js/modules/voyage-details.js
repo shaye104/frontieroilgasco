@@ -46,6 +46,12 @@ function toNumber(value) {
   return Number.isFinite(num) ? num : null;
 }
 
+function toMoney(value) {
+  const num = Number(value || 0);
+  if (!Number.isFinite(num)) return 0;
+  return Math.round(num * 100) / 100;
+}
+
 function parseVoyageId() {
   const query = new URLSearchParams(window.location.search);
   const value = Number(query.get('voyageId') || query.get('id'));
@@ -86,7 +92,9 @@ export async function initVoyageDetails(config) {
   const cargoLostEditor = document.querySelector(config.cargoLostEditorSelector);
   const finaliseHoldBtn = document.querySelector(config.finaliseHoldButtonSelector);
   const cancelHoldBtn = document.querySelector(config.cancelVoyageHoldButtonSelector);
-  const breakdownBuyTotal = document.querySelector(config.breakdownBuyTotalSelector);
+  const breakdownTrueSellUnitPrice = document.querySelector(config.breakdownTrueSellUnitPriceSelector);
+  const breakdownRevenue = document.querySelector(config.breakdownRevenueSelector);
+  const breakdownCost = document.querySelector(config.breakdownCostSelector);
   const breakdownProfit = document.querySelector(config.breakdownProfitSelector);
   const breakdownCompanyShare = document.querySelector(config.breakdownCompanyShareSelector);
   const breakdownContainer = document.querySelector(config.breakdownContainerSelector);
@@ -97,6 +105,7 @@ export async function initVoyageDetails(config) {
   const updateFieldTitle = document.querySelector(config.updateFieldTitleSelector);
   const updateFieldKey = document.querySelector(config.updateFieldKeySelector);
   const updateFieldControls = document.querySelector(config.updateFieldControlsSelector);
+  const HOLD_DURATION_MS = 1000;
 
   if (
     !feedback ||
@@ -118,7 +127,9 @@ export async function initVoyageDetails(config) {
     !cargoLostEditor ||
     !finaliseHoldBtn ||
     !cancelHoldBtn ||
-    !breakdownBuyTotal ||
+    !breakdownTrueSellUnitPrice ||
+    !breakdownRevenue ||
+    !breakdownCost ||
     !breakdownProfit ||
     !breakdownCompanyShare ||
     !breakdownContainer ||
@@ -147,6 +158,7 @@ export async function initVoyageDetails(config) {
   let activeHoldButton = null;
   let holdStartedAt = 0;
   let holdLock = false;
+  let comboboxCleanup = [];
 
   function isOngoing() {
     return String(detail?.voyage?.status || '') === 'ONGOING';
@@ -180,15 +192,19 @@ export async function initVoyageDetails(config) {
     activeHoldButton = button;
     holdStartedAt = Date.now();
     const tick = () => {
-      const pct = Math.min(1, (Date.now() - holdStartedAt) / 3000);
+      const pct = Math.min(1, (Date.now() - holdStartedAt) / HOLD_DURATION_MS);
       button.style.setProperty('--hold-pct', `${Math.floor(pct * 100)}%`);
       if (pct < 1) holdAnimation = window.requestAnimationFrame(tick);
     };
     holdAnimation = window.requestAnimationFrame(tick);
     holdTimer = window.setTimeout(async () => {
       stopHoldEffect();
-      await action();
-    }, 3000);
+      try {
+        await action();
+      } catch (error) {
+        showMessage(feedback, error.message || 'Action failed.', 'error');
+      }
+    }, HOLD_DURATION_MS);
   }
 
   function bindHoldButton(button, action) {
@@ -209,23 +225,84 @@ export async function initVoyageDetails(config) {
     return rows;
   }
 
-  function syncBreakdown() {
-    const buyTotal = manifest.reduce((sum, line) => sum + Number(line.line_total || Number(line.quantity || 0) * Number(line.buy_price || 0)), 0);
-    breakdownBuyTotal.textContent = formatGuilders(buyTotal);
-    buyTotalText.textContent = formatGuilders(buyTotal);
+  function clearComboboxCleanup() {
+    comboboxCleanup.forEach((fn) => fn());
+    comboboxCleanup = [];
+  }
 
+  function readLossMap() {
+    const lossMap = new Map();
+    cargoLostEditor.querySelectorAll('[data-loss-cargo-id]').forEach((input) => {
+      const cargoId = Number(input.getAttribute('data-loss-cargo-id'));
+      const raw = Number(input.value || 0);
+      const normalized = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+      lossMap.set(cargoId, normalized);
+    });
+    return lossMap;
+  }
+
+  function buildBreakdown() {
+    const lines = manifest.map((line) => {
+      const row = manifestBody.querySelector(`tr[data-cargo-id="${Number(line.cargo_type_id)}"]`);
+      const quantityValue = row?.querySelector('input[data-field="quantity"]')?.value;
+      const buyPriceValue = row?.querySelector('input[data-field="buyPrice"]')?.value;
+      const quantity = Math.max(0, Math.floor(Number(quantityValue ?? line.quantity ?? 0)));
+      const buyPrice = Math.max(0, Number(buyPriceValue ?? line.buy_price ?? 0));
+      return { line, quantity, buyPrice };
+    });
+    const totalCost = toMoney(lines.reduce((sum, row) => sum + row.quantity * row.buyPrice, 0));
     const sellMultiplier = toNumber(sellMultiplierInput.value);
     const baseSellPrice = toNumber(baseSellPriceInput.value);
+    const lossMap = readLossMap();
+
+    return {
+      totalCost,
+      sellMultiplier,
+      baseSellPrice,
+      lossMap,
+      lines
+    };
+  }
+
+  function syncBreakdown() {
+    const { totalCost, sellMultiplier, baseSellPrice, lossMap, lines } = buildBreakdown();
+    buyTotalText.textContent = formatGuilders(totalCost);
+
     if (sellMultiplier === null || baseSellPrice === null) {
+      breakdownTrueSellUnitPrice.textContent = '—';
+      breakdownRevenue.textContent = '—';
+      breakdownCost.textContent = formatGuilders(totalCost);
       breakdownProfit.textContent = '—';
       breakdownCompanyShare.textContent = '—';
       breakdownContainer.classList.add('hidden');
       return;
     }
-    breakdownContainer.classList.remove('hidden');
 
-    const profit = sellMultiplier * baseSellPrice - buyTotal;
-    const companyShare = Math.max(profit, 0) * 0.1;
+    if (sellMultiplier < 0 || baseSellPrice < 0) {
+      breakdownTrueSellUnitPrice.textContent = '—';
+      breakdownRevenue.textContent = '—';
+      breakdownCost.textContent = formatGuilders(totalCost);
+      breakdownProfit.textContent = '—';
+      breakdownCompanyShare.textContent = '—';
+      breakdownContainer.classList.add('hidden');
+      return;
+    }
+
+    const trueSellUnitPrice = toMoney(sellMultiplier * baseSellPrice);
+    const totalRevenue = toMoney(
+      lines.reduce((sum, row) => {
+        const lost = Math.min(row.quantity, Math.max(0, Number(lossMap.get(Number(row.line.cargo_type_id)) || 0)));
+        const netQty = Math.max(row.quantity - lost, 0);
+        return sum + trueSellUnitPrice * netQty;
+      }, 0)
+    );
+    const profit = toMoney(totalRevenue - totalCost);
+    const companyShare = toMoney(Math.max(profit, 0) * 0.1);
+
+    breakdownContainer.classList.remove('hidden');
+    breakdownTrueSellUnitPrice.textContent = formatGuilders(trueSellUnitPrice);
+    breakdownRevenue.textContent = formatGuilders(totalRevenue);
+    breakdownCost.textContent = formatGuilders(totalCost);
     breakdownProfit.textContent = formatGuilders(profit);
     breakdownCompanyShare.textContent = formatGuilders(companyShare);
   }
@@ -307,6 +384,21 @@ export async function initVoyageDetails(config) {
       });
     });
 
+    manifestBody.querySelectorAll('tr[data-cargo-id]').forEach((row) => {
+      const quantityInput = row.querySelector('input[data-field="quantity"]');
+      const buyPriceInput = row.querySelector('input[data-field="buyPrice"]');
+      const lineTotalCell = row.querySelector('td:nth-child(4)');
+      const refreshRow = () => {
+        const quantity = Math.max(0, Math.floor(Number(quantityInput?.value || 0)));
+        const buyPrice = Math.max(0, Number(buyPriceInput?.value || 0));
+        if (quantityInput && String(quantityInput.value) !== String(quantity)) quantityInput.value = String(quantity);
+        if (lineTotalCell) lineTotalCell.textContent = formatGuilders(toMoney(quantity * buyPrice));
+        syncBreakdown();
+      };
+      quantityInput?.addEventListener('input', refreshRow);
+      buyPriceInput?.addEventListener('input', refreshRow);
+    });
+
     addCargoBtn.classList.toggle('hidden', !canEdit());
     saveManifestBtn.classList.toggle('hidden', !canEdit());
     syncBreakdown();
@@ -321,6 +413,17 @@ export async function initVoyageDetails(config) {
         </div>`
       )
       .join('');
+
+    cargoLostEditor.querySelectorAll('[data-loss-cargo-id]').forEach((input) => {
+      input.addEventListener('input', () => {
+        const max = Math.max(0, Math.floor(Number(input.getAttribute('max') || 0)));
+        const raw = Number(input.value || 0);
+        let normalized = Number.isFinite(raw) ? Math.floor(raw) : 0;
+        normalized = Math.max(0, Math.min(max, normalized));
+        if (String(normalized) !== String(input.value)) input.value = String(normalized);
+        syncBreakdown();
+      });
+    });
   }
 
   function renderLogs() {
@@ -372,7 +475,105 @@ export async function initVoyageDetails(config) {
     renderLogs();
   }
 
+  function setupEmployeeCombobox({ input, results, onSearch, onSelect }) {
+    let options = [];
+    let activeIndex = -1;
+
+    function closeList() {
+      options = [];
+      activeIndex = -1;
+      results.classList.remove('is-open');
+      results.innerHTML = '';
+    }
+
+    function renderList() {
+      if (!options.length) {
+        closeList();
+        return;
+      }
+      results.classList.add('is-open');
+      results.innerHTML = options
+        .map(
+          (row, index) => `<button class="autocomplete-item ${index === activeIndex ? 'is-active' : ''}" type="button" data-pick-id="${row.id}" data-pick-index="${index}">
+              <span>${text(row.roblox_username)}</span><small>${text(row.serial_number)}</small>
+            </button>`
+        )
+        .join('');
+      results.querySelectorAll('[data-pick-index]').forEach((button) => {
+        button.addEventListener('mousedown', (event) => event.preventDefault());
+        button.addEventListener('click', () => {
+          const index = Number(button.getAttribute('data-pick-index'));
+          const picked = options[index];
+          if (!picked) return;
+          onSelect(picked);
+          closeList();
+        });
+      });
+    }
+
+    const runSearch = debounce(async () => {
+      const query = String(input.value || '').trim();
+      if (!query) {
+        closeList();
+        return;
+      }
+      options = await onSearch(query);
+      activeIndex = options.length ? 0 : -1;
+      renderList();
+    }, 260);
+
+    const onKeyDown = (event) => {
+      if (!options.length) {
+        if (event.key === 'Escape') closeList();
+        return;
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        activeIndex = (activeIndex + 1) % options.length;
+        renderList();
+        return;
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        activeIndex = activeIndex <= 0 ? options.length - 1 : activeIndex - 1;
+        renderList();
+        return;
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const picked = options[activeIndex];
+        if (!picked) return;
+        onSelect(picked);
+        closeList();
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeList();
+      }
+    };
+
+    const onOutside = (event) => {
+      const target = event.target;
+      if (target instanceof Node && (input.contains(target) || results.contains(target))) return;
+      closeList();
+    };
+
+    input.addEventListener('focus', runSearch);
+    input.addEventListener('input', runSearch);
+    input.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onOutside);
+
+    comboboxCleanup.push(() => {
+      input.removeEventListener('focus', runSearch);
+      input.removeEventListener('input', runSearch);
+      input.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onOutside);
+    });
+  }
+
   function openFieldModal(fieldKey) {
+    clearComboboxCleanup();
     updateFieldKey.value = fieldKey;
     const voyage = detail.voyage;
     const ports = detail.voyageConfig?.ports || [];
@@ -401,46 +602,39 @@ export async function initVoyageDetails(config) {
       updateFieldTitle.textContent = 'Update Officer of the Watch';
       updateFieldControls.innerHTML = `
         <label>Search Roblox Username</label>
-        <input id="pickerOowSearch" type="text" autocomplete="off" placeholder="Type username..." />
+        <div class="combobox-wrap">
+          <input id="pickerOowSearch" type="text" autocomplete="off" placeholder="Type username..." />
+          <div id="pickerOowResults" class="autocomplete-list"></div>
+        </div>
         <input id="pickerOowSelectedId" type="hidden" value="${voyage.officer_of_watch_employee_id}" />
-        <p id="pickerOowSelected" class="muted">Selected: ${text(voyage.officer_name)}</p>
-        <div id="pickerOowResults" class="autocomplete-list"></div>`;
+        <p id="pickerOowSelected" class="muted">Selected: ${text(voyage.officer_name)}</p>`;
       const search = updateFieldControls.querySelector('#pickerOowSearch');
       const results = updateFieldControls.querySelector('#pickerOowResults');
       const selectedId = updateFieldControls.querySelector('#pickerOowSelectedId');
       const selectedText = updateFieldControls.querySelector('#pickerOowSelected');
 
-      const runSearch = debounce(async () => {
-        const rows = await lookupEmployees('username', search.value);
-        results.innerHTML = rows
-          .map(
-            (row) => `<button class="autocomplete-item" type="button" data-pick-id="${row.id}">
-              <span>${text(row.roblox_username)}</span><small>${text(row.serial_number)}</small>
-            </button>`
-          )
-          .join('');
-        results.querySelectorAll('[data-pick-id]').forEach((button) => {
-          button.addEventListener('click', () => {
-            const id = Number(button.getAttribute('data-pick-id'));
-            const employee = (detail.employees || []).find((row) => Number(row.id) === id);
-            selectedId.value = String(id);
-            selectedText.textContent = `Selected: ${text(employee?.roblox_username || `#${id}`)}`;
-            search.value = '';
-            results.innerHTML = '';
-          });
-        });
-      }, 250);
-      search.addEventListener('input', runSearch);
-      search.addEventListener('focus', runSearch);
+      setupEmployeeCombobox({
+        input: search,
+        results,
+        onSearch: (query) => lookupEmployees('username', query),
+        onSelect: (row) => {
+          const id = Number(row.id);
+          selectedId.value = String(id);
+          selectedText.textContent = `Selected: ${text(row.roblox_username || `#${id}`)}`;
+          search.value = '';
+        }
+      });
     } else if (fieldKey === 'crewComplementIds') {
       updateFieldTitle.textContent = 'Update Crew Complement';
       const selectedCrew = new Set((detail.crew || []).map((row) => Number(row.id)));
       const oowId = Number(detail.voyage.officer_of_watch_employee_id || 0);
       updateFieldControls.innerHTML = `
         <label>Search Roblox Username</label>
-        <input id="pickerCrewSearch" type="text" autocomplete="off" placeholder="Type username..." />
-        <div id="pickerCrewResults" class="autocomplete-list"></div>
-        <div id="pickerCrewSelected" class="pill-list"></div>`;
+        <div class="combobox-wrap combobox-wrap-multi">
+          <div id="pickerCrewSelected" class="pill-list"></div>
+          <input id="pickerCrewSearch" type="text" autocomplete="off" placeholder="Type username..." />
+          <div id="pickerCrewResults" class="autocomplete-list"></div>
+        </div>`;
       const search = updateFieldControls.querySelector('#pickerCrewSearch');
       const results = updateFieldControls.querySelector('#pickerCrewResults');
       const selected = updateFieldControls.querySelector('#pickerCrewSelected');
@@ -466,29 +660,20 @@ export async function initVoyageDetails(config) {
         });
       };
 
-      const runSearch = debounce(async () => {
-        const rows = (await lookupEmployees('username', search.value))
-          .filter((row) => Number(row.id) !== oowId)
-          .filter((row) => !selectedCrew.has(Number(row.id)));
-        results.innerHTML = rows
-          .map(
-            (row) => `<button class="autocomplete-item" type="button" data-pick-id="${row.id}">
-              <span>${text(row.roblox_username)}</span><small>${text(row.serial_number)}</small>
-            </button>`
-          )
-          .join('');
-        results.querySelectorAll('[data-pick-id]').forEach((button) => {
-          button.addEventListener('click', () => {
-            const id = Number(button.getAttribute('data-pick-id'));
-            selectedCrew.add(id);
-            search.value = '';
-            results.innerHTML = '';
-            renderSelected();
-          });
-        });
-      }, 250);
-      search.addEventListener('input', runSearch);
-      search.addEventListener('focus', runSearch);
+      setupEmployeeCombobox({
+        input: search,
+        results,
+        onSearch: async (query) =>
+          (await lookupEmployees('username', query))
+            .filter((row) => Number(row.id) !== oowId)
+            .filter((row) => !selectedCrew.has(Number(row.id))),
+        onSelect: (row) => {
+          const id = Number(row.id);
+          selectedCrew.add(id);
+          search.value = '';
+          renderSelected();
+        }
+      });
       renderSelected();
     }
 
@@ -508,6 +693,7 @@ export async function initVoyageDetails(config) {
     if (fieldKey === 'crewComplementIds') payload.crewComplementIds = JSON.parse(String(updateFieldControls.getAttribute('data-crew-values') || '[]'));
 
     await updateVoyageDetails(voyageId, payload);
+    clearComboboxCleanup();
     closeModal('updateFieldModal');
     await Promise.all([loadSummary(), loadLogs()]);
     showMessage(feedback, 'Voyage profile updated.', 'success');
@@ -551,8 +737,8 @@ export async function initVoyageDetails(config) {
   saveManifestBtn.addEventListener('click', async () => {
     const lines = [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => ({
       cargoTypeId: Number(row.getAttribute('data-cargo-id')),
-      quantity: Number(row.querySelector('input[data-field="quantity"]')?.value || 0),
-      buyPrice: Number(row.querySelector('input[data-field="buyPrice"]')?.value || 0)
+      quantity: Math.max(0, Math.floor(Number(row.querySelector('input[data-field="quantity"]')?.value || 0))),
+      buyPrice: Math.max(0, Number(row.querySelector('input[data-field="buyPrice"]')?.value || 0))
     }));
     try {
       await updateVoyageManifest(voyageId, lines);
@@ -568,8 +754,8 @@ export async function initVoyageDetails(config) {
     event.preventDefault();
     const data = new FormData(addCargoForm);
     const cargoTypeId = Number(data.get('cargoTypeId'));
-    const quantity = Number(data.get('quantity'));
-    const buyPrice = Number(data.get('buyPrice'));
+    const quantity = Math.max(0, Math.floor(Number(data.get('quantity'))));
+    const buyPrice = Math.max(0, Number(data.get('buyPrice')));
     if (!Number.isInteger(cargoTypeId) || cargoTypeId <= 0) return;
     const cargoType = (detail.voyageConfig?.cargoTypes || []).find((row) => Number(row.id) === cargoTypeId);
     const next = {
@@ -610,13 +796,18 @@ export async function initVoyageDetails(config) {
 
   bindHoldButton(finaliseHoldBtn, async () => {
     const data = new FormData(endForm);
+    const sellMultiplier = Number(data.get('sellMultiplier') || 0);
+    const baseSellPrice = Number(data.get('baseSellPrice') || 0);
+    if (!Number.isFinite(sellMultiplier) || sellMultiplier < 0) throw new Error('Sell multiplier must be >= 0.');
+    if (!Number.isFinite(baseSellPrice) || baseSellPrice < 0) throw new Error('Base sell price must be >= 0.');
+
     const cargoLost = [...cargoLostEditor.querySelectorAll('[data-loss-cargo-id]')].map((input) => ({
       cargoTypeId: Number(input.getAttribute('data-loss-cargo-id')),
-      lostQuantity: Number(input.value || 0)
+      lostQuantity: Math.max(0, Math.floor(Number(input.value || 0)))
     }));
     await endVoyage(voyageId, {
-      sellMultiplier: Number(data.get('sellMultiplier') || 0),
-      baseSellPrice: Number(data.get('baseSellPrice') || 0),
+      sellMultiplier,
+      baseSellPrice,
       cargoLost
     });
     closeModal('endVoyageModal');
@@ -636,6 +827,7 @@ export async function initVoyageDetails(config) {
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
       const modalId = button.getAttribute('data-close-modal');
+      if (modalId === 'updateFieldModal') clearComboboxCleanup();
       if (modalId) closeModal(modalId);
     });
   });

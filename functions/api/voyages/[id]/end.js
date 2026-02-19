@@ -61,9 +61,26 @@ export async function onRequestPost(context) {
     return json({ error: error.message || 'Invalid cargo lost input.' }, 400);
   }
 
-  const buyTotal = toMoney(detail?.buyTotal || 0);
-  const effectiveSell = toMoney(sellMultiplier * baseSellPrice);
-  const profit = toMoney(effectiveSell - buyTotal);
+  const trueSellUnitPrice = toMoney(sellMultiplier * baseSellPrice);
+  const manifest = detail?.manifest || [];
+  const cargoLostMap = new Map(cargoLost.map((item) => [Number(item.cargoTypeId), Number(item.lostQuantity)]));
+
+  const totalCost = toMoney(
+    manifest.reduce((sum, line) => {
+      const quantity = Math.max(0, Math.floor(Number(line.quantity || 0)));
+      const buyPrice = Math.max(0, Number(line.buy_price || 0));
+      return sum + quantity * buyPrice;
+    }, 0)
+  );
+  const totalRevenue = toMoney(
+    manifest.reduce((sum, line) => {
+      const quantity = Math.max(0, Math.floor(Number(line.quantity || 0)));
+      const lostQuantity = Math.max(0, Math.floor(Number(cargoLostMap.get(Number(line.cargo_type_id)) || 0)));
+      const netQuantity = Math.max(quantity - lostQuantity, 0);
+      return sum + trueSellUnitPrice * netQuantity;
+    }, 0)
+  );
+  const profit = toMoney(totalRevenue - totalCost);
   const companyShare = toMoney((profit > 0 ? profit : 0) * 0.1);
 
   await env.DB
@@ -81,11 +98,11 @@ export async function onRequestPost(context) {
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`
     )
-    .bind(sellMultiplier, baseSellPrice, buyTotal, effectiveSell, profit, companyShare, JSON.stringify(cargoLost), voyageId)
+    .bind(sellMultiplier, baseSellPrice, totalCost, totalRevenue, profit, companyShare, JSON.stringify(cargoLost), voyageId)
     .run();
 
   return json({
     ok: true,
-    metrics: { buyTotal, effectiveSell, profit, companyShare }
+    metrics: { totalRevenue, totalCost, trueSellUnitPrice, profit, companyShare }
   });
 }

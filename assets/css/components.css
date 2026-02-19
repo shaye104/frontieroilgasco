@@ -376,7 +376,7 @@ textarea:focus {
 }
 
 .voyage-detail-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 0.3fr);
 }
 
 .employee-page-panel {
@@ -564,17 +564,32 @@ textarea:focus {
 }
 
 .autocomplete-list {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 220px;
+  overflow-y: auto;
+  gap: 0.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.14);
+  padding: 0.3rem;
+}
+
+.autocomplete-list.is-open {
   display: grid;
-  gap: 0.35rem;
-  margin: -0.2rem 0 0.8rem;
 }
 
 .autocomplete-item {
   width: 100%;
   text-align: left;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  padding: 0.42rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: #ffffff;
   color: var(--color-ink-soft);
   cursor: pointer;
@@ -589,8 +604,45 @@ textarea:focus {
   background: color-mix(in srgb, var(--color-secondary) 8%, white);
 }
 
+.autocomplete-item.is-active {
+  border-color: color-mix(in srgb, var(--color-secondary) 36%, white);
+  background: color-mix(in srgb, var(--color-secondary) 13%, white);
+}
+
 .autocomplete-item small {
   color: var(--color-muted);
+}
+
+.combobox-wrap {
+  position: relative;
+  margin-bottom: var(--space-2);
+}
+
+.combobox-wrap > input {
+  margin-bottom: 0;
+}
+
+.combobox-wrap-multi {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.45rem;
+}
+
+.combobox-wrap-multi input {
+  margin-bottom: 0;
+  border: none;
+  padding: 0.35rem 0.2rem;
+  border-radius: 0;
+}
+
+.combobox-wrap-multi input:focus {
+  outline: none;
+  border: none;
+}
+
+.combobox-wrap-multi .pill-list {
+  margin-bottom: 0.4rem;
 }
 
 .pill-list {
