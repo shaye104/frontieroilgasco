@@ -35,6 +35,11 @@ async function logout() {
   window.location.href = '/intranet.html';
 }
 
+function hasPermission(session, permission) {
+  const permissions = Array.isArray(session?.permissions) ? session.permissions : [];
+  return permissions.includes('super.admin') || permissions.includes(permission);
+}
+
 export function initIntranetAuth(config) {
   const authPanel = document.querySelector(config.authPanelSelector);
   const loginButton = document.querySelector(config.loginButtonSelector);
@@ -44,6 +49,9 @@ export function initIntranetAuth(config) {
   const adminPanelLinkRow = document.querySelector(config.adminPanelLinkRowSelector);
   const pendingPanel = document.querySelector(config.pendingPanelSelector);
   const logoutButton = document.querySelector(config.logoutButtonSelector);
+  const myDetailsLinkRow = document.querySelector('#myDetailsLinkRow');
+  const voyageLinkRow = document.querySelector('#voyageLinkRow');
+  const fleetLinkRow = document.querySelector('#fleetLinkRow');
 
   if (!authPanel || !loginButton || !feedback || !panel || !logoutButton) return;
 
@@ -75,6 +83,10 @@ export function initIntranetAuth(config) {
       authPanel.classList.add('hidden');
       panel.classList.remove('hidden');
       clearMessage(feedback);
+
+      if (myDetailsLinkRow) myDetailsLinkRow.classList.toggle('hidden', !hasPermission(session, 'my_details.view'));
+      if (voyageLinkRow) voyageLinkRow.classList.toggle('hidden', !hasPermission(session, 'voyages.read'));
+      if (fleetLinkRow) fleetLinkRow.classList.toggle('hidden', !hasPermission(session, 'fleet.read'));
 
       if (session.canAccessAdminPanel) {
         if (adminNavLink) adminNavLink.classList.remove('hidden');

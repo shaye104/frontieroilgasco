@@ -22,7 +22,8 @@ export async function ensureCoreSchema(env) {
     ['voyages.read', 'voyages', 'View Voyages', 'View voyage tracker.'],
     ['voyages.create', 'voyages', 'Create Voyages', 'Create voyage entries.'],
     ['voyages.edit', 'voyages', 'Edit Voyages', 'Edit voyage entries.'],
-    ['voyages.delete', 'voyages', 'Delete Voyages', 'Delete voyage entries.'],
+    ['voyages.end', 'voyages', 'End Voyages', 'End voyages and finalize voyage accounting.'],
+    ['cargo.manage', 'voyages', 'Manage Cargo', 'Manage cargo type definitions for manifests.'],
     ['fleet.read', 'voyages', 'View Fleet', 'View fleet information.'],
     ['fleet.manage', 'voyages', 'Manage Fleet', 'Manage fleet assignments/settings.']
   ];
@@ -133,6 +134,69 @@ export async function ensureCoreSchema(env) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY(discord_role_id, role_id),
       FOREIGN KEY(role_id) REFERENCES app_roles(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS cargo_types (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      active INTEGER NOT NULL DEFAULT 1,
+      default_price REAL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS voyages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      status TEXT NOT NULL DEFAULT 'ONGOING',
+      owner_employee_id INTEGER NOT NULL,
+      departure_port TEXT NOT NULL,
+      destination_port TEXT NOT NULL,
+      vessel_name TEXT NOT NULL,
+      vessel_class TEXT NOT NULL,
+      vessel_callsign TEXT NOT NULL,
+      officer_of_watch_employee_id INTEGER NOT NULL,
+      started_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      ended_at TEXT,
+      sell_multiplier REAL,
+      base_sell_price REAL,
+      buy_total REAL,
+      effective_sell REAL,
+      profit REAL,
+      company_share REAL,
+      cargo_lost_json TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(owner_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(officer_of_watch_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS voyage_crew_members (
+      voyage_id INTEGER NOT NULL,
+      employee_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(voyage_id, employee_id),
+      FOREIGN KEY(voyage_id) REFERENCES voyages(id),
+      FOREIGN KEY(employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS voyage_manifest_lines (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      voyage_id INTEGER NOT NULL,
+      cargo_type_id INTEGER NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 0,
+      buy_price REAL NOT NULL DEFAULT 0,
+      line_total REAL NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(voyage_id, cargo_type_id),
+      FOREIGN KEY(voyage_id) REFERENCES voyages(id),
+      FOREIGN KEY(cargo_type_id) REFERENCES cargo_types(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS voyage_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      voyage_id INTEGER NOT NULL,
+      author_employee_id INTEGER NOT NULL,
+      message TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(voyage_id) REFERENCES voyages(id),
+      FOREIGN KEY(author_employee_id) REFERENCES employees(id)
     )`,
     `CREATE TABLE IF NOT EXISTS form_categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

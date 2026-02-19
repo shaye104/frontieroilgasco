@@ -12,10 +12,12 @@ initIntranetPageGuard({
 
   const employeesLink = document.querySelector('#adminLinkEmployees');
   const configLink = document.querySelector('#adminLinkConfig');
+  const cargoLink = document.querySelector('#adminLinkCargo');
   const rolesLink = document.querySelector('#adminLinkRoles');
 
   if (employeesLink && hasPermission(session, 'employees.read')) employeesLink.classList.remove('hidden');
   if (configLink && hasPermission(session, 'config.manage')) configLink.classList.remove('hidden');
+  if (cargoLink && hasPermission(session, 'cargo.manage')) cargoLink.classList.remove('hidden');
   if (rolesLink && hasPermission(session, 'roles.manage')) rolesLink.classList.remove('hidden');
 });
 

@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-19T17:40:41.982Z
+Generated: 2026-02-19T18:26:06.874Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -10,6 +10,7 @@ SITE STRUCTURE
 - admin-config.html | title: Frontier Oil & Gas Company | System Config | primary heading: System Config
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
+- cargo-admin.html | title: Frontier Oil & Gas Company | Cargo Management | primary heading: Cargo Management
 - employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
 - form-fill.html | title: Frontier Oil & Gas Company | Fill Form | primary heading: Form
 - forms-admin.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
@@ -25,12 +26,14 @@ SITE STRUCTURE
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
 - my-fleet.html | title: Frontier Oil & Gas Company | My Fleet | primary heading: My Fleet
 - roles.html | title: Frontier Oil & Gas Company | Role Management | primary heading: Role Management
+- voyage-details.html | title: Frontier Oil & Gas Company | Voyage Details | primary heading: Voyage Details
 - voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
 
 JAVASCRIPT MODULES
-- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createAdminRole, createConfigValue, createEmployee, createFormAdmin, createFormCategory, deleteAdminRole, deleteConfigValue, deleteFormAdmin, deleteFormCategory, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, listAccessRequests, listAccessibleFormResponses, listAvailableForms, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, processAccessRequest, reorderAdminRole, submitFormResponse, updateAdminRole, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory
+- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, createAdminRole, createCargoType, createConfigValue, createEmployee, createFormAdmin, createFormCategory, createVoyageLog, deleteAdminRole, deleteCargoType, deleteConfigValue, deleteFormAdmin, deleteFormCategory, endVoyage, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getSession, getVoyage, listAccessRequests, listAccessibleFormResponses, listAvailableForms, listCargoTypes, listCargoTypesAdmin, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, listVoyages, processAccessRequest, reorderAdminRole, startVoyage, submitFormResponse, updateAdminRole, updateCargoType, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory, updateVoyageLog, updateVoyageManifest
 - assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
+- assets/js/modules/cargo-admin.js | exports: No public exports
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/employee-profile.js | exports: No public exports
 - assets/js/modules/form-fill.js | exports: No public exports
@@ -47,10 +50,13 @@ JAVASCRIPT MODULES
 - assets/js/modules/notice.js | exports: clearMessage, showMessage
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/roles-admin.js | exports: No public exports
+- assets/js/modules/voyage-details.js | exports: No public exports
+- assets/js/modules/voyage-tracker.js | exports: No public exports
 - assets/js/modules/year.js | exports: initializeYear
 - assets/js/pages/admin-config-page.js | exports: No public exports
 - assets/js/pages/admin-panel-page.js | exports: No public exports
 - assets/js/pages/application-page.js | exports: No public exports
+- assets/js/pages/cargo-admin-page.js | exports: No public exports
 - assets/js/pages/employee-profile-page.js | exports: No public exports
 - assets/js/pages/form-fill-page.js | exports: No public exports
 - assets/js/pages/forms-admin-page.js | exports: No public exports
@@ -66,6 +72,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/my-details-page.js | exports: No public exports
 - assets/js/pages/my-fleet-page.js | exports: No public exports
 - assets/js/pages/roles-page.js | exports: No public exports
+- assets/js/pages/voyage-details-page.js | exports: No public exports
 - assets/js/pages/voyage-tracker-page.js | exports: No public exports
 
 CSS MODULES

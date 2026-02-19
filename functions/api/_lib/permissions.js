@@ -61,7 +61,8 @@ export const PERMISSION_GROUPS = [
       { key: 'voyages.read', label: 'View Voyages', description: 'View voyage tracker.' },
       { key: 'voyages.create', label: 'Create Voyages', description: 'Create voyage entries.' },
       { key: 'voyages.edit', label: 'Edit Voyages', description: 'Edit voyage entries.' },
-      { key: 'voyages.delete', label: 'Delete Voyages', description: 'Delete voyage entries.' },
+      { key: 'voyages.end', label: 'End Voyages', description: 'End voyages and finalize voyage accounting.' },
+      { key: 'cargo.manage', label: 'Manage Cargo', description: 'Manage cargo type definitions for manifests.' },
       { key: 'fleet.read', label: 'View Fleet', description: 'View fleet information.' },
       { key: 'fleet.manage', label: 'Manage Fleet', description: 'Manage fleet assignments/settings.' }
     ]

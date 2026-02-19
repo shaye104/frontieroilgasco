@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier intranet voyage tracker." />
-    <title>Frontier Oil & Gas Company | Voyage Tracker</title>
+    <meta name="description" content="Frontier cargo management." />
+    <title>Frontier Oil & Gas Company | Cargo Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -35,51 +35,50 @@
       <div class="container intranet-layout">
         <section class="panel">
           <div class="modal-header">
-            <h1>Voyage Tracker</h1>
-            <button id="openStartVoyageBtn" class="btn btn-primary hidden" type="button">Start Voyage</button>
+            <h1>Cargo Management</h1>
+            <button id="openCargoModalBtn" class="btn btn-primary" type="button">+ New Cargo Type</button>
           </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
-          <div id="voyageFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="cargoFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
         <section id="protectedContent" class="panel hidden">
-          <article class="panel">
-            <h2>Ongoing Voyages</h2>
-            <div id="ongoingVoyages" class="card-grid"></div>
-          </article>
-
-          <article class="panel">
-            <h2>Archived Voyages</h2>
-            <div id="archivedVoyages" class="card-grid"></div>
-          </article>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Active</th>
+                  <th>Default Price</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="cargoTableBody"></tbody>
+            </table>
+          </div>
         </section>
       </div>
     </main>
 
-    <section id="startVoyageModal" class="modal-overlay hidden" aria-hidden="true">
+    <section id="cargoModal" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal-card">
         <div class="modal-header">
-          <h2>Start Voyage</h2>
-          <button class="btn btn-secondary" type="button" data-close-modal="startVoyageModal">Close</button>
+          <h2 id="cargoModalTitle">Create Cargo Type</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="cargoModal">Close</button>
         </div>
-        <form id="startVoyageForm">
-          <label>Port of Departure</label>
-          <input name="departurePort" type="text" required />
-          <label>Port of Destination</label>
-          <input name="destinationPort" type="text" required />
-          <label>Vessel Name</label>
-          <input name="vesselName" type="text" required />
-          <label>Vessel Class</label>
-          <input name="vesselClass" type="text" required />
-          <label>Vessel Callsign</label>
-          <input name="vesselCallsign" type="text" required />
-          <label>Officer of the Watch</label>
-          <select name="officerOfWatchEmployeeId" id="voyageOowSelect" required></select>
-          <label>Crew Complement</label>
-          <select name="crewComplementIds" id="voyageCrewSelect" multiple size="8" required></select>
+        <form id="cargoForm">
+          <input name="id" type="hidden" />
+          <label>Name</label>
+          <input name="name" type="text" required />
+          <label>Default Price (optional)</label>
+          <input name="defaultPrice" type="number" min="0" step="0.01" />
+          <label>
+            <input name="active" type="checkbox" checked />
+            Active
+          </label>
           <div class="modal-actions">
-            <button class="btn btn-primary" type="submit">Start</button>
-            <button class="btn btn-secondary" type="button" data-close-modal="startVoyageModal">Cancel</button>
+            <button class="btn btn-primary" type="submit">Save</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="cargoModal">Cancel</button>
           </div>
         </form>
       </div>
@@ -91,6 +90,6 @@
       </div>
     </footer>
 
-    <script type="module" src="assets/js/pages/voyage-tracker-page.js"></script>
+    <script type="module" src="assets/js/pages/cargo-admin-page.js"></script>
   </body>
 </html>

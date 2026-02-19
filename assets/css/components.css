@@ -509,6 +509,50 @@ textarea:focus {
   margin: 0.2rem 0 0;
 }
 
+.voyage-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.voyage-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-ink-soft);
+}
+
+.voyage-status::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--color-muted);
+}
+
+.voyage-status-active {
+  color: var(--color-secondary);
+}
+
+.voyage-status-active::before {
+  background: var(--color-secondary);
+  animation: voyagePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes voyagePulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-secondary) 45%, transparent);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    opacity: 0.7;
+  }
+}
+
 @media (max-width: 1023px) {
   .employee-modal-grid,
   .employee-page-grid,

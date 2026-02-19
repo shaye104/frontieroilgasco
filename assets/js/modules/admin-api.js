@@ -215,3 +215,74 @@ export function listAccessibleFormResponses(filters = {}) {
 export function getAccessibleFormResponse(responseId) {
   return requestJson(`/api/forms/responses/${responseId}`, { method: 'GET' });
 }
+
+export function listVoyages() {
+  return requestJson('/api/voyages', { method: 'GET' });
+}
+
+export function startVoyage(payload) {
+  return requestJson('/api/voyages', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function getVoyage(voyageId) {
+  return requestJson(`/api/voyages/${voyageId}`, { method: 'GET' });
+}
+
+export function updateVoyageManifest(voyageId, lines) {
+  return requestJson(`/api/voyages/${voyageId}/manifest`, {
+    method: 'PUT',
+    body: JSON.stringify({ lines })
+  });
+}
+
+export function createVoyageLog(voyageId, message) {
+  return requestJson(`/api/voyages/${voyageId}/logs`, {
+    method: 'POST',
+    body: JSON.stringify({ message })
+  });
+}
+
+export function updateVoyageLog(voyageId, logId, message) {
+  return requestJson(`/api/voyages/${voyageId}/logs/${logId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ message })
+  });
+}
+
+export function endVoyage(voyageId, payload) {
+  return requestJson(`/api/voyages/${voyageId}/end`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listCargoTypes(includeInactive = false) {
+  return requestJson(`/api/cargo-types${includeInactive ? '?includeInactive=1' : ''}`, { method: 'GET' });
+}
+
+export function listCargoTypesAdmin() {
+  return requestJson('/api/admin/cargo-types', { method: 'GET' });
+}
+
+export function createCargoType(payload) {
+  return requestJson('/api/admin/cargo-types', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateCargoType(payload) {
+  return requestJson('/api/admin/cargo-types', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteCargoType(cargoTypeId) {
+  return requestJson(`/api/admin/cargo-types?id=${encodeURIComponent(String(cargoTypeId))}`, {
+    method: 'DELETE'
+  });
+}
