@@ -81,7 +81,8 @@ export async function initVoyageDetails(config) {
   const shipInPortBtn = document.querySelector(config.shipInPortSelector);
   const manifestBody = document.querySelector(config.manifestBodySelector);
   const buyTotalText = document.querySelector(config.buyTotalSelector);
-  const saveManifestBtn = document.querySelector(config.saveManifestButtonSelector);
+  const manifestSaveState = document.querySelector(config.manifestSaveStateSelector);
+  const manifestFeedback = document.querySelector(config.manifestFeedbackSelector);
   const openEndVoyageBtn = document.querySelector(config.openEndVoyageButtonSelector);
   const addCargoBtn = document.querySelector(config.addCargoButtonSelector);
   const addCargoForm = document.querySelector(config.addCargoFormSelector);
@@ -89,6 +90,7 @@ export async function initVoyageDetails(config) {
   const addLogForm = document.querySelector(config.addLogFormSelector);
   const logList = document.querySelector(config.logListSelector);
   const endForm = document.querySelector(config.endFormSelector);
+  const endFeedback = document.querySelector(config.endFeedbackSelector);
   const cargoLostEditor = document.querySelector(config.cargoLostEditorSelector);
   const finaliseHoldBtn = document.querySelector(config.finaliseHoldButtonSelector);
   const cancelHoldBtn = document.querySelector(config.cancelVoyageHoldButtonSelector);
@@ -105,7 +107,7 @@ export async function initVoyageDetails(config) {
   const updateFieldTitle = document.querySelector(config.updateFieldTitleSelector);
   const updateFieldKey = document.querySelector(config.updateFieldKeySelector);
   const updateFieldControls = document.querySelector(config.updateFieldControlsSelector);
-  const HOLD_DURATION_MS = 1000;
+  const HOLD_DURATION_MS = 500;
 
   if (
     !feedback ||
@@ -116,7 +118,8 @@ export async function initVoyageDetails(config) {
     !shipInPortBtn ||
     !manifestBody ||
     !buyTotalText ||
-    !saveManifestBtn ||
+    !manifestSaveState ||
+    !manifestFeedback ||
     !openEndVoyageBtn ||
     !addCargoBtn ||
     !addCargoForm ||
@@ -124,6 +127,7 @@ export async function initVoyageDetails(config) {
     !addLogForm ||
     !logList ||
     !endForm ||
+    !endFeedback ||
     !cargoLostEditor ||
     !finaliseHoldBtn ||
     !cancelHoldBtn ||
@@ -159,6 +163,8 @@ export async function initVoyageDetails(config) {
   let holdStartedAt = 0;
   let holdLock = false;
   let comboboxCleanup = [];
+  let manifestSaveFlashTimer = null;
+  let manifestSaveRequestId = 0;
 
   function isOngoing() {
     return String(detail?.voyage?.status || '') === 'ONGOING';
@@ -166,6 +172,36 @@ export async function initVoyageDetails(config) {
 
   function canEdit() {
     return Boolean(detail?.permissions?.canEdit) && isOngoing();
+  }
+
+  function setInlineMessage(target, message = '', tone = 'error') {
+    if (!target) return;
+    target.textContent = message;
+    target.classList.remove('hidden', 'is-error', 'is-success');
+    if (!message) {
+      target.classList.add('hidden');
+      return;
+    }
+    target.classList.add(tone === 'success' ? 'is-success' : 'is-error');
+  }
+
+  function setManifestSaveState(textValue = '', tone = 'muted') {
+    if (manifestSaveFlashTimer) {
+      window.clearTimeout(manifestSaveFlashTimer);
+      manifestSaveFlashTimer = null;
+    }
+    manifestSaveState.textContent = textValue;
+    manifestSaveState.classList.remove('is-saving', 'is-saved', 'is-error');
+    if (!textValue) return;
+    if (tone === 'saving') manifestSaveState.classList.add('is-saving');
+    if (tone === 'saved') {
+      manifestSaveState.classList.add('is-saved');
+      manifestSaveFlashTimer = window.setTimeout(() => {
+        manifestSaveState.textContent = '';
+        manifestSaveState.classList.remove('is-saving', 'is-saved', 'is-error');
+      }, 1300);
+    }
+    if (tone === 'error') manifestSaveState.classList.add('is-error');
   }
 
   function stopHoldEffect() {
@@ -185,7 +221,7 @@ export async function initVoyageDetails(config) {
     holdLock = false;
   }
 
-  function startHoldAction(button, action) {
+  function startHoldAction(button, action, onError) {
     if (!canEdit() || holdLock) return;
     stopHoldEffect();
     holdLock = true;
@@ -202,13 +238,14 @@ export async function initVoyageDetails(config) {
       try {
         await action();
       } catch (error) {
-        showMessage(feedback, error.message || 'Action failed.', 'error');
+        if (typeof onError === 'function') onError(error);
+        else showMessage(feedback, error.message || 'Action failed.', 'error');
       }
     }, HOLD_DURATION_MS);
   }
 
-  function bindHoldButton(button, action) {
-    const start = () => startHoldAction(button, action);
+  function bindHoldButton(button, action, onError) {
+    const start = () => startHoldAction(button, action, onError);
     const end = () => stopHoldEffect();
     button.addEventListener('pointerdown', start);
     ['pointerup', 'pointerleave', 'pointercancel'].forEach((eventName) => button.addEventListener(eventName, end));
@@ -322,24 +359,23 @@ export async function initVoyageDetails(config) {
     const voyage = detail.voyage;
     const crewNames = (detail.crew || []).map((entry) => text(entry.roblox_username)).join(', ') || 'N/A';
     const rows = [
-      { key: 'departurePort', label: 'Port of Departure', value: text(voyage.departure_port) },
-      { key: 'destinationPort', label: 'Port of Destination', value: text(voyage.destination_port) },
-      { key: 'vesselName', label: 'Vessel Name', value: text(voyage.vessel_name) },
-      { key: 'vesselClass', label: 'Vessel Class', value: text(voyage.vessel_class) },
-      { key: 'vesselCallsign', label: 'Vessel Callsign', value: text(voyage.vessel_callsign) },
-      { key: 'officerOfWatchEmployeeId', label: 'Officer of the Watch', value: text(voyage.officer_name) },
-      { key: 'crewComplementIds', label: 'Crew Complement', value: crewNames },
-      { key: 'shipStatus', label: 'Ship Status', value: voyage.ship_status === 'UNDERWAY' ? 'Ship Underway' : 'Ship In Port' },
-      { key: 'status', label: 'Voyage State', value: text(voyage.status) },
-      { key: 'startedAt', label: 'Started', value: formatWhen(voyage.started_at) },
-      { key: 'endedAt', label: 'Ended', value: voyage.status === 'ENDED' ? formatWhen(voyage.ended_at) : 'N/A' }
+      { key: 'departurePort', label: 'Port of Departure', value: text(voyage.departure_port), area: 'departure' },
+      { key: 'destinationPort', label: 'Port of Destination', value: text(voyage.destination_port), area: 'destination' },
+      { key: 'vesselName', label: 'Vessel Name', value: text(voyage.vessel_name), area: 'vessel-name' },
+      { key: 'vesselClass', label: 'Vessel Class', value: text(voyage.vessel_class), area: 'vessel-class' },
+      { key: 'vesselCallsign', label: 'Vessel Callsign', value: text(voyage.vessel_callsign), area: 'vessel-callsign' },
+      { key: 'officerOfWatchEmployeeId', label: 'Officer of the Watch', value: text(voyage.officer_name), area: 'oow' },
+      { key: 'crewComplementIds', label: 'Crew Complement', value: crewNames, area: 'crew' },
+      { key: 'status', label: 'Voyage State', value: text(voyage.status), area: 'state' },
+      { key: 'startedAt', label: 'Started', value: formatWhen(voyage.started_at), area: 'started' },
+      { key: 'endedAt', label: 'Ended', value: voyage.status === 'ENDED' ? formatWhen(voyage.ended_at) : 'N/A', area: 'ended' }
     ];
 
     const editableKeys = new Set(['departurePort', 'destinationPort', 'vesselName', 'vesselClass', 'vesselCallsign', 'officerOfWatchEmployeeId', 'crewComplementIds']);
 
-    fieldList.innerHTML = rows
+    fieldList.innerHTML = `<div class="voyage-profile-grid">${rows
       .map(
-        (row) => `<div class="voyage-field-row">
+        (row) => `<div class="voyage-field-row voyage-field-row-${row.area}">
           <div>
             <p class="voyage-field-label">${row.label}</p>
             <p class="voyage-field-value">${row.value}</p>
@@ -351,7 +387,7 @@ export async function initVoyageDetails(config) {
           }
         </div>`
       )
-      .join('');
+      .join('')}</div>`;
 
     fieldList.querySelectorAll('[data-edit-field]').forEach((button) => {
       button.addEventListener('click', () => {
@@ -381,6 +417,7 @@ export async function initVoyageDetails(config) {
         renderManifest();
         renderCargoLostEditor();
         syncBreakdown();
+        queueManifestAutoSave();
       });
     });
 
@@ -394,15 +431,97 @@ export async function initVoyageDetails(config) {
         if (quantityInput && String(quantityInput.value) !== String(quantity)) quantityInput.value = String(quantity);
         if (lineTotalCell) lineTotalCell.textContent = formatGuilders(toMoney(quantity * buyPrice));
         syncBreakdown();
+        queueManifestAutoSave();
       };
       quantityInput?.addEventListener('input', refreshRow);
       buyPriceInput?.addEventListener('input', refreshRow);
     });
 
     addCargoBtn.classList.toggle('hidden', !canEdit());
-    saveManifestBtn.classList.toggle('hidden', !canEdit());
     syncBreakdown();
   }
+
+  function clearManifestFieldErrors() {
+    manifestFeedback.classList.add('hidden');
+    manifestBody.querySelectorAll('.field-error').forEach((el) => el.classList.remove('field-error'));
+    manifestBody.querySelectorAll('.row-error').forEach((el) => el.classList.remove('row-error'));
+  }
+
+  function collectManifestLinesFromDom() {
+    return [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => {
+      const qtyInput = row.querySelector('input[data-field="quantity"]');
+      const priceInput = row.querySelector('input[data-field="buyPrice"]');
+      const quantity = Number(qtyInput?.value || 0);
+      const buyPrice = Number(priceInput?.value || 0);
+      return {
+        row,
+        qtyInput,
+        priceInput,
+        cargoTypeId: Number(row.getAttribute('data-cargo-id')),
+        quantity,
+        buyPrice
+      };
+    });
+  }
+
+  function validateManifestRows(rows) {
+    clearManifestFieldErrors();
+    for (const item of rows) {
+      if (!Number.isInteger(item.quantity) || item.quantity < 0) {
+        item.row.classList.add('row-error');
+        item.qtyInput?.classList.add('field-error');
+        setInlineMessage(manifestFeedback, 'Quantity must be a whole number >= 0.');
+        return false;
+      }
+      if (!Number.isFinite(item.buyPrice) || item.buyPrice < 0) {
+        item.row.classList.add('row-error');
+        item.priceInput?.classList.add('field-error');
+        setInlineMessage(manifestFeedback, 'Buy price must be a number >= 0.');
+        return false;
+      }
+      if (item.quantity > 0 && !Number.isFinite(item.buyPrice)) {
+        item.row.classList.add('row-error');
+        item.priceInput?.classList.add('field-error');
+        setInlineMessage(manifestFeedback, 'Buy price is required when quantity > 0.');
+        return false;
+      }
+    }
+    setInlineMessage(manifestFeedback, '');
+    return true;
+  }
+
+  async function persistManifestNow() {
+    if (!canEdit()) return;
+    const rows = collectManifestLinesFromDom();
+    if (!validateManifestRows(rows)) {
+      setManifestSaveState('Error', 'error');
+      return;
+    }
+    const lines = rows.map((item) => ({
+      cargoTypeId: item.cargoTypeId,
+      quantity: item.quantity,
+      buyPrice: item.buyPrice
+    }));
+    const requestId = ++manifestSaveRequestId;
+    setManifestSaveState('Saving...', 'saving');
+    try {
+      const payload = await updateVoyageManifest(voyageId, lines);
+      if (requestId !== manifestSaveRequestId) return;
+      manifest = payload.manifest || manifest;
+      renderManifest();
+      renderCargoLostEditor();
+      setInlineMessage(manifestFeedback, '');
+      setManifestSaveState('Saved', 'saved');
+    } catch (error) {
+      if (requestId !== manifestSaveRequestId) return;
+      setInlineMessage(manifestFeedback, error.message || 'Unable to save manifest.');
+      setManifestSaveState('Error', 'error');
+    }
+  }
+
+  const queueManifestAutoSave = debounce(() => {
+    persistManifestNow();
+  }, 420);
 
   function renderCargoLostEditor() {
     cargoLostEditor.innerHTML = manifest
@@ -465,6 +584,8 @@ export async function initVoyageDetails(config) {
   async function loadManifest() {
     const payload = await getVoyageManifest(voyageId);
     manifest = payload.manifest || [];
+    setManifestSaveState('');
+    setInlineMessage(manifestFeedback, '');
     renderManifest();
     renderCargoLostEditor();
   }
@@ -475,7 +596,7 @@ export async function initVoyageDetails(config) {
     renderLogs();
   }
 
-  function setupEmployeeCombobox({ input, results, onSearch, onSelect }) {
+  function setupEmployeeCombobox({ input, results, onSearch, onSelect, errorTarget }) {
     let options = [];
     let activeIndex = -1;
 
@@ -514,12 +635,19 @@ export async function initVoyageDetails(config) {
     const runSearch = debounce(async () => {
       const query = String(input.value || '').trim();
       if (!query) {
+        setInlineMessage(errorTarget, '');
         closeList();
         return;
       }
-      options = await onSearch(query);
-      activeIndex = options.length ? 0 : -1;
-      renderList();
+      try {
+        options = await onSearch(query);
+        setInlineMessage(errorTarget, '');
+        activeIndex = options.length ? 0 : -1;
+        renderList();
+      } catch (error) {
+        closeList();
+        setInlineMessage(errorTarget, error.message || 'Search failed.');
+      }
     }, 260);
 
     const onKeyDown = (event) => {
@@ -606,10 +734,12 @@ export async function initVoyageDetails(config) {
           <input id="pickerOowSearch" type="text" autocomplete="off" placeholder="Type username..." />
           <div id="pickerOowResults" class="autocomplete-list"></div>
         </div>
+        <div id="pickerOowError" class="inline-feedback hidden"></div>
         <input id="pickerOowSelectedId" type="hidden" value="${voyage.officer_of_watch_employee_id}" />
         <p id="pickerOowSelected" class="muted">Selected: ${text(voyage.officer_name)}</p>`;
       const search = updateFieldControls.querySelector('#pickerOowSearch');
       const results = updateFieldControls.querySelector('#pickerOowResults');
+      const error = updateFieldControls.querySelector('#pickerOowError');
       const selectedId = updateFieldControls.querySelector('#pickerOowSelectedId');
       const selectedText = updateFieldControls.querySelector('#pickerOowSelected');
 
@@ -622,7 +752,8 @@ export async function initVoyageDetails(config) {
           selectedId.value = String(id);
           selectedText.textContent = `Selected: ${text(row.roblox_username || `#${id}`)}`;
           search.value = '';
-        }
+        },
+        errorTarget: error
       });
     } else if (fieldKey === 'crewComplementIds') {
       updateFieldTitle.textContent = 'Update Crew Complement';
@@ -635,9 +766,11 @@ export async function initVoyageDetails(config) {
           <input id="pickerCrewSearch" type="text" autocomplete="off" placeholder="Type username..." />
           <div id="pickerCrewResults" class="autocomplete-list"></div>
         </div>`;
+      updateFieldControls.insertAdjacentHTML('beforeend', '<div id="pickerCrewError" class="inline-feedback hidden"></div>');
       const search = updateFieldControls.querySelector('#pickerCrewSearch');
       const results = updateFieldControls.querySelector('#pickerCrewResults');
       const selected = updateFieldControls.querySelector('#pickerCrewSelected');
+      const error = updateFieldControls.querySelector('#pickerCrewError');
 
       const renderSelected = () => {
         updateFieldControls.setAttribute('data-crew-values', JSON.stringify([...selectedCrew]));
@@ -672,7 +805,8 @@ export async function initVoyageDetails(config) {
           selectedCrew.add(id);
           search.value = '';
           renderSelected();
-        }
+        },
+        errorTarget: error
       });
       renderSelected();
     }
@@ -734,21 +868,6 @@ export async function initVoyageDetails(config) {
     }
   });
 
-  saveManifestBtn.addEventListener('click', async () => {
-    const lines = [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => ({
-      cargoTypeId: Number(row.getAttribute('data-cargo-id')),
-      quantity: Math.max(0, Math.floor(Number(row.querySelector('input[data-field="quantity"]')?.value || 0))),
-      buyPrice: Math.max(0, Number(row.querySelector('input[data-field="buyPrice"]')?.value || 0))
-    }));
-    try {
-      await updateVoyageManifest(voyageId, lines);
-      await loadManifest();
-      showMessage(feedback, 'Manifest saved.', 'success');
-    } catch (error) {
-      showMessage(feedback, error.message || 'Unable to save manifest.', 'error');
-    }
-  });
-
   addCargoBtn.addEventListener('click', () => openModal('addCargoModal'));
   addCargoForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -756,7 +875,10 @@ export async function initVoyageDetails(config) {
     const cargoTypeId = Number(data.get('cargoTypeId'));
     const quantity = Math.max(0, Math.floor(Number(data.get('quantity'))));
     const buyPrice = Math.max(0, Number(data.get('buyPrice')));
-    if (!Number.isInteger(cargoTypeId) || cargoTypeId <= 0) return;
+    if (!Number.isInteger(cargoTypeId) || cargoTypeId <= 0) {
+      setInlineMessage(manifestFeedback, 'Select a cargo type before adding a line.');
+      return;
+    }
     const cargoType = (detail.voyageConfig?.cargoTypes || []).find((row) => Number(row.id) === cargoTypeId);
     const next = {
       cargo_type_id: cargoTypeId,
@@ -771,6 +893,7 @@ export async function initVoyageDetails(config) {
     renderCargoLostEditor();
     closeModal('addCargoModal');
     addCargoForm.reset();
+    queueManifestAutoSave();
   });
 
   addLogForm.addEventListener('submit', async (event) => {
@@ -790,6 +913,7 @@ export async function initVoyageDetails(config) {
 
   openEndVoyageBtn.addEventListener('click', () => {
     if (!detail?.permissions?.canEnd || !isOngoing()) return;
+    setInlineMessage(endFeedback, '');
     syncBreakdown();
     openModal('endVoyageModal');
   });
@@ -825,15 +949,16 @@ export async function initVoyageDetails(config) {
       baseSellPrice,
       cargoLost
     });
+    setInlineMessage(endFeedback, '');
     closeModal('endVoyageModal');
     await Promise.all([loadSummary(), loadManifest(), loadLogs()]);
     showMessage(feedback, 'Voyage finalized and archived.', 'success');
-  });
+  }, (error) => setInlineMessage(endFeedback, error.message || 'Unable to submit voyage.'));
 
   bindHoldButton(cancelHoldBtn, async () => {
     await cancelVoyage(voyageId);
     window.location.href = 'voyage-tracker.html';
-  });
+  }, (error) => setInlineMessage(endFeedback, error.message || 'Unable to cancel voyage.'));
 
   [sellMultiplierInput, baseSellPriceInput].forEach((input) => {
     input.addEventListener('input', syncBreakdown);
@@ -843,6 +968,7 @@ export async function initVoyageDetails(config) {
     button.addEventListener('click', () => {
       const modalId = button.getAttribute('data-close-modal');
       if (modalId === 'updateFieldModal') clearComboboxCleanup();
+      if (modalId === 'endVoyageModal') setInlineMessage(endFeedback, '');
       if (modalId) closeModal(modalId);
     });
   });

@@ -645,6 +645,35 @@ textarea:focus {
   margin-bottom: 0.4rem;
 }
 
+.manifest-table tr.row-error td {
+  background: color-mix(in srgb, var(--color-danger) 6%, white);
+}
+
+.field-error {
+  border-color: var(--color-danger) !important;
+  background: color-mix(in srgb, var(--color-danger) 6%, white);
+}
+
+.inline-feedback {
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+}
+
+.inline-feedback.is-error {
+  background: color-mix(in srgb, var(--color-danger) 9%, white);
+  border-color: color-mix(in srgb, var(--color-danger) 30%, white);
+  color: var(--color-danger);
+}
+
+.inline-feedback.is-success {
+  background: color-mix(in srgb, var(--color-success) 10%, white);
+  border-color: color-mix(in srgb, var(--color-success) 30%, white);
+  color: var(--color-success);
+}
+
 .pill-list {
   display: flex;
   flex-wrap: wrap;
@@ -700,6 +729,30 @@ textarea:focus {
   margin-bottom: 0.6rem;
 }
 
+.manifest-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.manifest-save-state {
+  min-width: 64px;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.manifest-save-state.is-saving {
+  color: var(--color-muted);
+}
+
+.manifest-save-state.is-saved {
+  color: var(--color-success);
+}
+
+.manifest-save-state.is-error {
+  color: var(--color-danger);
+}
+
 .btn-plus {
   width: 32px;
   min-width: 32px;
@@ -725,29 +778,53 @@ textarea:focus {
 }
 
 .voyage-field-list {
-  display: grid;
-  gap: 0.35rem;
   margin-bottom: var(--space-3);
+}
+
+.voyage-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.4rem 0.65rem;
 }
 
 .voyage-field-row {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: 0.6rem;
   align-items: center;
   border-bottom: 1px solid #edf2f6;
-  padding: 0.5rem 0;
+  padding: 0.35rem 0;
+}
+
+.voyage-field-row-departure,
+.voyage-field-row-destination,
+.voyage-field-row-oow,
+.voyage-field-row-crew {
+  grid-column: span 3;
+}
+
+.voyage-field-row-vessel-name,
+.voyage-field-row-vessel-class,
+.voyage-field-row-vessel-callsign {
+  grid-column: span 2;
+}
+
+.voyage-field-row-state,
+.voyage-field-row-started,
+.voyage-field-row-ended {
+  grid-column: span 2;
 }
 
 .voyage-field-label {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.84rem;
+  font-size: 0.8rem;
 }
 
 .voyage-field-value {
   margin: 0;
   color: var(--color-ink-soft);
+  font-size: 0.93rem;
 }
 
 .btn-pencil {
@@ -846,6 +923,14 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 
+  .voyage-profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .voyage-field-row {
+    grid-column: span 1 !important;
+  }
+
   .voyage-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -877,6 +962,10 @@ textarea:focus {
 
   .data-table {
     min-width: 680px;
+  }
+
+  .voyage-profile-grid {
+    grid-template-columns: 1fr;
   }
 
   .voyage-grid {

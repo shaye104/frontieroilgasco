@@ -56,7 +56,10 @@
 
             <div class="modal-header manifest-head-row">
               <h3>Cargo Manifest</h3>
-              <button id="openAddCargoBtn" class="btn btn-secondary btn-plus hidden" type="button" aria-label="Add Cargo">+</button>
+              <div class="manifest-head-actions">
+                <span id="manifestSaveState" class="muted manifest-save-state" aria-live="polite"></span>
+                <button id="openAddCargoBtn" class="btn btn-secondary btn-plus hidden" type="button" aria-label="Add Cargo">+</button>
+              </div>
             </div>
             <div class="table-wrap manifest-table-wrap">
               <table class="data-table manifest-table">
@@ -72,9 +75,9 @@
                 <tbody id="manifestTableBody"></tbody>
               </table>
             </div>
+            <div id="manifestFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
             <p><strong>Total Freight Value:</strong> <span id="buyTotalText">ƒ 0</span></p>
             <div class="modal-actions">
-              <button id="saveManifestBtn" class="btn btn-primary hidden" type="button">Save Manifest</button>
               <button id="openEndVoyageBtn" class="btn btn-danger hidden" type="button">End Voyage</button>
             </div>
           </section>
@@ -142,6 +145,7 @@
         </div>
         <form id="endVoyageForm" class="end-voyage-layout">
           <section>
+            <div id="endVoyageFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
             <label>Sell Multiplier</label>
             <input name="sellMultiplier" id="sellMultiplierInput" type="number" min="0" step="0.01" />
             <label>Base Sell Price</label>
