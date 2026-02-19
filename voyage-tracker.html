@@ -74,14 +74,21 @@
           <label>Vessel Callsign</label>
           <select name="vesselCallsign" id="voyageVesselCallsignSelect" required></select>
           <label>Officer of the Watch</label>
-          <input id="voyageOowSerialSearch" type="text" placeholder="Search by Roblox username" autocomplete="off" />
+          <div class="combobox-wrap">
+            <input id="voyageOowSerialSearch" type="text" placeholder="Search by Roblox username" autocomplete="off" />
+            <div id="voyageOowResults" class="autocomplete-list"></div>
+          </div>
           <input type="hidden" name="officerOfWatchEmployeeId" id="voyageOowHidden" required />
           <p id="voyageOowSelected" class="muted">No officer selected.</p>
-          <div id="voyageOowResults" class="autocomplete-list"></div>
+          <div id="voyageOowError" class="inline-feedback hidden" role="status" aria-live="polite"></div>
           <label>Crew Complement</label>
-          <input id="voyageCrewSerialSearch" type="text" placeholder="Search by Roblox username" autocomplete="off" />
-          <div id="voyageCrewResults" class="autocomplete-list"></div>
-          <div id="voyageCrewSelected" class="pill-list"></div>
+          <div class="combobox-wrap combobox-wrap-multi">
+            <div id="voyageCrewSelected" class="pill-list"></div>
+            <input id="voyageCrewSerialSearch" type="text" placeholder="Search by Roblox username" autocomplete="off" />
+            <div id="voyageCrewResults" class="autocomplete-list"></div>
+          </div>
+          <div id="voyageCrewInfo" class="inline-feedback hidden" role="status" aria-live="polite"></div>
+          <div id="voyageCrewError" class="inline-feedback hidden" role="status" aria-live="polite"></div>
           <div class="modal-actions">
             <button class="btn btn-primary" type="submit">Start</button>
             <button class="btn btn-secondary" type="button" data-close-modal="startVoyageModal">Cancel</button>

@@ -613,6 +613,12 @@ textarea:focus {
   color: var(--color-muted);
 }
 
+.autocomplete-empty {
+  padding: 0.45rem 0.55rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
 .combobox-wrap {
   position: relative;
   margin-bottom: var(--space-2);

@@ -40,6 +40,17 @@ function closeModal(modalId) {
   modal.setAttribute('aria-hidden', 'true');
 }
 
+function setInlineMessage(target, message = '', tone = 'error') {
+  if (!target) return;
+  target.textContent = message;
+  target.classList.remove('hidden', 'is-error', 'is-success');
+  if (!message) {
+    target.classList.add('hidden');
+    return;
+  }
+  target.classList.add(tone === 'success' ? 'is-success' : 'is-error');
+}
+
 function fillSelect(select, items, placeholder) {
   if (!select) return;
   const current = select.value;
@@ -92,9 +103,12 @@ export async function initVoyageTracker(config, session) {
   const oowResults = document.querySelector(config.officerResultsSelector);
   const oowHidden = document.querySelector(config.officerHiddenSelector);
   const oowSelected = document.querySelector(config.officerSelectedSelector);
+  const oowError = document.querySelector(config.officerErrorSelector);
   const crewSearch = document.querySelector(config.crewSearchSelector);
   const crewResults = document.querySelector(config.crewResultsSelector);
   const crewSelected = document.querySelector(config.crewSelectedSelector);
+  const crewInfo = document.querySelector(config.crewInfoSelector);
+  const crewError = document.querySelector(config.crewErrorSelector);
 
   if (
     !feedback ||
@@ -111,9 +125,12 @@ export async function initVoyageTracker(config, session) {
     !oowResults ||
     !oowHidden ||
     !oowSelected ||
+    !oowError ||
     !crewSearch ||
     !crewResults ||
-    !crewSelected
+    !crewSelected ||
+    !crewInfo ||
+    !crewError
   ) {
     return;
   }
@@ -136,33 +153,110 @@ export async function initVoyageTracker(config, session) {
     return results;
   }
 
-  async function renderOowResults() {
-    const matches = await lookupEmployees('username', oowSearch.value);
-    oowResults.innerHTML = matches
-      .map(
-        (employee) => `<button class="autocomplete-item" type="button" data-oow-id="${employee.id}">
+  function setupCombobox({ input, dropdown, errorTarget, onSearch, onSelect }) {
+    let options = [];
+    let activeIndex = -1;
+
+    function closeList() {
+      dropdown.classList.remove('is-open');
+      dropdown.innerHTML = '';
+      options = [];
+      activeIndex = -1;
+    }
+
+    function renderList() {
+      if (!options.length) {
+        dropdown.classList.add('is-open');
+        dropdown.innerHTML = '<div class="autocomplete-empty">No results</div>';
+        return;
+      }
+      dropdown.classList.add('is-open');
+      dropdown.innerHTML = options
+        .map(
+          (employee, index) => `<button class="autocomplete-item ${index === activeIndex ? 'is-active' : ''}" type="button" data-index="${index}">
           <span>${text(employee.roblox_username)}</span>
           <small>${text(employee.serial_number)}</small>
         </button>`
-      )
-      .join('');
-
-    oowResults.querySelectorAll('[data-oow-id]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const selectedId = Number(button.getAttribute('data-oow-id'));
-        const selected = employees.find((employee) => Number(employee.id) === selectedId);
-        if (!selected) return;
-        oowHidden.value = String(selected.id);
-        oowSelected.textContent = `Selected OOW: ${text(selected.roblox_username)}`;
-        if (selectedCrewIds.has(selectedId)) {
-          selectedCrewIds.delete(selectedId);
-          renderCrewSelected();
-          showMessage(feedback, 'Officer of the Watch cannot be added to crew.', 'error');
-        }
-        oowResults.innerHTML = '';
-        oowSearch.value = '';
+        )
+        .join('');
+      dropdown.querySelectorAll('[data-index]').forEach((button) => {
+        button.addEventListener('mousedown', (event) => event.preventDefault());
+        button.addEventListener('click', () => {
+          const idx = Number(button.getAttribute('data-index'));
+          const choice = options[idx];
+          if (!choice) return;
+          onSelect(choice);
+          closeList();
+        });
       });
-    });
+    }
+
+    const runSearch = debounce(async () => {
+      const query = normalize(input.value);
+      if (!query) {
+        closeList();
+        setInlineMessage(errorTarget, '');
+        return;
+      }
+      try {
+        options = (await onSearch(query)).slice(0, 12);
+        setInlineMessage(errorTarget, '');
+        activeIndex = options.length ? 0 : -1;
+        renderList();
+      } catch (error) {
+        closeList();
+        setInlineMessage(errorTarget, error.message || 'Search failed.');
+      }
+    }, 300);
+
+    const onKeyDown = (event) => {
+      if (!options.length) {
+        if (event.key === 'Escape') closeList();
+        return;
+      }
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        activeIndex = (activeIndex + 1) % options.length;
+        renderList();
+        return;
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        activeIndex = activeIndex <= 0 ? options.length - 1 : activeIndex - 1;
+        renderList();
+        return;
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const choice = options[activeIndex];
+        if (!choice) return;
+        onSelect(choice);
+        closeList();
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeList();
+      }
+    };
+
+    const onOutside = (event) => {
+      const target = event.target;
+      if (target instanceof Node && (input.contains(target) || dropdown.contains(target))) return;
+      closeList();
+    };
+
+    input.addEventListener('focus', runSearch);
+    input.addEventListener('input', runSearch);
+    input.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onOutside);
+    return () => {
+      input.removeEventListener('focus', runSearch);
+      input.removeEventListener('input', runSearch);
+      input.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onOutside);
+      closeList();
+    };
   }
 
   function renderCrewSelected() {
@@ -192,45 +286,19 @@ export async function initVoyageTracker(config, session) {
     });
   }
 
-  async function renderCrewResults() {
-    const oowId = Number(oowHidden.value || 0);
-    const matches = (await lookupEmployees('username', crewSearch.value))
-      .filter((employee) => !selectedCrewIds.has(Number(employee.id)))
-      .filter((employee) => Number(employee.id) !== oowId)
-      .slice(0, 10);
-
-    crewResults.innerHTML = matches
-      .map(
-        (employee) => `<button class="autocomplete-item" type="button" data-crew-id="${employee.id}">
-          <span>${text(employee.roblox_username)}</span>
-          <small>${text(employee.serial_number)}</small>
-        </button>`
-      )
-      .join('');
-
-    crewResults.querySelectorAll('[data-crew-id]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const selectedId = Number(button.getAttribute('data-crew-id'));
-        if (selectedId === oowId) {
-          showMessage(feedback, 'Officer of the Watch cannot be added to crew.', 'error');
-          return;
-        }
-        selectedCrewIds.add(selectedId);
-        crewSearch.value = '';
-        void renderCrewResults();
-        renderCrewSelected();
-      });
-    });
-  }
-
   function clearStartForm() {
     startForm.reset();
     oowHidden.value = '';
     oowSelected.textContent = 'No officer selected.';
+    setInlineMessage(oowError, '');
+    setInlineMessage(crewError, '');
+    setInlineMessage(crewInfo, '');
     oowSearch.value = '';
     oowResults.innerHTML = '';
+    oowResults.classList.remove('is-open');
     crewSearch.value = '';
     crewResults.innerHTML = '';
+    crewResults.classList.remove('is-open');
     selectedCrewIds = new Set();
     renderCrewSelected();
   }
@@ -266,10 +334,47 @@ export async function initVoyageTracker(config, session) {
     });
   });
 
-  oowSearch.addEventListener('input', debounce(() => void renderOowResults(), 250));
-  oowSearch.addEventListener('focus', () => void renderOowResults());
-  crewSearch.addEventListener('input', debounce(() => void renderCrewResults(), 250));
-  crewSearch.addEventListener('focus', () => void renderCrewResults());
+  setupCombobox({
+    input: oowSearch,
+    dropdown: oowResults,
+    errorTarget: oowError,
+    onSearch: (query) => lookupEmployees('username', query),
+    onSelect: (employee) => {
+      const selectedId = Number(employee.id);
+      oowHidden.value = String(selectedId);
+      oowSelected.textContent = `Selected OOW: ${text(employee.roblox_username)}`;
+      oowSearch.value = '';
+      setInlineMessage(oowError, '');
+      if (selectedCrewIds.has(selectedId)) {
+        selectedCrewIds.delete(selectedId);
+        renderCrewSelected();
+        setInlineMessage(crewInfo, `Removed ${text(employee.roblox_username)} from crew because they are OOW.`, 'success');
+      }
+    }
+  });
+
+  setupCombobox({
+    input: crewSearch,
+    dropdown: crewResults,
+    errorTarget: crewError,
+    onSearch: async (query) =>
+      (await lookupEmployees('username', query))
+        .filter((employee) => !selectedCrewIds.has(Number(employee.id)))
+        .filter((employee) => Number(employee.id) !== Number(oowHidden.value || 0)),
+    onSelect: (employee) => {
+      const selectedId = Number(employee.id);
+      const oowId = Number(oowHidden.value || 0);
+      if (selectedId === oowId) {
+        setInlineMessage(crewError, 'Officer of the Watch cannot be added to crew.');
+        return;
+      }
+      selectedCrewIds.add(selectedId);
+      crewSearch.value = '';
+      setInlineMessage(crewError, '');
+      setInlineMessage(crewInfo, '');
+      renderCrewSelected();
+    }
+  });
 
   startForm.addEventListener('submit', async (event) => {
     event.preventDefault();

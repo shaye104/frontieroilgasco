@@ -25,9 +25,12 @@ initIntranetPageGuard({
       officerResultsSelector: '#voyageOowResults',
       officerHiddenSelector: '#voyageOowHidden',
       officerSelectedSelector: '#voyageOowSelected',
+      officerErrorSelector: '#voyageOowError',
       crewSearchSelector: '#voyageCrewSerialSearch',
       crewResultsSelector: '#voyageCrewResults',
-      crewSelectedSelector: '#voyageCrewSelected'
+      crewSelectedSelector: '#voyageCrewSelected',
+      crewInfoSelector: '#voyageCrewInfo',
+      crewErrorSelector: '#voyageCrewError'
     },
     session
   );
