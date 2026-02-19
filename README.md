@@ -42,11 +42,19 @@ git push -u origin main
 ## Cloudflare Deployment
 
 1. Push updated code to GitHub.
-2. If your Cloudflare flow requires a deploy command, use:
+2. If your Cloudflare flow requires a deploy command, use either:
+
+```bash
+npx wrangler pages deploy
+```
+
+or:
 
 ```bash
 npx wrangler deploy
 ```
 
-3. This works because `wrangler.jsonc` is configured to deploy this repository as static assets (`assets.directory = "."`).
+3. This works because `wrangler.jsonc` is configured for both flows:
+   - `pages_build_output_dir = "."` for `wrangler pages deploy`
+   - `assets.directory = "."` for `wrangler deploy`
 4. In Cloudflare, connect your custom domain and complete DNS routing.

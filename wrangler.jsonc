@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "frontieroilgasco",
   "compatibility_date": "2026-02-19",
+  "pages_build_output_dir": ".",
   "assets": {
     "directory": "."
   }
