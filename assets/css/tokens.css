@@ -1,15 +1,15 @@
 :root {
-  --font-heading: "Sora", "Avenir Next", "Segoe UI", sans-serif;
-  --font-body: "Source Sans 3", "Trebuchet MS", sans-serif;
+  --font-heading: "Lexend", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Lexend", "Trebuchet MS", sans-serif;
 
   --color-bg: #eef3f6;
   --color-surface: #ffffff;
   --color-surface-soft: #f6fafb;
   --color-ink: #0f2530;
   --color-ink-soft: #3f5967;
-  --color-primary: #0a6a86;
-  --color-primary-strong: #084f67;
-  --color-secondary: #d07a20;
+  --color-primary: #1155cc;
+  --color-primary-strong: #3c78d8;
+  --color-secondary: #6d9eeb;
   --color-border: #d5e1e8;
   --color-success: #167e62;
   --color-danger: #b43f3f;
