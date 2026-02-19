@@ -42,11 +42,11 @@ git push -u origin main
 ## Cloudflare Deployment
 
 1. Push updated code to GitHub.
-2. In Cloudflare dashboard, open **Workers & Pages** and create a new **Pages** project.
-3. Connect GitHub and select `shaye104/frontieroilgasco`.
-4. Build settings:
-   - Framework preset: `None`
-   - Build command: *(leave blank)*
-   - Build output directory: `.`
-5. Deploy the project.
-6. In the Pages project, add your custom domain and complete DNS routing in Cloudflare.
+2. If your Cloudflare flow requires a deploy command, use:
+
+```bash
+npx wrangler deploy
+```
+
+3. This works because `wrangler.jsonc` is configured to deploy this repository as static assets (`assets.directory = "."`).
+4. In Cloudflare, connect your custom domain and complete DNS routing.
