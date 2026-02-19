@@ -54,6 +54,10 @@ function getActiveDisciplinaries(records) {
 }
 
 function parseEmployeeIdFromUrl() {
+  const query = new URLSearchParams(window.location.search);
+  const queryCandidate = query.get('employeeId') || query.get('id') || query.get('employee');
+  if (/^\d+$/.test(String(queryCandidate || ''))) return Number(queryCandidate);
+
   const pathParts = window.location.pathname.split('/').filter(Boolean);
   const employeesIndex = pathParts.findIndex((part) => part === 'employees');
   if (employeesIndex >= 0) {
@@ -64,8 +68,11 @@ function parseEmployeeIdFromUrl() {
   const pathMatch = window.location.pathname.match(/\/admin\/employees\/(\d+)(?:\/|$)/);
   if (pathMatch?.[1]) return Number(pathMatch[1]);
 
-  const fromQuery = new URLSearchParams(window.location.search).get('employeeId');
-  if (/^\d+$/.test(String(fromQuery || ''))) return Number(fromQuery);
+  const anyPathDigits = window.location.pathname.match(/(\d+)/);
+  if (anyPathDigits?.[1]) return Number(anyPathDigits[1]);
+
+  const stored = window.sessionStorage.getItem('fog_last_employee_id');
+  if (/^\d+$/.test(String(stored || ''))) return Number(stored);
 
   return null;
 }

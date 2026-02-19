@@ -64,11 +64,19 @@ function renderEmployeeTable(target, employees) {
           <td>${text(emp.serial_number)}</td>
           <td>${text(emp.employee_status)}</td>
           <td>${text(emp.hire_date)}</td>
-          <td><a class="btn btn-secondary" href="/admin/employees/${emp.id}?employeeId=${emp.id}">Open</a></td>
+          <td><a class="btn btn-secondary" href="/employee-profile.html?employeeId=${emp.id}">Open</a></td>
         </tr>
       `
     )
     .join('');
+
+  target.querySelectorAll('a[href*="employeeId="]').forEach((link) => {
+    link.addEventListener('click', () => {
+      const href = link.getAttribute('href') || '';
+      const match = href.match(/employeeId=(\d+)/);
+      if (match?.[1]) window.sessionStorage.setItem('fog_last_employee_id', match[1]);
+    });
+  });
 }
 
 export async function initManageEmployees(config) {
