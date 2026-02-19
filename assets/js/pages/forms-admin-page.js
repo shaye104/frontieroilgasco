@@ -21,7 +21,9 @@ initIntranetPageGuard({
     newFormBtnSelector: '#newFormBtn',
     deleteFormBtnSelector: '#deleteFormBtn',
     addQuestionBtnSelector: '#addQuestionBtn',
-    questionBuilderSelector: '#questionBuilder'
+    questionBuilderSelector: '#questionBuilder',
+    categoriesPanelSelector: '#categoriesPanel',
+    formBuilderPanelSelector: '#formBuilderPanel'
   });
 });
 

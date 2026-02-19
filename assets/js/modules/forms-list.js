@@ -48,10 +48,10 @@ export async function initFormsList(config, session) {
     if (!categories.length) {
       categoriesRoot.innerHTML = '<h2>Categories</h2><p>No categories configured.</p>';
     } else {
-      categoriesRoot.innerHTML = `<h2>Categories</h2>${categories
+      categoriesRoot.innerHTML = `<h2>Categories</h2><div class="forms-category-stack">${categories
         .map(
           (category) => `
-            <section class="panel">
+            <section class="panel forms-category-section">
               <h3>${text(category.name)}</h3>
               <p>${text(category.description || 'No description')}</p>
               <div>${(category.forms || []).length ? '' : '<p>No forms in this category.</p>'}</div>
@@ -59,7 +59,7 @@ export async function initFormsList(config, session) {
             </section>
           `
         )
-        .join('')}`;
+        .join('')}</div>`;
 
       categories.forEach((category) => {
         const target = categoriesRoot.querySelector(`[data-category-forms="${category.id}"]`);

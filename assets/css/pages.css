@@ -42,7 +42,7 @@
   width: 100%;
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 @media (max-width: 980px) {

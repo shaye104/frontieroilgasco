@@ -117,6 +117,8 @@ export async function initFormsAdmin(config) {
   const deleteFormBtn = document.querySelector(config.deleteFormBtnSelector);
   const addQuestionBtn = document.querySelector(config.addQuestionBtnSelector);
   const questionBuilder = document.querySelector(config.questionBuilderSelector);
+  const categoriesPanel = document.querySelector(config.categoriesPanelSelector);
+  const formBuilderPanel = document.querySelector(config.formBuilderPanelSelector);
 
   if (!feedback || !categoryForm || !categoryList || !formList || !formEditorForm || !questionBuilder) return;
 
@@ -124,6 +126,32 @@ export async function initFormsAdmin(config) {
   let forms = [];
   let employees = [];
   let selectedFormId = null;
+  const url = new URL(window.location.href);
+  const mode = String(url.searchParams.get('mode') || '').trim().toLowerCase();
+  const returnTo = String(url.searchParams.get('returnTo') || '').trim();
+
+  function maybeReturnToForms() {
+    if (!returnTo) return;
+    window.location.href = `${returnTo}${returnTo.includes('?') ? '&' : '?'}updated=${Date.now()}`;
+  }
+
+  function applyMode() {
+    if (!categoriesPanel || !formBuilderPanel) return;
+    if (mode === 'categories') {
+      categoriesPanel.classList.remove('hidden');
+      formBuilderPanel.classList.add('hidden');
+      return;
+    }
+
+    if (mode === 'create') {
+      categoriesPanel.classList.add('hidden');
+      formBuilderPanel.classList.remove('hidden');
+      return;
+    }
+
+    categoriesPanel.classList.remove('hidden');
+    formBuilderPanel.classList.remove('hidden');
+  }
 
   function bindQuestionEvents() {
     questionBuilder.querySelectorAll('[data-remove-question]').forEach((button) => {
@@ -262,6 +290,7 @@ export async function initFormsAdmin(config) {
       categoryForm.querySelector('[name="id"]').value = '';
       await refreshAll();
       showMessage(feedback, 'Category saved.', 'success');
+      if (mode === 'categories' && returnTo) maybeReturnToForms();
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to save category.', 'error');
     }
@@ -315,6 +344,7 @@ export async function initFormsAdmin(config) {
       await refreshAll();
       if (selectedFormId) await openForm(selectedFormId);
       showMessage(feedback, 'Form saved.', 'success');
+      if (mode === 'create' && returnTo) maybeReturnToForms();
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to save form.', 'error');
     }
@@ -339,6 +369,7 @@ export async function initFormsAdmin(config) {
   try {
     await refreshAll();
     resetFormEditor();
+    applyMode();
     clearMessage(feedback);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to initialize forms admin.', 'error');
