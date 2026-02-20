@@ -1,5 +1,6 @@
 import { json } from '../auth/_lib/auth.js';
 import { requirePermission } from './_lib/admin-auth.js';
+import { hasPermission } from '../_lib/permissions.js';
 import { normalizeDiscordUserId } from '../_lib/db.js';
 
 export async function onRequestGet(context) {
@@ -36,7 +37,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env } = context;
-  const { errorResponse } = await requirePermission(context, ['employees.create']);
+  const { errorResponse, session } = await requirePermission(context, ['employees.create']);
   if (errorResponse) return errorResponse;
 
   let payload;
@@ -47,8 +48,14 @@ export async function onRequestPost(context) {
   }
 
   const discordUserId = normalizeDiscordUserId(payload?.discordUserId);
+  const providedRoleIds = Array.isArray(payload?.roleIds)
+    ? [...new Set(payload.roleIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))]
+    : [];
   if (!/^\d{6,30}$/.test(discordUserId)) {
     return json({ error: 'discordUserId is required and must be a Discord snowflake.' }, 400);
+  }
+  if (providedRoleIds.length && !hasPermission(session, 'roles.assign')) {
+    return json({ error: 'Forbidden. Missing required permission.' }, 403);
   }
 
   try {
@@ -71,9 +78,6 @@ export async function onRequestPost(context) {
 
     const employeeId = Number(insert?.meta?.last_row_id);
     if (employeeId > 0) {
-      const providedRoleIds = Array.isArray(payload?.roleIds)
-        ? [...new Set(payload.roleIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))]
-        : [];
       const rolesToAssign = [];
       if (providedRoleIds.length) {
         rolesToAssign.push(...providedRoleIds);

@@ -2,6 +2,8 @@ import {
   createConfigValue,
   deleteConfigValue,
   getConfig,
+  getRankPermissions,
+  saveRankPermissions,
   updateConfigValue
 } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
@@ -57,12 +59,20 @@ export async function initAdminConfigMenu(config) {
     ranks: document.querySelector('#addRankBtn'),
     grades: document.querySelector('#addGradeBtn')
   };
+  const rankPermissionSelect = document.querySelector('#rankPermissionSelect');
+  const rankPermissionsGrid = document.querySelector('#rankPermissionsGrid');
+  const saveRankPermissionsButton = document.querySelector('#saveRankPermissionsBtn');
 
   let configState = {
     statuses: [],
     disciplinary_types: [],
     ranks: [],
     grades: []
+  };
+  let rankPermissionState = {
+    ranks: [],
+    permissions: [],
+    mappingsByRank: {}
   };
 
   async function refreshType(type) {
@@ -97,6 +107,76 @@ export async function initAdminConfigMenu(config) {
         }
       }
     );
+
+    if (type === 'ranks') {
+      await refreshRankPermissions();
+    }
+  }
+
+  function renderRankPermissionOptions() {
+    if (!rankPermissionSelect) return;
+    const current = rankPermissionSelect.value;
+    rankPermissionSelect.innerHTML =
+      '<option value="">Select rank</option>' +
+      rankPermissionState.ranks.map((rank) => `<option value="${rank.value}">${text(rank.value)}</option>`).join('');
+    if (current && rankPermissionState.ranks.some((rank) => String(rank.value) === String(current))) {
+      rankPermissionSelect.value = current;
+      return;
+    }
+    if (rankPermissionState.ranks.length) {
+      rankPermissionSelect.value = String(rankPermissionState.ranks[0].value || '');
+    }
+  }
+
+  function renderRankPermissionGrid() {
+    if (!rankPermissionsGrid) return;
+    const selectedRank = String(rankPermissionSelect?.value || '').trim();
+    if (!selectedRank) {
+      rankPermissionsGrid.innerHTML = '<p class="role-id">Create at least one rank to map permissions.</p>';
+      return;
+    }
+
+    const selected = new Set(rankPermissionState.mappingsByRank[selectedRank] || []);
+    const grouped = (rankPermissionState.permissions || []).reduce((acc, permission) => {
+      const key = permission.group || 'other';
+      if (!acc[key]) acc[key] = { label: permission.groupLabel || key, permissions: [] };
+      acc[key].permissions.push(permission);
+      return acc;
+    }, {});
+
+    const groups = Object.entries(grouped).sort((a, b) => a[1].label.localeCompare(b[1].label));
+    if (!groups.length) {
+      rankPermissionsGrid.innerHTML = '<p class="role-id">No permissions configured.</p>';
+      return;
+    }
+
+    rankPermissionsGrid.innerHTML = groups
+      .map(
+        ([groupKey, group]) => `<section class="permissions-group">
+      <h3>${text(group.label)}</h3>
+      <div class="permissions-list">
+        ${group.permissions
+          .map(
+            (permission) => `<label class="permissions-item">
+          <input type="checkbox" data-rank-permission-key="${permission.key}" ${selected.has(permission.key) ? 'checked' : ''} />
+          <span><strong>${text(permission.label)}</strong><br /><small>${text(permission.description)}</small></span>
+        </label>`
+          )
+          .join('')}
+      </div>
+    </section>`
+      )
+      .join('');
+  }
+
+  async function refreshRankPermissions() {
+    if (!rankPermissionSelect || !rankPermissionsGrid) return;
+    rankPermissionState = await getRankPermissions();
+    rankPermissionState.ranks = rankPermissionState.ranks || [];
+    rankPermissionState.permissions = rankPermissionState.permissions || [];
+    rankPermissionState.mappingsByRank = rankPermissionState.mappingsByRank || {};
+    renderRankPermissionOptions();
+    renderRankPermissionGrid();
   }
 
   for (const cfg of typeConfigs) {
@@ -122,8 +202,37 @@ export async function initAdminConfigMenu(config) {
     });
   }
 
+  rankPermissionSelect?.addEventListener('change', () => {
+    clearMessage(feedback);
+    renderRankPermissionGrid();
+  });
+
+  saveRankPermissionsButton?.addEventListener('click', async () => {
+    clearMessage(feedback);
+    const selectedRank = String(rankPermissionSelect?.value || '').trim();
+    if (!selectedRank) {
+      showMessage(feedback, 'Select a rank to save permissions.', 'error');
+      return;
+    }
+
+    const permissionKeys = [...(rankPermissionsGrid?.querySelectorAll('[data-rank-permission-key]:checked') || [])]
+      .map((input) => String(input.getAttribute('data-rank-permission-key') || '').trim())
+      .filter(Boolean);
+
+    try {
+      await saveRankPermissions(selectedRank, permissionKeys);
+      await refreshRankPermissions();
+      if (rankPermissionSelect) rankPermissionSelect.value = selectedRank;
+      renderRankPermissionGrid();
+      showMessage(feedback, `Saved rank permissions for ${selectedRank}.`, 'success');
+    } catch (error) {
+      showMessage(feedback, error.message || 'Unable to save rank permissions.', 'error');
+    }
+  });
+
   try {
     await Promise.all(typeConfigs.map((entry) => refreshType(entry.type)));
+    await refreshRankPermissions();
     clearMessage(feedback);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to initialize config menu.', 'error');

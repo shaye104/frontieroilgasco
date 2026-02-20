@@ -234,6 +234,28 @@ export function listVoyages(options = {}) {
   return requestJson(`/api/voyages${suffix}`, { method: 'GET' });
 }
 
+export function listActivityTracker(options = {}) {
+  const params = new URLSearchParams();
+  if (options.search) params.set('search', String(options.search));
+  if (options.lessThan !== undefined && options.lessThan !== null && options.lessThan !== '') params.set('lessThan', String(options.lessThan));
+  if (options.scope) params.set('scope', String(options.scope));
+  if (options.page) params.set('page', String(options.page));
+  if (options.pageSize) params.set('pageSize', String(options.pageSize));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/admin/activity-tracker${suffix}`, { method: 'GET' });
+}
+
+export function getRankPermissions() {
+  return requestJson('/api/admin/rank-permissions', { method: 'GET' });
+}
+
+export function saveRankPermissions(rankValue, permissionKeys) {
+  return requestJson('/api/admin/rank-permissions', {
+    method: 'PUT',
+    body: JSON.stringify({ rankValue, permissionKeys })
+  });
+}
+
 export function startVoyage(payload) {
   return requestJson('/api/voyages', {
     method: 'POST',

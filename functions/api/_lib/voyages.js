@@ -103,3 +103,24 @@ export async function getVoyageDetail(env, voyageId, options = {}) {
     buyTotal
   };
 }
+
+export async function syncVoyageParticipants(env, voyageId, officerOfWatchEmployeeId, crewComplementIds = []) {
+  const crewIds = [...new Set((Array.isArray(crewComplementIds) ? crewComplementIds : []).map((value) => Number(value)).filter((v) => Number.isInteger(v) && v > 0))];
+  const oowId = Number(officerOfWatchEmployeeId);
+  const statements = [env.DB.prepare('DELETE FROM voyage_participants WHERE voyage_id = ?').bind(voyageId)];
+  if (Number.isInteger(oowId) && oowId > 0) {
+    statements.push(
+      env.DB
+        .prepare('INSERT OR IGNORE INTO voyage_participants (voyage_id, employee_id, role_in_voyage) VALUES (?, ?, ?)')
+        .bind(voyageId, oowId, 'OOW')
+    );
+  }
+  crewIds.forEach((crewId) => {
+    statements.push(
+      env.DB
+        .prepare('INSERT OR IGNORE INTO voyage_participants (voyage_id, employee_id, role_in_voyage) VALUES (?, ?, ?)')
+        .bind(voyageId, crewId, 'CREW')
+    );
+  });
+  await env.DB.batch(statements);
+}

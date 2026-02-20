@@ -68,6 +68,8 @@ export async function initMyDetailsPanel(config) {
     if (fields.employeeStatus) fields.employeeStatus.textContent = safeText(employee.employeeStatus);
     if (fields.hireDate) fields.hireDate.textContent = safeText(employee.hireDate);
     if (fields.tenureDays) fields.tenureDays.textContent = safeText(employee.tenureDays);
+    if (fields.totalVoyages) fields.totalVoyages.textContent = String(Number(details?.voyageActivity?.totalVoyages || 0));
+    if (fields.monthlyVoyages) fields.monthlyVoyages.textContent = String(Number(details?.voyageActivity?.monthlyVoyages || 0));
 
     renderDisciplinaryList(activeList, details.activeDisciplinaryRecords || [], 'No active disciplinary records.');
     renderDisciplinaryList(historyList, details.disciplinaryHistory || [], 'No disciplinary history.');

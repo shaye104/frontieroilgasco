@@ -14,6 +14,7 @@ initIntranetPageGuard({
   const configLink = document.querySelector('#adminLinkConfig');
   const cargoLink = document.querySelector('#adminLinkCargo');
   const rolesLink = document.querySelector('#adminLinkRoles');
+  const activityTrackerLink = document.querySelector('#adminLinkActivityTracker');
 
   if (employeesLink && hasPermission(session, 'employees.read')) employeesLink.classList.remove('hidden');
   if (configLink && hasPermission(session, 'config.manage')) configLink.classList.remove('hidden');
@@ -21,6 +22,7 @@ initIntranetPageGuard({
     cargoLink.classList.remove('hidden');
   }
   if (rolesLink && hasPermission(session, 'roles.manage')) rolesLink.classList.remove('hidden');
+  if (activityTrackerLink && hasPermission(session, 'activity_tracker.view')) activityTrackerLink.classList.remove('hidden');
 });
 
 initializeYear();

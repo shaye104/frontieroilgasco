@@ -23,7 +23,9 @@ initIntranetPageGuard({
       serialNumber: '#fieldSerialNumber',
       employeeStatus: '#fieldEmployeeStatus',
       hireDate: '#fieldHireDate',
-      tenureDays: '#fieldTenureDays'
+      tenureDays: '#fieldTenureDays',
+      totalVoyages: '#fieldTotalVoyages',
+      monthlyVoyages: '#fieldMonthlyVoyages'
     }
   });
 });

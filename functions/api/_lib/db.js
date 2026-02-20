@@ -14,6 +14,9 @@ export async function ensureCoreSchema(env) {
     ['config.manage', 'config', 'Manage Config', 'Manage statuses, ranks, grades, and disciplinary types.'],
     ['roles.read', 'roles', 'View Roles', 'View role definitions and permissions.'],
     ['roles.manage', 'roles', 'Manage Roles', 'Create, edit, delete, and reorder roles.'],
+    ['roles.assign', 'roles', 'Assign Roles', 'Assign and unassign roles for employees.'],
+    ['activity_tracker.view', 'activity_tracker', 'View Activity Tracker', 'View employee voyage activity statistics.'],
+    ['activity_tracker.manage', 'activity_tracker', 'Manage Activity Tracker', 'Manage advanced activity tracker features.'],
     ['forms.read', 'forms', 'View Forms', 'View forms list and form details.'],
     ['forms.submit', 'forms', 'Submit Forms', 'Submit form responses.'],
     ['forms.manage', 'forms', 'Manage Forms', 'Create/edit forms, categories, and question builders.'],
@@ -136,6 +139,13 @@ export async function ensureCoreSchema(env) {
       PRIMARY KEY(discord_role_id, role_id),
       FOREIGN KEY(role_id) REFERENCES app_roles(id)
     )`,
+    `CREATE TABLE IF NOT EXISTS rank_permission_mappings (
+      rank_value TEXT NOT NULL,
+      permission_key TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(rank_value, permission_key),
+      FOREIGN KEY(permission_key) REFERENCES app_permissions(permission_key)
+    )`,
     `CREATE TABLE IF NOT EXISTS cargo_types (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
@@ -199,6 +209,15 @@ export async function ensureCoreSchema(env) {
       employee_id INTEGER NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY(voyage_id, employee_id),
+      FOREIGN KEY(voyage_id) REFERENCES voyages(id),
+      FOREIGN KEY(employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS voyage_participants (
+      voyage_id INTEGER NOT NULL,
+      employee_id INTEGER NOT NULL,
+      role_in_voyage TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY(voyage_id, employee_id, role_in_voyage),
       FOREIGN KEY(voyage_id) REFERENCES voyages(id),
       FOREIGN KEY(employee_id) REFERENCES employees(id)
     )`,

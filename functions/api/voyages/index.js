@@ -1,6 +1,6 @@
 import { json } from '../auth/_lib/auth.js';
 import { hasPermission } from '../_lib/permissions.js';
-import { requireVoyagePermission } from '../_lib/voyages.js';
+import { requireVoyagePermission, syncVoyageParticipants } from '../_lib/voyages.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -215,6 +215,7 @@ export async function onRequestPost(context) {
       env.DB.prepare('INSERT OR IGNORE INTO voyage_crew_members (voyage_id, employee_id) VALUES (?, ?)').bind(voyageId, crewId)
     )
   );
+  await syncVoyageParticipants(env, voyageId, officerOfWatchEmployeeId, crewComplementIds);
 
   const created = await env.DB.prepare('SELECT id FROM voyages WHERE id = ?').bind(voyageId).first();
   return json({ voyageId: created?.id || voyageId }, 201);

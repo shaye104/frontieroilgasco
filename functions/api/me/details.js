@@ -65,6 +65,24 @@ export async function onRequestGet(context) {
     return state === 'open' || state === 'active';
   });
 
+  const statsRow = await env.DB
+    .prepare(
+      `SELECT
+        COUNT(DISTINCT v.id) AS total_voyages,
+        COUNT(
+          DISTINCT CASE
+            WHEN datetime(v.ended_at, 'localtime') >= datetime('now', 'localtime', 'start of month')
+              AND datetime(v.ended_at, 'localtime') < datetime('now', 'localtime', 'start of month', '+1 month')
+            THEN v.id
+          END
+        ) AS monthly_voyages
+       FROM voyage_participants vp
+       INNER JOIN voyages v ON v.id = vp.voyage_id
+       WHERE vp.employee_id = ? AND v.status = 'ENDED'`
+    )
+    .bind(employee.id)
+    .first();
+
   return json({
     loggedIn: true,
     isAdmin: Boolean(session.isAdmin),
@@ -79,6 +97,10 @@ export async function onRequestGet(context) {
       employeeStatus: employee.employee_status || '',
       hireDate: employee.hire_date || '',
       tenureDays: calculateTenureDays(employee.hire_date)
+    },
+    voyageActivity: {
+      totalVoyages: Number(statsRow?.total_voyages || 0),
+      monthlyVoyages: Number(statsRow?.monthly_voyages || 0)
     },
     activeDisciplinaryRecords,
     disciplinaryHistory

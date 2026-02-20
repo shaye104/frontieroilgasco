@@ -40,7 +40,16 @@ export const PERMISSION_GROUPS = [
     label: 'Roles',
     permissions: [
       { key: 'roles.read', label: 'View Roles', description: 'View role definitions and permissions.' },
-      { key: 'roles.manage', label: 'Manage Roles', description: 'Create, edit, delete, and reorder roles.' }
+      { key: 'roles.manage', label: 'Manage Roles', description: 'Create, edit, delete, and reorder roles.' },
+      { key: 'roles.assign', label: 'Assign Roles', description: 'Assign and unassign roles for employees.' }
+    ]
+  },
+  {
+    key: 'activity_tracker',
+    label: 'Activity Tracker',
+    permissions: [
+      { key: 'activity_tracker.view', label: 'View Activity Tracker', description: 'View voyage activity statistics for employees.' },
+      { key: 'activity_tracker.manage', label: 'Manage Activity Tracker', description: 'Manage advanced activity tracker actions.' }
     ]
   },
   {
@@ -149,6 +158,20 @@ async function getRolePermissions(env, roleIds) {
   };
 }
 
+async function getRankPermissions(env, rankValue) {
+  const rank = String(rankValue || '').trim();
+  if (!rank) return [];
+  const rows = await env.DB
+    .prepare(
+      `SELECT DISTINCT permission_key
+       FROM rank_permission_mappings
+       WHERE LOWER(rank_value) = LOWER(?)`
+    )
+    .bind(rank)
+    .all();
+  return normalizePermissionKeys((rows?.results || []).map((row) => row.permission_key));
+}
+
 export async function buildPermissionContext(env, { discordUserId, discordRoleIds = [], isSuperAdmin = false } = {}) {
   await ensureCoreSchema(env);
 
@@ -158,9 +181,10 @@ export async function buildPermissionContext(env, { discordUserId, discordRoleId
 
   const appRoleIds = [...new Set([...assignedRoleIds, ...mappedRoleIds])];
   const { roles, permissions } = await getRolePermissions(env, appRoleIds);
+  const rankPermissions = await getRankPermissions(env, employee?.rank);
 
   const normalizedPermissions = normalizePermissionKeys(
-    isSuperAdmin ? [...permissions, SUPER_ADMIN_PERMISSION, ...getPermissionKeys()] : permissions
+    isSuperAdmin ? [...permissions, ...rankPermissions, SUPER_ADMIN_PERMISSION, ...getPermissionKeys()] : [...permissions, ...rankPermissions]
   );
 
   return {

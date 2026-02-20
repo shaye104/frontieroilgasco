@@ -106,7 +106,7 @@ export async function initEmployeeProfilePage(config, session) {
   let currentEmployee = null;
   let availableRoles = [];
   let assignedRoleIds = [];
-  const canManageRoles = hasPermission(session, 'roles.manage');
+  const canManageRoles = hasPermission(session, 'roles.assign');
 
   async function refreshConfig() {
     const [statuses, ranks, grades, disciplinaryTypes] = await Promise.all([

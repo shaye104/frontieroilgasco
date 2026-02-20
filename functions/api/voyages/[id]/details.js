@@ -1,6 +1,6 @@
 import { json } from '../../auth/_lib/auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
-import { getVoyageBase, getVoyageDetail, requireVoyagePermission } from '../../_lib/voyages.js';
+import { getVoyageBase, getVoyageDetail, requireVoyagePermission, syncVoyageParticipants } from '../../_lib/voyages.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -170,6 +170,7 @@ export async function onRequestPut(context) {
       )
     );
   }
+  await syncVoyageParticipants(env, voyageId, officerOfWatchEmployeeId, crewComplementIds);
 
   if (logs.length) {
     await env.DB.batch(

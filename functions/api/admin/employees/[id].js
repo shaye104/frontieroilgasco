@@ -123,7 +123,7 @@ export async function onRequestPut(context) {
     ? [...new Set(payload.roleIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))]
     : null;
   if (roleIds) {
-    if (!hasPermission(session, 'roles.manage')) {
+    if (!hasPermission(session, 'roles.assign')) {
       return json({ error: 'Forbidden. Missing required permission.' }, 403);
     }
     await env.DB.batch([
