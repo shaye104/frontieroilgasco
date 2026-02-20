@@ -88,7 +88,7 @@ function renderVoyageCards(target, voyages, isOngoing) {
           : 'status-pill status-pill-in-port'
         : 'status-pill status-pill-ended';
       return `
-        <a class="voyage-card ${isOngoing ? 'voyage-card-ongoing' : 'voyage-card-archived'}" href="/voyages/${voyage.id}">
+        <a class="voyage-card ${isOngoing ? 'voyage-card-ongoing' : 'voyage-card-archived'}" href="/voyage-details.html?voyageId=${voyage.id}">
           <div class="voyage-card-head">
             <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
             <span class="${statusClass}">${isOngoing ? shipStatusLabel : 'Ended'}</span>
@@ -445,7 +445,7 @@ export async function initVoyageTracker(config, session) {
       closeModal('startVoyageModal');
       clearStartForm();
       showMessage(feedback, 'Voyage started.', 'success');
-      window.location.href = `/voyages/${payload.voyageId}`;
+      window.location.href = `/voyage-details.html?voyageId=${payload.voyageId}`;
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to start voyage.', 'error');
     }

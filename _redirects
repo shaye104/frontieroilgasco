@@ -8,8 +8,8 @@
 /voyages/ /voyage-tracker.html 200
 /voyages/archive /voyage-archive.html 200
 /voyages/archive/ /voyage-archive.html 200
-/voyages/:id /voyage-details.html?voyageId=:id 200
-/voyages/:id/ /voyage-details.html?voyageId=:id 200
+/voyages/:id /voyage-details.html 200
+/voyages/:id/ /voyage-details.html 200
 /admin /admin-panel.html 200
 /admin/ /admin-panel.html 200
 /admin/user-groups /roles.html 200

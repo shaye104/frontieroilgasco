@@ -26,7 +26,7 @@ function renderArchivedCards(target, voyages) {
 
   target.innerHTML = voyages
     .map(
-      (voyage) => `<a class="voyage-card voyage-card-archived" href="/voyages/${voyage.id}">
+      (voyage) => `<a class="voyage-card voyage-card-archived" href="/voyage-details.html?voyageId=${voyage.id}">
       <div class="voyage-card-head">
         <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
         <span class="status-pill status-pill-ended">Ended</span>
