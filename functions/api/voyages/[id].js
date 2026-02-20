@@ -18,6 +18,7 @@ export async function onRequestGet(context) {
   if (!detail) return json({ error: 'Voyage not found.' }, 404);
 
   const cargoLost = detail.voyage.cargo_lost_json ? JSON.parse(detail.voyage.cargo_lost_json) : [];
+  const voyageSettlementLines = detail.voyage.settlement_lines_json ? JSON.parse(detail.voyage.settlement_lines_json) : [];
   const isOwner = Number(detail.voyage.owner_employee_id) === Number(employee.id);
   const [employees, ports, vesselNames, vesselClasses, vesselCallsigns, cargoTypes] = includeSetup
     ? await Promise.all([
@@ -35,6 +36,7 @@ export async function onRequestGet(context) {
   return json({
     ...detail,
     cargoLost,
+    voyageSettlementLines,
     isOwner,
     employees: employees?.results || [],
     voyageConfig: {

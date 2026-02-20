@@ -106,6 +106,20 @@
             </section>
             <section id="archivedBreakdownSection" class="employee-page-panel hidden archived-breakdown-panel">
               <h3>Financial Breakdown</h3>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Cargo Type</th>
+                      <th>Net Quantity</th>
+                      <th>Total Freight Cost</th>
+                      <th>Gross Sale Revenue</th>
+                      <th>Net Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="archivedBreakdownLinesBody"></tbody>
+                </table>
+              </div>
               <p><strong>Total Freight Cost:</strong> <span id="archivedBreakdownFreight">ƒ 0</span></p>
               <p><strong>Freight Loss Adjustment:</strong> <span id="archivedBreakdownLossAdjustment">0 units</span></p>
               <p><strong>Gross Sale Revenue:</strong> <span id="archivedBreakdownRevenue">ƒ 0</span></p>
@@ -150,13 +164,43 @@
             <div id="endVoyageFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
             <label>Sell Multiplier</label>
             <input name="sellMultiplier" id="sellMultiplierInput" type="number" min="0" step="0.01" />
-            <label>Base Sell Price</label>
-            <input name="baseSellPrice" id="baseSellPriceInput" type="number" min="0" step="0.01" />
             <h4>Freight Loss Adjustment</h4>
-            <div id="cargoLostEditor"></div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Cargo Type</th>
+                    <th>Quantity</th>
+                    <th>Freight Loss Adjustment</th>
+                    <th>Net Quantity</th>
+                    <th>Buy Price</th>
+                    <th>Total Freight Cost</th>
+                    <th>Base Sell Price</th>
+                    <th>True Sell Unit Price</th>
+                    <th>Gross Sale Revenue</th>
+                    <th>Net Profit</th>
+                  </tr>
+                </thead>
+                <tbody id="endVoyageLinesBody"></tbody>
+              </table>
+            </div>
           </section>
           <section id="financialBreakdown" class="section-surface hidden">
             <h3>Financial Breakdown</h3>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Cargo Type</th>
+                    <th>Net Quantity</th>
+                    <th>Total Freight Cost</th>
+                    <th>Gross Sale Revenue</th>
+                    <th>Net Profit</th>
+                  </tr>
+                </thead>
+                <tbody id="breakdownLinesBody"></tbody>
+              </table>
+            </div>
             <p><strong>Total Freight Cost:</strong> <span id="breakdownCost">ƒ 0</span></p>
             <p><strong>Freight Loss Adjustment:</strong> <span id="breakdownLossAdjustment">0 units</span></p>
             <p><strong>Gross Sale Revenue:</strong> <span id="breakdownRevenue">ƒ 0</span></p>

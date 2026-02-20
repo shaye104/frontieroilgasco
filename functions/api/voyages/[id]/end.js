@@ -12,6 +12,16 @@ function normalizeCargoLost(items) {
     .filter((item) => Number.isInteger(item.cargoTypeId) && item.cargoTypeId > 0);
 }
 
+function normalizeBaseSellPrices(items) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => ({
+      cargoTypeId: Number(item?.cargoTypeId),
+      baseSellPrice: Number(item?.baseSellPrice)
+    }))
+    .filter((item) => Number.isInteger(item.cargoTypeId) && item.cargoTypeId > 0);
+}
+
 export async function onRequestPost(context) {
   const { env, params } = context;
   const { errorResponse, employee, session } = await requireVoyagePermission(context, 'voyages.end');
@@ -35,13 +45,25 @@ export async function onRequestPost(context) {
   }
 
   const sellMultiplier = Number(payload?.sellMultiplier);
-  const baseSellPrice = Number(payload?.baseSellPrice);
   if (!Number.isFinite(sellMultiplier) || sellMultiplier < 0) return json({ error: 'Sell multiplier must be >= 0.' }, 400);
-  if (!Number.isFinite(baseSellPrice) || baseSellPrice < 0) return json({ error: 'Base sell price must be >= 0.' }, 400);
 
   const detail = await getVoyageDetail(env, voyageId);
   const manifestByCargo = new Map((detail?.manifest || []).map((line) => [Number(line.cargo_type_id), Number(line.quantity || 0)]));
+  const manifestNameByCargo = new Map((detail?.manifest || []).map((line) => [Number(line.cargo_type_id), String(line.cargo_name || `Cargo #${line.cargo_type_id}`)]));
+  const manifestBuyPriceByCargo = new Map((detail?.manifest || []).map((line) => [Number(line.cargo_type_id), Number(line.buy_price || 0)]));
   const cargoLostRaw = normalizeCargoLost(payload?.cargoLost || []);
+  const baseSellPricesRaw = normalizeBaseSellPrices(payload?.baseSellPrices || []);
+  const baseSellPriceByCargo = new Map();
+  try {
+    baseSellPricesRaw.forEach((entry) => {
+      const manifestQty = manifestByCargo.get(entry.cargoTypeId);
+      if (!Number.isInteger(manifestQty) || manifestQty <= 0) throw new Error('Base sell price contains cargo not in manifest.');
+      if (!Number.isFinite(entry.baseSellPrice) || entry.baseSellPrice < 0) throw new Error('Base sell price must be >= 0.');
+      baseSellPriceByCargo.set(entry.cargoTypeId, entry.baseSellPrice);
+    });
+  } catch (error) {
+    return json({ error: error.message || 'Invalid base sell prices input.' }, 400);
+  }
   let cargoLost = [];
   try {
     cargoLost = cargoLostRaw.map((loss) => {
@@ -61,28 +83,52 @@ export async function onRequestPost(context) {
     return json({ error: error.message || 'Invalid freight loss adjustment input.' }, 400);
   }
 
-  const trueSellUnitPrice = toMoney(sellMultiplier * baseSellPrice);
   const manifest = detail?.manifest || [];
   const cargoLostMap = new Map(cargoLost.map((item) => [Number(item.cargoTypeId), Number(item.lostQuantity)]));
+  const manifestActiveLines = manifest.filter((line) => Math.max(0, Math.floor(Number(line.quantity || 0))) > 0);
+  for (const line of manifestActiveLines) {
+    const cargoTypeId = Number(line.cargo_type_id);
+    if (!baseSellPriceByCargo.has(cargoTypeId)) {
+      const cargoName = manifestNameByCargo.get(cargoTypeId) || `Cargo #${cargoTypeId}`;
+      return json({ error: `Base sell price is required for ${cargoName}.` }, 400);
+    }
+  }
 
-  const totalCost = toMoney(
-    manifest.reduce((sum, line) => {
-      const quantity = Math.max(0, Math.floor(Number(line.quantity || 0)));
-      const buyPrice = Math.max(0, Number(line.buy_price || 0));
-      return sum + quantity * buyPrice;
-    }, 0)
-  );
-  const totalRevenue = toMoney(
-    manifest.reduce((sum, line) => {
-      const quantity = Math.max(0, Math.floor(Number(line.quantity || 0)));
-      const lostQuantity = Math.max(0, Math.floor(Number(cargoLostMap.get(Number(line.cargo_type_id)) || 0)));
-      const netQuantity = Math.max(quantity - lostQuantity, 0);
-      const revenueLine = toMoney(trueSellUnitPrice * netQuantity);
-      return sum + revenueLine;
-    }, 0)
-  );
-  const profit = toMoney(totalRevenue - totalCost);
+  const settlementLines = manifest
+    .filter((line) => Math.max(0, Math.floor(Number(line.quantity || 0))) > 0)
+    .map((line) => {
+    const cargoTypeId = Number(line.cargo_type_id);
+    const cargoName = manifestNameByCargo.get(cargoTypeId) || `Cargo #${cargoTypeId}`;
+    const quantity = Math.max(0, Math.floor(Number(line.quantity || 0)));
+    const buyPrice = Math.max(0, Number(manifestBuyPriceByCargo.get(cargoTypeId) || 0));
+    const lostQuantity = Math.max(0, Math.floor(Number(cargoLostMap.get(cargoTypeId) || 0)));
+    const netQuantity = Math.max(quantity - lostQuantity, 0);
+    const lineCost = toMoney(buyPrice * quantity);
+    const baseSellPrice = Number(baseSellPriceByCargo.get(cargoTypeId) || 0);
+    const trueSellUnitPrice = toMoney(sellMultiplier * baseSellPrice);
+    const lineRevenue = toMoney(trueSellUnitPrice * netQuantity);
+    const lineProfit = toMoney(lineRevenue - lineCost);
+    return {
+      cargoTypeId,
+      cargoName,
+      quantity,
+      lostQuantity,
+      netQuantity,
+      buyPrice: toMoney(buyPrice),
+      baseSellPrice: toMoney(baseSellPrice),
+      trueSellUnitPrice,
+      lineCost,
+      lineRevenue,
+      lineProfit
+    };
+    });
+
+  const totalCost = toMoney(settlementLines.reduce((sum, line) => sum + line.lineCost, 0));
+  const totalRevenue = toMoney(settlementLines.reduce((sum, line) => sum + line.lineRevenue, 0));
+  const profit = toMoney(settlementLines.reduce((sum, line) => sum + line.lineProfit, 0));
   const companyShare = toMoney((profit > 0 ? profit : 0) * 0.1);
+  const crewShare = toMoney(profit - companyShare);
+  const totalLossUnits = Math.round(settlementLines.reduce((sum, line) => sum + line.lostQuantity, 0));
 
   await env.DB
     .prepare(
@@ -95,15 +141,17 @@ export async function onRequestPost(context) {
            profit = ?,
            company_share = ?,
            cargo_lost_json = ?,
+           settlement_lines_json = ?,
            ended_at = CURRENT_TIMESTAMP,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`
     )
-    .bind(sellMultiplier, baseSellPrice, totalCost, totalRevenue, profit, companyShare, JSON.stringify(cargoLost), voyageId)
+    .bind(sellMultiplier, null, totalCost, totalRevenue, profit, companyShare, JSON.stringify(cargoLost), JSON.stringify(settlementLines), voyageId)
     .run();
 
   return json({
     ok: true,
-    metrics: { totalRevenue, totalCost, trueSellUnitPrice, profit, companyShare }
+    metrics: { totalRevenue, totalCost, profit, companyShare, crewShare, totalLossUnits },
+    settlementLines
   });
 }

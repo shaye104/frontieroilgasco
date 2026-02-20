@@ -89,6 +89,7 @@ export async function initVoyageDetails(config) {
   const archivedBreakdownProfit = document.querySelector(config.archivedBreakdownProfitSelector);
   const archivedBreakdownCompanyShare = document.querySelector(config.archivedBreakdownCompanyShareSelector);
   const archivedBreakdownCrewShare = document.querySelector(config.archivedBreakdownCrewShareSelector);
+  const archivedBreakdownLinesBody = document.querySelector(config.archivedBreakdownLinesBodySelector);
   const manifestSaveState = document.querySelector(config.manifestSaveStateSelector);
   const manifestFeedback = document.querySelector(config.manifestFeedbackSelector);
   const openEndVoyageBtn = document.querySelector(config.openEndVoyageButtonSelector);
@@ -99,9 +100,10 @@ export async function initVoyageDetails(config) {
   const logList = document.querySelector(config.logListSelector);
   const endForm = document.querySelector(config.endFormSelector);
   const endFeedback = document.querySelector(config.endFeedbackSelector);
-  const cargoLostEditor = document.querySelector(config.cargoLostEditorSelector);
+  const endVoyageLinesBody = document.querySelector(config.endVoyageLinesBodySelector);
   const finaliseHoldBtn = document.querySelector(config.finaliseHoldButtonSelector);
   const cancelHoldBtn = document.querySelector(config.cancelVoyageHoldButtonSelector);
+  const breakdownLinesBody = document.querySelector(config.breakdownLinesBodySelector);
   const breakdownRevenue = document.querySelector(config.breakdownRevenueSelector);
   const breakdownCost = document.querySelector(config.breakdownCostSelector);
   const breakdownLossAdjustment = document.querySelector(config.breakdownLossAdjustmentSelector);
@@ -110,7 +112,6 @@ export async function initVoyageDetails(config) {
   const breakdownCrewShare = document.querySelector(config.breakdownCrewShareSelector);
   const breakdownContainer = document.querySelector(config.breakdownContainerSelector);
   const sellMultiplierInput = document.querySelector(config.sellMultiplierSelector);
-  const baseSellPriceInput = document.querySelector(config.baseSellPriceSelector);
   const editVoyageForm = document.querySelector(config.editVoyageFormSelector);
   const editVoyageFeedback = document.querySelector(config.editVoyageFeedbackSelector);
   const editDepartureSelect = document.querySelector(config.editDepartureSelector);
@@ -147,6 +148,7 @@ export async function initVoyageDetails(config) {
     !archivedBreakdownProfit ||
     !archivedBreakdownCompanyShare ||
     !archivedBreakdownCrewShare ||
+    !archivedBreakdownLinesBody ||
     !manifestSaveState ||
     !manifestFeedback ||
     !openEndVoyageBtn ||
@@ -157,9 +159,10 @@ export async function initVoyageDetails(config) {
     !logList ||
     !endForm ||
     !endFeedback ||
-    !cargoLostEditor ||
+    !endVoyageLinesBody ||
     !finaliseHoldBtn ||
     !cancelHoldBtn ||
+    !breakdownLinesBody ||
     !breakdownRevenue ||
     !breakdownCost ||
     !breakdownLossAdjustment ||
@@ -168,7 +171,6 @@ export async function initVoyageDetails(config) {
     !breakdownCrewShare ||
     !breakdownContainer ||
     !sellMultiplierInput ||
-    !baseSellPriceInput ||
     !editVoyageForm ||
     !editVoyageFeedback ||
     !editDepartureSelect ||
@@ -311,91 +313,154 @@ export async function initVoyageDetails(config) {
     comboboxCleanup = [];
   }
 
-  function readLossMap() {
-    const lossMap = new Map();
-    cargoLostEditor.querySelectorAll('[data-loss-cargo-id]').forEach((input) => {
-      const cargoId = Number(input.getAttribute('data-loss-cargo-id'));
-      const raw = Number(input.value || 0);
-      const normalized = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
-      lossMap.set(cargoId, normalized);
+  function collectEndLinesFromDom() {
+    return [...endVoyageLinesBody.querySelectorAll('tr[data-cargo-id]')].map((row) => {
+      const cargoTypeId = Number(row.getAttribute('data-cargo-id'));
+      const quantity = Math.max(0, Math.floor(Number(row.getAttribute('data-qty') || 0)));
+      const buyPrice = Math.max(0, Number(row.getAttribute('data-buy-price') || 0));
+      const cargoName = row.getAttribute('data-cargo-name') || `Cargo #${cargoTypeId}`;
+      const lossInput = row.querySelector('input[data-field="lostQty"]');
+      const baseSellInput = row.querySelector('input[data-field="baseSellPrice"]');
+      const lostQuantityRaw = Number(lossInput?.value || 0);
+      const baseSellPriceRaw = Number(baseSellInput?.value || 0);
+      const lostQuantity = Math.max(0, Math.min(quantity, Math.floor(Number.isFinite(lostQuantityRaw) ? lostQuantityRaw : 0)));
+      const baseSellPrice = Number.isFinite(baseSellPriceRaw) ? Math.max(0, baseSellPriceRaw) : null;
+      return {
+        cargoTypeId,
+        cargoName,
+        quantity,
+        buyPrice,
+        lostQuantity,
+        baseSellPrice,
+        lossInput,
+        baseSellInput,
+        row
+      };
     });
-    return lossMap;
   }
 
-  function buildBreakdown() {
-    const lines = manifest.map((line) => {
-      const row = manifestBody.querySelector(`tr[data-cargo-id="${Number(line.cargo_type_id)}"]`);
-      const quantityValue = row?.querySelector('input[data-field="quantity"]')?.value;
-      const buyPriceValue = row?.querySelector('input[data-field="buyPrice"]')?.value;
-      const quantity = Math.max(0, Math.floor(Number(quantityValue ?? line.quantity ?? 0)));
-      const buyPrice = Math.max(0, Number(buyPriceValue ?? line.buy_price ?? 0));
-      return { line, quantity, buyPrice };
+  function calculateBreakdown(lines, sellMultiplier) {
+    const lineItems = lines.map((line) => {
+      const netQuantity = Math.max(line.quantity - line.lostQuantity, 0);
+      const lineCost = toMoney(line.buyPrice * line.quantity);
+      const trueSellUnitPrice = line.baseSellPrice === null ? null : toMoney(sellMultiplier * line.baseSellPrice);
+      const lineRevenue = trueSellUnitPrice === null ? null : toMoney(trueSellUnitPrice * netQuantity);
+      const lineProfit = lineRevenue === null ? null : toMoney(lineRevenue - lineCost);
+      return {
+        ...line,
+        netQuantity,
+        lineCost,
+        trueSellUnitPrice,
+        lineRevenue,
+        lineProfit
+      };
     });
-    const totalCost = toMoney(lines.reduce((sum, row) => sum + row.quantity * row.buyPrice, 0));
-    const sellMultiplier = toNumber(sellMultiplierInput.value);
-    const baseSellPrice = toNumber(baseSellPriceInput.value);
-    const lossMap = readLossMap();
+
+    const totalCost = toMoney(lineItems.reduce((sum, line) => sum + line.lineCost, 0));
+    const totalLossUnits = Math.round(lineItems.reduce((sum, line) => sum + line.lostQuantity, 0));
+    const hasAllSellPrices = lineItems.every((line) => line.baseSellPrice !== null);
+    const totalRevenue = hasAllSellPrices ? toMoney(lineItems.reduce((sum, line) => sum + (line.lineRevenue || 0), 0)) : null;
+    const netProfit = hasAllSellPrices ? toMoney(totalRevenue - totalCost) : null;
+    const companyShare = hasAllSellPrices ? toMoney(Math.max(netProfit, 0) * 0.1) : null;
+    const crewShare = hasAllSellPrices ? toMoney(netProfit - companyShare) : null;
 
     return {
-      totalCost,
-      sellMultiplier,
-      baseSellPrice,
-      lossMap,
-      lines
+      lineItems,
+      totals: { totalCost, totalLossUnits, totalRevenue, netProfit, companyShare, crewShare },
+      hasAllSellPrices
     };
   }
 
+  function syncEndVoyageLineRow(row) {
+    const quantity = Math.max(0, Math.floor(Number(row.getAttribute('data-qty') || 0)));
+    const buyPrice = Math.max(0, Number(row.getAttribute('data-buy-price') || 0));
+    const lossInput = row.querySelector('input[data-field="lostQty"]');
+    const baseSellInput = row.querySelector('input[data-field="baseSellPrice"]');
+    const netQtyCell = row.querySelector('[data-cell="netQty"]');
+    const lineCostCell = row.querySelector('[data-cell="lineCost"]');
+    const trueSellCell = row.querySelector('[data-cell="trueSell"]');
+    const lineRevenueCell = row.querySelector('[data-cell="lineRevenue"]');
+    const lineProfitCell = row.querySelector('[data-cell="lineProfit"]');
+
+    const lostRaw = Number(lossInput?.value || 0);
+    const lostQuantity = Math.max(0, Math.min(quantity, Math.floor(Number.isFinite(lostRaw) ? lostRaw : 0)));
+    if (lossInput && String(lossInput.value) !== String(lostQuantity)) lossInput.value = String(lostQuantity);
+    const netQty = Math.max(quantity - lostQuantity, 0);
+    const lineCost = toMoney(buyPrice * quantity);
+
+    const sellMultiplier = toNumber(sellMultiplierInput.value);
+    const baseSellRaw = Number(baseSellInput?.value || 0);
+    const baseSellPrice = Number.isFinite(baseSellRaw) ? Math.max(0, baseSellRaw) : null;
+    const trueSellUnitPrice =
+      sellMultiplier === null || sellMultiplier < 0 || baseSellPrice === null ? null : toMoney(sellMultiplier * baseSellPrice);
+    const lineRevenue = trueSellUnitPrice === null ? null : toMoney(trueSellUnitPrice * netQty);
+    const lineProfit = lineRevenue === null ? null : toMoney(lineRevenue - lineCost);
+
+    if (netQtyCell) netQtyCell.textContent = String(netQty);
+    if (lineCostCell) lineCostCell.textContent = formatGuilders(lineCost);
+    if (trueSellCell) trueSellCell.textContent = trueSellUnitPrice === null ? '—' : formatGuilders(trueSellUnitPrice);
+    if (lineRevenueCell) lineRevenueCell.textContent = lineRevenue === null ? '—' : formatGuilders(lineRevenue);
+    if (lineProfitCell) lineProfitCell.textContent = lineProfit === null ? '—' : formatGuilders(lineProfit);
+  }
+
+  function renderBreakdownLines(lineItems) {
+    breakdownLinesBody.innerHTML = lineItems
+      .map(
+        (line) => `<tr>
+          <td>${text(line.cargoName)}</td>
+          <td>${line.netQuantity}</td>
+          <td>${formatGuilders(line.lineCost)}</td>
+          <td>${line.lineRevenue === null ? '—' : formatGuilders(line.lineRevenue)}</td>
+          <td>${line.lineProfit === null ? '—' : formatGuilders(line.lineProfit)}</td>
+        </tr>`
+      )
+      .join('');
+  }
+
   function syncBreakdown() {
-    const { totalCost, sellMultiplier, baseSellPrice, lossMap, lines } = buildBreakdown();
-    buyTotalText.textContent = formatGuilders(totalCost);
-    const totalLossUnits = lines.reduce((sum, row) => {
-      const lost = Math.min(row.quantity, Math.max(0, Number(lossMap.get(Number(row.line.cargo_type_id)) || 0)));
-      return sum + lost;
-    }, 0);
-    breakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
-
-    if (sellMultiplier === null || baseSellPrice === null) {
+    endVoyageLinesBody.querySelectorAll('tr[data-cargo-id]').forEach((row) => syncEndVoyageLineRow(row));
+    const lines = collectEndLinesFromDom();
+    if (!lines.length) {
+      const manifestTotalCost = toMoney(
+        manifest.reduce((sum, line) => {
+          const quantity = Math.max(0, Math.floor(Number(line.quantity || 0)));
+          const buyPrice = Math.max(0, Number(line.buy_price || 0));
+          return sum + quantity * buyPrice;
+        }, 0)
+      );
+      buyTotalText.textContent = formatGuilders(manifestTotalCost);
+      breakdownCost.textContent = formatGuilders(manifestTotalCost);
+      breakdownLossAdjustment.textContent = '0 units';
       breakdownRevenue.textContent = '—';
-      breakdownCost.textContent = formatGuilders(totalCost);
-      breakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
+      breakdownProfit.textContent = '—';
+      breakdownCompanyShare.textContent = '—';
+      breakdownCrewShare.textContent = '—';
+      breakdownLinesBody.innerHTML = '';
+      breakdownContainer.classList.add('hidden');
+      return;
+    }
+    const sellMultiplier = toNumber(sellMultiplierInput.value);
+    const hasMultiplier = sellMultiplier !== null && sellMultiplier >= 0;
+    const computed = calculateBreakdown(lines, hasMultiplier ? sellMultiplier : 0);
+    buyTotalText.textContent = formatGuilders(computed.totals.totalCost);
+    breakdownCost.textContent = formatGuilders(computed.totals.totalCost);
+    breakdownLossAdjustment.textContent = `${computed.totals.totalLossUnits} units`;
+    renderBreakdownLines(computed.lineItems);
+
+    if (!hasMultiplier || !computed.hasAllSellPrices) {
+      breakdownRevenue.textContent = '—';
       breakdownProfit.textContent = '—';
       breakdownCompanyShare.textContent = '—';
       breakdownCrewShare.textContent = '—';
       breakdownContainer.classList.add('hidden');
       return;
     }
-
-    if (sellMultiplier < 0 || baseSellPrice < 0) {
-      breakdownRevenue.textContent = '—';
-      breakdownCost.textContent = formatGuilders(totalCost);
-      breakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
-      breakdownProfit.textContent = '—';
-      breakdownCompanyShare.textContent = '—';
-      breakdownCrewShare.textContent = '—';
-      breakdownContainer.classList.add('hidden');
-      return;
-    }
-
-    const trueSellUnitPrice = toMoney(sellMultiplier * baseSellPrice);
-    const totalRevenue = toMoney(
-      lines.reduce((sum, row) => {
-        const lost = Math.min(row.quantity, Math.max(0, Number(lossMap.get(Number(row.line.cargo_type_id)) || 0)));
-        const netQty = Math.max(row.quantity - lost, 0);
-        const revenueLine = toMoney(trueSellUnitPrice * netQty);
-        return sum + revenueLine;
-      }, 0)
-    );
-    const profit = toMoney(totalRevenue - totalCost);
-    const companyShare = toMoney(Math.max(profit, 0) * 0.1);
-    const crewShare = toMoney(profit - companyShare);
 
     breakdownContainer.classList.remove('hidden');
-    breakdownRevenue.textContent = formatGuilders(totalRevenue);
-    breakdownCost.textContent = formatGuilders(totalCost);
-    breakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
-    breakdownProfit.textContent = formatGuilders(profit);
-    breakdownCompanyShare.textContent = formatGuilders(companyShare);
-    breakdownCrewShare.textContent = formatGuilders(crewShare);
+    breakdownRevenue.textContent = formatGuilders(computed.totals.totalRevenue);
+    breakdownProfit.textContent = formatGuilders(computed.totals.netProfit);
+    breakdownCompanyShare.textContent = formatGuilders(computed.totals.companyShare);
+    breakdownCrewShare.textContent = formatGuilders(computed.totals.crewShare);
   }
 
   function renderStatusControls() {
@@ -415,6 +480,43 @@ export async function initVoyageDetails(config) {
     archivedBreakdownSection.classList.toggle('hidden', !ended);
     if (!ended) return;
     const cargoLost = Array.isArray(detail?.cargoLost) ? detail.cargoLost : [];
+    const lossByCargo = new Map(cargoLost.map((item) => [Number(item.cargoTypeId), Math.max(0, Math.floor(Number(item?.lostQuantity || 0)))]));
+    const settlementLines = Array.isArray(detail?.voyageSettlementLines) ? detail.voyageSettlementLines : [];
+    let lineItems = [];
+    if (settlementLines.length) {
+      lineItems = settlementLines.map((line) => ({
+        cargoName: text(line.cargoName),
+        netQuantity: Math.max(0, Math.floor(Number(line.netQuantity || 0))),
+        lineCost: toMoney(line.lineCost || 0),
+        lineRevenue: toMoney(line.lineRevenue || 0),
+        lineProfit: toMoney(line.lineProfit || 0)
+      }));
+    } else {
+      lineItems = (detail?.manifest || []).map((line) => {
+        const quantity = Math.max(0, Math.floor(Number(line.quantity || 0)));
+        const lostQuantity = Math.max(0, Math.floor(Number(lossByCargo.get(Number(line.cargo_type_id)) || 0)));
+        const netQuantity = Math.max(quantity - lostQuantity, 0);
+        const lineCost = toMoney(Number(line.line_total || 0));
+        return {
+          cargoName: text(line.cargo_name),
+          netQuantity,
+          lineCost,
+          lineRevenue: 0,
+          lineProfit: toMoney(0 - lineCost)
+        };
+      });
+    }
+    archivedBreakdownLinesBody.innerHTML = lineItems
+      .map(
+        (line) => `<tr>
+          <td>${line.cargoName}</td>
+          <td>${line.netQuantity}</td>
+          <td>${formatGuilders(line.lineCost)}</td>
+          <td>${formatGuilders(line.lineRevenue)}</td>
+          <td>${formatGuilders(line.lineProfit)}</td>
+        </tr>`
+      )
+      .join('');
     const totalLossUnits = cargoLost.reduce((sum, item) => sum + Math.max(0, Math.floor(Number(item?.lostQuantity || 0))), 0);
     const totalCost = toMoney(detail.voyage.buy_total ?? detail.buyTotal ?? 0);
     const totalRevenue = toMoney(detail.voyage.effective_sell ?? 0);
@@ -504,7 +606,7 @@ export async function initVoyageDetails(config) {
           const cargoId = Number(button.getAttribute('data-remove-line'));
           manifest = manifest.filter((line) => Number(line.cargo_type_id) !== cargoId);
           renderManifest();
-          renderCargoLostEditor();
+          renderEndVoyageLines();
           syncBreakdown();
           queueManifestAutoSave();
         });
@@ -599,7 +701,7 @@ export async function initVoyageDetails(config) {
       if (requestId !== manifestSaveRequestId) return;
       manifest = payload.manifest || manifest;
       renderManifest();
-      renderCargoLostEditor();
+      renderEndVoyageLines();
       setInlineMessage(manifestFeedback, '');
       setManifestSaveState('Saved', 'saved');
     } catch (error) {
@@ -613,25 +715,60 @@ export async function initVoyageDetails(config) {
     persistManifestNow();
   }, 420);
 
-  function renderCargoLostEditor() {
-    cargoLostEditor.innerHTML = manifest
-      .map(
-        (line) => `<div>
-          <label>${text(line.cargo_name)} (max ${Number(line.quantity || 0)})</label>
-          <input type="number" min="0" max="${Number(line.quantity || 0)}" step="1" data-loss-cargo-id="${line.cargo_type_id}" value="0" ${canEdit() ? '' : 'disabled'} />
-        </div>`
-      )
+  function renderEndVoyageLines() {
+    const existingLoss = new Map(
+      [...endVoyageLinesBody.querySelectorAll('tr[data-cargo-id]')].map((row) => [
+        Number(row.getAttribute('data-cargo-id')),
+        Math.max(0, Math.floor(Number(row.querySelector('input[data-field="lostQty"]')?.value || 0)))
+      ])
+    );
+    const existingBaseSell = new Map(
+      [...endVoyageLinesBody.querySelectorAll('tr[data-cargo-id]')].map((row) => [
+        Number(row.getAttribute('data-cargo-id')),
+        Number(row.querySelector('input[data-field="baseSellPrice"]')?.value || 0)
+      ])
+    );
+    const manifestRows = manifest
+      .map((line) => ({
+        cargoTypeId: Number(line.cargo_type_id),
+        cargoName: text(line.cargo_name),
+        quantity: Math.max(0, Math.floor(Number(line.quantity || 0))),
+        buyPrice: Math.max(0, Number(line.buy_price || 0))
+      }))
+      .filter((line) => line.quantity > 0);
+
+    endVoyageLinesBody.innerHTML = manifestRows
+      .map((line) => {
+        const lineCost = toMoney(line.buyPrice * line.quantity);
+        const defaultBaseSell = existingBaseSell.has(line.cargoTypeId)
+          ? existingBaseSell.get(line.cargoTypeId)
+          : Math.max(0, Number(line.buyPrice || 0));
+        const defaultLoss = existingLoss.has(line.cargoTypeId)
+          ? Math.min(existingLoss.get(line.cargoTypeId), line.quantity)
+          : 0;
+        return `<tr data-cargo-id="${line.cargoTypeId}" data-cargo-name="${line.cargoName}" data-qty="${line.quantity}" data-buy-price="${line.buyPrice}">
+          <td>${line.cargoName}</td>
+          <td>${line.quantity}</td>
+          <td><input data-field="lostQty" type="number" min="0" max="${line.quantity}" step="1" value="${defaultLoss}" /></td>
+          <td data-cell="netQty">${line.quantity - defaultLoss}</td>
+          <td>${formatGuilders(line.buyPrice)}</td>
+          <td data-cell="lineCost">${formatGuilders(lineCost)}</td>
+          <td><input data-field="baseSellPrice" type="number" min="0" step="0.01" value="${defaultBaseSell}" /></td>
+          <td data-cell="trueSell">—</td>
+          <td data-cell="lineRevenue">—</td>
+          <td data-cell="lineProfit">—</td>
+        </tr>`;
+      })
       .join('');
 
-    cargoLostEditor.querySelectorAll('[data-loss-cargo-id]').forEach((input) => {
-      input.addEventListener('input', () => {
-        const max = Math.max(0, Math.floor(Number(input.getAttribute('max') || 0)));
-        const raw = Number(input.value || 0);
-        let normalized = Number.isFinite(raw) ? Math.floor(raw) : 0;
-        normalized = Math.max(0, Math.min(max, normalized));
-        if (String(normalized) !== String(input.value)) input.value = String(normalized);
-        syncBreakdown();
+    endVoyageLinesBody.querySelectorAll('tr[data-cargo-id]').forEach((row) => {
+      row.querySelectorAll('input[data-field="lostQty"], input[data-field="baseSellPrice"]').forEach((input) => {
+        input.addEventListener('input', () => {
+          syncEndVoyageLineRow(row);
+          syncBreakdown();
+        });
       });
+      syncEndVoyageLineRow(row);
     });
   }
 
@@ -695,7 +832,7 @@ export async function initVoyageDetails(config) {
     setManifestSaveState('');
     setInlineMessage(manifestFeedback, '');
     renderManifest();
-    renderCargoLostEditor();
+    renderEndVoyageLines();
     renderArchivedBreakdown();
   }
 
@@ -982,7 +1119,7 @@ export async function initVoyageDetails(config) {
     const exists = manifest.some((line) => Number(line.cargo_type_id) === cargoTypeId);
     manifest = exists ? manifest.map((line) => (Number(line.cargo_type_id) === cargoTypeId ? next : line)) : [...manifest, next];
     renderManifest();
-    renderCargoLostEditor();
+    renderEndVoyageLines();
     closeModal('addCargoModal');
     addCargoForm.reset();
     queueManifestAutoSave();
@@ -1006,6 +1143,7 @@ export async function initVoyageDetails(config) {
   openEndVoyageBtn.addEventListener('click', () => {
     if (!detail?.permissions?.canEnd || !isOngoing()) return;
     setInlineMessage(endFeedback, '');
+    renderEndVoyageLines();
     syncBreakdown();
     openModal('endVoyageModal');
   });
@@ -1013,9 +1151,7 @@ export async function initVoyageDetails(config) {
   bindHoldButton(finaliseHoldBtn, async () => {
     const data = new FormData(endForm);
     const sellMultiplier = Number(data.get('sellMultiplier') || 0);
-    const baseSellPrice = Number(data.get('baseSellPrice') || 0);
     if (!Number.isFinite(sellMultiplier) || sellMultiplier < 0) throw new Error('Sell multiplier must be >= 0.');
-    if (!Number.isFinite(baseSellPrice) || baseSellPrice < 0) throw new Error('Base sell price must be >= 0.');
 
     const lines = [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => ({
       cargoTypeId: Number(row.getAttribute('data-cargo-id')),
@@ -1024,22 +1160,19 @@ export async function initVoyageDetails(config) {
     }));
     await updateVoyageManifest(voyageId, lines);
 
-    const manifestQtyByCargo = new Map(lines.map((line) => [Number(line.cargoTypeId), Number(line.quantity)]));
-    const cargoLost = [...cargoLostEditor.querySelectorAll('[data-loss-cargo-id]')]
-      .map((input) => ({
-        cargoTypeId: Number(input.getAttribute('data-loss-cargo-id')),
-        lostQuantity: Math.max(0, Math.floor(Number(input.value || 0)))
-      }))
-      .filter((entry) => manifestQtyByCargo.has(Number(entry.cargoTypeId)))
-      .map((entry) => ({
-        cargoTypeId: entry.cargoTypeId,
-        lostQuantity: Math.min(entry.lostQuantity, manifestQtyByCargo.get(Number(entry.cargoTypeId)) || 0)
-      }));
+    const endLines = collectEndLinesFromDom();
+    const cargoLost = endLines.map((entry) => ({ cargoTypeId: entry.cargoTypeId, lostQuantity: entry.lostQuantity }));
+    const baseSellPrices = endLines.map((entry) => {
+      if (entry.baseSellPrice === null || !Number.isFinite(entry.baseSellPrice)) {
+        throw new Error(`Base sell price is required for ${entry.cargoName}.`);
+      }
+      return { cargoTypeId: entry.cargoTypeId, baseSellPrice: entry.baseSellPrice };
+    });
 
     await endVoyage(voyageId, {
       sellMultiplier,
-      baseSellPrice,
-      cargoLost
+      cargoLost,
+      baseSellPrices
     });
     setInlineMessage(endFeedback, '');
     closeModal('endVoyageModal');
@@ -1052,7 +1185,7 @@ export async function initVoyageDetails(config) {
     window.location.href = 'voyage-tracker.html';
   }, (error) => setInlineMessage(endFeedback, error.message || 'Unable to cancel voyage.'));
 
-  [sellMultiplierInput, baseSellPriceInput].forEach((input) => {
+  [sellMultiplierInput].forEach((input) => {
     input.addEventListener('input', syncBreakdown);
   });
 

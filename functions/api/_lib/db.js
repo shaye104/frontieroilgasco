@@ -188,6 +188,7 @@ export async function ensureCoreSchema(env) {
       profit REAL,
       company_share REAL,
       cargo_lost_json TEXT,
+      settlement_lines_json TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(owner_employee_id) REFERENCES employees(id),
@@ -301,6 +302,9 @@ export async function ensureCoreSchema(env) {
   const voyageColumnNames = new Set((voyageColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
   if (!voyageColumnNames.has('ship_status')) {
     await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN ship_status TEXT NOT NULL DEFAULT 'IN_PORT'`).run();
+  }
+  if (!voyageColumnNames.has('settlement_lines_json')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN settlement_lines_json TEXT`).run();
   }
   const voyageLogColumns = await env.DB.prepare(`PRAGMA table_info(voyage_logs)`).all();
   const voyageLogColumnNames = new Set((voyageLogColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
