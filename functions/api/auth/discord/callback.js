@@ -18,6 +18,15 @@ function toLoginUrl(requestUrl, params = {}) {
   return target.toString();
 }
 
+function toAccessDeniedUrl(requestUrl, params = {}) {
+  const source = new URL(requestUrl);
+  const target = new URL('/access-denied.html', `${source.protocol}//${source.host}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v) target.searchParams.set(k, v);
+  });
+  return target.toString();
+}
+
 function toMyDetailsUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
   const target = new URL('/my-details.html', `${source.protocol}//${source.host}`);
@@ -126,7 +135,14 @@ export async function onRequest(context) {
       sameSite: 'Lax',
       maxAge: 0
     });
-    return redirect(toLoginUrl(request.url, { auth: 'denied', reason: 'missing_role' }), [clearStateCookie]);
+    const clearSessionCookie = serializeCookie('fog_session', '', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax',
+      maxAge: 0
+    });
+    return redirect(toAccessDeniedUrl(request.url, { reason: 'missing_permission' }), [clearStateCookie, clearSessionCookie]);
   }
 
   if (!isAdminUser && !employee) {

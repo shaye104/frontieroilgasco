@@ -11,6 +11,13 @@ async function fetchSession() {
   return response.json();
 }
 
+function toAccessDeniedUrl(reason) {
+  const url = new URL('/access-denied.html', window.location.origin);
+  if (reason) url.searchParams.set('reason', reason);
+  url.searchParams.set('from', window.location.pathname);
+  return url.toString();
+}
+
 export async function initIntranetLayout(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const protectedContent = document.querySelector(config.protectedContentSelector);
@@ -33,22 +40,22 @@ export async function initIntranetLayout(config) {
     renderIntranetNavbar(session);
 
     if (requireAdmin && !hasPermission(session, 'admin.access')) {
-      showMessage(feedback, 'Access denied: admin access required.', 'error');
+      window.location.href = toAccessDeniedUrl('admin_required');
       return null;
     }
 
     if (requireFormsAdmin && !hasPermission(session, 'forms.manage')) {
-      showMessage(feedback, 'Access denied: forms admin access required.', 'error');
+      window.location.href = toAccessDeniedUrl('forms_admin_required');
       return null;
     }
 
     if (requiredPermissions.length && !requiredPermissions.every((permission) => hasPermission(session, permission))) {
-      showMessage(feedback, 'Access denied: missing required permissions.', 'error');
+      window.location.href = toAccessDeniedUrl('missing_permissions');
       return null;
     }
 
     if (requireEmployee && !session.isAdmin && session.accessPending) {
-      showMessage(feedback, 'Access pending: your profile has not been approved yet.', 'error');
+      window.location.href = toAccessDeniedUrl('access_pending');
       return null;
     }
 

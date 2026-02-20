@@ -56,7 +56,9 @@ export async function onRequest(context) {
       pathname.startsWith('/api/') ||
       pathname.startsWith('/assets/') ||
       pathname === '/favicon.ico' ||
-      pathname === '/_redirects'
+      pathname === '/_redirects' ||
+      pathname === '/access-denied' ||
+      pathname === '/access-denied.html'
     ) {
       return context.next();
     }
@@ -69,6 +71,9 @@ export async function onRequest(context) {
     }
 
     if (pathname === '/login') {
+      if (url.searchParams.has('auth') || url.searchParams.has('reason')) {
+        return context.next();
+      }
       if (isLoggedIn) {
         return Response.redirect(new URL('/my-details.html', url.origin).toString(), 302);
       }

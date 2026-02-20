@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-20T17:49:59.952Z
+Generated: 2026-02-20T17:57:16.050Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -7,6 +7,7 @@ PROJECT PURPOSE
 - Built for Cloudflare Pages with optional Pages Functions for authenticated intranet access.
 
 SITE STRUCTURE
+- access-denied.html | title: Frontier Oil & Gas Company | Access Denied | primary heading: You cannot access this page
 - activity-tracker.html | title: Frontier Oil & Gas Company | Activity Tracker | primary heading: Activity Tracker
 - admin-config.html | title: Frontier Oil & Gas Company | System Config | primary heading: System Config
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
@@ -59,6 +60,7 @@ JAVASCRIPT MODULES
 - assets/js/modules/voyage-details.js | exports: No public exports
 - assets/js/modules/voyage-tracker.js | exports: No public exports
 - assets/js/modules/year.js | exports: initializeYear
+- assets/js/pages/access-denied-page.js | exports: No public exports
 - assets/js/pages/activity-tracker-page.js | exports: No public exports
 - assets/js/pages/admin-config-page.js | exports: No public exports
 - assets/js/pages/admin-panel-page.js | exports: No public exports

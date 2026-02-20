@@ -2,6 +2,8 @@
 /dashboard/ /my-details.html 302
 /login /intranet.html 200
 /login/ /intranet.html 200
+/access-denied /access-denied.html 200
+/access-denied/ /access-denied.html 200
 /my-details /my-details.html 200
 /my-details/ /my-details.html 200
 /voyages/my /voyage-tracker.html 200

@@ -43,6 +43,7 @@ export function initIntranetAuth(config) {
     window.location.href = '/api/auth/discord/start';
   });
 
+  const hasAuthQuery = new URLSearchParams(window.location.search).has('auth');
   const urlMessage = getAuthMessageFromUrl();
   if (urlMessage) {
     showMessage(feedback, urlMessage.text, urlMessage.type);
@@ -53,7 +54,7 @@ export function initIntranetAuth(config) {
 
   fetchSession()
     .then((session) => {
-      if (session.loggedIn) {
+      if (session.loggedIn && !hasAuthQuery) {
         window.location.href = '/my-details.html';
         return;
       }
