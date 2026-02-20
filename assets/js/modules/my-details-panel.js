@@ -5,11 +5,25 @@ function safeText(value) {
   return text || 'N/A';
 }
 
+function applyStatusBadgeClass(element, statusValue) {
+  if (!element) return;
+  element.classList.remove('is-active', 'is-inactive');
+  const status = String(statusValue || '').trim().toLowerCase();
+  if (!status) return;
+  if (status === 'active') {
+    element.classList.add('is-active');
+    return;
+  }
+  if (status === 'terminated' || status === 'suspended' || status === 'inactive') {
+    element.classList.add('is-inactive');
+  }
+}
+
 function renderDisciplinaryList(target, items, emptyMessage) {
   if (!target) return;
 
   if (!Array.isArray(items) || items.length === 0) {
-    target.innerHTML = `<li class="role-item"><span class="role-id">${emptyMessage}</span></li>`;
+    target.innerHTML = `<li class="discipline-empty"><span class="discipline-empty-icon" aria-hidden="true">i</span><span>${emptyMessage}</span></li>`;
     return;
   }
 
@@ -23,6 +37,31 @@ function renderDisciplinaryList(target, items, emptyMessage) {
       return `<li class="role-item"><span class="role-id">${type} | ${status} | ${date} | Issued By: ${issuedBy} | ${notes}</span></li>`;
     })
     .join('');
+}
+
+function initDisciplineTabs() {
+  const activeButton = document.querySelector('#disciplineTabActive');
+  const historyButton = document.querySelector('#disciplineTabHistory');
+  const activePanel = document.querySelector('#disciplinePanelActive');
+  const historyPanel = document.querySelector('#disciplinePanelHistory');
+
+  if (!activeButton || !historyButton || !activePanel || !historyPanel) return;
+  if (activeButton.dataset.bound === '1') return;
+  activeButton.dataset.bound = '1';
+
+  const setTab = (tab) => {
+    const showActive = tab === 'active';
+    activeButton.classList.toggle('is-active', showActive);
+    historyButton.classList.toggle('is-active', !showActive);
+    activeButton.setAttribute('aria-selected', showActive ? 'true' : 'false');
+    historyButton.setAttribute('aria-selected', showActive ? 'false' : 'true');
+    activePanel.classList.toggle('hidden', !showActive);
+    historyPanel.classList.toggle('hidden', showActive);
+  };
+
+  activeButton.addEventListener('click', () => setTab('active'));
+  historyButton.addEventListener('click', () => setTab('history'));
+  setTab('active');
 }
 
 async function fetchMyDetails() {
@@ -70,9 +109,20 @@ export async function initMyDetailsPanel(config) {
     if (fields.tenureDays) fields.tenureDays.textContent = safeText(employee.tenureDays);
     if (fields.totalVoyages) fields.totalVoyages.textContent = String(Number(details?.voyageActivity?.totalVoyages || 0));
     if (fields.monthlyVoyages) fields.monthlyVoyages.textContent = String(Number(details?.voyageActivity?.monthlyVoyages || 0));
+    if (fields.identityUsername) fields.identityUsername.textContent = safeText(employee.robloxUsername);
+    if (fields.identityRankBadge) fields.identityRankBadge.textContent = safeText(employee.rank);
+    if (fields.identityStatusBadge) fields.identityStatusBadge.textContent = safeText(employee.employeeStatus);
+    if (fields.profileUsername) fields.profileUsername.textContent = safeText(employee.robloxUsername);
+    if (fields.profileSerial) fields.profileSerial.textContent = `Serial: ${safeText(employee.serialNumber)}`;
+    if (fields.profileRankBadge) fields.profileRankBadge.textContent = safeText(employee.rank);
+    if (fields.profileStatusBadge) fields.profileStatusBadge.textContent = safeText(employee.employeeStatus);
+
+    applyStatusBadgeClass(fields.identityStatusBadge, employee.employeeStatus);
+    applyStatusBadgeClass(fields.profileStatusBadge, employee.employeeStatus);
 
     renderDisciplinaryList(activeList, details.activeDisciplinaryRecords || [], 'No active disciplinary records.');
     renderDisciplinaryList(historyList, details.disciplinaryHistory || [], 'No disciplinary history.');
+    initDisciplineTabs();
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load My Details.', 'error');
   }

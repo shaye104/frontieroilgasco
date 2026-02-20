@@ -25,7 +25,14 @@ initIntranetPageGuard({
       hireDate: '#fieldHireDate',
       tenureDays: '#fieldTenureDays',
       totalVoyages: '#fieldTotalVoyages',
-      monthlyVoyages: '#fieldMonthlyVoyages'
+      monthlyVoyages: '#fieldMonthlyVoyages',
+      identityUsername: '#identityUsername',
+      identityRankBadge: '#identityRankBadge',
+      identityStatusBadge: '#identityStatusBadge',
+      profileUsername: '#profileUsername',
+      profileSerial: '#profileSerial',
+      profileRankBadge: '#profileRankBadge',
+      profileStatusBadge: '#profileStatusBadge'
     }
   });
 });

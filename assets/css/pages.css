@@ -63,3 +63,305 @@
     display: grid;
   }
 }
+
+.my-details-feedback-wrap {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.my-details-shell {
+  width: 100%;
+  max-width: 1360px;
+  margin-inline: auto;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.my-details-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1rem;
+}
+
+.my-details-page-header h1 {
+  margin-bottom: 0.25rem;
+  color: var(--color-primary);
+}
+
+.my-details-subtitle {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.96rem;
+}
+
+.identity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.4rem 0.6rem;
+  white-space: nowrap;
+}
+
+.identity-user {
+  color: #0f172a;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.74rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.badge-rank {
+  background: #253475;
+  color: #ffffff;
+}
+
+.badge-status {
+  background: #ecf4ff;
+  border: 1px solid #d8e6ff;
+  color: #5776b7;
+}
+
+.badge-status.is-active {
+  background: #ebf9f1;
+  border-color: #d4f2e2;
+  color: #167e62;
+}
+
+.badge-status.is-inactive {
+  background: #fff2f2;
+  border-color: #ffe2e2;
+  color: #b43f3f;
+}
+
+.my-details-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.my-details-left-col,
+.my-details-right-col {
+  min-width: 0;
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+}
+
+.details-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+
+.details-card h2,
+.details-card h3 {
+  margin-bottom: 0.85rem;
+  color: #0f172a;
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-bottom: 0.9rem;
+}
+
+.profile-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  color: #0f172a;
+}
+
+.profile-serial {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.badge-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.profile-kv-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid #edf2f7;
+}
+
+.profile-kv-grid dt,
+.profile-kv-grid dd {
+  margin: 0;
+  padding: 0.62rem 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.profile-kv-grid dt {
+  color: #64748b;
+  font-weight: 600;
+  padding-right: 0.8rem;
+}
+
+.profile-kv-grid dd {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.voyage-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.voyage-stat-tile {
+  border: 1px solid #e8edf5;
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: #fbfdff;
+}
+
+.voyage-stat-value {
+  margin: 0 0 0.2rem;
+  font-size: clamp(1.4rem, 2.1vw, 2rem);
+  font-weight: 700;
+  color: #253475;
+  line-height: 1.05;
+}
+
+.voyage-stat-label {
+  margin: 0;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.voyage-stat-note {
+  margin: 0.2rem 0 0;
+  color: #64748b;
+  font-size: 0.83rem;
+}
+
+.discipline-card {
+  min-height: 100%;
+}
+
+.discipline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+
+.segmented-btn {
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.segmented-btn.is-active {
+  background: #ffffff;
+  color: #253475;
+  box-shadow: 0 1px 4px rgba(37, 52, 117, 0.12);
+}
+
+.discipline-tab-panel .role-list {
+  margin-top: 0;
+}
+
+.discipline-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 0.1rem;
+  color: #64748b;
+  border-bottom: none;
+}
+
+.discipline-empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: #f3f7fc;
+  color: #5776b7;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 1080px) {
+  .my-details-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .discipline-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .my-details-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .identity-pill {
+    flex-wrap: wrap;
+  }
+
+  .profile-kv-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-kv-grid dt {
+    padding-bottom: 0.1rem;
+    border-bottom: none;
+  }
+
+  .profile-kv-grid dd {
+    padding-top: 0.1rem;
+  }
+
+  .voyage-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .discipline-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

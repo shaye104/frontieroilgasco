@@ -26,8 +26,7 @@
 
     <main class="section">
       <div class="container intranet-layout">
-        <section class="panel">
-          <h1>My Details</h1>
+        <section class="panel my-details-feedback-wrap">
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
@@ -37,57 +36,100 @@
             <p>Your access request is pending admin review. You will receive access once approved.</p>
           </article>
 
-          <article id="detailsPanel" class="panel hidden">
-            <h2>Employee Profile</h2>
-            <section class="panel">
-              <h3>Voyage Activity</h3>
-              <div class="card-grid">
-                <article class="panel">
-                  <h4>Total Voyages</h4>
-                  <p id="fieldTotalVoyages">0</p>
-                </article>
-                <article class="panel">
-                  <h4>Voyages This Month</h4>
-                  <p id="fieldMonthlyVoyages">0</p>
-                </article>
+          <article id="detailsPanel" class="hidden my-details-shell">
+            <header class="my-details-page-header">
+              <div>
+                <h1>My Details</h1>
+                <p class="my-details-subtitle">Employee overview</p>
               </div>
-            </section>
-            <div class="details-split">
-              <section class="details-block">
-                <h3>Profile Information</h3>
-                <dl class="details-grid">
-                  <dt>Roblox Username</dt>
-                  <dd id="fieldRobloxUsername"></dd>
+              <div class="identity-pill" aria-label="Identity summary">
+                <span id="identityUsername" class="identity-user">N/A</span>
+                <span id="identityRankBadge" class="badge badge-rank">Rank</span>
+                <span id="identityStatusBadge" class="badge badge-status">Status</span>
+              </div>
+            </header>
 
-                  <dt>Roblox User ID</dt>
-                  <dd id="fieldRobloxUserId"></dd>
+            <div class="my-details-main-grid">
+              <section class="my-details-left-col">
+                <article class="details-card profile-card">
+                  <header class="profile-card-header">
+                    <div>
+                      <h2 id="profileUsername" class="profile-title">N/A</h2>
+                      <p id="profileSerial" class="profile-serial">Serial: N/A</p>
+                    </div>
+                    <div class="badge-row">
+                      <span id="profileRankBadge" class="badge badge-rank">Rank</span>
+                      <span id="profileStatusBadge" class="badge badge-status">Status</span>
+                    </div>
+                  </header>
 
-                  <dt>Rank</dt>
-                  <dd id="fieldRank"></dd>
+                  <h3>Profile Information</h3>
+                  <dl class="profile-kv-grid">
+                    <dt>Roblox Username</dt>
+                    <dd id="fieldRobloxUsername"></dd>
 
-                  <dt>Grade</dt>
-                  <dd id="fieldGrade"></dd>
+                    <dt>Roblox User ID</dt>
+                    <dd id="fieldRobloxUserId"></dd>
 
-                  <dt>Serial Number</dt>
-                  <dd id="fieldSerialNumber"></dd>
+                    <dt>Rank</dt>
+                    <dd id="fieldRank"></dd>
 
-                  <dt>Employee Status</dt>
-                  <dd id="fieldEmployeeStatus"></dd>
+                    <dt>Grade</dt>
+                    <dd id="fieldGrade"></dd>
 
-                  <dt>Hire Date</dt>
-                  <dd id="fieldHireDate"></dd>
+                    <dt>Serial Number</dt>
+                    <dd id="fieldSerialNumber"></dd>
 
-                  <dt>Tenure (Days)</dt>
-                  <dd id="fieldTenureDays"></dd>
-                </dl>
+                    <dt>Employee Status</dt>
+                    <dd id="fieldEmployeeStatus"></dd>
+
+                    <dt>Hire Date</dt>
+                    <dd id="fieldHireDate"></dd>
+
+                    <dt>Tenure (Days)</dt>
+                    <dd id="fieldTenureDays"></dd>
+                  </dl>
+                </article>
+
+                <article class="details-card voyage-activity-card">
+                  <h3>Voyage Activity</h3>
+                  <div class="voyage-stats-grid">
+                    <article class="voyage-stat-tile">
+                      <p id="fieldTotalVoyages" class="voyage-stat-value">0</p>
+                      <p class="voyage-stat-label">Total Voyages</p>
+                      <p class="voyage-stat-note">Completed voyage participation</p>
+                    </article>
+                    <article class="voyage-stat-tile">
+                      <p id="fieldMonthlyVoyages" class="voyage-stat-value">0</p>
+                      <p class="voyage-stat-label">Voyages This Month</p>
+                      <p class="voyage-stat-note">Current calendar month</p>
+                    </article>
+                  </div>
+                </article>
               </section>
 
-              <section class="details-block">
-                <h3>Active Disciplinary Records</h3>
-                <ul id="activeDisciplinaryList" class="role-list"></ul>
+              <section class="my-details-right-col">
+                <article class="details-card discipline-card">
+                  <header class="discipline-header">
+                    <h3>Disciplinary Records</h3>
+                    <div class="segmented-control" role="tablist" aria-label="Disciplinary records tabs">
+                      <button id="disciplineTabActive" type="button" class="segmented-btn is-active" role="tab" aria-selected="true">
+                        Active
+                      </button>
+                      <button id="disciplineTabHistory" type="button" class="segmented-btn" role="tab" aria-selected="false">
+                        History
+                      </button>
+                    </div>
+                  </header>
 
-                <h3 class="details-subhead">Disciplinary History</h3>
-                <ul id="disciplinaryHistoryList" class="role-list"></ul>
+                  <section id="disciplinePanelActive" class="discipline-tab-panel">
+                    <ul id="activeDisciplinaryList" class="role-list"></ul>
+                  </section>
+
+                  <section id="disciplinePanelHistory" class="discipline-tab-panel hidden">
+                    <ul id="disciplinaryHistoryList" class="role-list"></ul>
+                  </section>
+                </article>
               </section>
             </div>
           </article>
