@@ -356,7 +356,7 @@ textarea:focus {
 }
 
 .end-settlement-wrap {
-  max-height: min(50vh, 560px);
+  max-height: min(44vh, 500px);
   overflow: auto;
 }
 
@@ -368,6 +368,7 @@ textarea:focus {
   position: sticky;
   top: 0;
   z-index: 2;
+  white-space: nowrap;
 }
 
 .end-settlement-table th,
@@ -375,6 +376,7 @@ textarea:focus {
   padding-top: 0.36rem;
   padding-bottom: 0.36rem;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .end-settlement-table input {
@@ -410,6 +412,7 @@ textarea:focus {
 .end-breakdown-lines-table td {
   padding-top: 0.42rem;
   padding-bottom: 0.42rem;
+  white-space: nowrap;
 }
 
 .end-breakdown-totals {
@@ -425,6 +428,12 @@ textarea:focus {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
+  align-items: baseline;
+}
+
+.end-total-row span {
+  text-align: right;
+  min-width: 140px;
 }
 
 .end-total-row-net {
@@ -456,6 +465,13 @@ textarea:focus {
 
 .share-muted {
   color: var(--color-muted);
+}
+
+.input-inline-error {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--color-danger);
+  line-height: 1.2;
 }
 
 .modal-header {

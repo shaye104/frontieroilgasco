@@ -37,8 +37,8 @@ function formatWhen(value) {
 
 function formatGuilders(value) {
   const num = Number(value || 0);
-  if (!Number.isFinite(num)) return 'ƒ 0';
-  return `ƒ ${Math.round(num).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  if (!Number.isFinite(num)) return '\u0192 0';
+  return `\u0192 ${Math.round(num).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
 function toNumber(value) {
@@ -387,6 +387,10 @@ export async function initVoyageDetails(config) {
 
   function clearEndFieldErrors() {
     endVoyageLinesBody.querySelectorAll('.field-error').forEach((el) => el.classList.remove('field-error'));
+    endVoyageLinesBody.querySelectorAll('.input-inline-error').forEach((el) => {
+      el.textContent = '';
+      el.classList.add('hidden');
+    });
   }
 
   function validateEndVoyageInputs(lines) {
@@ -398,10 +402,20 @@ export async function initVoyageDetails(config) {
     for (const line of lines) {
       if (!Number.isInteger(line.lostQuantity) || line.lostQuantity < 0 || line.lostQuantity > line.quantity) {
         line.lossInput?.classList.add('field-error');
+        const inlineError = line.row?.querySelector('[data-error-for="lostQty"]');
+        if (inlineError) {
+          inlineError.textContent = `Must be 0 to ${line.quantity}.`;
+          inlineError.classList.remove('hidden');
+        }
         return { ok: false, message: `Freight loss adjustment for ${line.cargoName} must be between 0 and ${line.quantity}.` };
       }
       if (line.quantity > 0 && (line.baseSellPrice === null || !Number.isFinite(line.baseSellPrice) || line.baseSellPrice < 0)) {
         line.baseSellInput?.classList.add('field-error');
+        const inlineError = line.row?.querySelector('[data-error-for="baseSellPrice"]');
+        if (inlineError) {
+          inlineError.textContent = 'Required, and must be >= 0.';
+          inlineError.classList.remove('hidden');
+        }
         return { ok: false, message: `Base sell price is required for ${line.cargoName}.` };
       }
     }
@@ -800,11 +814,17 @@ export async function initVoyageDetails(config) {
         return `<tr data-cargo-id="${line.cargoTypeId}" data-cargo-name="${line.cargoName}" data-qty="${line.quantity}" data-buy-price="${line.buyPrice}">
           <td>${line.cargoName}</td>
           <td class="align-right">${line.quantity}</td>
-          <td><input data-field="lostQty" type="number" min="0" max="${line.quantity}" step="1" value="${defaultLoss}" /></td>
+          <td>
+            <input data-field="lostQty" type="number" min="0" max="${line.quantity}" step="1" value="${defaultLoss}" />
+            <div class="input-inline-error hidden" data-error-for="lostQty"></div>
+          </td>
           <td class="align-right" data-cell="netQty">${line.quantity - defaultLoss}</td>
           <td class="align-right">${formatGuilders(line.buyPrice)}</td>
           <td class="align-right" data-cell="lineCost">${formatGuilders(lineCost)}</td>
-          <td><input data-field="baseSellPrice" type="number" min="0" step="0.01" value="${defaultBaseSell}" /></td>
+          <td>
+            <input data-field="baseSellPrice" type="number" min="0" step="0.01" value="${defaultBaseSell}" />
+            <div class="input-inline-error hidden" data-error-for="baseSellPrice"></div>
+          </td>
           <td class="align-right" data-cell="trueSell">—</td>
           <td class="align-right" data-cell="lineRevenue">—</td>
           <td class="align-right" data-cell="lineProfit">—</td>
