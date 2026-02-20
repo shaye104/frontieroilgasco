@@ -20,7 +20,7 @@ function toLoginUrl(requestUrl, params = {}) {
 
 function toMyDetailsUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
-  const target = new URL('/my-details', `${source.protocol}//${source.host}`);
+  const target = new URL('/my-details.html', `${source.protocol}//${source.host}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v) target.searchParams.set(k, v);
   });
