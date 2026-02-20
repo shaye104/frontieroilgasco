@@ -790,6 +790,16 @@ textarea:focus {
   font-size: 0.97rem;
 }
 
+.voyage-card-ongoing {
+  border-color: color-mix(in srgb, var(--color-secondary) 28%, white);
+  box-shadow: 0 10px 24px rgba(37, 52, 117, 0.07);
+}
+
+.voyage-card-ongoing:hover,
+.voyage-card-ongoing:focus-visible {
+  box-shadow: 0 14px 30px rgba(37, 52, 117, 0.1);
+}
+
 .voyage-card-head {
   display: flex;
   align-items: flex-start;
@@ -823,15 +833,6 @@ textarea:focus {
   color: var(--color-ink-soft);
   font-weight: 600;
   min-width: 3.2rem;
-}
-
-.voyage-view-link {
-  margin-top: 0.45rem;
-  display: inline-flex;
-  align-items: center;
-  color: var(--color-secondary);
-  font-weight: 600;
-  font-size: 0.84rem;
 }
 
 .status-pill {
@@ -909,6 +910,20 @@ textarea:focus {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+.pagination-row {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  color: var(--color-muted);
+  font-size: 0.9rem;
 }
 
 .ship-status-toggle-wrap {

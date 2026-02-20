@@ -18,6 +18,7 @@ function isProtectedPath(pathname) {
     '/my-details.html',
     '/voyages',
     '/voyage-tracker.html',
+    '/voyage-archive.html',
     '/voyage-details.html',
     '/my-fleet',
     '/my-fleet.html',

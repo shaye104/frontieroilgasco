@@ -40,6 +40,12 @@ export async function onRequestGet(context) {
     whereSql = 'WHERE v.status = ?';
     whereBindings.push(statusFilter);
   }
+  const orderSql =
+    statusFilter === 'ONGOING'
+      ? 'ORDER BY COALESCE(v.started_at, v.created_at) DESC, v.id DESC'
+      : statusFilter === 'ENDED'
+      ? 'ORDER BY COALESCE(v.ended_at, v.started_at, v.created_at) DESC, v.id DESC'
+      : "ORDER BY CASE WHEN v.status = 'ONGOING' THEN 0 ELSE 1 END, COALESCE(v.started_at, v.created_at) DESC, v.id DESC";
 
   const rows = await env.DB
     .prepare(
@@ -51,7 +57,7 @@ export async function onRequestGet(context) {
        LEFT JOIN employees ow ON ow.id = v.officer_of_watch_employee_id
        LEFT JOIN employees owner ON owner.id = v.owner_employee_id
        ${whereSql}
-       ORDER BY CASE WHEN v.status = 'ONGOING' THEN 0 ELSE 1 END, COALESCE(v.started_at, v.created_at) DESC, v.id DESC
+       ${orderSql}
        ${hasPaging ? 'LIMIT ? OFFSET ?' : ''}`
     )
     .bind(...whereBindings, ...(hasPaging ? [pageSize, offset] : []))

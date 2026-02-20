@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-20T22:59:29.444Z
+Generated: 2026-02-20T23:09:27.998Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -30,6 +30,7 @@ SITE STRUCTURE
 - my-fleet.html | title: Frontier Oil & Gas Company | My Fleet | primary heading: My Fleet
 - roles.html | title: Frontier Oil & Gas Company | User Groups | primary heading: User Groups
 - user-ranks.html | title: Frontier Oil & Gas Company | User Ranks | primary heading: User Ranks
+- voyage-archive.html | title: Frontier Oil & Gas Company | Archived Voyages | primary heading: Archived Voyages
 - voyage-details.html | title: Frontier Oil & Gas Company | Voyage Details | primary heading: Voyage Details
 - voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
 
@@ -58,6 +59,7 @@ JAVASCRIPT MODULES
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/roles-admin.js | exports: No public exports
 - assets/js/modules/user-ranks-admin.js | exports: No public exports
+- assets/js/modules/voyage-archive.js | exports: No public exports
 - assets/js/modules/voyage-details.js | exports: No public exports
 - assets/js/modules/voyage-tracker.js | exports: No public exports
 - assets/js/modules/year.js | exports: initializeYear
@@ -83,6 +85,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/my-fleet-page.js | exports: No public exports
 - assets/js/pages/roles-page.js | exports: No public exports
 - assets/js/pages/user-ranks-page.js | exports: No public exports
+- assets/js/pages/voyage-archive-page.js | exports: No public exports
 - assets/js/pages/voyage-details-page.js | exports: No public exports
 - assets/js/pages/voyage-tracker-page.js | exports: No public exports
 

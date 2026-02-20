@@ -98,7 +98,6 @@ function renderVoyageCards(target, voyages, isOngoing) {
             <p class="voyage-meta-line"><span>OOW</span>${text(voyage.officer_name)}</p>
             <p class="voyage-meta-line"><span>${isOngoing ? 'Started' : 'Ended'}</span>${formatWhen(isOngoing ? voyage.started_at : voyage.ended_at)}</p>
           </div>
-          <span class="voyage-view-link">View Details →</span>
         </a>
       `;
     })
@@ -109,6 +108,7 @@ export async function initVoyageTracker(config, session) {
   const feedback = document.querySelector(config.feedbackSelector);
   const ongoingRoot = document.querySelector(config.ongoingSelector);
   const archivedRoot = document.querySelector(config.archivedSelector);
+  const archivedCta = document.querySelector(config.archivedCtaSelector);
   const ongoingCountChip = document.querySelector(config.ongoingCountSelector);
   const archivedCountChip = document.querySelector(config.archivedCountSelector);
   const startBtn = document.querySelector(config.startButtonSelector);
@@ -133,6 +133,7 @@ export async function initVoyageTracker(config, session) {
     !feedback ||
     !ongoingRoot ||
     !archivedRoot ||
+    !archivedCta ||
     !ongoingCountChip ||
     !archivedCountChip ||
     !startBtn ||
@@ -159,6 +160,7 @@ export async function initVoyageTracker(config, session) {
   let employees = [];
   let ongoing = [];
   let archived = [];
+  let archivedTotal = 0;
   let ongoingKeys = new Set();
   let selectedCrewIds = new Set();
   const searchCache = new Map();
@@ -327,11 +329,12 @@ export async function initVoyageTracker(config, session) {
   async function refreshBoard() {
     const [ongoingPayload, archivedPayload] = await Promise.all([
       listVoyages({ includeSetup: true, status: 'ONGOING', page: 1, pageSize: 100 }),
-      listVoyages({ status: 'ENDED', page: 1, pageSize: 20 })
+      listVoyages({ status: 'ENDED', page: 1, pageSize: 6 })
     ]);
     employees = ongoingPayload.employees || [];
     ongoing = ongoingPayload.voyages || ongoingPayload.ongoing || [];
     archived = archivedPayload.voyages || archivedPayload.archived || [];
+    archivedTotal = Number(archivedPayload?.pagination?.total || archived.length || 0);
     console.info('[voyages] loaded', { ongoing: ongoing.length, archived: archived.length });
     ongoingKeys = new Set(ongoing.map((voyage) => `${normalize(voyage.vessel_name)}::${normalize(voyage.vessel_callsign)}`));
 
@@ -347,7 +350,8 @@ export async function initVoyageTracker(config, session) {
     renderVoyageCards(ongoingRoot, ongoing, true);
     renderVoyageCards(archivedRoot, archived, false);
     ongoingCountChip.textContent = String(ongoing.length);
-    archivedCountChip.textContent = String(archived.length);
+    archivedCountChip.textContent = String(archivedTotal);
+    archivedCta.classList.toggle('hidden', archivedTotal <= 6);
   }
 
   startBtn.addEventListener('click', () => openModal('startVoyageModal'));
@@ -456,5 +460,6 @@ export async function initVoyageTracker(config, session) {
     archivedRoot.innerHTML = '<article class="voyage-empty-state voyage-empty-state-muted"><h3>Unable to load data</h3><p>Please refresh and try again.</p></article>';
     ongoingCountChip.textContent = '0';
     archivedCountChip.textContent = '0';
+    archivedCta.classList.add('hidden');
   }
 }

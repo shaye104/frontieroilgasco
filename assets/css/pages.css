@@ -128,8 +128,21 @@
   padding: 1rem;
 }
 
+.voyage-console-section-plain {
+  padding: 0;
+}
+
 .voyage-console-section h2 {
   margin: 0 0 0.8rem;
+}
+
+.voyage-archive-cta {
+  margin-top: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 860px) {

@@ -14,6 +14,7 @@ initIntranetPageGuard({
       feedbackSelector: '#voyageFeedback',
       ongoingSelector: '#ongoingVoyages',
       archivedSelector: '#archivedVoyages',
+      archivedCtaSelector: '#viewAllArchivedLink',
       ongoingCountSelector: '#ongoingCountChip',
       archivedCountSelector: '#archivedCountChip',
       startButtonSelector: '#openStartVoyageBtn',
