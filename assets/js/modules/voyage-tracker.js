@@ -62,7 +62,19 @@ function fillSelect(select, items, placeholder) {
 function renderVoyageCards(target, voyages, isOngoing) {
   if (!target) return;
   if (!voyages.length) {
-    target.innerHTML = '<p>No voyages yet.</p>';
+    if (isOngoing) {
+      target.innerHTML = `<article class="voyage-empty-state">
+        <span class="voyage-empty-icon" aria-hidden="true">⛵</span>
+        <h3>No ongoing voyages</h3>
+        <p>Start a new voyage to begin tracking fleet activity.</p>
+      </article>`;
+      return;
+    }
+    target.innerHTML = `<article class="voyage-empty-state voyage-empty-state-muted">
+      <span class="voyage-empty-icon" aria-hidden="true">⌁</span>
+      <h3>No archived voyages</h3>
+      <p>Ended voyages will appear here.</p>
+    </article>`;
     return;
   }
 
@@ -70,19 +82,24 @@ function renderVoyageCards(target, voyages, isOngoing) {
     .map((voyage) => {
       const underway = voyage.ship_status === 'UNDERWAY';
       const shipStatusLabel = underway ? 'Ship Underway' : 'Ship In Port';
+      const statusClass = isOngoing
+        ? underway
+          ? 'status-pill status-pill-underway'
+          : 'status-pill status-pill-in-port'
+        : 'status-pill status-pill-ended';
       return `
-        <article class="panel voyage-card">
-          <div class="modal-header">
+        <a class="voyage-card ${isOngoing ? 'voyage-card-ongoing' : 'voyage-card-archived'}" href="/voyages/${voyage.id}">
+          <div class="voyage-card-head">
             <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
-            <span class="voyage-status ${isOngoing && underway ? 'voyage-status-active' : ''}">${isOngoing ? shipStatusLabel : 'Ended'}</span>
+            <span class="${statusClass}">${isOngoing ? shipStatusLabel : 'Ended'}</span>
           </div>
-          <p><strong>Route:</strong> ${text(voyage.departure_port)} -> ${text(voyage.destination_port)}</p>
-          <p><strong>Officer of the Watch:</strong> ${text(voyage.officer_name)}</p>
-          <p><strong>${isOngoing ? 'Started' : 'Ended'}:</strong> ${formatWhen(isOngoing ? voyage.started_at : voyage.ended_at)}</p>
-          <div class="modal-actions">
-            <a class="btn btn-secondary" href="voyage-details.html?voyageId=${voyage.id}">Open</a>
+          <p class="voyage-route-line">${text(voyage.departure_port)} → ${text(voyage.destination_port)}</p>
+          <div class="voyage-card-meta">
+            <p class="voyage-meta-line"><span>OOW</span>${text(voyage.officer_name)}</p>
+            <p class="voyage-meta-line"><span>${isOngoing ? 'Started' : 'Ended'}</span>${formatWhen(isOngoing ? voyage.started_at : voyage.ended_at)}</p>
           </div>
-        </article>
+          <span class="voyage-view-link">View Details →</span>
+        </a>
       `;
     })
     .join('');
@@ -92,6 +109,8 @@ export async function initVoyageTracker(config, session) {
   const feedback = document.querySelector(config.feedbackSelector);
   const ongoingRoot = document.querySelector(config.ongoingSelector);
   const archivedRoot = document.querySelector(config.archivedSelector);
+  const ongoingCountChip = document.querySelector(config.ongoingCountSelector);
+  const archivedCountChip = document.querySelector(config.archivedCountSelector);
   const startBtn = document.querySelector(config.startButtonSelector);
   const startForm = document.querySelector(config.startFormSelector);
   const departureSelect = document.querySelector(config.departureSelector);
@@ -114,6 +133,8 @@ export async function initVoyageTracker(config, session) {
     !feedback ||
     !ongoingRoot ||
     !archivedRoot ||
+    !ongoingCountChip ||
+    !archivedCountChip ||
     !startBtn ||
     !startForm ||
     !departureSelect ||
@@ -325,6 +346,8 @@ export async function initVoyageTracker(config, session) {
     renderCrewSelected();
     renderVoyageCards(ongoingRoot, ongoing, true);
     renderVoyageCards(archivedRoot, archived, false);
+    ongoingCountChip.textContent = String(ongoing.length);
+    archivedCountChip.textContent = String(archived.length);
   }
 
   startBtn.addEventListener('click', () => openModal('startVoyageModal'));
@@ -418,7 +441,7 @@ export async function initVoyageTracker(config, session) {
       closeModal('startVoyageModal');
       clearStartForm();
       showMessage(feedback, 'Voyage started.', 'success');
-      window.location.href = `voyage-details.html?voyageId=${payload.voyageId}`;
+      window.location.href = `/voyages/${payload.voyageId}`;
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to start voyage.', 'error');
     }
@@ -429,7 +452,9 @@ export async function initVoyageTracker(config, session) {
     clearMessage(feedback);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load voyages.', 'error');
-    ongoingRoot.innerHTML = '<p>Unable to load data</p>';
-    archivedRoot.innerHTML = '<p>Unable to load data</p>';
+    ongoingRoot.innerHTML = '<article class="voyage-empty-state"><h3>Unable to load data</h3><p>Please refresh and try again.</p></article>';
+    archivedRoot.innerHTML = '<article class="voyage-empty-state voyage-empty-state-muted"><h3>Unable to load data</h3><p>Please refresh and try again.</p></article>';
+    ongoingCountChip.textContent = '0';
+    archivedCountChip.textContent = '0';
   }
 }

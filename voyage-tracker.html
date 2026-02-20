@@ -26,22 +26,31 @@
 
     <main class="section">
       <div class="container intranet-layout">
-        <section class="panel">
-          <div class="modal-header">
-            <h1>Voyage Tracker</h1>
-            <button id="openStartVoyageBtn" class="btn btn-primary hidden" type="button">Start Voyage</button>
+        <section class="panel voyage-console-header">
+          <div class="voyage-control-bar">
+            <div class="voyage-control-title">
+              <h1>Voyage Tracker</h1>
+              <p class="voyage-control-subtitle">Fleet operations overview</p>
+            </div>
+            <div class="voyage-control-actions">
+              <div class="voyage-count-chips" aria-label="Voyage counts">
+                <span class="voyage-count-chip">Ongoing: <strong id="ongoingCountChip">0</strong></span>
+                <span class="voyage-count-chip">Archived: <strong id="archivedCountChip">0</strong></span>
+              </div>
+              <button id="openStartVoyageBtn" class="btn btn-primary hidden" type="button">Start Voyage</button>
+            </div>
           </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="voyageFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="panel hidden">
-          <article class="panel">
+        <section id="protectedContent" class="hidden voyage-console-sections">
+          <article class="details-card voyage-console-section">
             <h2>Ongoing Voyages</h2>
             <div id="ongoingVoyages" class="voyage-grid"></div>
           </article>
 
-          <article class="panel">
+          <article class="details-card voyage-console-section">
             <h2>Archived Voyages</h2>
             <div id="archivedVoyages" class="voyage-grid"></div>
           </article>
