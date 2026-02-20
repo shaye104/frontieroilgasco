@@ -54,8 +54,23 @@ function toMoney(value) {
 
 function parseVoyageId() {
   const query = new URLSearchParams(window.location.search);
-  const value = Number(query.get('voyageId') || query.get('id'));
-  return Number.isInteger(value) && value > 0 ? value : null;
+
+  const parsePositiveInt = (value) => {
+    const num = Number(value);
+    return Number.isInteger(num) && num > 0 ? num : null;
+  };
+
+  const queryId = parsePositiveInt(query.get('voyageId') || query.get('id'));
+  if (queryId) return queryId;
+
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  if (pathParts[0] === 'voyages' && pathParts.length >= 2) {
+    const candidate = pathParts[1];
+    if (candidate === 'my' || candidate === 'archive') return null;
+    return parsePositiveInt(candidate);
+  }
+
+  return null;
 }
 
 function openModal(id) {
