@@ -111,10 +111,10 @@
                   <thead>
                     <tr>
                       <th>Cargo Type</th>
-                      <th>Net Quantity</th>
-                      <th>Total Freight Cost</th>
-                      <th>Gross Sale Revenue</th>
-                      <th>Net Profit</th>
+                      <th class="align-right">Net Quantity</th>
+                      <th class="align-right">Line Cost</th>
+                      <th class="align-right">Gross Sale Revenue</th>
+                      <th class="align-right">Net Profit</th>
                     </tr>
                   </thead>
                   <tbody id="archivedBreakdownLinesBody"></tbody>
@@ -157,56 +157,63 @@
       <div class="modal-card modal-card-wide">
         <div class="modal-header">
           <h2>End Voyage</h2>
-          <button id="closeEndVoyageBtnTop" class="btn btn-secondary" type="button" data-close-modal="endVoyageModal">Close</button>
+          <button id="closeEndVoyageBtnTop" class="btn btn-secondary btn-compact" type="button" data-close-modal="endVoyageModal">Close</button>
         </div>
         <form id="endVoyageForm" class="end-voyage-layout">
-          <section>
+          <section class="end-settlement-panel">
             <div id="endVoyageFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
-            <label>Sell Multiplier</label>
-            <input name="sellMultiplier" id="sellMultiplierInput" type="number" min="0" step="0.01" />
-            <h4>Freight Loss Adjustment</h4>
-            <div class="table-wrap">
-              <table class="data-table">
+            <div class="end-settlement-head">
+              <div class="end-multiplier-field">
+                <label for="sellMultiplierInput">Sell Multiplier</label>
+                <input name="sellMultiplier" id="sellMultiplierInput" type="number" min="0" step="0.01" />
+              </div>
+            </div>
+            <h4>Cargo Settlement</h4>
+            <div class="table-wrap end-settlement-wrap">
+              <table class="data-table end-settlement-table">
                 <thead>
                   <tr>
                     <th>Cargo Type</th>
-                    <th>Quantity</th>
+                    <th class="align-right">Quantity</th>
                     <th>Freight Loss Adjustment</th>
-                    <th>Net Quantity</th>
-                    <th>Buy Price</th>
-                    <th>Total Freight Cost</th>
+                    <th class="align-right">Net Quantity</th>
+                    <th class="align-right">Buy Price</th>
+                    <th class="align-right">Line Cost</th>
                     <th>Base Sell Price</th>
-                    <th>True Sell Unit Price</th>
-                    <th>Gross Sale Revenue</th>
-                    <th>Net Profit</th>
+                    <th class="align-right">True Sell Unit Price</th>
+                    <th class="align-right">Gross Sale Revenue</th>
+                    <th class="align-right">Net Profit</th>
                   </tr>
                 </thead>
                 <tbody id="endVoyageLinesBody"></tbody>
               </table>
             </div>
           </section>
-          <section id="financialBreakdown" class="section-surface hidden">
+          <section id="financialBreakdown" class="section-surface hidden end-breakdown">
             <h3>Financial Breakdown</h3>
-            <div class="table-wrap">
-              <table class="data-table">
+            <h4 class="end-breakdown-subhead">Cargo Lines Summary</h4>
+            <div class="table-wrap end-breakdown-lines-wrap">
+              <table class="data-table end-breakdown-lines-table">
                 <thead>
                   <tr>
                     <th>Cargo Type</th>
-                    <th>Net Quantity</th>
-                    <th>Total Freight Cost</th>
-                    <th>Gross Sale Revenue</th>
-                    <th>Net Profit</th>
+                    <th class="align-right">Net Quantity</th>
+                    <th class="align-right">Line Cost</th>
+                    <th class="align-right">Gross Sale Revenue</th>
+                    <th class="align-right">Net Profit</th>
                   </tr>
                 </thead>
                 <tbody id="breakdownLinesBody"></tbody>
               </table>
             </div>
-            <p><strong>Total Freight Cost:</strong> <span id="breakdownCost">ƒ 0</span></p>
-            <p><strong>Freight Loss Adjustment:</strong> <span id="breakdownLossAdjustment">0 units</span></p>
-            <p><strong>Gross Sale Revenue:</strong> <span id="breakdownRevenue">ƒ 0</span></p>
-            <p><strong>Net Profit:</strong> <span id="breakdownProfit">—</span></p>
-            <p><strong>Company Share (10%):</strong> <span id="breakdownCompanyShare">—</span></p>
-            <p><strong>Crew Share (90%):</strong> <span id="breakdownCrewShare">—</span></p>
+            <div class="end-breakdown-totals">
+              <p class="end-total-row"><strong>Total Freight Cost:</strong> <span id="breakdownCost">ƒ 0</span></p>
+              <p class="end-total-row"><strong>Freight Loss Adjustment:</strong> <span id="breakdownLossAdjustment">0 units</span></p>
+              <p class="end-total-row"><strong>Gross Sale Revenue:</strong> <span id="breakdownRevenue">ƒ 0</span></p>
+              <p class="end-total-row end-total-row-net"><strong>Net Profit:</strong> <span id="breakdownProfit">—</span></p>
+              <p class="end-total-row"><strong>Company Share (10%):</strong> <span id="breakdownCompanyShare">—</span></p>
+              <p class="end-total-row"><strong>Crew Share (90%):</strong> <span id="breakdownCrewShare">—</span></p>
+            </div>
           </section>
           <div class="end-actions-row">
             <button id="finaliseVoyageHoldBtn" class="btn btn-submit-hold hold-sweep" type="button">Submit Voyage</button>

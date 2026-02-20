@@ -127,7 +127,7 @@ export async function onRequestPost(context) {
   const totalRevenue = toMoney(settlementLines.reduce((sum, line) => sum + line.lineRevenue, 0));
   const profit = toMoney(settlementLines.reduce((sum, line) => sum + line.lineProfit, 0));
   const companyShare = toMoney((profit > 0 ? profit : 0) * 0.1);
-  const crewShare = toMoney(profit - companyShare);
+  const crewShare = profit > 0 ? toMoney(profit - companyShare) : 0;
   const totalLossUnits = Math.round(settlementLines.reduce((sum, line) => sum + line.lostQuantity, 0));
 
   await env.DB

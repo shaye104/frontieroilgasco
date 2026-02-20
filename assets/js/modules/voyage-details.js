@@ -362,13 +362,50 @@ export async function initVoyageDetails(config) {
     const totalRevenue = hasAllSellPrices ? toMoney(lineItems.reduce((sum, line) => sum + (line.lineRevenue || 0), 0)) : null;
     const netProfit = hasAllSellPrices ? toMoney(totalRevenue - totalCost) : null;
     const companyShare = hasAllSellPrices ? toMoney(Math.max(netProfit, 0) * 0.1) : null;
-    const crewShare = hasAllSellPrices ? toMoney(netProfit - companyShare) : null;
+    const crewShare = hasAllSellPrices ? (netProfit > 0 ? toMoney(netProfit - companyShare) : 0) : null;
 
     return {
       lineItems,
       totals: { totalCost, totalLossUnits, totalRevenue, netProfit, companyShare, crewShare },
       hasAllSellPrices
     };
+  }
+
+  function applyNetProfitTone(target, value) {
+    if (!target) return;
+    target.classList.remove('profit-positive', 'profit-negative', 'profit-zero');
+    if (!Number.isFinite(value)) return;
+    if (value > 0) target.classList.add('profit-positive');
+    else if (value < 0) target.classList.add('profit-negative');
+    else target.classList.add('profit-zero');
+  }
+
+  function applyShareMuted(target, value) {
+    if (!target) return;
+    target.classList.toggle('share-muted', Number(value || 0) <= 0);
+  }
+
+  function clearEndFieldErrors() {
+    endVoyageLinesBody.querySelectorAll('.field-error').forEach((el) => el.classList.remove('field-error'));
+  }
+
+  function validateEndVoyageInputs(lines) {
+    clearEndFieldErrors();
+    const sellMultiplier = toNumber(sellMultiplierInput.value);
+    if (sellMultiplier === null || sellMultiplier < 0) {
+      return { ok: false, message: 'Sell multiplier is required and must be >= 0.' };
+    }
+    for (const line of lines) {
+      if (!Number.isInteger(line.lostQuantity) || line.lostQuantity < 0 || line.lostQuantity > line.quantity) {
+        line.lossInput?.classList.add('field-error');
+        return { ok: false, message: `Freight loss adjustment for ${line.cargoName} must be between 0 and ${line.quantity}.` };
+      }
+      if (line.quantity > 0 && (line.baseSellPrice === null || !Number.isFinite(line.baseSellPrice) || line.baseSellPrice < 0)) {
+        line.baseSellInput?.classList.add('field-error');
+        return { ok: false, message: `Base sell price is required for ${line.cargoName}.` };
+      }
+    }
+    return { ok: true, message: '' };
   }
 
   function syncEndVoyageLineRow(row) {
@@ -408,10 +445,10 @@ export async function initVoyageDetails(config) {
       .map(
         (line) => `<tr>
           <td>${text(line.cargoName)}</td>
-          <td>${line.netQuantity}</td>
-          <td>${formatGuilders(line.lineCost)}</td>
-          <td>${line.lineRevenue === null ? '—' : formatGuilders(line.lineRevenue)}</td>
-          <td>${line.lineProfit === null ? '—' : formatGuilders(line.lineProfit)}</td>
+          <td class="align-right">${line.netQuantity}</td>
+          <td class="align-right">${formatGuilders(line.lineCost)}</td>
+          <td class="align-right">${line.lineRevenue === null ? '—' : formatGuilders(line.lineRevenue)}</td>
+          <td class="align-right">${line.lineProfit === null ? '—' : formatGuilders(line.lineProfit)}</td>
         </tr>`
       )
       .join('');
@@ -435,6 +472,9 @@ export async function initVoyageDetails(config) {
       breakdownProfit.textContent = '—';
       breakdownCompanyShare.textContent = '—';
       breakdownCrewShare.textContent = '—';
+      applyNetProfitTone(breakdownProfit, null);
+      applyShareMuted(breakdownCompanyShare, 0);
+      applyShareMuted(breakdownCrewShare, 0);
       breakdownLinesBody.innerHTML = '';
       breakdownContainer.classList.add('hidden');
       return;
@@ -452,15 +492,23 @@ export async function initVoyageDetails(config) {
       breakdownProfit.textContent = '—';
       breakdownCompanyShare.textContent = '—';
       breakdownCrewShare.textContent = '—';
+      applyNetProfitTone(breakdownProfit, null);
+      applyShareMuted(breakdownCompanyShare, 0);
+      applyShareMuted(breakdownCrewShare, 0);
       breakdownContainer.classList.add('hidden');
-      return;
+    } else {
+      breakdownContainer.classList.remove('hidden');
+      breakdownRevenue.textContent = formatGuilders(computed.totals.totalRevenue);
+      breakdownProfit.textContent = formatGuilders(computed.totals.netProfit);
+      breakdownCompanyShare.textContent = formatGuilders(computed.totals.companyShare);
+      breakdownCrewShare.textContent = formatGuilders(computed.totals.crewShare);
+      applyNetProfitTone(breakdownProfit, computed.totals.netProfit);
+      applyShareMuted(breakdownCompanyShare, computed.totals.companyShare);
+      applyShareMuted(breakdownCrewShare, computed.totals.crewShare);
     }
-
-    breakdownContainer.classList.remove('hidden');
-    breakdownRevenue.textContent = formatGuilders(computed.totals.totalRevenue);
-    breakdownProfit.textContent = formatGuilders(computed.totals.netProfit);
-    breakdownCompanyShare.textContent = formatGuilders(computed.totals.companyShare);
-    breakdownCrewShare.textContent = formatGuilders(computed.totals.crewShare);
+    const validation = validateEndVoyageInputs(lines);
+    if (!validation.ok) setInlineMessage(endFeedback, validation.message);
+    else setInlineMessage(endFeedback, '');
   }
 
   function renderStatusControls() {
@@ -510,10 +558,10 @@ export async function initVoyageDetails(config) {
       .map(
         (line) => `<tr>
           <td>${line.cargoName}</td>
-          <td>${line.netQuantity}</td>
-          <td>${formatGuilders(line.lineCost)}</td>
-          <td>${formatGuilders(line.lineRevenue)}</td>
-          <td>${formatGuilders(line.lineProfit)}</td>
+          <td class="align-right">${line.netQuantity}</td>
+          <td class="align-right">${formatGuilders(line.lineCost)}</td>
+          <td class="align-right">${formatGuilders(line.lineRevenue)}</td>
+          <td class="align-right">${formatGuilders(line.lineProfit)}</td>
         </tr>`
       )
       .join('');
@@ -522,13 +570,16 @@ export async function initVoyageDetails(config) {
     const totalRevenue = toMoney(detail.voyage.effective_sell ?? 0);
     const profit = toMoney(detail.voyage.profit ?? totalRevenue - totalCost);
     const companyShare = toMoney(detail.voyage.company_share ?? Math.max(profit, 0) * 0.1);
-    const crewShare = toMoney(profit - companyShare);
+    const crewShare = profit > 0 ? toMoney(profit - companyShare) : 0;
     archivedBreakdownFreight.textContent = formatGuilders(totalCost);
     archivedBreakdownLossAdjustment.textContent = `${Math.round(totalLossUnits)} units`;
     archivedBreakdownRevenue.textContent = formatGuilders(totalRevenue);
     archivedBreakdownProfit.textContent = formatGuilders(profit);
     archivedBreakdownCompanyShare.textContent = formatGuilders(companyShare);
     archivedBreakdownCrewShare.textContent = formatGuilders(crewShare);
+    applyNetProfitTone(archivedBreakdownProfit, profit);
+    applyShareMuted(archivedBreakdownCompanyShare, companyShare);
+    applyShareMuted(archivedBreakdownCrewShare, crewShare);
   }
 
   function removeArchivedControlsFromDom() {
@@ -748,15 +799,15 @@ export async function initVoyageDetails(config) {
           : 0;
         return `<tr data-cargo-id="${line.cargoTypeId}" data-cargo-name="${line.cargoName}" data-qty="${line.quantity}" data-buy-price="${line.buyPrice}">
           <td>${line.cargoName}</td>
-          <td>${line.quantity}</td>
+          <td class="align-right">${line.quantity}</td>
           <td><input data-field="lostQty" type="number" min="0" max="${line.quantity}" step="1" value="${defaultLoss}" /></td>
-          <td data-cell="netQty">${line.quantity - defaultLoss}</td>
-          <td>${formatGuilders(line.buyPrice)}</td>
-          <td data-cell="lineCost">${formatGuilders(lineCost)}</td>
+          <td class="align-right" data-cell="netQty">${line.quantity - defaultLoss}</td>
+          <td class="align-right">${formatGuilders(line.buyPrice)}</td>
+          <td class="align-right" data-cell="lineCost">${formatGuilders(lineCost)}</td>
           <td><input data-field="baseSellPrice" type="number" min="0" step="0.01" value="${defaultBaseSell}" /></td>
-          <td data-cell="trueSell">—</td>
-          <td data-cell="lineRevenue">—</td>
-          <td data-cell="lineProfit">—</td>
+          <td class="align-right" data-cell="trueSell">—</td>
+          <td class="align-right" data-cell="lineRevenue">—</td>
+          <td class="align-right" data-cell="lineProfit">—</td>
         </tr>`;
       })
       .join('');
@@ -1152,6 +1203,9 @@ export async function initVoyageDetails(config) {
     const data = new FormData(endForm);
     const sellMultiplier = Number(data.get('sellMultiplier') || 0);
     if (!Number.isFinite(sellMultiplier) || sellMultiplier < 0) throw new Error('Sell multiplier must be >= 0.');
+    const previewLines = collectEndLinesFromDom();
+    const validation = validateEndVoyageInputs(previewLines);
+    if (!validation.ok) throw new Error(validation.message);
 
     const lines = [...manifestBody.querySelectorAll('tr[data-cargo-id]')].map((row) => ({
       cargoTypeId: Number(row.getAttribute('data-cargo-id')),
@@ -1192,7 +1246,10 @@ export async function initVoyageDetails(config) {
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
       const modalId = button.getAttribute('data-close-modal');
-      if (modalId === 'endVoyageModal') setInlineMessage(endFeedback, '');
+      if (modalId === 'endVoyageModal') {
+        setInlineMessage(endFeedback, '');
+        clearEndFieldErrors();
+      }
       if (modalId === 'editVoyageModal') {
         editState = null;
         clearComboboxCleanup();
