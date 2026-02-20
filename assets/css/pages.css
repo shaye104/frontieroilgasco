@@ -145,6 +145,48 @@
   font-size: 0.9rem;
 }
 
+@media (min-width: 1024px) {
+  body.page-intranet.intranet-no-scroll .voyage-console-header {
+    padding-bottom: 0;
+  }
+
+  body.page-intranet.intranet-no-scroll .voyage-control-bar {
+    padding-bottom: 0.55rem;
+    gap: 0.75rem;
+  }
+
+  body.page-intranet.intranet-no-scroll .voyage-control-title h1 {
+    margin-bottom: 0.12rem;
+    font-size: 1.95rem;
+  }
+
+  body.page-intranet.intranet-no-scroll .voyage-control-subtitle {
+    font-size: 0.86rem;
+  }
+
+  body.page-intranet.intranet-no-scroll .voyage-console-sections {
+    gap: 0.75rem;
+  }
+
+  body.page-intranet.intranet-no-scroll .voyage-console-section {
+    padding: 0.55rem 0.75rem;
+  }
+
+  body.page-intranet.intranet-no-scroll .voyage-console-section-plain {
+    padding: 0;
+  }
+
+  body.page-intranet.intranet-no-scroll .voyage-console-section h2 {
+    margin: 0 0 0.45rem;
+    font-size: 1.18rem;
+  }
+
+  body.page-intranet.intranet-no-scroll .voyage-archive-cta {
+    margin-top: 0.45rem;
+    font-size: 0.84rem;
+  }
+}
+
 @media (max-width: 860px) {
   .voyage-control-bar {
     flex-direction: column;

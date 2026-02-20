@@ -59,17 +59,42 @@ function fillSelect(select, items, placeholder) {
   if (current) select.value = current;
 }
 
-function renderVoyageCards(target, voyages, isOngoing) {
+function renderOngoingVoyageCards(target, voyages) {
   if (!target) return;
   if (!voyages.length) {
-    if (isOngoing) {
-      target.innerHTML = `<article class="voyage-empty-state">
-        <span class="voyage-empty-icon" aria-hidden="true">⛵</span>
-        <h3>No ongoing voyages</h3>
-        <p>Start a new voyage to begin tracking fleet activity.</p>
-      </article>`;
-      return;
-    }
+    target.innerHTML = `<article class="voyage-empty-state">
+      <span class="voyage-empty-icon" aria-hidden="true">⛵</span>
+      <h3>No ongoing voyages</h3>
+      <p>Start a new voyage to begin tracking fleet activity.</p>
+    </article>`;
+    return;
+  }
+
+  target.innerHTML = voyages
+    .map((voyage) => {
+      const underway = voyage.ship_status === 'UNDERWAY';
+      const shipStatusLabel = underway ? 'Ship Underway' : 'Ship In Port';
+      const statusClass = underway ? 'status-pill status-pill-underway' : 'status-pill status-pill-in-port';
+      return `
+        <a class="voyage-card voyage-card-ongoing" href="/voyage-details.html?voyageId=${voyage.id}">
+          <div class="voyage-card-head">
+            <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
+            <span class="${statusClass}">${shipStatusLabel}</span>
+          </div>
+          <p class="voyage-route-line">${text(voyage.departure_port)} → ${text(voyage.destination_port)}</p>
+          <div class="voyage-card-meta">
+            <p class="voyage-meta-line"><span>OOW</span>${text(voyage.officer_name)}</p>
+            <p class="voyage-meta-line"><span>Started</span>${formatWhen(voyage.started_at)}</p>
+          </div>
+        </a>
+      `;
+    })
+    .join('');
+}
+
+function renderArchivedVoyageCards(target, voyages) {
+  if (!target) return;
+  if (!voyages.length) {
     target.innerHTML = `<article class="voyage-empty-state voyage-empty-state-muted">
       <span class="voyage-empty-icon" aria-hidden="true">⌁</span>
       <h3>No archived voyages</h3>
@@ -79,28 +104,21 @@ function renderVoyageCards(target, voyages, isOngoing) {
   }
 
   target.innerHTML = voyages
-    .map((voyage) => {
-      const underway = voyage.ship_status === 'UNDERWAY';
-      const shipStatusLabel = underway ? 'Ship Underway' : 'Ship In Port';
-      const statusClass = isOngoing
-        ? underway
-          ? 'status-pill status-pill-underway'
-          : 'status-pill status-pill-in-port'
-        : 'status-pill status-pill-ended';
-      return `
-        <a class="voyage-card ${isOngoing ? 'voyage-card-ongoing' : 'voyage-card-archived'}" href="/voyage-details.html?voyageId=${voyage.id}">
+    .map(
+      (voyage) => `
+        <article class="voyage-card voyage-card-archived voyage-card-static" aria-label="Archived voyage preview">
           <div class="voyage-card-head">
             <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
-            <span class="${statusClass}">${isOngoing ? shipStatusLabel : 'Ended'}</span>
+            <span class="status-pill status-pill-ended">Ended</span>
           </div>
           <p class="voyage-route-line">${text(voyage.departure_port)} → ${text(voyage.destination_port)}</p>
           <div class="voyage-card-meta">
             <p class="voyage-meta-line"><span>OOW</span>${text(voyage.officer_name)}</p>
-            <p class="voyage-meta-line"><span>${isOngoing ? 'Started' : 'Ended'}</span>${formatWhen(isOngoing ? voyage.started_at : voyage.ended_at)}</p>
+            <p class="voyage-meta-line"><span>Ended</span>${formatWhen(voyage.ended_at)}</p>
           </div>
-        </a>
-      `;
-    })
+        </article>
+      `
+    )
     .join('');
 }
 
@@ -358,8 +376,8 @@ export async function initVoyageTracker(config, session) {
     fillSelect(vesselClassSelect, payload.voyageConfig?.vesselClasses || [], 'Select vessel class');
     fillSelect(vesselCallsignSelect, payload.voyageConfig?.vesselCallsigns || [], 'Select vessel callsign');
     renderCrewSelected();
-    renderVoyageCards(ongoingRoot, ongoing, true);
-    renderVoyageCards(archivedRoot, archived, false);
+    renderOngoingVoyageCards(ongoingRoot, ongoing);
+    renderArchivedVoyageCards(archivedRoot, archived);
     ongoingCountChip.textContent = String(ongoing.length);
     archivedCountChip.textContent = String(archivedTotal);
     archivedCta.classList.toggle('hidden', archivedTotal <= 6);

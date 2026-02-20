@@ -19,6 +19,9 @@ function toAccessDeniedUrl(reason) {
 }
 
 export async function initIntranetLayout(config) {
+  document.documentElement.classList.add('intranet-no-scroll');
+  document.body.classList.add('intranet-no-scroll');
+
   const feedback = document.querySelector(config.feedbackSelector);
   const protectedContent = document.querySelector(config.protectedContentSelector);
   const requireAdmin = Boolean(config.requireAdmin);

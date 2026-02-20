@@ -26,7 +26,7 @@ function renderArchivedCards(target, voyages) {
 
   target.innerHTML = voyages
     .map(
-      (voyage) => `<a class="voyage-card voyage-card-archived" href="/voyage-details.html?voyageId=${voyage.id}">
+      (voyage) => `<article class="voyage-card voyage-card-archived voyage-card-static" aria-label="Archived voyage preview">
       <div class="voyage-card-head">
         <h3>${text(voyage.vessel_name)} | ${text(voyage.vessel_callsign)}</h3>
         <span class="status-pill status-pill-ended">Ended</span>
@@ -36,7 +36,7 @@ function renderArchivedCards(target, voyages) {
         <p class="voyage-meta-line"><span>OOW</span>${text(voyage.officer_name)}</p>
         <p class="voyage-meta-line"><span>Ended</span>${formatWhen(voyage.ended_at)}</p>
       </div>
-    </a>`
+    </article>`
     )
     .join('');
 }
