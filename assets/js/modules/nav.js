@@ -37,7 +37,7 @@ export function renderIntranetNavbar(session) {
 
   nav.innerHTML = '';
   nav.append(buildNavLink('/my-details', 'My Details'));
-  nav.append(buildNavLink('/voyages', 'Voyages'));
+  nav.append(buildNavLink('/voyages/my', 'Voyages'));
   nav.append(buildNavLink('/my-fleet', 'My Fleet'));
   nav.append(buildNavLink('/forms', 'Forms'));
 
