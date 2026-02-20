@@ -55,7 +55,7 @@ export function initIntranetAuth(config) {
   fetchSession()
     .then((session) => {
       if (session.loggedIn && !hasAuthQuery) {
-        window.location.href = '/my-details.html';
+        window.location.href = '/my-details';
         return;
       }
 

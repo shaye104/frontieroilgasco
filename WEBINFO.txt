@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-20T18:06:49.386Z
+Generated: 2026-02-20T18:13:42.066Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -24,6 +24,7 @@ SITE STRUCTURE
 - forms.html | title: Frontier Oil & Gas Company | Forms | primary heading: Forms
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
 - intranet.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
+- login.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
 - my-fleet.html | title: Frontier Oil & Gas Company | My Fleet | primary heading: My Fleet

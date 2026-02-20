@@ -67,7 +67,7 @@ export async function onRequest(context) {
     const isLoggedIn = Boolean(session);
 
     if (pathname === '/dashboard') {
-      return Response.redirect(new URL('/my-details.html', url.origin).toString(), 302);
+      return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
     }
 
     if (pathname === '/login') {
@@ -75,13 +75,13 @@ export async function onRequest(context) {
         return context.next();
       }
       if (isLoggedIn) {
-        return Response.redirect(new URL('/my-details.html', url.origin).toString(), 302);
+        return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
       }
       return context.next();
     }
 
     if (isLoggedIn && (pathname === '/' || pathname === '/index.html')) {
-      return Response.redirect(new URL('/my-details.html', url.origin).toString(), 302);
+      return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
     }
 
     if (!isLoggedIn && isProtectedPath(pathname)) {
