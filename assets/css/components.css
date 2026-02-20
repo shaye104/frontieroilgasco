@@ -308,13 +308,14 @@ textarea:focus {
 
 .end-voyage-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.92fr);
-  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1.22fr) minmax(0, 0.78fr);
+  gap: 1.5rem;
   align-items: start;
 }
 
 .end-voyage-layout > section {
   min-height: 0;
+  min-width: 0;
 }
 
 .end-voyage-layout .section-surface {
@@ -357,18 +358,23 @@ textarea:focus {
 
 .end-settlement-wrap {
   max-height: none;
-  overflow: visible;
+  overflow: hidden;
+  width: 100%;
 }
 
 .end-settlement-table {
+  width: 100%;
   min-width: 0;
+  table-layout: fixed;
 }
 
 .end-settlement-table thead th {
   position: sticky;
   top: 0;
   z-index: 2;
-  white-space: nowrap;
+  white-space: normal;
+  font-size: 0.86rem;
+  line-height: 1.2;
 }
 
 .end-settlement-table th,
@@ -376,6 +382,38 @@ textarea:focus {
   padding-top: 0.36rem;
   padding-bottom: 0.36rem;
   vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.end-settlement-table td {
+  white-space: nowrap;
+}
+
+.end-settlement-table .col-cargo {
+  width: 34%;
+}
+
+.end-settlement-table .col-qty {
+  width: 14%;
+}
+
+.end-settlement-table .col-loss {
+  width: 16%;
+}
+
+.end-settlement-table .col-buy {
+  width: 17%;
+}
+
+.end-settlement-table .col-base {
+  width: 19%;
+}
+
+.end-settlement-table .cargo-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -386,11 +424,13 @@ textarea:focus {
 }
 
 .end-settlement-table input[data-field='lostQty'] {
-  min-width: 90px;
+  width: 100%;
+  min-width: 0;
 }
 
 .end-settlement-table input[data-field='baseSellPrice'] {
-  min-width: 120px;
+  width: 100%;
+  min-width: 0;
   text-align: right;
 }
 

@@ -170,16 +170,20 @@
             <h4>Cargo Settlement</h4>
             <div class="table-wrap end-settlement-wrap">
               <table class="data-table end-settlement-table">
+                <colgroup>
+                  <col class="col-cargo" />
+                  <col class="col-qty" />
+                  <col class="col-loss" />
+                  <col class="col-buy" />
+                  <col class="col-base" />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>Cargo Type</th>
-                    <th>Quantity</th>
-                    <th>Freight Loss Adjustment</th>
+                    <th>Qty</th>
+                    <th>Loss</th>
                     <th class="align-right">Buy Price</th>
-                    <th>Base Sell Price</th>
-                    <th class="align-right">Gross Sale Revenue</th>
-                    <th class="align-right">Line Cost</th>
-                    <th class="align-right">Net Profit</th>
+                    <th>Base Sell</th>
                   </tr>
                 </thead>
                 <tbody id="endVoyageLinesBody"></tbody>

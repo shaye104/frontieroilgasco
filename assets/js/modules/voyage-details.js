@@ -425,29 +425,13 @@ export async function initVoyageDetails(config) {
     const buyPrice = Math.max(0, Number(row.getAttribute('data-buy-price') || 0));
     const lossInput = row.querySelector('input[data-field="lostQty"]');
     const baseSellInput = row.querySelector('input[data-field="baseSellPrice"]');
-    const lineCostCell = row.querySelector('[data-cell="lineCost"]');
-    const lineRevenueCell = row.querySelector('[data-cell="lineRevenue"]');
-    const lineProfitCell = row.querySelector('[data-cell="lineProfit"]');
     const quantityMeta = row.querySelector('[data-cell="quantityMeta"]');
 
     const lostRaw = Number(lossInput?.value || 0);
     const lostQuantity = Math.max(0, Math.min(quantity, Math.floor(Number.isFinite(lostRaw) ? lostRaw : 0)));
     if (lossInput && String(lossInput.value) !== String(lostQuantity)) lossInput.value = String(lostQuantity);
     const netQty = Math.max(quantity - lostQuantity, 0);
-    const lineCost = toMoney(buyPrice * quantity);
-
-    const sellMultiplier = toNumber(sellMultiplierInput.value);
-    const baseSellRaw = Number(baseSellInput?.value || 0);
-    const baseSellPrice = Number.isFinite(baseSellRaw) ? Math.max(0, baseSellRaw) : null;
-    const trueSellUnitPrice =
-      sellMultiplier === null || sellMultiplier < 0 || baseSellPrice === null ? null : toMoney(sellMultiplier * baseSellPrice);
-    const lineRevenue = trueSellUnitPrice === null ? null : toMoney(trueSellUnitPrice * netQty);
-    const lineProfit = lineRevenue === null ? null : toMoney(lineRevenue - lineCost);
-
     if (quantityMeta) quantityMeta.textContent = `Net: ${netQty}`;
-    if (lineCostCell) lineCostCell.textContent = formatGuilders(lineCost);
-    if (lineRevenueCell) lineRevenueCell.textContent = lineRevenue === null ? '—' : formatGuilders(lineRevenue);
-    if (lineProfitCell) lineProfitCell.textContent = lineProfit === null ? '—' : formatGuilders(lineProfit);
   }
 
   function syncBreakdown() {
@@ -783,7 +767,6 @@ export async function initVoyageDetails(config) {
 
     endVoyageLinesBody.innerHTML = manifestRows
       .map((line) => {
-        const lineCost = toMoney(line.buyPrice * line.quantity);
         const defaultBaseSell = existingBaseSell.has(line.cargoTypeId)
           ? existingBaseSell.get(line.cargoTypeId)
           : Math.max(0, Number(line.buyPrice || 0));
@@ -791,7 +774,7 @@ export async function initVoyageDetails(config) {
           ? Math.min(existingLoss.get(line.cargoTypeId), line.quantity)
           : 0;
         return `<tr data-cargo-id="${line.cargoTypeId}" data-cargo-name="${line.cargoName}" data-qty="${line.quantity}" data-buy-price="${line.buyPrice}">
-          <td>${line.cargoName}</td>
+          <td><span class="cargo-name" title="${line.cargoName}">${line.cargoName}</span></td>
           <td><div class="quantity-main">${line.quantity}</div><div class="quantity-meta muted" data-cell="quantityMeta">Net: ${line.quantity - defaultLoss}</div></td>
           <td>
             <input data-field="lostQty" type="number" min="0" max="${line.quantity}" step="1" value="${defaultLoss}" />
@@ -802,9 +785,6 @@ export async function initVoyageDetails(config) {
             <input data-field="baseSellPrice" type="number" min="0" step="0.01" value="${defaultBaseSell}" />
             <div class="input-inline-error hidden" data-error-for="baseSellPrice"></div>
           </td>
-          <td class="align-right" data-cell="lineRevenue">—</td>
-          <td class="align-right" data-cell="lineCost">${formatGuilders(lineCost)}</td>
-          <td class="align-right" data-cell="lineProfit">—</td>
         </tr>`;
       })
       .join('');
