@@ -54,7 +54,7 @@ export function initIntranetAuth(config) {
   fetchSession()
     .then((session) => {
       if (session.loggedIn) {
-        window.location.href = '/my-details';
+        window.location.href = '/my-details.html';
         return;
       }
 

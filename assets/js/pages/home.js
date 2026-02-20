@@ -10,7 +10,7 @@ async function initHomePage() {
     const response = await fetch('/api/auth/session', { method: 'GET', credentials: 'include' });
     const session = response.ok ? await response.json() : { loggedIn: false };
     if (session.loggedIn) {
-      window.location.href = '/my-details';
+      window.location.href = '/my-details.html';
       return;
     }
   } catch {
