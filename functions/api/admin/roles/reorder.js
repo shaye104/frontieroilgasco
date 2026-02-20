@@ -19,7 +19,7 @@ async function listRoles(env) {
 
 export async function onRequestPost(context) {
   const { env } = context;
-  const { errorResponse } = await requirePermission(context, ['roles.manage']);
+  const { errorResponse } = await requirePermission(context, ['user_groups.manage']);
   if (errorResponse) return errorResponse;
 
   let payload;

@@ -1,6 +1,7 @@
 import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
+import { canEditEmployeeByRank, getEmployeeByDiscordUserId } from '../../_lib/db.js';
 
 function valueText(value) {
   const text = String(value ?? '').trim();
@@ -24,9 +25,36 @@ function buildChangeEntries(previous, next) {
     }));
 }
 
+function normalizeText(value) {
+  return String(value || '').trim();
+}
+
+async function findDuplicateEmployee(env, { robloxUsername, robloxUserId }, excludeEmployeeId) {
+  const username = normalizeText(robloxUsername);
+  const userId = normalizeText(robloxUserId);
+  if (!username && !userId) return null;
+  const clauses = [];
+  const binds = [];
+  if (username) {
+    clauses.push('LOWER(COALESCE(roblox_username, \'\')) = LOWER(?)');
+    binds.push(username);
+  }
+  if (userId) {
+    clauses.push('TRIM(COALESCE(roblox_user_id, \'\')) = ?');
+    binds.push(userId);
+  }
+  let sql = `SELECT id, roblox_username, roblox_user_id FROM employees WHERE (${clauses.join(' OR ')})`;
+  if (Number.isInteger(excludeEmployeeId) && excludeEmployeeId > 0) {
+    sql += ' AND id != ?';
+    binds.push(excludeEmployeeId);
+  }
+  sql += ' LIMIT 1';
+  return env.DB.prepare(sql).bind(...binds).first();
+}
+
 export async function onRequestGet(context) {
   const { env, params } = context;
-  const { errorResponse } = await requirePermission(context, ['employees.read']);
+  const { errorResponse, session } = await requirePermission(context, ['employees.read']);
   if (errorResponse) return errorResponse;
 
   const employeeId = Number(params.id);
@@ -34,6 +62,12 @@ export async function onRequestGet(context) {
 
   const employee = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
   if (!employee) return json({ error: 'Employee not found.' }, 404);
+  const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
+  const canEditByRank = hasPermission(session, 'admin.override')
+    ? true
+    : actorEmployee
+    ? await canEditEmployeeByRank(env, actorEmployee, employee)
+    : false;
 
   const disciplinaries = await env.DB.prepare(
     `SELECT id, record_type, record_date, record_status, notes, issued_by, created_at
@@ -73,7 +107,11 @@ export async function onRequestGet(context) {
     disciplinaries: disciplinaries?.results || [],
     notes: notes?.results || [],
     assignedRoles: roleAssignments?.results || [],
-    availableRoles: availableRoles?.results || []
+    availableRoles: availableRoles?.results || [],
+    capabilities: {
+      canEditByRank,
+      canAssignUserGroups: hasPermission(session, 'user_groups.assign') && canEditByRank
+    }
   });
 }
 
@@ -94,6 +132,33 @@ export async function onRequestPut(context) {
 
   const existing = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
   if (!existing) return json({ error: 'Employee not found.' }, 404);
+  const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
+  const canEditByRank = actorEmployee
+    ? await canEditEmployeeByRank(env, actorEmployee, existing)
+    : false;
+  if (!hasPermission(session, 'admin.override') && !canEditByRank) {
+    return json({ error: 'You cannot edit employees with a higher rank than yours.' }, 403);
+  }
+  const duplicate = await findDuplicateEmployee(
+    env,
+    {
+      robloxUsername: payload?.robloxUsername,
+      robloxUserId: payload?.robloxUserId
+    },
+    employeeId
+  );
+  if (duplicate) {
+    if (
+      normalizeText(duplicate.roblox_username).toLowerCase() === normalizeText(payload?.robloxUsername).toLowerCase() &&
+      normalizeText(payload?.robloxUsername)
+    ) {
+      return json({ error: 'Roblox Username already exists for another employee.' }, 400);
+    }
+    if (normalizeText(duplicate.roblox_user_id) === normalizeText(payload?.robloxUserId) && normalizeText(payload?.robloxUserId)) {
+      return json({ error: 'Roblox User ID already exists for another employee.' }, 400);
+    }
+    return json({ error: 'Roblox Username/User ID must be unique.' }, 400);
+  }
 
   await env.DB.prepare(
     `UPDATE employees
@@ -123,7 +188,7 @@ export async function onRequestPut(context) {
     ? [...new Set(payload.roleIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))]
     : null;
   if (roleIds) {
-    if (!hasPermission(session, 'roles.assign')) {
+    if (!hasPermission(session, 'user_groups.assign')) {
       return json({ error: 'Forbidden. Missing required permission.' }, 403);
     }
     await env.DB.batch([

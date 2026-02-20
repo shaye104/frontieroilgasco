@@ -46,7 +46,7 @@ export async function onRequest(context) {
     hasEmployee: payload.isAdmin ? true : Boolean(employee),
     accessPending: payload.isAdmin ? false : !employee,
     canAccessAdminPanel: hasPermission({ permissions: permissionContext?.permissions || [] }, 'admin.access'),
-    canManageRoles: hasPermission({ permissions: permissionContext?.permissions || [] }, 'roles.manage'),
+    canManageRoles: hasPermission({ permissions: permissionContext?.permissions || [] }, 'user_groups.manage'),
     canManageConfig: hasPermission({ permissions: permissionContext?.permissions || [] }, 'config.manage'),
     canReadFormResponses: hasPermission({ permissions: permissionContext?.permissions || [] }, 'forms.responses.read')
   });

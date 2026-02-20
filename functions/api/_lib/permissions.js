@@ -1,6 +1,16 @@
 import { ensureCoreSchema, getEmployeeByDiscordUserId } from './db.js';
 
 export const SUPER_ADMIN_PERMISSION = 'super.admin';
+export const ADMIN_OVERRIDE_PERMISSION = 'admin.override';
+
+const PERMISSION_ALIASES = {
+  'roles.read': 'user_groups.read',
+  'roles.manage': 'user_groups.manage',
+  'roles.assign': 'user_groups.assign',
+  'user_groups.read': 'roles.read',
+  'user_groups.manage': 'roles.manage',
+  'user_groups.assign': 'roles.assign'
+};
 
 export const PERMISSION_GROUPS = [
   {
@@ -36,12 +46,31 @@ export const PERMISSION_GROUPS = [
     ]
   },
   {
-    key: 'roles',
-    label: 'Roles',
+    key: 'user_groups',
+    label: 'User Groups',
     permissions: [
-      { key: 'roles.read', label: 'View Roles', description: 'View role definitions and permissions.' },
-      { key: 'roles.manage', label: 'Manage Roles', description: 'Create, edit, delete, and reorder roles.' },
-      { key: 'roles.assign', label: 'Assign Roles', description: 'Assign and unassign roles for employees.' }
+      { key: 'user_groups.read', label: 'View User Groups', description: 'View user group definitions and permissions.' },
+      { key: 'user_groups.manage', label: 'Manage User Groups', description: 'Create, edit, delete, and reorder user groups.' },
+      { key: 'user_groups.assign', label: 'Assign User Groups', description: 'Assign and unassign user groups for employees.' }
+    ]
+  },
+  {
+    key: 'user_ranks',
+    label: 'User Ranks',
+    permissions: [
+      { key: 'user_ranks.manage', label: 'Manage User Ranks', description: 'Create, edit, delete, and reorder user ranks.' },
+      {
+        key: 'user_ranks.permissions.manage',
+        label: 'Manage User Rank Permissions',
+        description: 'Edit permission mappings granted by user ranks.'
+      }
+    ]
+  },
+  {
+    key: 'admin',
+    label: 'Admin',
+    permissions: [
+      { key: ADMIN_OVERRIDE_PERMISSION, label: 'Admin Override', description: 'Grant all permissions across the application.' }
     ]
   },
   {
@@ -94,15 +123,32 @@ export function getPermissionKeys() {
 }
 
 export function normalizePermissionKeys(values) {
-  const allowed = new Set([...getPermissionKeys(), SUPER_ADMIN_PERMISSION]);
+  const allowed = new Set([...getPermissionKeys(), SUPER_ADMIN_PERMISSION, ...Object.keys(PERMISSION_ALIASES)]);
   const source = Array.isArray(values) ? values : [];
   return [...new Set(source.map((value) => String(value || '').trim()).filter((value) => allowed.has(value)))];
 }
 
+function expandPermissionAliases(values) {
+  const normalized = normalizePermissionKeys(values);
+  const expanded = new Set(normalized);
+  normalized.forEach((permission) => {
+    const alias = PERMISSION_ALIASES[permission];
+    if (alias) expanded.add(alias);
+  });
+  return [...expanded];
+}
+
 export function hasPermission(session, permissionKey) {
   if (!session || !permissionKey) return false;
-  const permissions = Array.isArray(session.permissions) ? session.permissions : [];
-  return permissions.includes(SUPER_ADMIN_PERMISSION) || permissions.includes(permissionKey);
+  const permissions = expandPermissionAliases(Array.isArray(session.permissions) ? session.permissions : []);
+  const requested = String(permissionKey || '').trim();
+  const requestedAlias = PERMISSION_ALIASES[requested];
+  return (
+    permissions.includes(SUPER_ADMIN_PERMISSION) ||
+    permissions.includes(ADMIN_OVERRIDE_PERMISSION) ||
+    permissions.includes(requested) ||
+    (requestedAlias ? permissions.includes(requestedAlias) : false)
+  );
 }
 
 export function hasAnyPermission(session, permissionKeys) {
@@ -183,8 +229,10 @@ export async function buildPermissionContext(env, { discordUserId, discordRoleId
   const { roles, permissions } = await getRolePermissions(env, appRoleIds);
   const rankPermissions = await getRankPermissions(env, employee?.rank);
 
-  const normalizedPermissions = normalizePermissionKeys(
-    isSuperAdmin ? [...permissions, ...rankPermissions, SUPER_ADMIN_PERMISSION, ...getPermissionKeys()] : [...permissions, ...rankPermissions]
+  const normalizedPermissions = expandPermissionAliases(
+    isSuperAdmin
+      ? [...permissions, ...rankPermissions, SUPER_ADMIN_PERMISSION, ADMIN_OVERRIDE_PERMISSION, ...getPermissionKeys()]
+      : [...permissions, ...rankPermissions]
   );
 
   return {

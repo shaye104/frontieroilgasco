@@ -83,7 +83,7 @@ export async function initRolesAdmin(config) {
 
   function renderRoleList() {
     if (!roles.length) {
-      list.innerHTML = '<li class="role-item"><span class="role-id">No roles found.</span></li>';
+      list.innerHTML = '<li class="role-item"><span class="role-id">No user groups found.</span></li>';
       return;
     }
 
@@ -138,12 +138,12 @@ export async function initRolesAdmin(config) {
         try {
           await reorderAdminRole({ id: roleId, direction });
           pendingMoves.delete(roleId);
-          showMessage(feedback, 'Role order updated.', 'success');
+          showMessage(feedback, 'User group order updated.', 'success');
         } catch (error) {
           roles = previous;
           pendingMoves.delete(roleId);
           renderRoleList();
-          showMessage(feedback, error.message || 'Unable to reorder roles.', 'error');
+          showMessage(feedback, error.message || 'Unable to reorder user groups.', 'error');
           return;
         }
         renderRoleList();
@@ -198,9 +198,9 @@ export async function initRolesAdmin(config) {
       closeModal('createRoleModal');
       renderRoleList();
       renderRoleDetails();
-      showMessage(feedback, 'Role created.', 'success');
+      showMessage(feedback, 'User group created.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to create role.', 'error');
+      showMessage(feedback, error.message || 'Unable to create user group.', 'error');
     }
   });
 
@@ -221,9 +221,9 @@ export async function initRolesAdmin(config) {
       roles = payload.roles || [];
       renderRoleList();
       renderRoleDetails();
-      showMessage(feedback, 'Role updated.', 'success');
+      showMessage(feedback, 'User group updated.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to save role.', 'error');
+      showMessage(feedback, error.message || 'Unable to save user group.', 'error');
     }
   });
 
@@ -246,9 +246,9 @@ export async function initRolesAdmin(config) {
         });
       }
       await refreshRoles();
-      showMessage(feedback, 'Role cloned.', 'success');
+      showMessage(feedback, 'User group cloned.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to clone role.', 'error');
+      showMessage(feedback, error.message || 'Unable to clone user group.', 'error');
     }
   });
 
@@ -262,9 +262,9 @@ export async function initRolesAdmin(config) {
       selectedRoleId = roles[0]?.id || null;
       renderRoleList();
       renderRoleDetails();
-      showMessage(feedback, 'Role deleted.', 'success');
+      showMessage(feedback, 'User group deleted.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to delete role.', 'error');
+      showMessage(feedback, error.message || 'Unable to delete user group.', 'error');
     }
   });
 
@@ -272,6 +272,6 @@ export async function initRolesAdmin(config) {
     await refreshRoles();
     clearMessage(feedback);
   } catch (error) {
-    showMessage(feedback, error.message || 'Unable to initialize roles page.', 'error');
+    showMessage(feedback, error.message || 'Unable to initialize user groups page.', 'error');
   }
 }

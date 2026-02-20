@@ -6,7 +6,7 @@ initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
-  requiredPermissions: ['admin.access', 'roles.manage']
+  requiredPermissions: ['admin.access', 'user_groups.manage']
 }).then((session) => {
   if (!session) return;
 

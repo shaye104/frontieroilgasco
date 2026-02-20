@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier user groups management." />
-    <title>Frontier Oil & Gas Company | User Groups</title>
+    <meta name="description" content="Frontier user ranks management." />
+    <title>Frontier Oil & Gas Company | User Ranks</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -28,40 +28,38 @@
       <div class="container intranet-layout">
         <section class="panel">
           <div class="modal-header">
-            <h1>User Groups</h1>
+            <h1>User Ranks</h1>
             <a class="btn btn-secondary" href="admin-panel.html">&larr; Back to Admin Panel</a>
           </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
-          <div id="rolesFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="userRanksFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
         <section id="protectedContent" class="hidden">
           <article class="panel roles-layout">
             <section class="roles-list-panel">
               <div class="modal-header">
-                <h2>User Groups</h2>
-                <button id="openCreateRoleBtn" class="btn btn-primary" type="button">+ Create Group</button>
+                <h2>Ranks</h2>
+                <button id="openCreateRankBtn" class="btn btn-primary" type="button">+ Create Rank</button>
               </div>
-              <ul id="rolesList" class="role-list"></ul>
+              <ul id="userRanksList" class="role-list"></ul>
             </section>
-
             <section class="roles-details-panel">
-              <h2>Group Details</h2>
-              <p id="selectedRoleHint">Select a user group to edit permissions.</p>
-              <form id="roleDetailsForm" class="hidden">
+              <h2>Rank Permissions</h2>
+              <p id="userRanksHint">Select a rank to edit permission mappings.</p>
+              <form id="userRanksDetailsForm" class="hidden">
                 <input type="hidden" name="id" />
-                <label>Group Name</label>
-                <input name="name" type="text" required />
+                <label>Rank Name</label>
+                <input name="value" type="text" required />
+                <label>Rank Level</label>
+                <input name="level" type="number" step="1" required />
                 <label>Description</label>
                 <textarea name="description" rows="3"></textarea>
-
                 <h3>Permissions</h3>
-                <div id="permissionsEditor" class="permissions-grid"></div>
-
+                <div id="userRanksPermissionsEditor" class="permissions-grid"></div>
                 <div class="modal-actions">
-                  <button class="btn btn-primary" type="submit">Save Changes</button>
-                  <button id="cloneRoleBtn" class="btn btn-secondary" type="button">Clone Role</button>
-                  <button id="deleteRoleBtn" class="btn btn-danger" type="button">Delete Group</button>
+                  <button class="btn btn-primary" type="submit">Save Rank</button>
+                  <button id="deleteUserRankBtn" class="btn btn-danger" type="button">Delete Rank</button>
                 </div>
               </form>
             </section>
@@ -70,20 +68,22 @@
       </div>
     </main>
 
-    <section id="createRoleModal" class="modal-overlay hidden" aria-hidden="true">
+    <section id="createUserRankModal" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal-card">
         <div class="modal-header">
-          <h2>Create Group</h2>
-          <button class="btn btn-secondary" type="button" data-close-modal="createRoleModal">Close</button>
+          <h2>Create Rank</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="createUserRankModal">Close</button>
         </div>
-        <form id="createRoleForm">
-          <label>Group Name</label>
-          <input name="name" type="text" required />
+        <form id="createUserRankForm">
+          <label>Rank Name</label>
+          <input name="value" type="text" required />
+          <label>Rank Level</label>
+          <input name="level" type="number" step="1" required />
           <label>Description</label>
           <textarea name="description" rows="3"></textarea>
           <div class="modal-actions">
-            <button class="btn btn-primary" type="submit">Create Group</button>
-            <button class="btn btn-secondary" type="button" data-close-modal="createRoleModal">Cancel</button>
+            <button class="btn btn-primary" type="submit">Create Rank</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="createUserRankModal">Cancel</button>
           </div>
         </form>
       </div>
@@ -95,6 +95,6 @@
       </div>
     </footer>
 
-    <script type="module" src="assets/js/pages/roles-page.js"></script>
+    <script type="module" src="assets/js/pages/user-ranks-page.js"></script>
   </body>
 </html>

@@ -15,6 +15,12 @@ export async function ensureCoreSchema(env) {
     ['roles.read', 'roles', 'View Roles', 'View role definitions and permissions.'],
     ['roles.manage', 'roles', 'Manage Roles', 'Create, edit, delete, and reorder roles.'],
     ['roles.assign', 'roles', 'Assign Roles', 'Assign and unassign roles for employees.'],
+    ['user_groups.read', 'user_groups', 'View User Groups', 'View user group definitions and permissions.'],
+    ['user_groups.manage', 'user_groups', 'Manage User Groups', 'Create, edit, delete, and reorder user groups.'],
+    ['user_groups.assign', 'user_groups', 'Assign User Groups', 'Assign and unassign user groups for employees.'],
+    ['user_ranks.manage', 'user_ranks', 'Manage User Ranks', 'Create, edit, delete, and reorder user ranks.'],
+    ['user_ranks.permissions.manage', 'user_ranks', 'Manage User Rank Permissions', 'Edit permission mappings granted by user ranks.'],
+    ['admin.override', 'admin', 'Admin Override', 'Grant all permissions across the application.'],
     ['activity_tracker.view', 'activity_tracker', 'View Activity Tracker', 'View employee voyage activity statistics.'],
     ['activity_tracker.manage', 'activity_tracker', 'Manage Activity Tracker', 'Manage advanced activity tracker features.'],
     ['forms.read', 'forms', 'View Forms', 'View forms list and form details.'],
@@ -92,6 +98,9 @@ export async function ensureCoreSchema(env) {
     `CREATE TABLE IF NOT EXISTS config_ranks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       value TEXT NOT NULL UNIQUE,
+      level INTEGER NOT NULL DEFAULT 0,
+      description TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS config_grades (
@@ -330,6 +339,17 @@ export async function ensureCoreSchema(env) {
   if (!voyageLogColumnNames.has('log_type')) {
     await env.DB.prepare(`ALTER TABLE voyage_logs ADD COLUMN log_type TEXT NOT NULL DEFAULT 'manual'`).run();
   }
+  const rankColumns = await env.DB.prepare(`PRAGMA table_info(config_ranks)`).all();
+  const rankColumnNames = new Set((rankColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!rankColumnNames.has('level')) {
+    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN level INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!rankColumnNames.has('description')) {
+    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN description TEXT`).run();
+  }
+  if (!rankColumnNames.has('updated_at')) {
+    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+  }
 
   await env.DB.batch(
     permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>
@@ -468,4 +488,22 @@ export function calculateTenureDays(hireDateText) {
   const now = new Date();
   const msPerDay = 24 * 60 * 60 * 1000;
   return Math.max(0, Math.floor((now.getTime() - hire.getTime()) / msPerDay));
+}
+
+export async function getRankLevelByValue(env, rankValue) {
+  await ensureCoreSchema(env);
+  const rank = String(rankValue || '').trim();
+  if (!rank) return 0;
+  const row = await env.DB
+    .prepare(`SELECT level FROM config_ranks WHERE LOWER(value) = LOWER(?) LIMIT 1`)
+    .bind(rank)
+    .first();
+  const level = Number(row?.level);
+  return Number.isFinite(level) ? level : 0;
+}
+
+export async function canEditEmployeeByRank(env, actorEmployee, targetEmployee) {
+  const actorRankLevel = await getRankLevelByValue(env, actorEmployee?.rank);
+  const targetRankLevel = await getRankLevelByValue(env, targetEmployee?.rank);
+  return actorRankLevel >= targetRankLevel;
 }

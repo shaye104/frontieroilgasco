@@ -256,6 +256,30 @@ export function saveRankPermissions(rankValue, permissionKeys) {
   });
 }
 
+export function listUserRanks() {
+  return requestJson('/api/admin/user-ranks', { method: 'GET' });
+}
+
+export function createUserRank(payload) {
+  return requestJson('/api/admin/user-ranks', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateUserRank(payload) {
+  return requestJson('/api/admin/user-ranks', {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function deleteUserRank(rankId) {
+  return requestJson(`/api/admin/user-ranks?id=${encodeURIComponent(String(rankId))}`, {
+    method: 'DELETE'
+  });
+}
+
 export function startVoyage(payload) {
   return requestJson('/api/voyages', {
     method: 'POST',

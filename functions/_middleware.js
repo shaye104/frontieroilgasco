@@ -35,6 +35,7 @@ function isProtectedPath(pathname) {
     '/admin-config.html',
     '/cargo-admin.html',
     '/roles.html',
+    '/user-ranks.html',
     '/manage-employees.html',
     '/employee-profile.html'
   ]);
@@ -65,6 +66,13 @@ export async function onRequest(context) {
 
     if (pathname === '/dashboard') {
       return Response.redirect(new URL('/my-details.html', url.origin).toString(), 302);
+    }
+
+    if (pathname === '/login') {
+      if (isLoggedIn) {
+        return Response.redirect(new URL('/my-details.html', url.origin).toString(), 302);
+      }
+      return context.next();
     }
 
     if (isLoggedIn && (pathname === '/' || pathname === '/index.html')) {

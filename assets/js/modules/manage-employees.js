@@ -1,4 +1,5 @@
 import { createEmployee, getConfig, listEmployees } from './admin-api.js';
+import { hasPermission } from './nav.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
@@ -45,7 +46,7 @@ function applyEmployeeFilters(employees, filters) {
   });
 }
 
-function renderEmployeeTable(target, employees) {
+function renderEmployeeTable(target, employees, actorRankLevel, canOverride) {
   if (!target) return;
   if (!employees.length) {
     target.innerHTML = '<tr><td colspan="9">No employees found.</td></tr>';
@@ -64,7 +65,11 @@ function renderEmployeeTable(target, employees) {
           <td>${text(emp.serial_number)}</td>
           <td>${text(emp.employee_status)}</td>
           <td>${text(emp.hire_date)}</td>
-          <td><a class="btn btn-secondary" href="/employee-profile.html?employeeId=${emp.id}">Open</a></td>
+          <td>${
+            !canOverride && Number(emp.rank_level || 0) > Number(actorRankLevel || 0)
+              ? '<span class="role-id">Restricted</span>'
+              : `<a class="btn btn-secondary" href="/employee-profile.html?employeeId=${emp.id}">Open</a>`
+          }</td>
         </tr>
       `
     )
@@ -79,7 +84,7 @@ function renderEmployeeTable(target, employees) {
   });
 }
 
-export async function initManageEmployees(config) {
+export async function initManageEmployees(config, session) {
   const feedback = document.querySelector(config.feedbackSelector);
   const tableBody = document.querySelector(config.employeeTableBodySelector);
 
@@ -94,6 +99,8 @@ export async function initManageEmployees(config) {
   if (!feedback || !tableBody || !createForm) return;
 
   let employees = [];
+  let actorRankLevel = 0;
+  const canOverride = hasPermission(session, 'admin.override');
 
   const refreshTable = () => {
     const filtered = applyEmployeeFilters(employees, {
@@ -103,7 +110,7 @@ export async function initManageEmployees(config) {
       username: filterUsername?.value || ''
     });
 
-    renderEmployeeTable(tableBody, filtered);
+    renderEmployeeTable(tableBody, filtered, actorRankLevel, canOverride);
   };
 
   async function refreshConfig() {
@@ -120,6 +127,7 @@ export async function initManageEmployees(config) {
   async function refreshEmployees() {
     const payload = await listEmployees();
     employees = payload.employees || [];
+    actorRankLevel = Number(payload.actorRankLevel || 0);
     refreshTable();
   }
 

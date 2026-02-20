@@ -1,5 +1,7 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { requirePermission } from '../../_lib/admin-auth.js';
+import { canEditEmployeeByRank, getEmployeeByDiscordUserId } from '../../../_lib/db.js';
+import { hasPermission } from '../../../_lib/permissions.js';
 
 export async function onRequestPost(context) {
   const { env, params } = context;
@@ -8,6 +10,15 @@ export async function onRequestPost(context) {
 
   const employeeId = Number(params.id);
   if (!Number.isInteger(employeeId) || employeeId <= 0) return json({ error: 'Invalid employee id.' }, 400);
+  const targetEmployee = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
+  if (!targetEmployee) return json({ error: 'Employee not found.' }, 404);
+  const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
+  const canEditByRank = actorEmployee
+    ? await canEditEmployeeByRank(env, actorEmployee, targetEmployee)
+    : false;
+  if (!hasPermission(session, 'admin.override') && !canEditByRank) {
+    return json({ error: 'You cannot edit employees with a higher rank than yours.' }, 403);
+  }
 
   let payload;
   try {

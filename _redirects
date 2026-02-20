@@ -16,5 +16,9 @@
 /forms/ /forms.html 200
 /admin /admin-panel.html 200
 /admin/ /admin-panel.html 200
+/admin/user-groups /roles.html 200
+/admin/user-groups/ /roles.html 200
+/admin/user-ranks /user-ranks.html 200
+/admin/user-ranks/ /user-ranks.html 200
 /admin/activity-tracker /activity-tracker.html 200
 /admin/activity-tracker/ /activity-tracker.html 200

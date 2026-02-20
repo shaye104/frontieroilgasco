@@ -106,7 +106,8 @@ export async function initEmployeeProfilePage(config, session) {
   let currentEmployee = null;
   let availableRoles = [];
   let assignedRoleIds = [];
-  const canManageRoles = hasPermission(session, 'roles.assign');
+  let canEditEmployee = true;
+  let canManageRoles = hasPermission(session, 'user_groups.assign');
 
   async function refreshConfig() {
     const [statuses, ranks, grades, disciplinaryTypes] = await Promise.all([
@@ -140,7 +141,7 @@ export async function initEmployeeProfilePage(config, session) {
             .map(
               (role) => `<label class="permissions-item">
           <input type="checkbox" data-role-id="${role.id}" ${selected.has(Number(role.id)) ? 'checked' : ''} ${
-                canManageRoles ? '' : 'disabled'
+                canManageRoles && canEditEmployee ? '' : 'disabled'
               } />
           <span><strong>${text(role.name)}</strong><br /><small>${text(role.description || '')}</small></span>
         </label>`
@@ -150,13 +151,29 @@ export async function initEmployeeProfilePage(config, session) {
     }
 
     if (tenureDaysInput) tenureDaysInput.value = calculateTenureDays(employee.hire_date);
+
+    const controls = editForm.querySelectorAll('input, select, textarea, button');
+    controls.forEach((control) => {
+      if (control.id === 'tenureDays') return;
+      if (control.type === 'hidden') return;
+      control.disabled = !canEditEmployee;
+    });
+    openDisciplinaryModalBtn?.classList.toggle('hidden', !canEditEmployee);
+    openNoteModalBtn?.classList.toggle('hidden', !canEditEmployee);
+    resetButton?.classList.toggle('hidden', !canEditEmployee);
   }
 
   async function loadEmployee() {
     const payload = await getEmployee(employeeId);
+    const capabilities = payload.capabilities || {};
+    canEditEmployee = Boolean(capabilities.canEditByRank);
+    canManageRoles = hasPermission(session, 'user_groups.assign') && Boolean(capabilities.canAssignUserGroups);
     availableRoles = payload.availableRoles || [];
     assignedRoleIds = (payload.assignedRoles || []).map((role) => Number(role.id)).filter((value) => Number.isInteger(value) && value > 0);
     applyEmployeeToForm(payload.employee);
+    if (!canEditEmployee) {
+      showMessage(feedback, 'You cannot edit employees with a higher rank than yours.', 'error');
+    }
 
     const activeDisciplinaries = getActiveDisciplinaries(payload.disciplinaries || []);
 
@@ -199,6 +216,10 @@ export async function initEmployeeProfilePage(config, session) {
   editForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearMessage(feedback);
+    if (!canEditEmployee) {
+      showMessage(feedback, 'You cannot edit employees with a higher rank than yours.', 'error');
+      return;
+    }
 
     const data = new FormData(editForm);
 
@@ -228,6 +249,10 @@ export async function initEmployeeProfilePage(config, session) {
   disciplinaryForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearMessage(feedback);
+    if (!canEditEmployee) {
+      showMessage(feedback, 'You cannot edit employees with a higher rank than yours.', 'error');
+      return;
+    }
 
     const data = new FormData(disciplinaryForm);
 
@@ -257,6 +282,10 @@ export async function initEmployeeProfilePage(config, session) {
   noteForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearMessage(feedback);
+    if (!canEditEmployee) {
+      showMessage(feedback, 'You cannot edit employees with a higher rank than yours.', 'error');
+      return;
+    }
 
     const data = new FormData(noteForm);
 

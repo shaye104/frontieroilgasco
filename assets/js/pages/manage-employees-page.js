@@ -10,17 +10,20 @@ initIntranetPageGuard({
 }).then((session) => {
   if (!session) return;
 
-  initManageEmployees({
-    feedbackSelector: '#manageEmployeesFeedback',
-    employeeTableBodySelector: '#employeeTableBody',
-    selectedEmployeeSelector: '#selectedEmployee',
-    filterRankSelector: '#filterRank',
-    filterGradeSelector: '#filterGrade',
-    filterSerialSelector: '#filterSerialNumber',
-    filterUsernameSelector: '#filterRobloxUsername',
-    openCreateEmployeeBtnSelector: '#openCreateEmployeeBtn',
-    createFormSelector: '#createEmployeeForm'
-  });
+  initManageEmployees(
+    {
+      feedbackSelector: '#manageEmployeesFeedback',
+      employeeTableBodySelector: '#employeeTableBody',
+      selectedEmployeeSelector: '#selectedEmployee',
+      filterRankSelector: '#filterRank',
+      filterGradeSelector: '#filterGrade',
+      filterSerialSelector: '#filterSerialNumber',
+      filterUsernameSelector: '#filterRobloxUsername',
+      openCreateEmployeeBtnSelector: '#openCreateEmployeeBtn',
+      createFormSelector: '#createEmployeeForm'
+    },
+    session
+  );
 });
 
 initializeYear();

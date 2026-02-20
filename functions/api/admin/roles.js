@@ -1,6 +1,7 @@
 import { json } from '../auth/_lib/auth.js';
 import { requirePermission } from './_lib/admin-auth.js';
 import {
+  ADMIN_OVERRIDE_PERMISSION,
   SUPER_ADMIN_PERMISSION,
   getPermissionCatalog,
   normalizePermissionKeys,
@@ -54,9 +55,9 @@ async function rolesWithManageCount(env) {
     .prepare(
       `SELECT COUNT(DISTINCT role_id) AS count
        FROM app_role_permissions
-       WHERE permission_key IN (?, ?)`
+       WHERE permission_key IN (?, ?, ?)`
     )
-    .bind('roles.manage', SUPER_ADMIN_PERMISSION)
+    .bind('user_groups.manage', 'roles.manage', SUPER_ADMIN_PERMISSION)
     .first();
   return Number(result?.count || 0);
 }
@@ -85,11 +86,14 @@ async function userCanManageViaRole(env, userId, targetRoleId, nextPermissionKey
   (rolePermissionRows?.results || []).forEach((row) => {
     const roleId = Number(row.role_id);
     const key = String(row.permission_key || '');
-    if (key === 'roles.manage' || key === SUPER_ADMIN_PERMISSION) manages.add(roleId);
+    if (key === 'user_groups.manage' || key === 'roles.manage' || key === SUPER_ADMIN_PERMISSION) manages.add(roleId);
   });
 
   if (assignedRoleIds.includes(targetRoleId)) {
-    const targetHasManage = nextPermissionKeys.includes('roles.manage') || nextPermissionKeys.includes(SUPER_ADMIN_PERMISSION);
+    const targetHasManage =
+      nextPermissionKeys.includes('user_groups.manage') ||
+      nextPermissionKeys.includes('roles.manage') ||
+      nextPermissionKeys.includes(SUPER_ADMIN_PERMISSION);
     if (targetHasManage) manages.add(targetRoleId);
     else manages.delete(targetRoleId);
   }
@@ -97,18 +101,27 @@ async function userCanManageViaRole(env, userId, targetRoleId, nextPermissionKey
   return manages.size > 0;
 }
 
+function canManageAdminOverride(env, session) {
+  const ownerId = String(env.OWNER_DISCORD_ID || env.ADMIN_DISCORD_USER_ID || '').trim();
+  return Boolean(ownerId) && String(session?.userId || '') === ownerId;
+}
+
 export async function onRequestGet(context) {
   const { env } = context;
-  const { errorResponse } = await requirePermission(context, ['roles.read']);
+  const { errorResponse, session } = await requirePermission(context, ['user_groups.read']);
   if (errorResponse) return errorResponse;
 
   const roles = await getRolesWithPermissions(env);
-  return json({ roles, permissionCatalog: getPermissionCatalog() });
+  const isOwner = canManageAdminOverride(env, session);
+  return json({
+    roles,
+    permissionCatalog: getPermissionCatalog().filter((permission) => isOwner || permission.key !== ADMIN_OVERRIDE_PERMISSION)
+  });
 }
 
 export async function onRequestPost(context) {
   const { env } = context;
-  const { errorResponse } = await requirePermission(context, ['roles.manage']);
+  const { errorResponse } = await requirePermission(context, ['user_groups.manage']);
   if (errorResponse) return errorResponse;
 
   let payload;
@@ -139,7 +152,7 @@ export async function onRequestPost(context) {
 
 export async function onRequestPut(context) {
   const { env } = context;
-  const { errorResponse, session } = await requirePermission(context, ['roles.manage']);
+  const { errorResponse, session } = await requirePermission(context, ['user_groups.manage']);
   if (errorResponse) return errorResponse;
 
   let payload;
@@ -160,7 +173,21 @@ export async function onRequestPut(context) {
   if (!name) return json({ error: 'Role name is required.' }, 400);
 
   const permissionKeys = normalizePermissionKeys(payload?.permissionKeys);
-  const includesManage = permissionKeys.includes('roles.manage') || permissionKeys.includes(SUPER_ADMIN_PERMISSION);
+  const includesManage =
+    permissionKeys.includes('user_groups.manage') ||
+    permissionKeys.includes('roles.manage') ||
+    permissionKeys.includes(SUPER_ADMIN_PERMISSION);
+  const isOwner = canManageAdminOverride(env, session);
+  const existingPermissionRows = await env.DB
+    .prepare('SELECT permission_key FROM app_role_permissions WHERE role_id = ?')
+    .bind(roleId)
+    .all();
+  const existingPermissionKeys = (existingPermissionRows?.results || []).map((row) => String(row.permission_key || '').trim());
+  const existingHasAdminOverride = existingPermissionKeys.includes(ADMIN_OVERRIDE_PERMISSION);
+  const nextHasAdminOverride = permissionKeys.includes(ADMIN_OVERRIDE_PERMISSION);
+  if (!isOwner && (existingHasAdminOverride || nextHasAdminOverride)) {
+    return json({ error: 'Only OWNER_DISCORD_ID can grant or revoke admin.override.' }, 403);
+  }
 
   if (!includesManage) {
     const count = await rolesWithManageCount(env);
@@ -169,10 +196,10 @@ export async function onRequestPut(context) {
         `SELECT 1
          FROM app_role_permissions
          WHERE role_id = ?
-           AND permission_key IN (?, ?)
+           AND permission_key IN (?, ?, ?)
          LIMIT 1`
       )
-      .bind(roleId, 'roles.manage', SUPER_ADMIN_PERMISSION)
+      .bind(roleId, 'user_groups.manage', 'roles.manage', SUPER_ADMIN_PERMISSION)
       .first();
     if (currentHasManage && count <= 1) {
       return json({ error: 'Cannot remove manage permission from the last administrative role.' }, 400);
@@ -206,7 +233,7 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { env, request } = context;
-  const { errorResponse, session } = await requirePermission(context, ['roles.manage']);
+  const { errorResponse, session } = await requirePermission(context, ['user_groups.manage']);
   if (errorResponse) return errorResponse;
 
   const roleId = toInt(new URL(request.url).searchParams.get('id'));
@@ -218,16 +245,27 @@ export async function onRequestDelete(context) {
     .first();
   if (!role) return json({ error: 'Role not found.' }, 404);
   if (Number(role.is_system) === 1) return json({ error: 'System roles cannot be deleted.' }, 400);
+  const isOwner = canManageAdminOverride(env, session);
+  const permissionRows = await env.DB
+    .prepare('SELECT permission_key FROM app_role_permissions WHERE role_id = ?')
+    .bind(roleId)
+    .all();
+  const hasAdminOverride = (permissionRows?.results || []).some(
+    (row) => String(row.permission_key || '').trim() === ADMIN_OVERRIDE_PERMISSION
+  );
+  if (!isOwner && hasAdminOverride) {
+    return json({ error: 'Only OWNER_DISCORD_ID can grant or revoke admin.override.' }, 403);
+  }
 
   const roleHasManage = await env.DB
     .prepare(
       `SELECT 1
        FROM app_role_permissions
        WHERE role_id = ?
-         AND permission_key IN (?, ?)
+         AND permission_key IN (?, ?, ?)
        LIMIT 1`
     )
-    .bind(roleId, 'roles.manage', SUPER_ADMIN_PERMISSION)
+    .bind(roleId, 'user_groups.manage', 'roles.manage', SUPER_ADMIN_PERMISSION)
     .first();
 
   if (roleHasManage) {
