@@ -9,15 +9,6 @@ import {
 import { createOrRefreshAccessRequest } from '../../_lib/db.js';
 import { buildPermissionContext, hasPermission } from '../../_lib/permissions.js';
 
-function toLoginUrl(requestUrl, params = {}) {
-  const source = new URL(requestUrl);
-  const target = new URL('/login', `${source.protocol}//${source.host}`);
-  Object.entries(params).forEach(([k, v]) => {
-    if (v) target.searchParams.set(k, v);
-  });
-  return target.toString();
-}
-
 function toAccessDeniedUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
   const target = new URL('/access-denied.html', `${source.protocol}//${source.host}`);
@@ -74,13 +65,13 @@ export async function onRequest(context) {
   const oauthError = url.searchParams.get('error');
 
   if (oauthError || !code || !state) {
-    return redirect(toLoginUrl(request.url, { auth: 'error' }));
+    return redirect(toAccessDeniedUrl(request.url, { reason: 'oauth_callback_invalid' }));
   }
 
   const cookies = parseCookies(request.headers.get('Cookie'));
   const stateValid = await verifyStateToken(env.SESSION_SECRET, cookies.fog_oauth_state, state);
   if (!stateValid) {
-    return redirect(toLoginUrl(request.url, { auth: 'error' }));
+    return redirect(toAccessDeniedUrl(request.url, { reason: 'oauth_state_invalid' }));
   }
 
   const origin = `${url.protocol}//${url.host}`;
@@ -99,13 +90,13 @@ export async function onRequest(context) {
   });
 
   if (!tokenResponse.ok) {
-    return redirect(toLoginUrl(request.url, { auth: 'error' }));
+    return redirect(toAccessDeniedUrl(request.url, { reason: 'oauth_token_exchange_failed' }));
   }
 
   const tokenData = await tokenResponse.json();
   const user = await fetchDiscordUser(tokenData.access_token);
   if (!user || !user.id) {
-    return redirect(toLoginUrl(request.url, { auth: 'error' }));
+    return redirect(toAccessDeniedUrl(request.url, { reason: 'oauth_user_fetch_failed' }));
   }
 
   const isAdminUser = user.id === String(env.ADMIN_DISCORD_USER_ID).trim();
@@ -123,7 +114,7 @@ export async function onRequest(context) {
     });
     employee = permissionContext.employee;
   } catch {
-    return redirect(toLoginUrl(request.url, { auth: 'error' }));
+    return redirect(toAccessDeniedUrl(request.url, { reason: 'session_build_failed' }));
   }
 
   const hasEntryPermission = hasPermission({ permissions: permissionContext.permissions }, 'my_details.view');
@@ -152,7 +143,7 @@ export async function onRequest(context) {
         displayName
       });
     } catch {
-      return redirect(toLoginUrl(request.url, { auth: 'error' }));
+      return redirect(toAccessDeniedUrl(request.url, { reason: 'access_request_failed' }));
     }
   }
 
