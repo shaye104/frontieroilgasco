@@ -1,4 +1,5 @@
 import { clearMessage, showMessage } from './notice.js';
+import { getMyDetails } from './admin-api.js';
 
 function safeText(value) {
   const text = String(value ?? '').trim();
@@ -64,15 +65,34 @@ function initDisciplineTabs() {
   setTab('active');
 }
 
-async function fetchMyDetails() {
-  const response = await fetch('/api/me/details', { method: 'GET', credentials: 'include' });
-  const payload = await response.json().catch(() => ({}));
+function renderDetailsSkeleton(fields, activeList, historyList) {
+  const textFieldIds = [
+    'robloxUsername',
+    'robloxUserId',
+    'rank',
+    'grade',
+    'serialNumber',
+    'employeeStatus',
+    'hireDate',
+    'tenureDays'
+  ];
+  textFieldIds.forEach((key) => {
+    if (!fields[key]) return;
+    fields[key].innerHTML = '<span class="skeleton-line skeleton-w-55"></span>';
+  });
+  if (fields.totalVoyages) fields.totalVoyages.innerHTML = '<span class="skeleton-line skeleton-w-35"></span>';
+  if (fields.monthlyVoyages) fields.monthlyVoyages.innerHTML = '<span class="skeleton-line skeleton-w-35"></span>';
 
-  if (!response.ok) throw new Error(payload.error || 'Unable to load profile details.');
-  return payload;
+  if (activeList) {
+    activeList.innerHTML = `<li class="role-item skeleton-shell"><span class="skeleton-line skeleton-w-90"></span></li>`;
+  }
+  if (historyList) {
+    historyList.innerHTML = `<li class="role-item skeleton-shell"><span class="skeleton-line skeleton-w-90"></span></li>`;
+  }
 }
 
 export async function initMyDetailsPanel(config) {
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
   const feedback = document.querySelector(config.feedbackSelector);
   const accessPendingPanel = document.querySelector(config.accessPendingSelector);
   const detailsPanel = document.querySelector(config.detailsPanelSelector);
@@ -86,7 +106,8 @@ export async function initMyDetailsPanel(config) {
   if (!feedback || !accessPendingPanel || !detailsPanel || !activeList || !historyList) return;
 
   try {
-    const details = await fetchMyDetails();
+    renderDetailsSkeleton(fields, activeList, historyList);
+    const details = await getMyDetails();
     clearMessage(feedback);
 
     if (details.accessPending) {
@@ -123,6 +144,10 @@ export async function initMyDetailsPanel(config) {
     renderDisciplinaryList(activeList, details.activeDisciplinaryRecords || [], 'No active disciplinary records.');
     renderDisciplinaryList(historyList, details.disciplinaryHistory || [], 'No disciplinary history.');
     initDisciplineTabs();
+    if (startedAt) {
+      const elapsed = Math.round(performance.now() - startedAt);
+      console.info('[perf] my-details first data render', { ms: elapsed });
+    }
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load My Details.', 'error');
   }

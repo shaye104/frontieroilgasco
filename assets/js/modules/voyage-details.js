@@ -832,7 +832,9 @@ export async function initVoyageDetails(config) {
   }
 
   async function loadSummary() {
-    detail = await getVoyage(voyageId, { includeSetup: true, includeManifest: false, includeLogs: false });
+    detail = await getVoyage(voyageId, { includeSetup: true, includeManifest: true, includeLogs: true });
+    manifest = detail.manifest || [];
+    logs = detail.logs || [];
     heading.textContent = `${text(detail.voyage.vessel_name)} | ${text(detail.voyage.vessel_callsign)} | ${text(detail.voyage.status)}`;
     const protectedContent = document.getElementById('protectedContent');
     const isArchived = String(detail.voyage.status) === 'ENDED';
@@ -852,6 +854,12 @@ export async function initVoyageDetails(config) {
     }
     const cargoTypes = detail.voyageConfig?.cargoTypes || [];
     addCargoTypeSelect.innerHTML = ['<option value="">Select cargo type</option>', ...cargoTypes.map((item) => `<option value="${item.id}">${item.name}</option>`)].join('');
+    setManifestSaveState('');
+    setInlineMessage(manifestFeedback, '');
+    renderManifest();
+    renderEndVoyageLines();
+    renderLogs();
+    renderArchivedBreakdown();
     if (isArchived) {
       removeArchivedControlsFromDom();
       closeModal('addCargoModal');
@@ -1252,7 +1260,7 @@ export async function initVoyageDetails(config) {
   });
 
   try {
-    await Promise.all([loadSummary(), loadManifest(), loadLogs()]);
+    await loadSummary();
     clearMessage(feedback);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load voyage details.', 'error');

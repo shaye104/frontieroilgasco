@@ -1,4 +1,4 @@
-import { listVoyages, searchEmployees, startVoyage } from './admin-api.js';
+import { getVoyageOverview, searchEmployees, startVoyage } from './admin-api.js';
 import { hasPermission } from './nav.js';
 import { clearMessage, showMessage } from './notice.js';
 
@@ -104,7 +104,21 @@ function renderVoyageCards(target, voyages, isOngoing) {
     .join('');
 }
 
+function renderVoyageSkeleton(target, count = 3) {
+  if (!target) return;
+  target.innerHTML = Array.from({ length: count })
+    .map(
+      () => `<article class="voyage-card skeleton-shell">
+        <div class="skeleton-line skeleton-w-60"></div>
+        <div class="skeleton-line skeleton-w-80"></div>
+        <div class="skeleton-line skeleton-w-45"></div>
+      </article>`
+    )
+    .join('');
+}
+
 export async function initVoyageTracker(config, session) {
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
   const feedback = document.querySelector(config.feedbackSelector);
   const ongoingRoot = document.querySelector(config.ongoingSelector);
   const archivedRoot = document.querySelector(config.archivedSelector);
@@ -327,31 +341,32 @@ export async function initVoyageTracker(config, session) {
   }
 
   async function refreshBoard() {
-    const [ongoingPayload, archivedPayload] = await Promise.all([
-      listVoyages({ includeSetup: true, status: 'ONGOING', page: 1, pageSize: 100 }),
-      listVoyages({ status: 'ENDED', page: 1, pageSize: 6 })
-    ]);
-    employees = ongoingPayload.employees || [];
-    ongoing = ongoingPayload.voyages || ongoingPayload.ongoing || [];
-    archived = archivedPayload.voyages || archivedPayload.archived || [];
-    archivedTotal = Number(archivedPayload?.pagination?.total || archived.length || 0);
+    const payload = await getVoyageOverview({ includeSetup: true, archivedLimit: 6 });
+    employees = payload.employees || [];
+    ongoing = payload.ongoing || [];
+    archived = payload.archived || [];
+    archivedTotal = Number(payload?.counts?.archived || archived.length || 0);
     console.info('[voyages] loaded', { ongoing: ongoing.length, archived: archived.length });
     ongoingKeys = new Set(ongoing.map((voyage) => `${normalize(voyage.vessel_name)}::${normalize(voyage.vessel_callsign)}`));
 
     if (hasPermission(session, 'voyages.create')) startBtn.classList.remove('hidden');
     else startBtn.classList.add('hidden');
 
-    fillSelect(departureSelect, ongoingPayload.voyageConfig?.ports || [], 'Select departure port');
-    fillSelect(destinationSelect, ongoingPayload.voyageConfig?.ports || [], 'Select destination port');
-    fillSelect(vesselNameSelect, ongoingPayload.voyageConfig?.vesselNames || [], 'Select vessel name');
-    fillSelect(vesselClassSelect, ongoingPayload.voyageConfig?.vesselClasses || [], 'Select vessel class');
-    fillSelect(vesselCallsignSelect, ongoingPayload.voyageConfig?.vesselCallsigns || [], 'Select vessel callsign');
+    fillSelect(departureSelect, payload.voyageConfig?.ports || [], 'Select departure port');
+    fillSelect(destinationSelect, payload.voyageConfig?.ports || [], 'Select destination port');
+    fillSelect(vesselNameSelect, payload.voyageConfig?.vesselNames || [], 'Select vessel name');
+    fillSelect(vesselClassSelect, payload.voyageConfig?.vesselClasses || [], 'Select vessel class');
+    fillSelect(vesselCallsignSelect, payload.voyageConfig?.vesselCallsigns || [], 'Select vessel callsign');
     renderCrewSelected();
     renderVoyageCards(ongoingRoot, ongoing, true);
     renderVoyageCards(archivedRoot, archived, false);
     ongoingCountChip.textContent = String(ongoing.length);
     archivedCountChip.textContent = String(archivedTotal);
     archivedCta.classList.toggle('hidden', archivedTotal <= 6);
+    if (startedAt) {
+      const elapsed = Math.round(performance.now() - startedAt);
+      console.info('[perf] voyage tracker first data render', { ms: elapsed });
+    }
   }
 
   startBtn.addEventListener('click', () => openModal('startVoyageModal'));
@@ -452,6 +467,8 @@ export async function initVoyageTracker(config, session) {
   });
 
   try {
+    renderVoyageSkeleton(ongoingRoot, 3);
+    renderVoyageSkeleton(archivedRoot, 3);
     await refreshBoard();
     clearMessage(feedback);
   } catch (error) {

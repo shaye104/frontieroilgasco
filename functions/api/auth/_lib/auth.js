@@ -112,6 +112,36 @@ export function json(data, status = 200) {
   });
 }
 
+function weakEtagFromBody(body) {
+  let hash = 5381;
+  for (let i = 0; i < body.length; i += 1) {
+    hash = (hash * 33) ^ body.charCodeAt(i);
+  }
+  const digest = (hash >>> 0).toString(16);
+  return `W/"${digest}-${body.length}"`;
+}
+
+export function cachedJson(request, data, options = {}) {
+  const body = JSON.stringify(data);
+  const etag = options.etag || weakEtagFromBody(body);
+  const cacheControl = options.cacheControl || 'private, max-age=30, stale-while-revalidate=60';
+  const status = options.status || 200;
+  const ifNoneMatch = request?.headers?.get('if-none-match');
+
+  const headers = new Headers({
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': cacheControl,
+    etag,
+    vary: 'Cookie'
+  });
+
+  if (ifNoneMatch && ifNoneMatch === etag) {
+    return new Response(null, { status: 304, headers });
+  }
+
+  return new Response(body, { status, headers });
+}
+
 export function redirect(to, cookies = []) {
   const headers = new Headers({ Location: to, 'cache-control': 'no-store' });
   cookies.forEach((cookie) => headers.append('Set-Cookie', cookie));

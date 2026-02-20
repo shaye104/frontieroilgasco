@@ -1,13 +1,82 @@
+const clientDataCache = new Map();
+
+function nowMs() {
+  return Date.now();
+}
+
+function cacheGet(key, ttlMs) {
+  if (!ttlMs || ttlMs <= 0) return null;
+  const item = clientDataCache.get(key);
+  if (!item) return null;
+  if (nowMs() - item.ts > ttlMs) return null;
+  return item.payload;
+}
+
+function cacheSet(key, payload) {
+  clientDataCache.set(key, { ts: nowMs(), payload });
+}
+
+function clearDataCache() {
+  clientDataCache.clear();
+}
+
+function markApiRequest(url) {
+  if (typeof window === 'undefined') return;
+  const route = window.location.pathname || '/';
+  window.__fogRoutePerf = window.__fogRoutePerf || {};
+  if (!window.__fogRoutePerf[route]) {
+    window.__fogRoutePerf[route] = {
+      startedAt: performance.now(),
+      apiRequests: 0
+    };
+  }
+  window.__fogRoutePerf[route].apiRequests += 1;
+  if (window.__fogPerfVerbose) console.info('[perf] api', { route, url, requests: window.__fogRoutePerf[route].apiRequests });
+}
+
 async function requestJson(url, options = {}) {
+  const method = String(options.method || 'GET').toUpperCase();
+  const cacheTtlMs = Number(options.cacheTtlMs || 0);
+  const cacheKey = String(options.cacheKey || `${method}:${url}`);
+
+  if (method === 'GET' && cacheTtlMs > 0) {
+    const cached = cacheGet(cacheKey, cacheTtlMs);
+    if (cached) return cached;
+  }
+
+  const fetchOptions = { ...options };
+  delete fetchOptions.cacheTtlMs;
+  delete fetchOptions.cacheKey;
+
+  markApiRequest(url);
   const response = await fetch(url, {
     credentials: 'include',
-    headers: { 'content-type': 'application/json', ...(options.headers || {}) },
-    ...options
+    headers: { 'content-type': 'application/json', ...(fetchOptions.headers || {}) },
+    ...fetchOptions
   });
+
+  if (response.status === 304) {
+    const cached = clientDataCache.get(cacheKey);
+    if (cached?.payload) {
+      cacheSet(cacheKey, cached.payload);
+      return cached.payload;
+    }
+  }
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error || `Request failed: ${response.status}`);
+
+  if (method === 'GET' && cacheTtlMs > 0) {
+    cacheSet(cacheKey, payload);
+  } else if (method !== 'GET') {
+    clearDataCache();
+  }
+
   return payload;
+}
+
+export function prefetchJson(url, options = {}) {
+  return requestJson(url, { method: 'GET', cacheTtlMs: 30000, ...options }).catch(() => null);
 }
 
 export function getSession() {
@@ -74,7 +143,7 @@ export function listEmployees(options = {}) {
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
   const suffix = params.toString() ? `?${params.toString()}` : '';
-  return requestJson(`/api/admin/employees${suffix}`, { method: 'GET' });
+  return requestJson(`/api/admin/employees${suffix}`, { method: 'GET', cacheTtlMs: 15000 });
 }
 
 export function createEmployee(employee) {
@@ -122,11 +191,11 @@ export function processAccessRequest(payload) {
 }
 
 export function getMyDetails() {
-  return requestJson('/api/me/details', { method: 'GET' });
+  return requestJson('/api/me/details', { method: 'GET', cacheTtlMs: 30000 });
 }
 
 export function listAvailableForms() {
-  return requestJson('/api/forms', { method: 'GET' });
+  return requestJson('/api/forms', { method: 'GET', cacheTtlMs: 30000 });
 }
 
 export function getAvailableForm(formId) {
@@ -231,7 +300,15 @@ export function listVoyages(options = {}) {
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
   if (options.includeSetup) params.set('includeSetup', '1');
   const suffix = params.toString() ? `?${params.toString()}` : '';
-  return requestJson(`/api/voyages${suffix}`, { method: 'GET' });
+  return requestJson(`/api/voyages${suffix}`, { method: 'GET', cacheTtlMs: 20000 });
+}
+
+export function getVoyageOverview(options = {}) {
+  const params = new URLSearchParams();
+  params.set('overview', '1');
+  if (options.includeSetup) params.set('includeSetup', '1');
+  if (options.archivedLimit) params.set('archivedLimit', String(options.archivedLimit));
+  return requestJson(`/api/voyages?${params.toString()}`, { method: 'GET', cacheTtlMs: 20000 });
 }
 
 export function listActivityTracker(options = {}) {
@@ -293,7 +370,7 @@ export function getVoyage(voyageId, options = {}) {
   if (options.includeManifest) params.set('includeManifest', '1');
   if (options.includeLogs) params.set('includeLogs', '1');
   const suffix = params.toString() ? `?${params.toString()}` : '';
-  return requestJson(`/api/voyages/${voyageId}${suffix}`, { method: 'GET' });
+  return requestJson(`/api/voyages/${voyageId}${suffix}`, { method: 'GET', cacheTtlMs: 15000 });
 }
 
 export function updateVoyageManifest(voyageId, lines) {
@@ -360,7 +437,11 @@ export function searchEmployees(options = {}) {
   if (options.serial) params.set('serial', String(options.serial));
   if (options.limit) params.set('limit', String(options.limit));
   const suffix = params.toString() ? `?${params.toString()}` : '';
-  return requestJson(`/api/employees/search${suffix}`, { method: 'GET' });
+  return requestJson(`/api/employees/search${suffix}`, {
+    method: 'GET',
+    cacheTtlMs: 10000,
+    cacheKey: `GET:/api/employees/search:${suffix}`
+  });
 }
 
 export function listCargoTypes(includeInactive = false) {
@@ -417,4 +498,23 @@ export function deleteCargoType(cargoTypeId) {
   return requestJson(`/api/admin/cargo-types?id=${encodeURIComponent(String(cargoTypeId))}`, {
     method: 'DELETE'
   });
+}
+
+export function prefetchRouteData(pathname, session) {
+  const route = String(pathname || '').replace(/\/+$/, '') || '/';
+  if (route === '/my-details') {
+    return prefetchJson('/api/me/details');
+  }
+  if (route === '/voyages/my' || route === '/voyages') {
+    return prefetchJson('/api/voyages?overview=1&includeSetup=1&archivedLimit=6');
+  }
+  if (route === '/forms') {
+    return prefetchJson('/api/forms');
+  }
+  if (route === '/admin') {
+    const isAdmin = Boolean(session?.permissions?.includes?.('admin.access') || session?.isAdmin);
+    if (!isAdmin) return Promise.resolve(null);
+    return prefetchJson('/api/admin/employees?page=1&pageSize=20');
+  }
+  return Promise.resolve(null);
 }

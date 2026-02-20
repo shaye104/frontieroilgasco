@@ -1,3 +1,5 @@
+import { prefetchRouteData } from './admin-api.js';
+
 const PERMISSION_ALIASES = {
   'roles.read': 'user_groups.read',
   'roles.manage': 'user_groups.manage',
@@ -32,6 +34,18 @@ function buildNavLink(href, label) {
   return link;
 }
 
+function wireLinkPrefetch(link, session) {
+  if (!link) return;
+  let primed = false;
+  const run = () => {
+    if (primed) return;
+    primed = true;
+    prefetchRouteData(link.getAttribute('href') || '', session);
+  };
+  link.addEventListener('pointerenter', run, { once: true });
+  link.addEventListener('focus', run, { once: true });
+}
+
 export function renderPublicNavbar() {
   const nav = document.querySelector('.site-nav');
   if (!nav) return;
@@ -52,13 +66,22 @@ export function renderIntranetNavbar(session) {
   if (!nav) return;
 
   nav.innerHTML = '';
-  nav.append(buildNavLink('/my-details', 'My Details'));
-  nav.append(buildNavLink('/voyages/my', 'Voyages'));
-  nav.append(buildNavLink('/my-fleet', 'My Fleet'));
-  nav.append(buildNavLink('/forms', 'Forms'));
+  const myDetailsLink = buildNavLink('/my-details', 'My Details');
+  const voyagesLink = buildNavLink('/voyages/my', 'Voyages');
+  const fleetLink = buildNavLink('/my-fleet', 'My Fleet');
+  const formsLink = buildNavLink('/forms', 'Forms');
+  nav.append(myDetailsLink);
+  nav.append(voyagesLink);
+  nav.append(fleetLink);
+  nav.append(formsLink);
+  wireLinkPrefetch(myDetailsLink, session);
+  wireLinkPrefetch(voyagesLink, session);
+  wireLinkPrefetch(formsLink, session);
 
   if (hasPermission(session, 'admin.access')) {
-    nav.append(buildNavLink('/admin', 'Admin Panel'));
+    const adminLink = buildNavLink('/admin', 'Admin Panel');
+    nav.append(adminLink);
+    wireLinkPrefetch(adminLink, session);
   }
 
   const spacer = document.createElement('span');

@@ -29,7 +29,25 @@ function renderForms(target, forms) {
     .join('');
 }
 
+function renderFormsSkeleton(target, sectionTitle) {
+  if (!target) return;
+  target.innerHTML = `<h2>${sectionTitle}</h2>
+    <div class="card-grid">
+      <article class="panel skeleton-shell">
+        <div class="skeleton-line skeleton-w-45"></div>
+        <div class="skeleton-line skeleton-w-80"></div>
+        <div class="skeleton-line skeleton-w-60"></div>
+      </article>
+      <article class="panel skeleton-shell">
+        <div class="skeleton-line skeleton-w-55"></div>
+        <div class="skeleton-line skeleton-w-70"></div>
+        <div class="skeleton-line skeleton-w-35"></div>
+      </article>
+    </div>`;
+}
+
 export async function initFormsList(config, session) {
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
   const feedback = document.querySelector(config.feedbackSelector);
   const categoriesRoot = document.querySelector(config.categoriesSelector);
   const uncategorizedRoot = document.querySelector(config.uncategorizedSelector);
@@ -39,6 +57,8 @@ export async function initFormsList(config, session) {
   if (!feedback || !categoriesRoot || !uncategorizedRoot) return;
 
   try {
+    renderFormsSkeleton(categoriesRoot, 'Categories');
+    renderFormsSkeleton(uncategorizedRoot, 'Uncategorized');
     const payload = await listAvailableForms();
     clearMessage(feedback);
 
@@ -78,6 +98,10 @@ export async function initFormsList(config, session) {
 
     uncategorizedRoot.innerHTML = '<h2>Uncategorized</h2><div id="uncategorizedFormsGrid" class="card-grid"></div>';
     renderForms(uncategorizedRoot.querySelector('#uncategorizedFormsGrid'), uncategorized);
+    if (startedAt) {
+      const elapsed = Math.round(performance.now() - startedAt);
+      console.info('[perf] forms first data render', { ms: elapsed });
+    }
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load forms.', 'error');
     categoriesRoot.innerHTML = '<h2>Categories</h2><p>Unable to load data</p>';

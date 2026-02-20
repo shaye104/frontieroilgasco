@@ -1,4 +1,4 @@
-import { json } from '../auth/_lib/auth.js';
+import { cachedJson, json } from '../auth/_lib/auth.js';
 import { hasPermission } from '../_lib/permissions.js';
 import { requireVoyagePermission, syncVoyageParticipants } from '../_lib/voyages.js';
 
@@ -27,6 +27,93 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const includeSetup = url.searchParams.get('includeSetup') === '1';
+  const overviewMode = url.searchParams.get('overview') === '1';
+  const archivedLimit = Math.min(24, Math.max(1, Number(url.searchParams.get('archivedLimit')) || 6));
+  const baseSelect = `SELECT v.id, v.status, v.ship_status, v.owner_employee_id, v.departure_port, v.destination_port, v.vessel_name, v.vessel_class, v.vessel_callsign,
+                             v.officer_of_watch_employee_id, v.started_at, v.ended_at, v.buy_total, v.effective_sell, v.profit, v.company_share,
+                             ow.roblox_username AS officer_name,
+                             owner.roblox_username AS owner_name
+                      FROM voyages v
+                      LEFT JOIN employees ow ON ow.id = v.officer_of_watch_employee_id
+                      LEFT JOIN employees owner ON owner.id = v.owner_employee_id`;
+
+  if (overviewMode) {
+    const [ongoingRows, archivedRows, countRows] = await Promise.all([
+      env.DB
+        .prepare(
+          `${baseSelect}
+           WHERE v.status = 'ONGOING'
+           ORDER BY COALESCE(v.started_at, v.created_at) DESC, v.id DESC`
+        )
+        .all(),
+      env.DB
+        .prepare(
+          `${baseSelect}
+           WHERE v.status = 'ENDED'
+           ORDER BY COALESCE(v.ended_at, v.started_at, v.created_at) DESC, v.id DESC
+           LIMIT ?`
+        )
+        .bind(archivedLimit)
+        .all(),
+      env.DB.prepare(`SELECT status, COUNT(*) AS total FROM voyages GROUP BY status`).all()
+    ]);
+
+    const toView = (voyage) => ({
+      ...voyage,
+      isOwner: Number(voyage.owner_employee_id) === Number(employee.id),
+      isOngoing: String(voyage.status) === 'ONGOING'
+    });
+
+    const ongoing = (ongoingRows?.results || []).map(toView);
+    const archived = (archivedRows?.results || []).map(toView);
+    const counts = { ongoing: 0, archived: 0 };
+    (countRows?.results || []).forEach((row) => {
+      const total = Number(row.total || 0);
+      if (String(row.status) === 'ONGOING') counts.ongoing = total;
+      if (String(row.status) === 'ENDED') counts.archived = total;
+    });
+
+    const [employees, ports, vesselNames, vesselClasses, vesselCallsigns] = includeSetup
+      ? await Promise.all([
+          hasPermission(session, 'voyages.create')
+            ? (
+                await env.DB
+                  .prepare(
+                    'SELECT id, roblox_username, serial_number, rank, grade FROM employees ORDER BY roblox_username ASC, id ASC'
+                  )
+                  .all()
+              )?.results || []
+            : [],
+          listConfigValues(env, 'config_voyage_ports'),
+          listConfigValues(env, 'config_vessel_names'),
+          listConfigValues(env, 'config_vessel_classes'),
+          listConfigValues(env, 'config_vessel_callsigns')
+        ])
+      : [[], [], [], [], []];
+
+    return cachedJson(
+      request,
+      {
+        ongoing,
+        archived,
+        counts,
+        employees,
+        voyageConfig: {
+          ports,
+          vesselNames,
+          vesselClasses,
+          vesselCallsigns
+        },
+        permissions: {
+          canCreate: hasPermission(session, 'voyages.create'),
+          canEdit: hasPermission(session, 'voyages.edit'),
+          canEnd: hasPermission(session, 'voyages.end')
+        }
+      },
+      { cacheControl: 'private, max-age=20, stale-while-revalidate=40' }
+    );
+  }
+
   const statusFilterRaw = String(url.searchParams.get('status') || '').trim().toUpperCase();
   const statusFilter = statusFilterRaw === 'ONGOING' || statusFilterRaw === 'ENDED' ? statusFilterRaw : '';
   const hasPaging = url.searchParams.has('page') || url.searchParams.has('pageSize') || Boolean(statusFilter);
@@ -93,10 +180,12 @@ export async function onRequestGet(context) {
       ])
     : [[], [], [], [], []];
 
-  return json({
-    voyages,
-    ongoing: voyages.filter((voyage) => voyage.isOngoing),
-    archived: voyages.filter((voyage) => !voyage.isOngoing),
+  return cachedJson(
+    request,
+    {
+      voyages,
+      ongoing: voyages.filter((voyage) => voyage.isOngoing),
+      archived: voyages.filter((voyage) => !voyage.isOngoing),
     employees,
     voyageConfig: {
       ports,
@@ -115,7 +204,9 @@ export async function onRequestGet(context) {
       canEdit: hasPermission(session, 'voyages.edit'),
       canEnd: hasPermission(session, 'voyages.end')
     }
-  });
+    },
+    { cacheControl: 'private, max-age=20, stale-while-revalidate=40' }
+  );
 }
 
 export async function onRequestPost(context) {

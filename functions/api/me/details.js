@@ -1,4 +1,4 @@
-import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
+import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { calculateTenureDays, createOrRefreshAccessRequest, ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { enrichSessionWithPermissions, hasPermission } from '../_lib/permissions.js';
 
@@ -25,7 +25,7 @@ export async function onRequestGet(context) {
 
   if (!employee) {
     if (session.isAdmin) {
-      return json({
+      return cachedJson(request, {
         loggedIn: true,
         isAdmin: true,
         accessPending: false,
@@ -40,7 +40,7 @@ export async function onRequestGet(context) {
       displayName: session.displayName
     });
 
-    return json({
+    return cachedJson(request, {
       loggedIn: true,
       isAdmin: false,
       accessPending: true,
@@ -83,7 +83,7 @@ export async function onRequestGet(context) {
     .bind(employee.id)
     .first();
 
-  return json({
+  return cachedJson(request, {
     loggedIn: true,
     isAdmin: Boolean(session.isAdmin),
     accessPending: false,

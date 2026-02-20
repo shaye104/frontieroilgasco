@@ -1,9 +1,9 @@
-import { json } from '../auth/_lib/auth.js';
+import { cachedJson, json } from '../auth/_lib/auth.js';
 import { requireAuthenticated } from '../_lib/forms.js';
 import { hasPermission } from '../_lib/permissions.js';
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { env, request } = context;
   const { errorResponse, session, employee } = await requireAuthenticated(context);
   if (errorResponse) return errorResponse;
   if (!hasPermission(session, 'forms.read')) return json({ error: 'Forbidden. Missing required permission.' }, 403);
@@ -59,7 +59,7 @@ export async function onRequestGet(context) {
 
   const uncategorized = forms.filter((form) => !form.category_id);
 
-  return json({
+  return cachedJson(request, {
     isAdmin: Boolean(session.isAdmin),
     categories: grouped,
     uncategorized

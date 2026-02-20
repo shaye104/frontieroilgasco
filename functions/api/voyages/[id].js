@@ -1,4 +1,4 @@
-import { json } from '../auth/_lib/auth.js';
+import { cachedJson, json } from '../auth/_lib/auth.js';
 import { hasPermission } from '../_lib/permissions.js';
 import { getVoyageDetail, requireVoyagePermission } from '../_lib/voyages.js';
 
@@ -33,28 +33,32 @@ export async function onRequestGet(context) {
       ])
     : [null, null, null, null, null, null];
 
-  return json({
-    ...detail,
-    cargoLost,
-    voyageSettlementLines,
-    isOwner,
-    employees: employees?.results || [],
-    voyageConfig: {
-      ports: ports?.results || [],
-      vesselNames: vesselNames?.results || [],
-      vesselClasses: vesselClasses?.results || [],
-      vesselCallsigns: vesselCallsigns?.results || [],
-      cargoTypes: cargoTypes?.results || []
+  return cachedJson(
+    request,
+    {
+      ...detail,
+      cargoLost,
+      voyageSettlementLines,
+      isOwner,
+      employees: employees?.results || [],
+      voyageConfig: {
+        ports: ports?.results || [],
+        vesselNames: vesselNames?.results || [],
+        vesselClasses: vesselClasses?.results || [],
+        vesselCallsigns: vesselCallsigns?.results || [],
+        cargoTypes: cargoTypes?.results || []
+      },
+      permissions: {
+        canRead: hasPermission(session, 'voyages.read'),
+        canEdit: hasPermission(session, 'voyages.edit') && isOwner && detail.voyage.status === 'ONGOING',
+        canEnd: hasPermission(session, 'voyages.end') && isOwner && detail.voyage.status === 'ONGOING'
+      },
+      includes: {
+        includeSetup,
+        includeManifest,
+        includeLogs
+      }
     },
-    permissions: {
-      canRead: hasPermission(session, 'voyages.read'),
-      canEdit: hasPermission(session, 'voyages.edit') && isOwner && detail.voyage.status === 'ONGOING',
-      canEnd: hasPermission(session, 'voyages.end') && isOwner && detail.voyage.status === 'ONGOING'
-    },
-    includes: {
-      includeSetup,
-      includeManifest,
-      includeLogs
-    }
-  });
+    { cacheControl: 'private, max-age=15, stale-while-revalidate=30' }
+  );
 }
