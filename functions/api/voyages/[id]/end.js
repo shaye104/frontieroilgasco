@@ -58,7 +58,7 @@ export async function onRequestPost(context) {
       };
     });
   } catch (error) {
-    return json({ error: error.message || 'Invalid cargo lost input.' }, 400);
+    return json({ error: error.message || 'Invalid freight loss adjustment input.' }, 400);
   }
 
   const trueSellUnitPrice = toMoney(sellMultiplier * baseSellPrice);
