@@ -300,8 +300,8 @@ textarea:focus {
 
 .modal-card-wide {
   width: min(1360px, 100%);
-  max-height: min(90vh, 900px);
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
@@ -356,12 +356,12 @@ textarea:focus {
 }
 
 .end-settlement-wrap {
-  max-height: min(44vh, 500px);
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .end-settlement-table {
-  min-width: 1120px;
+  min-width: 0;
 }
 
 .end-settlement-table thead th {
@@ -392,27 +392,6 @@ textarea:focus {
 .end-settlement-table input[data-field='baseSellPrice'] {
   min-width: 120px;
   text-align: right;
-}
-
-.end-breakdown-subhead {
-  margin: 0 0 0.45rem;
-  font-size: 0.9rem;
-  color: var(--color-muted);
-}
-
-.end-breakdown-lines-wrap {
-  margin-bottom: 0.55rem;
-}
-
-.end-breakdown-lines-table {
-  min-width: 620px;
-}
-
-.end-breakdown-lines-table th,
-.end-breakdown-lines-table td {
-  padding-top: 0.42rem;
-  padding-bottom: 0.42rem;
-  white-space: nowrap;
 }
 
 .end-breakdown-totals {
@@ -472,6 +451,17 @@ textarea:focus {
   font-size: 0.78rem;
   color: var(--color-danger);
   line-height: 1.2;
+}
+
+.quantity-main {
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.quantity-meta {
+  margin-top: 0.12rem;
+  font-size: 0.78rem;
+  line-height: 1.1;
 }
 
 .modal-header {

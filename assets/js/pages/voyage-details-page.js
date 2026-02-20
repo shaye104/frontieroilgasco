@@ -59,7 +59,6 @@ initIntranetPageGuard({
     finaliseHoldButtonSelector: '#finaliseVoyageHoldBtn',
     cancelVoyageHoldButtonSelector: '#cancelVoyageHoldBtn',
     sellMultiplierSelector: '#sellMultiplierInput',
-    breakdownLinesBodySelector: '#breakdownLinesBody',
     breakdownRevenueSelector: '#breakdownRevenue',
     breakdownCostSelector: '#breakdownCost',
     breakdownLossAdjustmentSelector: '#breakdownLossAdjustment',

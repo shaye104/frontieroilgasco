@@ -103,7 +103,6 @@ export async function initVoyageDetails(config) {
   const endVoyageLinesBody = document.querySelector(config.endVoyageLinesBodySelector);
   const finaliseHoldBtn = document.querySelector(config.finaliseHoldButtonSelector);
   const cancelHoldBtn = document.querySelector(config.cancelVoyageHoldButtonSelector);
-  const breakdownLinesBody = document.querySelector(config.breakdownLinesBodySelector);
   const breakdownRevenue = document.querySelector(config.breakdownRevenueSelector);
   const breakdownCost = document.querySelector(config.breakdownCostSelector);
   const breakdownLossAdjustment = document.querySelector(config.breakdownLossAdjustmentSelector);
@@ -162,7 +161,6 @@ export async function initVoyageDetails(config) {
     !endVoyageLinesBody ||
     !finaliseHoldBtn ||
     !cancelHoldBtn ||
-    !breakdownLinesBody ||
     !breakdownRevenue ||
     !breakdownCost ||
     !breakdownLossAdjustment ||
@@ -427,11 +425,10 @@ export async function initVoyageDetails(config) {
     const buyPrice = Math.max(0, Number(row.getAttribute('data-buy-price') || 0));
     const lossInput = row.querySelector('input[data-field="lostQty"]');
     const baseSellInput = row.querySelector('input[data-field="baseSellPrice"]');
-    const netQtyCell = row.querySelector('[data-cell="netQty"]');
     const lineCostCell = row.querySelector('[data-cell="lineCost"]');
-    const trueSellCell = row.querySelector('[data-cell="trueSell"]');
     const lineRevenueCell = row.querySelector('[data-cell="lineRevenue"]');
     const lineProfitCell = row.querySelector('[data-cell="lineProfit"]');
+    const quantityMeta = row.querySelector('[data-cell="quantityMeta"]');
 
     const lostRaw = Number(lossInput?.value || 0);
     const lostQuantity = Math.max(0, Math.min(quantity, Math.floor(Number.isFinite(lostRaw) ? lostRaw : 0)));
@@ -447,25 +444,10 @@ export async function initVoyageDetails(config) {
     const lineRevenue = trueSellUnitPrice === null ? null : toMoney(trueSellUnitPrice * netQty);
     const lineProfit = lineRevenue === null ? null : toMoney(lineRevenue - lineCost);
 
-    if (netQtyCell) netQtyCell.textContent = String(netQty);
+    if (quantityMeta) quantityMeta.textContent = `Net: ${netQty}`;
     if (lineCostCell) lineCostCell.textContent = formatGuilders(lineCost);
-    if (trueSellCell) trueSellCell.textContent = trueSellUnitPrice === null ? '—' : formatGuilders(trueSellUnitPrice);
     if (lineRevenueCell) lineRevenueCell.textContent = lineRevenue === null ? '—' : formatGuilders(lineRevenue);
     if (lineProfitCell) lineProfitCell.textContent = lineProfit === null ? '—' : formatGuilders(lineProfit);
-  }
-
-  function renderBreakdownLines(lineItems) {
-    breakdownLinesBody.innerHTML = lineItems
-      .map(
-        (line) => `<tr>
-          <td>${text(line.cargoName)}</td>
-          <td class="align-right">${line.netQuantity}</td>
-          <td class="align-right">${formatGuilders(line.lineCost)}</td>
-          <td class="align-right">${line.lineRevenue === null ? '—' : formatGuilders(line.lineRevenue)}</td>
-          <td class="align-right">${line.lineProfit === null ? '—' : formatGuilders(line.lineProfit)}</td>
-        </tr>`
-      )
-      .join('');
   }
 
   function syncBreakdown() {
@@ -489,7 +471,6 @@ export async function initVoyageDetails(config) {
       applyNetProfitTone(breakdownProfit, null);
       applyShareMuted(breakdownCompanyShare, 0);
       applyShareMuted(breakdownCrewShare, 0);
-      breakdownLinesBody.innerHTML = '';
       breakdownContainer.classList.add('hidden');
       return;
     }
@@ -499,8 +480,6 @@ export async function initVoyageDetails(config) {
     buyTotalText.textContent = formatGuilders(computed.totals.totalCost);
     breakdownCost.textContent = formatGuilders(computed.totals.totalCost);
     breakdownLossAdjustment.textContent = `${computed.totals.totalLossUnits} units`;
-    renderBreakdownLines(computed.lineItems);
-
     if (!hasMultiplier || !computed.hasAllSellPrices) {
       breakdownRevenue.textContent = '—';
       breakdownProfit.textContent = '—';
@@ -813,20 +792,18 @@ export async function initVoyageDetails(config) {
           : 0;
         return `<tr data-cargo-id="${line.cargoTypeId}" data-cargo-name="${line.cargoName}" data-qty="${line.quantity}" data-buy-price="${line.buyPrice}">
           <td>${line.cargoName}</td>
-          <td class="align-right">${line.quantity}</td>
+          <td><div class="quantity-main">${line.quantity}</div><div class="quantity-meta muted" data-cell="quantityMeta">Net: ${line.quantity - defaultLoss}</div></td>
           <td>
             <input data-field="lostQty" type="number" min="0" max="${line.quantity}" step="1" value="${defaultLoss}" />
             <div class="input-inline-error hidden" data-error-for="lostQty"></div>
           </td>
-          <td class="align-right" data-cell="netQty">${line.quantity - defaultLoss}</td>
           <td class="align-right">${formatGuilders(line.buyPrice)}</td>
-          <td class="align-right" data-cell="lineCost">${formatGuilders(lineCost)}</td>
           <td>
             <input data-field="baseSellPrice" type="number" min="0" step="0.01" value="${defaultBaseSell}" />
             <div class="input-inline-error hidden" data-error-for="baseSellPrice"></div>
           </td>
-          <td class="align-right" data-cell="trueSell">—</td>
           <td class="align-right" data-cell="lineRevenue">—</td>
+          <td class="align-right" data-cell="lineCost">${formatGuilders(lineCost)}</td>
           <td class="align-right" data-cell="lineProfit">—</td>
         </tr>`;
       })
