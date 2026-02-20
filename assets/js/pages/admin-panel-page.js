@@ -1,5 +1,5 @@
 import { initIntranetPageGuard } from '../modules/intranet-page-guard.js';
-import { hasPermission } from '../modules/intranet-page-guard.js';
+import { hasPermission } from '../modules/nav.js';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({

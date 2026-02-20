@@ -1,4 +1,5 @@
 import { clearMessage, showMessage } from './notice.js';
+import { renderPublicNavbar } from './nav.js';
 
 async function fetchSession() {
   const response = await fetch('/api/auth/session', { method: 'GET', credentials: 'include' });
@@ -30,36 +31,17 @@ function cleanAuthQuery() {
   window.history.replaceState({}, '', url.toString());
 }
 
-async function logout() {
-  await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-  window.location.href = '/intranet.html';
-}
-
-function hasPermission(session, permission) {
-  const permissions = Array.isArray(session?.permissions) ? session.permissions : [];
-  return permissions.includes('super.admin') || permissions.includes(permission);
-}
-
 export function initIntranetAuth(config) {
   const authPanel = document.querySelector(config.authPanelSelector);
   const loginButton = document.querySelector(config.loginButtonSelector);
   const feedback = document.querySelector(config.feedbackSelector);
-  const panel = document.querySelector(config.panelSelector);
-  const adminNavLink = document.querySelector(config.adminNavLinkSelector);
-  const adminPanelLinkRow = document.querySelector(config.adminPanelLinkRowSelector);
-  const pendingPanel = document.querySelector(config.pendingPanelSelector);
-  const logoutButton = document.querySelector(config.logoutButtonSelector);
-  const myDetailsLinkRow = document.querySelector('#myDetailsLinkRow');
-  const voyageLinkRow = document.querySelector('#voyageLinkRow');
-  const fleetLinkRow = document.querySelector('#fleetLinkRow');
+  renderPublicNavbar();
 
-  if (!authPanel || !loginButton || !feedback || !panel || !logoutButton) return;
+  if (!authPanel || !loginButton || !feedback) return;
 
   loginButton.addEventListener('click', () => {
     window.location.href = '/api/auth/discord/start';
   });
-
-  logoutButton.addEventListener('click', logout);
 
   const urlMessage = getAuthMessageFromUrl();
   if (urlMessage) {
@@ -71,45 +53,16 @@ export function initIntranetAuth(config) {
 
   fetchSession()
     .then((session) => {
-      if (!session.loggedIn) {
-        authPanel.classList.remove('hidden');
-        panel.classList.add('hidden');
-        if (adminNavLink) adminNavLink.classList.add('hidden');
-        if (adminPanelLinkRow) adminPanelLinkRow.classList.add('hidden');
-        if (pendingPanel) pendingPanel.classList.add('hidden');
+      if (session.loggedIn) {
+        window.location.href = '/my-details';
         return;
       }
 
-      authPanel.classList.add('hidden');
-      panel.classList.remove('hidden');
+      authPanel.classList.remove('hidden');
       clearMessage(feedback);
-
-      if (myDetailsLinkRow) myDetailsLinkRow.classList.toggle('hidden', !hasPermission(session, 'my_details.view'));
-      if (voyageLinkRow) voyageLinkRow.classList.toggle('hidden', !hasPermission(session, 'voyages.read'));
-      if (fleetLinkRow) fleetLinkRow.classList.toggle('hidden', !hasPermission(session, 'fleet.read'));
-
-      if (session.canAccessAdminPanel) {
-        if (adminNavLink) adminNavLink.classList.remove('hidden');
-        if (adminPanelLinkRow) adminPanelLinkRow.classList.remove('hidden');
-        if (pendingPanel) pendingPanel.classList.add('hidden');
-      } else {
-        if (adminNavLink) adminNavLink.classList.add('hidden');
-        if (adminPanelLinkRow) adminPanelLinkRow.classList.add('hidden');
-
-        if (session.accessPending) {
-          if (pendingPanel) pendingPanel.classList.remove('hidden');
-          showMessage(feedback, 'Access Pending: your request is awaiting admin approval.', 'error');
-        } else if (pendingPanel) {
-          pendingPanel.classList.add('hidden');
-        }
-      }
     })
     .catch(() => {
       showMessage(feedback, 'Unable to verify session.', 'error');
       authPanel.classList.remove('hidden');
-      panel.classList.add('hidden');
-      if (adminNavLink) adminNavLink.classList.add('hidden');
-      if (adminPanelLinkRow) adminPanelLinkRow.classList.add('hidden');
-      if (pendingPanel) pendingPanel.classList.add('hidden');
     });
 }

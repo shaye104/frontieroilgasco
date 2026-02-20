@@ -1,10 +1,5 @@
 import { showMessage } from './notice.js';
-
-export function hasPermission(session, permissionKey) {
-  if (!session || !permissionKey) return false;
-  const permissions = Array.isArray(session.permissions) ? session.permissions : [];
-  return permissions.includes('super.admin') || permissions.includes(permissionKey);
-}
+import { hasPermission, renderIntranetNavbar } from './nav.js';
 
 async function fetchSession() {
   const response = await fetch('/api/auth/session', {
@@ -19,8 +14,6 @@ async function fetchSession() {
 export async function initIntranetPageGuard(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const protectedContent = document.querySelector(config.protectedContentSelector);
-  const navLogoutButton = document.querySelector(config.navLogoutButtonSelector || '#navLogoutBtn');
-  const adminNavLink = document.querySelector(config.adminNavLinkSelector || '#adminNavLink');
   const requireAdmin = Boolean(config.requireAdmin);
   const requireFormsAdmin = Boolean(config.requireFormsAdmin);
   const requireEmployee = Boolean(config.requireEmployee);
@@ -32,41 +25,30 @@ export async function initIntranetPageGuard(config) {
     const session = await fetchSession();
 
     if (!session.loggedIn) {
-      window.location.href = '/intranet.html?auth=denied&reason=login_required';
+      window.location.href = '/login?auth=denied&reason=login_required';
       return null;
     }
 
+    renderIntranetNavbar(session);
+
     if (requireAdmin && !hasPermission(session, 'admin.access')) {
-      window.location.href = '/intranet.html?auth=denied&reason=admin_required';
+      showMessage(feedback, 'Access denied: admin access required.', 'error');
       return null;
     }
 
     if (requireFormsAdmin && !hasPermission(session, 'forms.manage')) {
-      window.location.href = '/intranet.html?auth=denied&reason=admin_required';
+      showMessage(feedback, 'Access denied: forms admin access required.', 'error');
       return null;
     }
 
     if (requiredPermissions.length && !requiredPermissions.every((permission) => hasPermission(session, permission))) {
-      window.location.href = '/intranet.html?auth=denied&reason=admin_required';
+      showMessage(feedback, 'Access denied: missing required permissions.', 'error');
       return null;
     }
 
     if (requireEmployee && !session.isAdmin && session.accessPending) {
-      window.location.href = '/intranet.html?auth=denied&reason=login_required';
+      showMessage(feedback, 'Access pending: your profile has not been approved yet.', 'error');
       return null;
-    }
-
-    if (navLogoutButton) {
-      navLogoutButton.classList.remove('hidden');
-      navLogoutButton.addEventListener('click', async () => {
-        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-        window.location.href = '/intranet.html';
-      });
-    }
-
-    if (adminNavLink) {
-      if (hasPermission(session, 'admin.access')) adminNavLink.classList.remove('hidden');
-      else adminNavLink.classList.add('hidden');
     }
 
     protectedContent.classList.remove('hidden');

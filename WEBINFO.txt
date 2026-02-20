@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-20T01:09:32.639Z
+Generated: 2026-02-20T16:32:54.394Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -21,7 +21,7 @@ SITE STRUCTURE
 - forms-responses.html | title: Frontier Oil & Gas Company | Form Responses | primary heading: Form Responses
 - forms.html | title: Frontier Oil & Gas Company | Forms | primary heading: Forms
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
-- intranet.html | title: Frontier Oil & Gas Company | Employee Intranet | primary heading: Employee Intranet
+- intranet.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
 - my-fleet.html | title: Frontier Oil & Gas Company | My Fleet | primary heading: My Fleet
@@ -44,9 +44,10 @@ JAVASCRIPT MODULES
 - assets/js/modules/forms-manage-admin.js | exports: No public exports
 - assets/js/modules/forms-responses.js | exports: No public exports
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
-- assets/js/modules/intranet-page-guard.js | exports: hasPermission
+- assets/js/modules/intranet-page-guard.js | exports: No public exports
 - assets/js/modules/manage-employees.js | exports: No public exports
 - assets/js/modules/my-details-panel.js | exports: No public exports
+- assets/js/modules/nav.js | exports: hasPermission, renderIntranetNavbar, renderPublicNavbar
 - assets/js/modules/notice.js | exports: clearMessage, showMessage
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/roles-admin.js | exports: No public exports

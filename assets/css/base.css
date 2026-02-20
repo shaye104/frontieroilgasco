@@ -118,6 +118,15 @@ p {
   flex-wrap: wrap;
 }
 
+.nav-spacer {
+  flex: 1 1 auto;
+}
+
+.nav-user {
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
 .site-nav a:not(.btn) {
   color: var(--color-ink-soft);
   font-weight: 600;
@@ -158,6 +167,10 @@ p {
   .site-nav {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .nav-spacer {
+    display: none;
   }
 }
 

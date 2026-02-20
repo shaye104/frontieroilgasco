@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier Oil & Gas Company employee intranet login." />
-    <title>Frontier Oil & Gas Company | Employee Intranet</title>
+    <meta name="description" content="Frontier Oil & Gas Company employee login." />
+    <title>Frontier Oil & Gas Company | Login</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -24,12 +24,9 @@
           <span class="brand-text">Frontier Oil & Gas Company</span>
         </a>
         <nav class="site-nav" aria-label="Primary">
-          <a href="intranet.html">Dashboard</a>
-          <a href="my-details.html">My Details</a>
-          <a href="voyage-tracker.html">Voyage Tracker</a>
-          <a href="my-fleet.html">My Fleet</a>
-          <a href="forms.html">Forms</a>
-          <a id="adminNavLink" class="hidden" href="admin-panel.html">Admin Panel</a>
+          <a href="/">Home</a>
+          <span class="nav-spacer"></span>
+          <a class="btn btn-primary" href="/login">Login</a>
         </nav>
       </div>
     </header>
@@ -38,32 +35,11 @@
       <div class="container intranet-layout">
         <section id="authPanel" class="panel">
           <p class="eyebrow">Employees</p>
-          <h1>Employee Intranet</h1>
-          <p class="lead">
-            Access internal tools and operations resources using Discord OAuth2. Intranet access is granted only for approved
-            Discord roles.
-          </p>
+          <h1>Login</h1>
+          <p class="lead">Sign in with Discord to access the intranet.</p>
 
           <button id="discordLoginBtn" class="btn btn-primary btn-block" type="button">Sign In with Discord</button>
           <div id="loginFeedback" class="feedback" role="status" aria-live="polite"></div>
-        </section>
-
-        <section id="intranetPanel" class="panel hidden" aria-live="polite">
-          <h2>Employee Dashboard</h2>
-          <ul class="link-list">
-            <li id="myDetailsLinkRow"><a href="my-details.html">My Details</a></li>
-            <li id="voyageLinkRow"><a href="voyage-tracker.html">Voyage Tracker</a></li>
-            <li id="fleetLinkRow"><a href="my-fleet.html">My Fleet</a></li>
-            <li id="adminPanelLinkRow" class="hidden"><a href="admin-panel.html">Admin Panel</a></li>
-          </ul>
-          <div class="button-row">
-            <button id="dashboardLogoutBtn" class="btn btn-secondary" type="button">Log Out</button>
-          </div>
-        </section>
-
-        <section id="pendingPanel" class="panel hidden">
-          <h2>Access Pending</h2>
-          <p>Your account is authenticated, but your employee profile has not been approved yet.</p>
         </section>
       </div>
     </main>
