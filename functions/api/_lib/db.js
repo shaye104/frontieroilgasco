@@ -348,8 +348,9 @@ export async function ensureCoreSchema(env) {
     await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN description TEXT`).run();
   }
   if (!rankColumnNames.has('updated_at')) {
-    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN updated_at TEXT`).run();
   }
+  await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
 
   await env.DB.batch(
     permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>
