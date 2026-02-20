@@ -6,7 +6,7 @@ import {
   listFormCategories,
   listFormsAdmin
 } from './admin-api.js';
-import { hasPermission } from './intranet-page-guard.js';
+import { hasPermission } from './nav.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {

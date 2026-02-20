@@ -1,6 +1,6 @@
 import { listAvailableForms } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
-import { hasPermission } from './intranet-page-guard.js';
+import { hasPermission } from './nav.js';
 
 function text(value) {
   const output = String(value ?? '').trim();
@@ -46,6 +46,7 @@ export async function initFormsList(config, session) {
 
     const categories = payload.categories || [];
     const uncategorized = payload.uncategorized || [];
+    console.info('[forms] loaded', { categories: categories.length, uncategorized: uncategorized.length });
     const accessibleFormCount =
       uncategorized.length + categories.reduce((acc, category) => acc + ((category.forms || []).length || 0), 0);
     if (responsesBtn) {
@@ -79,5 +80,7 @@ export async function initFormsList(config, session) {
     renderForms(uncategorizedRoot.querySelector('#uncategorizedFormsGrid'), uncategorized);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load forms.', 'error');
+    categoriesRoot.innerHTML = '<h2>Categories</h2><p>Unable to load data</p>';
+    uncategorizedRoot.innerHTML = '<h2>Uncategorized</h2><p>Unable to load data</p>';
   }
 }

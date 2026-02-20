@@ -1,5 +1,5 @@
 import { listVoyages, searchEmployees, startVoyage } from './admin-api.js';
-import { hasPermission } from './intranet-page-guard.js';
+import { hasPermission } from './nav.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
@@ -62,7 +62,7 @@ function fillSelect(select, items, placeholder) {
 function renderVoyageCards(target, voyages, isOngoing) {
   if (!target) return;
   if (!voyages.length) {
-    target.innerHTML = `<p>${isOngoing ? 'No ongoing voyages.' : 'No archived voyages.'}</p>`;
+    target.innerHTML = '<p>No voyages yet.</p>';
     return;
   }
 
@@ -311,6 +311,7 @@ export async function initVoyageTracker(config, session) {
     employees = ongoingPayload.employees || [];
     ongoing = ongoingPayload.voyages || ongoingPayload.ongoing || [];
     archived = archivedPayload.voyages || archivedPayload.archived || [];
+    console.info('[voyages] loaded', { ongoing: ongoing.length, archived: archived.length });
     ongoingKeys = new Set(ongoing.map((voyage) => `${normalize(voyage.vessel_name)}::${normalize(voyage.vessel_callsign)}`));
 
     if (hasPermission(session, 'voyages.create')) startBtn.classList.remove('hidden');
@@ -428,5 +429,7 @@ export async function initVoyageTracker(config, session) {
     clearMessage(feedback);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load voyages.', 'error');
+    ongoingRoot.innerHTML = '<p>Unable to load data</p>';
+    archivedRoot.innerHTML = '<p>Unable to load data</p>';
   }
 }

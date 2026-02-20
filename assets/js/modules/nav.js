@@ -36,13 +36,13 @@ export function renderIntranetNavbar(session) {
   if (!nav) return;
 
   nav.innerHTML = '';
-  nav.append(buildNavLink('/my-details.html', 'My Details'));
-  nav.append(buildNavLink('/voyage-tracker.html', 'Voyages'));
-  nav.append(buildNavLink('/my-fleet.html', 'My Fleet'));
-  nav.append(buildNavLink('/forms.html', 'Forms'));
+  nav.append(buildNavLink('/my-details', 'My Details'));
+  nav.append(buildNavLink('/voyages/my', 'Voyages'));
+  nav.append(buildNavLink('/my-fleet', 'My Fleet'));
+  nav.append(buildNavLink('/forms', 'Forms'));
 
   if (hasPermission(session, 'admin.access')) {
-    nav.append(buildNavLink('/admin-panel.html', 'Admin Panel'));
+    nav.append(buildNavLink('/admin', 'Admin Panel'));
   }
 
   const spacer = document.createElement('span');
