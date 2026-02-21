@@ -306,6 +306,12 @@ export async function onRequestGet(context) {
   const unsettledRows = unsettledRowsResult?.results || [];
 
   const unsettledTotal = Math.max(0, toMoney(unsettledRows.reduce((sum, row) => sum + Number(row.company_share_amount || 0), 0)));
+  const now = Date.now();
+  const overdueVoyages = unsettledRows.reduce((count, row) => {
+    const endedAt = row?.ended_at ? new Date(row.ended_at).getTime() : Number.NaN;
+    if (!Number.isFinite(endedAt)) return count;
+    return now - endedAt > 5 * 86400000 ? count + 1 : count;
+  }, 0);
 
   const groupedDebts = new Map();
   unsettledRows.forEach((row) => {
@@ -373,12 +379,12 @@ export async function onRequestGet(context) {
         companyShareTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.companyShare })),
         freightLossValueTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.freightLossValue })),
         voyageCountTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.voyageCount })),
-        avgNetProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.avgNetProfit })),
-        companyVsCrew: chartBuckets.map((row) => ({ key: row.key, label: row.label, companyShare: row.companyShare, crewShare: row.crewShare }))
+        avgNetProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.avgNetProfit }))
       },
       unsettled: {
         totalOutstanding: unsettledTotal,
         totalVoyages: unsettledRows.length,
+        overdueVoyages,
         topDebtors
       },
       topPerformers: {

@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221n" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260221n" />
-    <link rel="stylesheet" href="/assets/css/components.css?v=20260221n" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221n" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221o" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221o" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221o" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221o" />
   </head>
   <body class="page page-intranet">
     <header class="site-header">
@@ -93,7 +93,7 @@
 
             <div class="finance-overview-main">
               <article class="finance-chart-card finance-overview-primary">
-                <h3>Net Profit Trend</h3>
+                <h3>Net Profit &amp; Company Share Trend</h3>
                 <div id="chartNetProfit" class="finance-chart-host">
                   <div class="finance-chart-skeleton"></div>
                 </div>
@@ -105,6 +105,21 @@
                   <p id="unsettledOutstandingTotal" class="finance-overview-unsettled-amount"><span class="finance-value-skeleton"></span></p>
                   <p id="unsettledVoyageCount" class="finance-overview-unsettled-count">Unsettled Voyages: 0</p>
                 </div>
+                <div class="finance-performance-grid">
+                  <article class="finance-performance-stat">
+                    <span>Settlement Rate</span>
+                    <strong id="overviewSettlementRate">0%</strong>
+                  </article>
+                  <article class="finance-performance-stat">
+                    <span>Avg Days to Settle</span>
+                    <strong id="overviewAvgDaysToSettle">—</strong>
+                  </article>
+                  <article class="finance-performance-stat">
+                    <span>Overdue Unsettled (&gt;5d)</span>
+                    <strong id="overviewOverdueUnsettled">0</strong>
+                  </article>
+                </div>
+                <h4 class="finance-inline-heading">Top Unsettled by OOTW</h4>
                 <ul id="unsettledTopList" class="finance-unsettled-list">
                   <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
                   <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
@@ -145,20 +160,20 @@
           <section id="financeTabTrends" class="finance-tab-panel hidden" data-finance-panel="trends">
             <div class="finance-main-chart-grid finance-trends-grid">
               <article class="finance-chart-card">
-                <h3>Net Profit Trend</h3>
-                <div id="trendsChartNetProfit" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
-              </article>
-              <article class="finance-chart-card">
-                <h3>Company Share Trend</h3>
-                <div id="trendsChartCompanyShare" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
-              </article>
-              <article class="finance-chart-card">
-                <h3>Freight Loss Value Trend</h3>
-                <div id="trendsChartLossTrend" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+                <h3>Net Profit &amp; Company Share</h3>
+                <div id="trendsChartNetProfitShare" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
                 <h3>Voyage Count Trend</h3>
                 <div id="trendsChartVoyageCount" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+              </article>
+              <article class="finance-chart-card">
+                <h3>Average Net Profit / Voyage</h3>
+                <div id="trendsChartAvgProfit" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+              </article>
+              <article class="finance-chart-card">
+                <h3>Freight Loss Value Trend</h3>
+                <div id="trendsChartLossTrend" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
             </div>
           </section>
@@ -278,6 +293,6 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221n"></script>
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221o"></script>
   </body>
 </html>

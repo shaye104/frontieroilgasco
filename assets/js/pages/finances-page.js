@@ -607,6 +607,73 @@ function renderCountBarChart(target, series, label, color) {
   });
 }
 
+function renderNoData(target, message) {
+  if (!target) return;
+  target.innerHTML = `<div class="finance-chart-empty">${text(message || 'No data for selected range')}</div>`;
+}
+
+function alignSeries(netSeries, companySeries) {
+  const netPoints = normalizeSeriesPoints(netSeries);
+  const companyPoints = normalizeSeriesPoints(companySeries);
+  const byKey = new Map();
+
+  netPoints.forEach((point) => {
+    byKey.set(point.key, {
+      key: point.key,
+      label: point.label,
+      parsedTime: point.parsedTime,
+      net: point.value,
+      company: 0
+    });
+  });
+
+  companyPoints.forEach((point) => {
+    const existing = byKey.get(point.key);
+    if (existing) {
+      existing.company = point.value;
+      if (!existing.label) existing.label = point.label;
+      return;
+    }
+    byKey.set(point.key, {
+      key: point.key,
+      label: point.label,
+      parsedTime: point.parsedTime,
+      net: 0,
+      company: point.value
+    });
+  });
+
+  return [...byKey.values()].sort((a, b) => {
+    const aTime = Number.isFinite(a.parsedTime) ? a.parsedTime : Number.POSITIVE_INFINITY;
+    const bTime = Number.isFinite(b.parsedTime) ? b.parsedTime : Number.POSITIVE_INFINITY;
+    if (aTime !== bTime) return aTime - bTime;
+    return a.key.localeCompare(b.key);
+  });
+}
+
+function renderProfitShareChart(target, netSeries, companySeries) {
+  const rows = alignSeries(netSeries, companySeries);
+  if (!rows.length) {
+    renderNoData(target, 'No data for selected range');
+    return;
+  }
+
+  const net = rows.map((row) => ({ key: row.key, label: row.label, value: row.net }));
+  const company = rows.map((row) => ({ key: row.key, label: row.label, value: row.company }));
+
+  renderCartesianLineChart(
+    target,
+    [
+      { label: 'Net Profit', color: '#253475', points: net },
+      { label: 'Company Share Earned', color: '#5776b7', points: company }
+    ],
+    {
+      valueFormatter: formatGuilders,
+      tickFormatter: formatGuildersCompact
+    }
+  );
+}
+
 function isAllZeroSeries(series) {
   const safe = Array.isArray(series) ? series : [];
   if (!safe.length) return true;
@@ -624,7 +691,7 @@ function renderOverviewSkeleton() {
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
 
-  ['#chartNetProfit', '#trendsChartNetProfit', '#trendsChartCompanyShare', '#trendsChartVoyageCount', '#trendsChartLossTrend'].forEach((selector) => {
+  ['#chartNetProfit', '#trendsChartNetProfitShare', '#trendsChartVoyageCount', '#trendsChartAvgProfit', '#trendsChartLossTrend'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<div class="finance-chart-skeleton"></div>';
   });
@@ -634,6 +701,11 @@ function renderOverviewSkeleton() {
 
   const unsettledCount = $('#unsettledVoyageCount');
   if (unsettledCount) unsettledCount.innerHTML = '<span class="finance-line-skeleton"></span>';
+
+  ['#overviewSettlementRate', '#overviewAvgDaysToSettle', '#overviewOverdueUnsettled'].forEach((selector) => {
+    const el = $(selector);
+    if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
+  });
 
   const topDebtors = $('#unsettledTopList');
   if (topDebtors) {
@@ -682,11 +754,17 @@ function renderOverview(data, previousData, range) {
   setDelta('#kpiDeltaSettlementRate', toDelta(kpis.settlementRatePct, previousKpis.settlementRatePct, range));
   setDelta('#kpiDeltaLossValue', toDelta(kpis.freightLossesValue, previousKpis.freightLossesValue, range, true));
 
-  renderLineChart($('#chartNetProfit'), charts.netProfitTrend || [], 'Net Profit', '#253475');
+  const hasVoyages = !isAllZeroSeries(charts.voyageCountTrend || []);
+  renderProfitShareChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.companyShareTrend || []);
+  renderProfitShareChart($('#trendsChartNetProfitShare'), charts.netProfitTrend || [], charts.companyShareTrend || []);
 
-  renderLineChart($('#trendsChartNetProfit'), charts.netProfitTrend || [], 'Net Profit', '#253475');
-  renderLineChart($('#trendsChartCompanyShare'), charts.companyShareTrend || [], 'Company Share Earned', '#5776b7');
-  renderCountBarChart($('#trendsChartVoyageCount'), charts.voyageCountTrend || [], 'Voyage Count', '#253475');
+  if (!hasVoyages) {
+    renderNoData($('#trendsChartVoyageCount'), 'No voyages in this period');
+    renderNoData($('#trendsChartAvgProfit'), 'No voyages in this period');
+  } else {
+    renderCountBarChart($('#trendsChartVoyageCount'), charts.voyageCountTrend || [], 'Voyage Count', '#253475');
+    renderLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'Avg Net Profit / Voyage', '#2b4aa2');
+  }
 
   if (isAllZeroSeries(charts.freightLossValueTrend || [])) {
     const lossTarget = $('#trendsChartLossTrend');
@@ -700,6 +778,13 @@ function renderOverview(data, previousData, range) {
 
   const unsettledCount = $('#unsettledVoyageCount');
   if (unsettledCount) unsettledCount.textContent = `Unsettled Voyages: ${Number(unsettled.totalVoyages || 0)}`;
+
+  const overviewSettlementRate = $('#overviewSettlementRate');
+  if (overviewSettlementRate) overviewSettlementRate.textContent = formatPercent(kpis.settlementRatePct || 0);
+  const overviewAvgDays = $('#overviewAvgDaysToSettle');
+  if (overviewAvgDays) overviewAvgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
+  const overviewOverdue = $('#overviewOverdueUnsettled');
+  if (overviewOverdue) overviewOverdue.textContent = formatInteger(unsettled.overdueVoyages || 0);
 
   const topList = $('#unsettledTopList');
   const topDebtors = Array.isArray(unsettled.topDebtors) ? unsettled.topDebtors : [];
@@ -759,7 +844,8 @@ function renderDebtsRows(state) {
 
   tbody.innerHTML = rows
     .map((row) => {
-      const canSettle = state.canSettle && String(row.companyShareStatus || '').toUpperCase() === 'UNSETTLED';
+      const isUnsettled = String(row.companyShareStatus || '').toUpperCase() === 'UNSETTLED';
+      const canSettle = state.canSettle && isUnsettled;
       const officer = row.officerSerial ? `${text(row.officerName)} (${text(row.officerSerial)})` : text(row.officerName);
       return `<tr>
         <td>${officer}</td>
@@ -767,7 +853,7 @@ function renderDebtsRows(state) {
         <td>${text(row.departurePort)} \u2192 ${text(row.destinationPort)}</td>
         <td>${formatWhen(row.endedAt)}</td>
         <td class="align-right">${formatGuilders(row.companyShareAmount)}</td>
-        <td><span class="finance-status-pill ${canSettle ? 'is-unsettled' : 'is-settled'}">${text(row.companyShareStatus)}</span></td>
+        <td><span class="finance-status-pill ${isUnsettled ? 'is-unsettled' : 'is-settled'}">${text(row.companyShareStatus)}</span></td>
         <td>${
           state.canSettle
             ? canSettle

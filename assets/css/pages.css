@@ -281,6 +281,7 @@
   display: grid;
   gap: 0.7rem;
   min-height: 0;
+  padding-bottom: clamp(2.4rem, 4vh, 4rem);
 }
 
 .finance-tab-panel {
@@ -423,9 +424,46 @@
 
 .finance-overview-side {
   display: grid;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto auto auto;
   align-content: start;
   gap: 0.55rem;
+}
+
+.finance-inline-heading {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.finance-performance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.finance-performance-stat {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.46rem 0.52rem;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.finance-performance-stat span {
+  font-size: 0.68rem;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+.finance-performance-stat strong {
+  font-size: 0.95rem;
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .finance-overview-unsettled-top h3 {
@@ -843,6 +881,7 @@
   .finance-main-chart-grid,
   .finance-overview-main,
   .finance-performer-strip,
+  .finance-performance-grid,
   .finance-overview-breakdown,
   .finance-trends-grid,
   .finance-summary-strip {
