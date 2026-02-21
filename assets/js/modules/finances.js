@@ -485,3 +485,347 @@ export async function initFinancesAudit(config) {
 
   await refresh();
 }
+
+function renderDebtGroupsSkeleton(root) {
+  if (!root) return;
+  root.innerHTML =
+    '<article class="finance-debt-group"><span class="finance-line-skeleton"></span></article>' +
+    '<article class="finance-debt-group"><span class="finance-line-skeleton"></span></article>' +
+    '<article class="finance-debt-group"><span class="finance-line-skeleton"></span></article>';
+}
+
+function renderDebtGroups(root, groups, canSettle, onSettle) {
+  if (!root) return;
+  const safeGroups = Array.isArray(groups) ? groups : [];
+  if (!safeGroups.length) {
+    root.innerHTML = '<article class="finance-debt-group"><p class="muted">No unsettled debts found.</p></article>';
+    return;
+  }
+
+  root.innerHTML = safeGroups
+    .map(
+      (group) => `<details class="finance-debt-group">
+        <summary>
+          <span>${text(group.officerName)}${group.officerSerial ? ` (${text(group.officerSerial)})` : ''}</span>
+          <strong>${formatGuilders(group.outstandingTotal)}</strong>
+        </summary>
+        <div class="table-wrap">
+          <table class="data-table finance-data-table">
+            <thead>
+              <tr>
+                <th>Vessel</th>
+                <th>Route</th>
+                <th>Ended</th>
+                <th class="align-right">Company Share (10%)</th>
+                <th>Status</th>
+                ${canSettle ? '<th>Action</th>' : ''}
+              </tr>
+            </thead>
+            <tbody>
+              ${(Array.isArray(group.voyages) ? group.voyages : [])
+                .map(
+                  (voyage) => `<tr>
+                    <td>${text(voyage.vesselName)} | ${text(voyage.vesselCallsign)}</td>
+                    <td>${text(voyage.departurePort)} \u2192 ${text(voyage.destinationPort)}</td>
+                    <td>${formatWhen(voyage.endedAt)}</td>
+                    <td class="align-right">${formatGuilders(voyage.companyShareAmount)}</td>
+                    <td>${text(voyage.companyShareStatus)}</td>
+                    ${canSettle ? `<td><button class="btn btn-primary" type="button" data-settle-voyage="${Number(voyage.voyageId || 0)}">Settle</button></td>` : ''}
+                  </tr>`
+                )
+                .join('')}
+            </tbody>
+          </table>
+        </div>
+      </details>`
+    )
+    .join('');
+
+  if (!canSettle || typeof onSettle !== 'function') return;
+  root.querySelectorAll('[data-settle-voyage]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const voyageId = Number(button.getAttribute('data-settle-voyage'));
+      if (!Number.isInteger(voyageId) || voyageId <= 0) return;
+      button.disabled = true;
+      try {
+        await onSettle(voyageId);
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+}
+
+export async function initFinancesConsole(config) {
+  const feedback = document.querySelector(config.feedbackSelector);
+  const rangeButtons = [...document.querySelectorAll(config.rangeButtonsSelector)];
+  const tabButtons = [...document.querySelectorAll(config.tabButtonsSelector)];
+  const panels = [...document.querySelectorAll(config.panelSelector)];
+  const openTabLinks = [...document.querySelectorAll(config.openTabLinkSelector)];
+  const unsettledScope = document.querySelector(config.unsettledScopeSelector);
+  const topDebtors = document.querySelector(config.topDebtorsSelector);
+  const debtGroupsRoot = document.querySelector(config.debtGroupsSelector);
+  const debtSearch = document.querySelector(config.debtSearchSelector);
+  const debtMinOutstanding = document.querySelector(config.debtMinOutstandingSelector);
+  const debtTotals = document.querySelector(config.debtTotalsSelector);
+  const debtPrev = document.querySelector(config.debtPrevSelector);
+  const debtNext = document.querySelector(config.debtNextSelector);
+  const debtPageInfo = document.querySelector(config.debtPageInfoSelector);
+  const auditBody = document.querySelector(config.auditTableBodySelector);
+  const auditPrev = document.querySelector(config.auditPrevSelector);
+  const auditNext = document.querySelector(config.auditNextSelector);
+  const auditPageInfo = document.querySelector(config.auditPageInfoSelector);
+
+  if (!feedback || !rangeButtons.length || !tabButtons.length || !panels.length || !unsettledScope || !topDebtors) {
+    console.error('[finances] Missing required console elements.');
+    return;
+  }
+
+  let activeRange = 'month';
+  let activeTab = 'overview';
+  let overviewLoaded = false;
+  let analyticsLoaded = false;
+  let debtsLoaded = false;
+  let auditLoaded = false;
+  let debtsDebounce = null;
+  let debtGroups = [];
+  let debtPage = 1;
+  let debtTotalPages = 1;
+  let canSettleDebts = Boolean(config?.session?.permissions?.includes?.('finances.debts.settle') || config?.session?.permissions?.includes?.('admin.override'));
+  const debtPageSize = 3;
+  let auditPage = 1;
+  let auditTotalPages = 1;
+  const auditPageSize = 10;
+
+  const setTab = (tabName) => {
+    activeTab = String(tabName || 'overview');
+    tabButtons.forEach((button) => {
+      const isActive = button.getAttribute('data-finance-tab') === activeTab;
+      button.classList.toggle('is-active', isActive);
+      if (isActive) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
+    panels.forEach((panel) => {
+      panel.classList.toggle('hidden', panel.getAttribute('data-finance-panel') !== activeTab);
+      panel.classList.toggle('is-active', panel.getAttribute('data-finance-panel') === activeTab);
+    });
+  };
+
+  const renderOverviewFromPayload = (payload) => {
+    const kpis = payload?.kpis || {};
+    const charts = payload?.charts || {};
+    renderKpiValue(document.querySelector(config.netProfitSelector), kpis.netProfit);
+    renderKpiValue(document.querySelector(config.companyShareSelector), kpis.companyShareEarnings);
+    renderKpiValue(document.querySelector(config.crewShareSelector), kpis.crewShare);
+    renderKpiValue(document.querySelector(config.lossesSelector), kpis.freightLossesValue);
+    renderKpiValue(document.querySelector(config.unsettledSelector), kpis.unsettledCompanyShareOutstanding);
+
+    const completedEl = document.querySelector(config.completedSelector);
+    if (completedEl) completedEl.textContent = String(Number(kpis.completedVoyages || 0));
+
+    renderSimpleLineChart(document.querySelector(config.netProfitChartSelector), charts.netProfitTrend || [], 'line-primary');
+    renderStackedShareChart(document.querySelector(config.shareChartSelector), charts.companyVsCrew || []);
+    renderSimpleLineChart(document.querySelector(config.avgChartSelector), charts.avgNetProfitTrend || [], 'line-muted', { height: 100 });
+
+    const avgSeries = Array.isArray(charts.avgNetProfitTrend) ? charts.avgNetProfitTrend : [];
+    const latestAvg = avgSeries.length ? toMoney(avgSeries[avgSeries.length - 1].value) : 0;
+    const miniMetric = document.querySelector(config.miniMetricValueSelector);
+    if (miniMetric) miniMetric.textContent = formatGuilders(latestAvg);
+
+    renderUnsettledTotal(document.querySelector(config.unsettledTotalSelector), payload?.unsettled?.totalOutstanding || 0);
+    renderTopDebtors(topDebtors, payload?.unsettled?.topDebtors || []);
+  };
+
+  const renderAnalyticsFromPayload = (payload) => {
+    const charts = payload?.charts || {};
+    renderSimpleLineChart(document.querySelector(config.analyticsNetProfitChartSelector), charts.netProfitTrend || [], 'line-primary');
+    renderStackedShareChart(document.querySelector(config.analyticsShareChartSelector), charts.companyVsCrew || []);
+    renderSimpleLineChart(document.querySelector(config.analyticsLossesChartSelector), charts.freightLossValueTrend || [], 'line-accent');
+    renderSimpleLineChart(document.querySelector(config.analyticsAvgChartSelector), charts.avgNetProfitTrend || [], 'line-muted');
+  };
+
+  const loadOverview = async () => {
+    renderOverviewSkeleton(config);
+    try {
+      const payload = await getFinancesOverview(activeRange, unsettledScope.value || 'all');
+      renderOverviewFromPayload(payload);
+      overviewLoaded = true;
+      clearMessage(feedback);
+    } catch (error) {
+      console.error('[finances] Failed to load overview', error);
+      showMessage(feedback, error.message || 'Unable to load finance overview.', 'error');
+    }
+  };
+
+  const loadAnalytics = async () => {
+    [
+      config.analyticsNetProfitChartSelector,
+      config.analyticsShareChartSelector,
+      config.analyticsLossesChartSelector,
+      config.analyticsAvgChartSelector
+    ].forEach((selector) => renderChartSkeleton(selector));
+
+    try {
+      const payload = await getFinancesOverview(activeRange, 'range');
+      renderAnalyticsFromPayload(payload);
+      analyticsLoaded = true;
+      clearMessage(feedback);
+    } catch (error) {
+      console.error('[finances] Failed to load analytics', error);
+      showMessage(feedback, error.message || 'Unable to load finance analytics.', 'error');
+    }
+  };
+
+  const renderDebtPage = async () => {
+    if (!debtGroupsRoot || !debtPageInfo || !debtPrev || !debtNext) return;
+    debtTotalPages = Math.max(1, Math.ceil(debtGroups.length / debtPageSize));
+    debtPage = Math.max(1, Math.min(debtPage, debtTotalPages));
+    const start = (debtPage - 1) * debtPageSize;
+    const groupsForPage = debtGroups.slice(start, start + debtPageSize);
+    debtPageInfo.textContent = `Page ${debtPage} of ${debtTotalPages}`;
+    debtPrev.disabled = debtPage <= 1;
+    debtNext.disabled = debtPage >= debtTotalPages;
+    renderDebtGroups(debtGroupsRoot, groupsForPage, canSettleDebts, async (voyageId) => {
+      try {
+        await settleFinanceDebt(voyageId);
+        await loadDebts();
+      } catch (error) {
+        showMessage(feedback, error.message || 'Unable to settle debt.', 'error');
+      }
+    });
+  };
+
+  const loadDebts = async () => {
+    if (!debtGroupsRoot || !debtTotals) return;
+    renderDebtGroupsSkeleton(debtGroupsRoot);
+    try {
+      const payload = await listFinanceDebts({
+        search: debtSearch?.value || '',
+        minOutstanding: debtMinOutstanding?.value || ''
+      });
+      debtGroups = Array.isArray(payload?.groups) ? payload.groups : [];
+      canSettleDebts = Boolean(payload?.permissions?.canSettle);
+      debtTotals.textContent = `Outstanding: ${formatGuilders(payload?.totals?.unsettledOutstanding || 0)} | Voyages: ${
+        Number(payload?.totals?.unsettledVoyages || 0)
+      }`;
+      await renderDebtPage();
+      debtsLoaded = true;
+      clearMessage(feedback);
+    } catch (error) {
+      console.error('[finances] Failed to load debts', error);
+      showMessage(feedback, error.message || 'Unable to load finance debts.', 'error');
+      debtGroupsRoot.innerHTML = '<article class="finance-debt-group"><p class="muted">Unable to load data</p></article>';
+      if (debtPageInfo) debtPageInfo.textContent = 'Page 1 of 1';
+      if (debtPrev) debtPrev.disabled = true;
+      if (debtNext) debtNext.disabled = true;
+    }
+  };
+
+  const loadAudit = async () => {
+    if (!auditBody || !auditPrev || !auditNext || !auditPageInfo) return;
+    auditBody.innerHTML = '<tr><td colspan="7"><div class="finance-chart-skeleton"></div></td></tr>';
+    try {
+      const payload = await listFinanceAudit({ page: auditPage, pageSize: auditPageSize });
+      const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+      const pagination = payload?.pagination || {};
+      auditTotalPages = Math.max(1, Number(pagination.totalPages || 1));
+      auditPage = Math.max(1, Math.min(auditPage, auditTotalPages));
+      auditPageInfo.textContent = `Page ${auditPage} of ${auditTotalPages}`;
+      auditPrev.disabled = auditPage <= 1;
+      auditNext.disabled = auditPage >= auditTotalPages;
+
+      if (!rows.length) {
+        auditBody.innerHTML = '<tr><td colspan="7">No audit entries found.</td></tr>';
+      } else {
+        auditBody.innerHTML = rows
+          .map(
+            (row) => `<tr>
+              <td>${formatWhen(row.createdAt)}</td>
+              <td>${text(row.action)}</td>
+              <td>${text(row.settledByName)}${row.settledByDiscordId ? ` (${text(row.settledByDiscordId)})` : ''}</td>
+              <td>${text(row.vesselName)} | ${text(row.vesselCallsign)}</td>
+              <td>${text(row.departurePort)} \u2192 ${text(row.destinationPort)}</td>
+              <td class="align-right">${formatGuilders(row.amount)}</td>
+              <td>${text(row.oowName)}${row.oowSerial ? ` (${text(row.oowSerial)})` : ''}</td>
+            </tr>`
+          )
+          .join('');
+      }
+      auditLoaded = true;
+      clearMessage(feedback);
+    } catch (error) {
+      console.error('[finances] Failed to load audit', error);
+      showMessage(feedback, error.message || 'Unable to load finance audit.', 'error');
+      auditBody.innerHTML = '<tr><td colspan="7">Unable to load data</td></tr>';
+    }
+  };
+
+  setupRangeButtons(rangeButtons, async (range) => {
+    activeRange = range;
+    if (activeTab === 'overview' || overviewLoaded) await loadOverview();
+    if (activeTab === 'analytics' || analyticsLoaded) await loadAnalytics();
+  });
+
+  unsettledScope.addEventListener('change', async () => {
+    if (activeTab === 'overview' || overviewLoaded) await loadOverview();
+  });
+
+  tabButtons.forEach((button) => {
+    button.addEventListener('click', async () => {
+      const nextTab = button.getAttribute('data-finance-tab') || 'overview';
+      setTab(nextTab);
+      if (nextTab === 'overview' && !overviewLoaded) await loadOverview();
+      if (nextTab === 'analytics' && !analyticsLoaded) await loadAnalytics();
+      if (nextTab === 'debts' && !debtsLoaded) await loadDebts();
+      if (nextTab === 'audit' && !auditLoaded) await loadAudit();
+    });
+  });
+
+  openTabLinks.forEach((link) => {
+    link.addEventListener('click', async (event) => {
+      event.preventDefault();
+      const nextTab = link.getAttribute('data-finance-open-tab') || 'overview';
+      setTab(nextTab);
+      if (nextTab === 'debts' && !debtsLoaded) await loadDebts();
+    });
+  });
+
+  if (debtSearch && debtMinOutstanding) {
+    const scheduleDebtRefresh = () => {
+      debtPage = 1;
+      if (debtsDebounce) window.clearTimeout(debtsDebounce);
+      debtsDebounce = window.setTimeout(() => loadDebts(), 280);
+    };
+    debtSearch.addEventListener('input', scheduleDebtRefresh);
+    debtMinOutstanding.addEventListener('input', scheduleDebtRefresh);
+  }
+
+  if (debtPrev && debtNext) {
+    debtPrev.addEventListener('click', async () => {
+      if (debtPage <= 1) return;
+      debtPage -= 1;
+      await renderDebtPage();
+    });
+    debtNext.addEventListener('click', async () => {
+      if (debtPage >= debtTotalPages) return;
+      debtPage += 1;
+      await renderDebtPage();
+    });
+  }
+
+  if (auditPrev && auditNext) {
+    auditPrev.addEventListener('click', async () => {
+      if (auditPage <= 1) return;
+      auditPage -= 1;
+      await loadAudit();
+    });
+    auditNext.addEventListener('click', async () => {
+      if (auditPage >= auditTotalPages) return;
+      auditPage += 1;
+      await loadAudit();
+    });
+  }
+
+  setTab('overview');
+  await loadOverview();
+}

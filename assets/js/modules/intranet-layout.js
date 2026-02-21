@@ -1,5 +1,5 @@
 import { showMessage } from './notice.js';
-import { hasPermission, renderIntranetNavbar } from './nav.js?v=20260221f';
+import { hasPermission, renderIntranetNavbar } from './nav.js?v=20260221g';
 
 async function fetchSession() {
   const response = await fetch('/api/auth/session', {

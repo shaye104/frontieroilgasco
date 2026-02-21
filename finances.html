@@ -41,95 +41,179 @@
             </div>
           </div>
           <nav class="finance-tabs" aria-label="Finance sections">
-            <a class="finance-tab is-active" href="/finances" aria-current="page">Overview</a>
-            <a class="finance-tab" href="/finances/analytics">Analytics</a>
-            <a class="finance-tab" href="/finances/debts">Debts</a>
-            <a class="finance-tab" href="/finances/audit">Audit</a>
+            <button class="finance-tab is-active" type="button" data-finance-tab="overview" aria-current="page">Overview</button>
+            <button class="finance-tab" type="button" data-finance-tab="analytics">Analytics</button>
+            <button class="finance-tab" type="button" data-finance-tab="debts">Debts</button>
+            <button class="finance-tab" type="button" data-finance-tab="audit">Audit</button>
           </nav>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="financesFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
         <section id="protectedContent" class="finance-dashboard-shell hidden">
-          <div class="finance-kpi-grid">
-            <article class="finance-kpi">
-              <span class="finance-kpi-icon" aria-hidden="true">↗</span>
-              <p class="finance-kpi-label">Net Profit</p>
-              <p id="kpiNetProfit" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-            </article>
-            <article class="finance-kpi">
-              <span class="finance-kpi-icon" aria-hidden="true">🏢</span>
-              <p class="finance-kpi-label">Company Share (10%)</p>
-              <p id="kpiCompanyShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-            </article>
-            <article class="finance-kpi">
-              <span class="finance-kpi-icon" aria-hidden="true">👥</span>
-              <p class="finance-kpi-label">Crew Share (90%)</p>
-              <p id="kpiCrewShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-            </article>
-            <article class="finance-kpi">
-              <span class="finance-kpi-icon" aria-hidden="true">📦</span>
-              <p class="finance-kpi-label">Freight Loss Value</p>
-              <p id="kpiLossValue" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-            </article>
-            <article class="finance-kpi">
-              <span class="finance-kpi-icon" aria-hidden="true">✓</span>
-              <p class="finance-kpi-label">Completed Voyages</p>
-              <p id="kpiCompletedVoyages" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-            </article>
-            <article class="finance-kpi">
-              <span class="finance-kpi-icon" aria-hidden="true">⏳</span>
-              <p class="finance-kpi-label">Unsettled Outstanding</p>
-              <p id="kpiUnsettled" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-            </article>
-          </div>
+          <section id="financeTabOverview" class="finance-tab-panel is-active" data-finance-panel="overview">
+            <div class="finance-kpi-grid">
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true">↗</span>
+                <p class="finance-kpi-label">Net Profit</p>
+                <p id="kpiNetProfit" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true">🏢</span>
+                <p class="finance-kpi-label">Company Share (10%)</p>
+                <p id="kpiCompanyShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true">👥</span>
+                <p class="finance-kpi-label">Crew Share (90%)</p>
+                <p id="kpiCrewShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true">📦</span>
+                <p class="finance-kpi-label">Freight Loss Value</p>
+                <p id="kpiLossValue" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true">✓</span>
+                <p class="finance-kpi-label">Completed Voyages</p>
+                <p id="kpiCompletedVoyages" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true">⏳</span>
+                <p class="finance-kpi-label">Unsettled Outstanding</p>
+                <p id="kpiUnsettled" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+              </article>
+            </div>
 
-          <div class="finance-main-chart-grid">
-            <article class="finance-chart-card">
-              <h3>Net Profit Trend</h3>
-              <div id="chartNetProfit" class="finance-chart-host">
-                <div class="finance-chart-skeleton"></div>
-              </div>
-            </article>
-            <article class="finance-chart-card">
-              <h3>Company vs Crew Share</h3>
-              <div id="chartCompanyCrew" class="finance-chart-host">
-                <div class="finance-chart-skeleton"></div>
-              </div>
-            </article>
-          </div>
+            <div class="finance-main-chart-grid">
+              <article class="finance-chart-card">
+                <h3>Net Profit Trend</h3>
+                <div id="chartNetProfit" class="finance-chart-host">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
+              </article>
+              <article class="finance-chart-card">
+                <h3>Company vs Crew Share</h3>
+                <div id="chartCompanyCrew" class="finance-chart-host">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
+              </article>
+            </div>
 
-          <div class="finance-bottom-grid">
-            <article class="finance-chart-card finance-mini-chart-card">
-              <div class="finance-mini-head">
-                <h3>Average Net Profit</h3>
-                <p id="avgMiniValue" class="finance-mini-value">ƒ 0</p>
-              </div>
-              <div id="chartAvgProfit" class="finance-chart-host">
-                <div class="finance-chart-skeleton"></div>
-              </div>
-            </article>
+            <div class="finance-bottom-grid">
+              <article class="finance-chart-card finance-mini-chart-card">
+                <div class="finance-mini-head">
+                  <h3>Average Net Profit</h3>
+                  <p id="avgMiniValue" class="finance-mini-value">ƒ 0</p>
+                </div>
+                <div id="chartAvgProfit" class="finance-chart-host">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
+              </article>
 
-            <article class="finance-chart-card finance-unsettled-card">
-              <div class="finance-unsettled-head">
-                <h3>Unsettled Company Share</h3>
-                <div class="finance-unsettled-actions">
-                  <label for="unsettledScopeSelect">Scope</label>
-                  <select id="unsettledScopeSelect">
-                    <option value="all">All Time</option>
-                    <option value="range">Selected Range</option>
-                  </select>
+              <article class="finance-chart-card finance-unsettled-card">
+                <div class="finance-unsettled-head">
+                  <h3>Unsettled Company Share</h3>
+                  <div class="finance-unsettled-actions">
+                    <label for="unsettledScopeSelect">Scope</label>
+                    <select id="unsettledScopeSelect">
+                      <option value="all">All Time</option>
+                      <option value="range">Selected Range</option>
+                    </select>
+                  </div>
+                </div>
+                <p id="unsettledOutstandingTotal" class="finance-unsettled-total"><span class="finance-value-skeleton"></span></p>
+                <ul id="unsettledTopList" class="finance-unsettled-list">
+                  <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
+                  <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
+                  <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
+                </ul>
+                <a class="btn btn-secondary finance-unsettled-link" href="#" data-finance-open-tab="debts">View all unsettled debts &rarr;</a>
+              </article>
+            </div>
+          </section>
+
+          <section id="financeTabAnalytics" class="finance-tab-panel hidden" data-finance-panel="analytics">
+            <div class="finance-main-chart-grid finance-analytics-grid">
+              <article class="finance-chart-card">
+                <h3>Net Profit Trend</h3>
+                <div id="analyticsChartNetProfit" class="finance-chart-host">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
+              </article>
+              <article class="finance-chart-card">
+                <h3>Company vs Crew Share</h3>
+                <div id="analyticsChartCompanyCrew" class="finance-chart-host">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
+              </article>
+              <article class="finance-chart-card">
+                <h3>Freight Loss Trend</h3>
+                <div id="analyticsChartLossTrend" class="finance-chart-host">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
+              </article>
+              <article class="finance-chart-card">
+                <h3>Average Profit per Voyage</h3>
+                <div id="analyticsChartAvgProfit" class="finance-chart-host">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="financeTabDebts" class="finance-tab-panel hidden" data-finance-panel="debts">
+            <article class="finance-chart-card finance-filter-card">
+              <div class="filter-row">
+                <div>
+                  <label for="debtSearch">Search OOTW / Vessel / Route</label>
+                  <input id="debtSearch" type="text" />
+                </div>
+                <div>
+                  <label for="debtMinOutstanding">Only show &gt;= ƒ X</label>
+                  <input id="debtMinOutstanding" type="number" min="0" step="1" />
                 </div>
               </div>
-              <p id="unsettledOutstandingTotal" class="finance-unsettled-total"><span class="finance-value-skeleton"></span></p>
-              <ul id="unsettledTopList" class="finance-unsettled-list">
-                <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
-                <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
-                <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
-              </ul>
-              <a class="btn btn-secondary finance-unsettled-link" href="/finances/debts">View all unsettled debts &rarr;</a>
+              <p id="debtTotals" class="muted">Outstanding: ƒ 0</p>
             </article>
-          </div>
+
+            <article class="finance-chart-card finance-debts-group-card">
+              <div id="financeDebtsGroups" class="finance-debt-groups"></div>
+              <div class="pagination-row">
+                <button id="financeDebtsPrev" class="btn btn-secondary" type="button">Previous</button>
+                <span id="financeDebtsPageInfo" class="pagination-info">Page 1 of 1</span>
+                <button id="financeDebtsNext" class="btn btn-secondary" type="button">Next</button>
+              </div>
+            </article>
+          </section>
+
+          <section id="financeTabAudit" class="finance-tab-panel hidden" data-finance-panel="audit">
+            <article class="finance-chart-card finance-table-card">
+              <div class="table-wrap">
+                <table class="data-table finance-data-table">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Action</th>
+                      <th>Settled By</th>
+                      <th>Voyage</th>
+                      <th>Route</th>
+                      <th class="align-right">Amount Settled</th>
+                      <th>OOTW</th>
+                    </tr>
+                  </thead>
+                  <tbody id="financeAuditBody">
+                    <tr><td colspan="7"><div class="finance-chart-skeleton"></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagination-row">
+                <button id="financeAuditPrev" class="btn btn-secondary" type="button">Previous</button>
+                <span id="financeAuditPageInfo" class="pagination-info">Page 1 of 1</span>
+                <button id="financeAuditNext" class="btn btn-secondary" type="button">Next</button>
+              </div>
+            </article>
+          </section>
         </section>
       </div>
     </main>
@@ -140,6 +224,6 @@
       </div>
     </footer>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221f"></script>
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221g"></script>
   </body>
 </html>
