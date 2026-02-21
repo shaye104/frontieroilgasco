@@ -34,6 +34,21 @@ function buildNavLink(href, label) {
   return link;
 }
 
+const INTRANET_NAV_ITEMS = [
+  { href: '/my-details', label: 'My Details' },
+  { href: '/voyages/my', label: 'Voyages' },
+  { href: '/my-fleet', label: 'My Fleet' },
+  { href: '/forms', label: 'Forms' },
+  { href: '/finances', label: 'Finances', anyPermissions: ['finances.view', 'admin.override'] },
+  { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
+];
+
+function canRenderNavItem(session, item) {
+  const anyPermissions = Array.isArray(item?.anyPermissions) ? item.anyPermissions : [];
+  if (!anyPermissions.length) return true;
+  return anyPermissions.some((permissionKey) => hasPermission(session, permissionKey));
+}
+
 function wireLinkPrefetch(link, session) {
   if (!link) return;
   let primed = false;
@@ -66,26 +81,12 @@ export function renderIntranetNavbar(session) {
   if (!nav) return;
 
   nav.innerHTML = '';
-  const myDetailsLink = buildNavLink('/my-details', 'My Details');
-  const voyagesLink = buildNavLink('/voyages/my', 'Voyages');
-  const fleetLink = buildNavLink('/my-fleet', 'My Fleet');
-  const formsLink = buildNavLink('/forms', 'Forms');
-  const financesLink = buildNavLink('/finances', 'Finances');
-  nav.append(myDetailsLink);
-  nav.append(voyagesLink);
-  nav.append(fleetLink);
-  nav.append(formsLink);
-  if (hasPermission(session, 'finances.view')) nav.append(financesLink);
-  wireLinkPrefetch(myDetailsLink, session);
-  wireLinkPrefetch(voyagesLink, session);
-  wireLinkPrefetch(formsLink, session);
-  wireLinkPrefetch(financesLink, session);
-
-  if (hasPermission(session, 'admin.access')) {
-    const adminLink = buildNavLink('/admin', 'Admin Panel');
-    nav.append(adminLink);
-    wireLinkPrefetch(adminLink, session);
-  }
+  INTRANET_NAV_ITEMS.forEach((item) => {
+    if (!canRenderNavItem(session, item)) return;
+    const link = buildNavLink(item.href, item.label);
+    nav.append(link);
+    wireLinkPrefetch(link, session);
+  });
 
   const spacer = document.createElement('span');
   spacer.className = 'nav-spacer';

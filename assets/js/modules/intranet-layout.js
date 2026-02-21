@@ -28,6 +28,7 @@ export async function initIntranetLayout(config) {
   const requireFormsAdmin = Boolean(config.requireFormsAdmin);
   const requireEmployee = Boolean(config.requireEmployee);
   const requiredPermissions = Array.isArray(config.requiredPermissions) ? config.requiredPermissions : [];
+  const requiredAnyPermissions = Array.isArray(config.requiredAnyPermissions) ? config.requiredAnyPermissions : [];
 
   if (!feedback || !protectedContent) return null;
 
@@ -53,6 +54,11 @@ export async function initIntranetLayout(config) {
     }
 
     if (requiredPermissions.length && !requiredPermissions.every((permission) => hasPermission(session, permission))) {
+      window.location.href = toAccessDeniedUrl('missing_permissions');
+      return null;
+    }
+
+    if (requiredAnyPermissions.length && !requiredAnyPermissions.some((permission) => hasPermission(session, permission))) {
       window.location.href = toAccessDeniedUrl('missing_permissions');
       return null;
     }

@@ -5,7 +5,7 @@ import { initializeYear } from '../modules/year.js';
 initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
-  requiredPermissions: ['finances.view']
+  requiredAnyPermissions: ['finances.view', 'admin.override']
 }).then((session) => {
   if (!session) return;
 
