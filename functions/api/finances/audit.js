@@ -1,6 +1,15 @@
 import { cachedJson } from '../auth/_lib/auth.js';
 import { requireFinancePermission, toMoney } from '../_lib/finances.js';
 
+function toUtcBoundary(input, isEnd = false) {
+  const value = String(input || '').trim();
+  if (!value) return null;
+  const suffix = isEnd ? 'T23:59:59.999Z' : 'T00:00:00.000Z';
+  const date = new Date(`${value}${suffix}`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
 export async function onRequestGet(context) {
   const { env, request } = context;
   const { errorResponse } = await requireFinancePermission(context, 'finances.audit.view');
@@ -10,6 +19,29 @@ export async function onRequestGet(context) {
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
   const pageSize = Math.min(100, Math.max(10, Number(url.searchParams.get('pageSize')) || 25));
   const offset = (page - 1) * pageSize;
+  const settledBy = String(url.searchParams.get('settledBy') || '').trim().toLowerCase();
+  const dateFrom = toUtcBoundary(url.searchParams.get('dateFrom'), false);
+  const dateTo = toUtcBoundary(url.searchParams.get('dateTo'), true);
+
+  const whereClauses = [];
+  const bindings = [];
+  if (settledBy) {
+    whereClauses.push(`(
+      LOWER(COALESCE(se.roblox_username, '')) LIKE ?
+      OR LOWER(COALESCE(fa.settled_by_discord_user_id, '')) LIKE ?
+    )`);
+    const search = `%${settledBy}%`;
+    bindings.push(search, search);
+  }
+  if (dateFrom) {
+    whereClauses.push('fa.created_at >= ?');
+    bindings.push(dateFrom);
+  }
+  if (dateTo) {
+    whereClauses.push('fa.created_at <= ?');
+    bindings.push(dateTo);
+  }
+  const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
   const [rowsResult, totalRow] = await Promise.all([
     env.DB
@@ -32,12 +64,21 @@ export async function onRequestGet(context) {
          LEFT JOIN employees se ON se.id = fa.settled_by_employee_id
          LEFT JOIN employees oow ON oow.id = fa.oow_employee_id
          LEFT JOIN voyages v ON v.id = fa.voyage_id
+         ${whereSql}
          ORDER BY fa.created_at DESC, fa.id DESC
          LIMIT ? OFFSET ?`
       )
-      .bind(pageSize, offset)
+      .bind(...bindings, pageSize, offset)
       .all(),
-    env.DB.prepare(`SELECT COUNT(*) AS total FROM finance_settlement_audit`).first()
+    env.DB
+      .prepare(
+        `SELECT COUNT(*) AS total
+         FROM finance_settlement_audit fa
+         LEFT JOIN employees se ON se.id = fa.settled_by_employee_id
+         ${whereSql}`
+      )
+      .bind(...bindings)
+      .first()
   ]);
 
   const rows = (rowsResult?.results || []).map((row) => ({

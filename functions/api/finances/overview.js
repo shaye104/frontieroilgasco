@@ -241,6 +241,7 @@ export async function onRequestGet(context) {
       },
       unsettled: {
         totalOutstanding: unsettledTotal,
+        totalVoyages: unsettledRows.length,
         topDebtors
       }
     },

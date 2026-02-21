@@ -1025,13 +1025,13 @@ textarea:focus {
 
 .finance-line-svg {
   width: 100%;
-  height: 150px;
+  height: 170px;
   display: block;
 }
 
 .finance-line-svg polyline {
   fill: none;
-  stroke-width: 2.5;
+  stroke-width: 3.4;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -1049,26 +1049,26 @@ textarea:focus {
 }
 
 .finance-chart-label-row {
-  margin-top: 0.2rem;
+  margin-top: 0.34rem;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .finance-chart-label-row span {
-  font-size: 0.72rem;
-  color: var(--color-muted);
+  font-size: 0.8rem;
+  color: #475569;
   text-align: center;
 }
 
 .finance-stacked-bars {
-  min-height: 150px;
+  min-height: 170px;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   align-items: end;
-  gap: 0.45rem;
+  gap: 0.5rem;
 }
 
 .finance-stacked-col {
@@ -1078,8 +1078,8 @@ textarea:focus {
 }
 
 .finance-stacked-col small {
-  color: var(--color-muted);
-  font-size: 0.7rem;
+  color: #475569;
+  font-size: 0.77rem;
   text-align: center;
 }
 
