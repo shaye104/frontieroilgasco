@@ -149,12 +149,9 @@ p {
 }
 
 .site-footer {
+  display: none;
   border-top: 1px solid var(--color-border);
   background: #ffffff;
-}
-
-body.page-intranet .site-footer {
-  display: none;
 }
 
 .footer-row {
