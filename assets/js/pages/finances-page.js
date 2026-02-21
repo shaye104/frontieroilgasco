@@ -9,6 +9,35 @@ function $$(selector) {
 }
 
 const RANGE_KEYS = ['week', 'month', '3m', '6m', 'year'];
+const TAB_KEYS = ['overview', 'trends', 'debts', 'audit'];
+
+const FINANCE_ICONS = {
+  'trending-up':
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h6v6"/></svg>',
+  building:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h2M11 7h2M15 7h2M7 11h2M11 11h2M15 11h2M10 21v-4h4v4"/></svg>',
+  hourglass:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12M6 22h12"/><path d="M8 2v5a4 4 0 0 0 2 3.5L12 12l-2 1.5A4 4 0 0 0 8 17v5M16 2v5a4 4 0 0 1-2 3.5L12 12l2 1.5A4 4 0 0 1 16 17v5"/></svg>',
+  'check-circle':
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg>',
+  clock:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  'package-x':
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16.5 9.4 7.5 4.2"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/><path d="m16 15 4 4"/><path d="m20 15-4 4"/></svg>',
+  route:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h5a3 3 0 0 0 3-3V7"/></svg>',
+  ship:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17h18l-2.2 3.3a2 2 0 0 1-1.7.9H6.9a2 2 0 0 1-1.7-.9L3 17z"/><path d="M5 17V9l7-4 7 4v8"/><path d="M12 5v12"/></svg>',
+  users:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+};
+
+function renderIcons() {
+  $$('[data-icon]').forEach((node) => {
+    const name = String(node.getAttribute('data-icon') || '').trim().toLowerCase();
+    node.innerHTML = FINANCE_ICONS[name] || '';
+  });
+}
 
 function text(value) {
   const output = String(value ?? '').trim();
@@ -24,31 +53,14 @@ function formatGuilders(value) {
   return `\u0192 ${toMoney(value).toLocaleString()}`;
 }
 
-function formatDateLabel(value, fallbackLabel = '') {
-  const raw = String(value || '').trim();
-  if (!raw) return text(fallbackLabel);
-  let date = null;
-  let monthly = false;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    date = new Date(`${raw}T00:00:00Z`);
-  } else if (/^\d{4}-\d{2}$/.test(raw)) {
-    monthly = true;
-    date = new Date(`${raw}-01T00:00:00Z`);
-  }
-  if (!date || Number.isNaN(date.getTime())) return text(fallbackLabel || raw);
-  if (monthly) {
-    return date.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' });
-  }
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+function formatInteger(value) {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? Math.round(num).toLocaleString() : '0';
 }
 
-function parseKeyTime(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return Number.NaN;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(`${raw}T00:00:00Z`).getTime();
-  if (/^\d{4}-\d{2}$/.test(raw)) return new Date(`${raw}-01T00:00:00Z`).getTime();
-  const parsed = new Date(raw).getTime();
-  return Number.isFinite(parsed) ? parsed : Number.NaN;
+function formatPercent(value) {
+  const num = Number(value || 0);
+  return Number.isFinite(num) ? `${Math.round(num)}%` : '0%';
 }
 
 function formatWhen(value) {
@@ -62,27 +74,65 @@ function normalizePathname(pathname) {
   return String(pathname || '').replace(/\/+$/, '') || '/';
 }
 
-function renderNavbar(session) {
-  renderIntranetNavbar(session);
-  const current = '/finances';
-  $$('.site-nav a[href]').forEach((link) => {
-    const href = link.getAttribute('href') || '/';
-    const path = normalizePathname(new URL(href, window.location.origin).pathname);
-    const isActive = path === current;
-    link.classList.toggle('is-active', isActive);
-    if (isActive) link.setAttribute('aria-current', 'page');
-    else link.removeAttribute('aria-current');
-  });
+function normalizeFinanceRange(input) {
+  const value = String(input || '').trim().toLowerCase();
+  return RANGE_KEYS.includes(value) ? value : 'week';
+}
 
-  const logout = $('.site-nav button.btn.btn-secondary');
-  if (!logout) return;
-  logout.onclick = async () => {
-    try {
-      await performLogout('/');
-    } catch {
-      window.location.href = '/';
-    }
-  };
+function normalizeFinanceTab(input) {
+  const value = String(input || '').trim().toLowerCase();
+  return TAB_KEYS.includes(value) ? value : 'overview';
+}
+
+function parseKeyTime(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return Number.NaN;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(`${raw}T00:00:00Z`).getTime();
+  if (/^\d{4}-\d{2}$/.test(raw)) return new Date(`${raw}-01T00:00:00Z`).getTime();
+  const parsed = new Date(raw).getTime();
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
+function formatDateLabel(value, fallbackLabel = '') {
+  const raw = String(value || '').trim();
+  if (!raw) return text(fallbackLabel);
+
+  let monthly = false;
+  let date = null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    date = new Date(`${raw}T00:00:00Z`);
+  } else if (/^\d{4}-\d{2}$/.test(raw)) {
+    monthly = true;
+    date = new Date(`${raw}-01T00:00:00Z`);
+  }
+
+  if (!date || Number.isNaN(date.getTime())) return text(fallbackLabel || raw);
+  if (monthly) {
+    return date.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' });
+  }
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+function normalizeSeriesPoints(series) {
+  const rows = Array.isArray(series) ? series : [];
+  return rows
+    .map((point, index) => {
+      const key = String(point?.key || '').trim() || `idx-${index}`;
+      const parsedTime = parseKeyTime(key);
+      return {
+        key,
+        label: formatDateLabel(key, point?.label || key),
+        value: toMoney(point?.value || 0),
+        parsedTime,
+        originalIndex: index
+      };
+    })
+    .sort((a, b) => {
+      const aTime = Number.isFinite(a.parsedTime) ? a.parsedTime : Number.POSITIVE_INFINITY;
+      const bTime = Number.isFinite(b.parsedTime) ? b.parsedTime : Number.POSITIVE_INFINITY;
+      if (aTime !== bTime) return aTime - bTime;
+      return a.originalIndex - b.originalIndex;
+    });
 }
 
 async function fetchJson(url, options = {}) {
@@ -139,6 +189,30 @@ function clearFeedback() {
   box.textContent = '';
 }
 
+function renderNavbar(session) {
+  renderIntranetNavbar(session);
+  const current = '/finances';
+
+  $$('.site-nav a[href]').forEach((link) => {
+    const href = link.getAttribute('href') || '/';
+    const path = normalizePathname(new URL(href, window.location.origin).pathname);
+    const isActive = path === current;
+    link.classList.toggle('is-active', isActive);
+    if (isActive) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+
+  const logoutButton = $('.site-nav button.btn.btn-secondary');
+  if (!logoutButton) return;
+  logoutButton.onclick = async () => {
+    try {
+      await performLogout('/');
+    } catch {
+      window.location.href = '/';
+    }
+  };
+}
+
 function setActiveRange(range) {
   $$('[data-finance-range]').forEach((button) => {
     button.classList.toggle('is-active', button.getAttribute('data-finance-range') === range);
@@ -160,15 +234,11 @@ function setActiveTab(tab) {
   });
 }
 
-function normalizeFinanceTab(input) {
-  const value = String(input || '').trim().toLowerCase();
-  if (value === 'overview' || value === 'trends' || value === 'debts' || value === 'audit') return value;
-  return 'overview';
-}
-
-function normalizeFinanceRange(input) {
-  const value = String(input || '').trim().toLowerCase();
-  return RANGE_KEYS.includes(value) ? value : 'week';
+function updateUrlState(state) {
+  const nextUrl = new URL(window.location.href);
+  nextUrl.searchParams.set('tab', state.activeTab);
+  nextUrl.searchParams.set('range', state.range);
+  window.history.replaceState({}, '', nextUrl.toString());
 }
 
 function previousRangeLabel(range) {
@@ -180,8 +250,8 @@ function previousRangeLabel(range) {
 }
 
 function toDelta(current, previous, range, invertDirection = false) {
-  const now = toMoney(current);
-  const prev = toMoney(previous);
+  const now = Number(current || 0);
+  const prev = Number(previous || 0);
   const diff = now - prev;
   const label = previousRangeLabel(range);
 
@@ -209,81 +279,34 @@ function setDelta(selector, delta) {
   const el = $(selector);
   if (!el) return;
   el.classList.remove('is-positive', 'is-negative', 'is-neutral');
-  el.classList.add(`is-${delta.tone || 'neutral'}`);
-  el.textContent = text(delta.text);
+  el.classList.add(`is-${delta?.tone || 'neutral'}`);
+  el.textContent = text(delta?.text || '');
 }
 
-function updateUrlState(state) {
-  const nextUrl = new URL(window.location.href);
-  nextUrl.searchParams.set('tab', state.activeTab);
-  nextUrl.searchParams.set('range', state.range);
-  window.history.replaceState({}, '', nextUrl.toString());
+function rangeWindow(range) {
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  const start = new Date(end);
+  if (range === 'week') start.setDate(end.getDate() - 6);
+  else if (range === 'month') start.setDate(1);
+  else if (range === '3m') start.setMonth(end.getMonth() - 2, 1);
+  else if (range === '6m') start.setMonth(end.getMonth() - 5, 1);
+  else start.setMonth(0, 1);
+  start.setHours(0, 0, 0, 0);
+  return { start, end };
 }
 
-function normalizeSeriesPoints(series) {
-  const rows = Array.isArray(series) ? series : [];
-  return rows
-    .map((point, index) => {
-      const key = String(point?.key || '').trim() || `idx-${index}`;
-      const parsedTime = parseKeyTime(key);
-      return {
-        key,
-        label: formatDateLabel(key, point?.label || key),
-        value: toMoney(point?.value || 0),
-        parsedTime,
-        originalIndex: index
-      };
-    })
-    .sort((a, b) => {
-      const aTime = Number.isFinite(a.parsedTime) ? a.parsedTime : Number.POSITIVE_INFINITY;
-      const bTime = Number.isFinite(b.parsedTime) ? b.parsedTime : Number.POSITIVE_INFINITY;
-      if (aTime !== bTime) return aTime - bTime;
-      return a.originalIndex - b.originalIndex;
-    });
-}
-
-function mergeSeriesByKey(baseSeries, extraSeries) {
-  const base = normalizeSeriesPoints(baseSeries);
-  const extras = normalizeSeriesPoints(extraSeries);
-  const byKey = new Map();
-  base.forEach((point) => {
-    byKey.set(point.key, {
-      key: point.key,
-      parsedTime: point.parsedTime,
-      originalIndex: point.originalIndex,
-      label: point.label,
-      base: point.value,
-      extra: 0
-    });
-  });
-  extras.forEach((point) => {
-    if (!byKey.has(point.key)) {
-      byKey.set(point.key, {
-        key: point.key,
-        parsedTime: point.parsedTime,
-        originalIndex: point.originalIndex + 10000,
-        label: point.label,
-        base: 0,
-        extra: point.value
-      });
-      return;
-    }
-    byKey.get(point.key).extra = point.value;
-  });
-  return [...byKey.values()].sort((a, b) => {
-    const aTime = Number.isFinite(a.parsedTime) ? a.parsedTime : Number.POSITIVE_INFINITY;
-    const bTime = Number.isFinite(b.parsedTime) ? b.parsedTime : Number.POSITIVE_INFINITY;
-    if (aTime !== bTime) return aTime - bTime;
-    return a.originalIndex - b.originalIndex;
-  });
-}
-
-function formatTick(value) {
-  return formatGuilders(value);
+function toDateInputValue(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function renderCartesianLineChart(target, lines, options = {}) {
   if (!target) return;
+
   const safeLines = Array.isArray(lines) ? lines.filter((line) => Array.isArray(line?.points)) : [];
   const maxPoints = safeLines.reduce((max, line) => Math.max(max, line.points.length), 0);
   if (!safeLines.length || maxPoints <= 0) {
@@ -291,8 +314,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
     return;
   }
 
-  const firstLine = safeLines[0];
-  const points = firstLine.points;
+  const points = safeLines[0].points;
   if (!points.length) {
     target.innerHTML = '<div class="finance-chart-empty">No data for selected range</div>';
     return;
@@ -300,6 +322,9 @@ function renderCartesianLineChart(target, lines, options = {}) {
 
   const width = Number(options.width || 760);
   const height = Number(options.height || 286);
+  const valueFormatter = typeof options.valueFormatter === 'function' ? options.valueFormatter : formatGuilders;
+  const tickFormatter = typeof options.tickFormatter === 'function' ? options.tickFormatter : valueFormatter;
+
   const plotLeft = 74;
   const plotRight = width - 18;
   const plotTop = 16;
@@ -316,7 +341,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
       maxValue = 1;
     } else {
       minValue = Math.min(0, minValue - Math.abs(minValue * 0.2));
-      maxValue = maxValue + Math.abs(maxValue * 0.2);
+      maxValue += Math.abs(maxValue * 0.2);
     }
   }
   if (minValue > 0) minValue = 0;
@@ -336,7 +361,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
       const y = yAt(tick);
       return `<g>
         <line class="finance-grid-line" x1="${plotLeft}" y1="${y}" x2="${plotRight}" y2="${y}"></line>
-        <text class="finance-axis-y-label" x="${plotLeft - 8}" y="${y + 4}" text-anchor="end">${formatTick(tick)}</text>
+        <text class="finance-axis-y-label" x="${plotLeft - 8}" y="${y + 4}" text-anchor="end">${text(tickFormatter(tick))}</text>
       </g>`;
     })
     .join('');
@@ -352,9 +377,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
 
   const linePaths = safeLines
     .map((line) => {
-      const path = line.points
-        .map((point, idx) => `${idx === 0 ? 'M' : 'L'} ${xAt(idx)} ${yAt(point.value)}`)
-        .join(' ');
+      const path = line.points.map((point, idx) => `${idx === 0 ? 'M' : 'L'} ${xAt(idx)} ${yAt(point.value)}`).join(' ');
       return `<path class="finance-line-path" d="${path}" stroke="${line.color}" fill="none"></path>`;
     })
     .join('');
@@ -401,9 +424,9 @@ function renderCartesianLineChart(target, lines, options = {}) {
     const linesHtml = safeLines
       .map((line) => {
         const point = line.points[idx];
-        return `<div class="finance-tooltip-row"><span class="finance-tooltip-key"><i style="background:${line.color}"></i>${text(line.label)}</span><strong>${formatGuilders(
+        return `<div class="finance-tooltip-row"><span class="finance-tooltip-key"><i style="background:${line.color}"></i>${text(line.label)}</span><strong>${text(valueFormatter(
           point?.value || 0
-        )}</strong></div>`;
+        ))}</strong></div>`;
       })
       .join('');
 
@@ -426,6 +449,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
     if (top + tooltipRect.height > shellRect.height - 8) top = shellRect.height - tooltipRect.height - 8;
     if (top < 8) top = 8;
     if (left < 8) left = 8;
+
     tooltip.style.left = `${left}px`;
     tooltip.style.top = `${top}px`;
   };
@@ -438,56 +462,142 @@ function renderCartesianLineChart(target, lines, options = {}) {
     const index = Math.round(Math.max(0, Math.min(1, ratio)) * steps);
     showTooltipAtIndex(index, event.clientX, event.clientY);
   });
+
   shell.addEventListener('mouseleave', () => {
     tooltip.classList.add('hidden');
     hoverLine.classList.add('hidden');
   });
 }
 
-function renderLineChart(target, series, lineLabel, color) {
+function renderCartesianBarChart(target, series, label, color, options = {}) {
+  if (!target) return;
   const points = normalizeSeriesPoints(series);
-  renderCartesianLineChart(target, [{ label: lineLabel, color, points }]);
-}
-
-function renderDualLineChart(target, baseSeries, baseLabel, baseColor, compareSeries, compareLabel, compareColor) {
-  const merged = mergeSeriesByKey(baseSeries, compareSeries).map((point) => ({
-    key: point.key,
-    label: point.label,
-    base: toMoney(point.base),
-    extra: toMoney(point.extra)
-  }));
-  renderCartesianLineChart(target, [
-    { label: baseLabel, color: baseColor, points: merged.map((point) => ({ key: point.key, label: point.label, value: point.base })) },
-    { label: compareLabel, color: compareColor, points: merged.map((point) => ({ key: point.key, label: point.label, value: point.extra })) }
-  ]);
-}
-
-function renderOverviewSkeleton() {
-  ['#kpiNetProfit', '#kpiCompanyShare', '#kpiCrewShare', '#kpiLossValue', '#kpiCompletedVoyages', '#kpiUnsettled'].forEach((selector) => {
-    const el = $(selector);
-    if (el) el.innerHTML = '<span class="finance-value-skeleton"></span>';
-  });
-  ['#kpiDeltaNetProfit', '#kpiDeltaCompanyShare', '#kpiDeltaCrewShare', '#kpiDeltaLossValue'].forEach((selector) => {
-    const el = $(selector);
-    if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
-  });
-
-  ['#chartNetProfit', '#trendsChartNetProfit', '#trendsChartCompanyShare', '#trendsChartLossTrend', '#trendsChartAvgProfit'].forEach((selector) => {
-    const el = $(selector);
-    if (el) el.innerHTML = '<div class="finance-chart-skeleton"></div>';
-  });
-
-  const unsettledAmount = $('#unsettledOutstandingTotal');
-  if (unsettledAmount) unsettledAmount.innerHTML = '<span class="finance-value-skeleton"></span>';
-
-  const top = $('#unsettledTopList');
-  if (top) {
-    top.innerHTML =
-      '<li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>' +
-      '<li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>' +
-      '<li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>';
+  if (!points.length) {
+    target.innerHTML = '<div class="finance-chart-empty">No data for selected range</div>';
+    return;
   }
 
+  const width = Number(options.width || 760);
+  const height = Number(options.height || 286);
+  const valueFormatter = typeof options.valueFormatter === 'function' ? options.valueFormatter : formatInteger;
+  const tickFormatter = typeof options.tickFormatter === 'function' ? options.tickFormatter : valueFormatter;
+
+  const plotLeft = 74;
+  const plotRight = width - 18;
+  const plotTop = 16;
+  const plotBottom = height - 38;
+  const plotWidth = Math.max(1, plotRight - plotLeft);
+  const plotHeight = Math.max(1, plotBottom - plotTop);
+
+  const values = points.map((point) => Math.max(0, toMoney(point.value)));
+  const maxValue = Math.max(1, ...values);
+
+  const yTicks = 5;
+  const tickValues = Array.from({ length: yTicks }, (_, idx) => {
+    const ratio = idx / (yTicks - 1);
+    return Math.round(maxValue - ratio * maxValue);
+  });
+
+  const yAt = (value) => plotTop + ((maxValue - value) / maxValue) * plotHeight;
+  const band = plotWidth / points.length;
+  const barWidth = Math.max(6, Math.min(26, band * 0.58));
+
+  const yGrid = tickValues
+    .map((tick) => {
+      const y = yAt(tick);
+      return `<g>
+        <line class="finance-grid-line" x1="${plotLeft}" y1="${y}" x2="${plotRight}" y2="${y}"></line>
+        <text class="finance-axis-y-label" x="${plotLeft - 8}" y="${y + 4}" text-anchor="end">${text(tickFormatter(tick))}</text>
+      </g>`;
+    })
+    .join('');
+
+  const xLabelStep = points.length > 9 ? Math.ceil(points.length / 6) : 1;
+  const xLabels = points
+    .map((point, idx) => {
+      const show = idx % xLabelStep === 0 || idx === points.length - 1;
+      if (!show) return '';
+      const x = plotLeft + (idx + 0.5) * band;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 10}" text-anchor="middle">${text(point.label)}</text>`;
+    })
+    .join('');
+
+  const bars = points
+    .map((point, idx) => {
+      const value = Math.max(0, toMoney(point.value));
+      const x = plotLeft + idx * band + (band - barWidth) / 2;
+      const y = yAt(value);
+      const h = Math.max(1, plotBottom - y);
+      return `<rect class="finance-bar-rect" data-index="${idx}" x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="4" fill="${color}"></rect>`;
+    })
+    .join('');
+
+  target.innerHTML = `
+    <div class="finance-chart-shell">
+      <svg class="finance-cartesian-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+        <rect x="${plotLeft}" y="${plotTop}" width="${plotWidth}" height="${plotHeight}" fill="#ffffff"></rect>
+        ${yGrid}
+        <line class="finance-axis-line" x1="${plotLeft}" y1="${plotBottom}" x2="${plotRight}" y2="${plotBottom}"></line>
+        <line class="finance-axis-line" x1="${plotLeft}" y1="${plotTop}" x2="${plotLeft}" y2="${plotBottom}"></line>
+        ${bars}
+        ${xLabels}
+      </svg>
+      <div class="finance-chart-legend"><span class="finance-legend-item"><i style="background:${color}"></i>${text(label)}</span></div>
+      <div class="finance-chart-tooltip hidden"></div>
+    </div>
+  `;
+
+  const shell = target.querySelector('.finance-chart-shell');
+  const tooltip = target.querySelector('.finance-chart-tooltip');
+  if (!shell || !tooltip) return;
+
+  shell.querySelectorAll('.finance-bar-rect').forEach((bar) => {
+    bar.addEventListener('mouseenter', (event) => {
+      const idx = Math.max(0, Math.min(points.length - 1, Number(bar.getAttribute('data-index') || 0)));
+      const point = points[idx];
+      tooltip.innerHTML = `<div class="finance-tooltip-title">${text(point.label)}</div><div class="finance-tooltip-row"><span class="finance-tooltip-key"><i style="background:${color}"></i>${text(
+        label
+      )}</span><strong>${text(valueFormatter(point.value))}</strong></div>`;
+      tooltip.classList.remove('hidden');
+
+      const shellRect = shell.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      let left = event.clientX - shellRect.left + 12;
+      let top = event.clientY - shellRect.top + 12;
+      if (left + tooltipRect.width > shellRect.width - 8) left = shellRect.width - tooltipRect.width - 8;
+      if (top + tooltipRect.height > shellRect.height - 8) top = shellRect.height - tooltipRect.height - 8;
+      if (left < 8) left = 8;
+      if (top < 8) top = 8;
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+    });
+
+    bar.addEventListener('mouseleave', () => {
+      tooltip.classList.add('hidden');
+    });
+  });
+}
+
+function renderLineChart(target, series, lineLabel, color) {
+  const points = normalizeSeriesPoints(series);
+  renderCartesianLineChart(target, [{ label: lineLabel, color, points }], {
+    valueFormatter: formatGuilders,
+    tickFormatter: formatGuilders
+  });
+}
+
+function renderCurrencyBarChart(target, series, label, color) {
+  renderCartesianBarChart(target, series, label, color, {
+    valueFormatter: formatGuilders,
+    tickFormatter: formatGuilders
+  });
+}
+
+function renderCountBarChart(target, series, label, color) {
+  renderCartesianBarChart(target, series, label, color, {
+    valueFormatter: (value) => formatInteger(value),
+    tickFormatter: (value) => formatInteger(value)
+  });
 }
 
 function isAllZeroSeries(series) {
@@ -496,10 +606,47 @@ function isAllZeroSeries(series) {
   return safe.every((point) => toMoney(point?.value || 0) === 0);
 }
 
-function renderOverview(currentData, previousData, range) {
-  const kpis = currentData?.kpis || {};
-  const charts = currentData?.charts || {};
-  const unsettled = currentData?.unsettled || {};
+function renderOverviewSkeleton() {
+  ['#kpiNetProfit', '#kpiCompanyShare', '#kpiOutstanding', '#kpiSettlementRate', '#kpiAvgDaysToSettle', '#kpiLossValue'].forEach((selector) => {
+    const el = $(selector);
+    if (el) el.innerHTML = '<span class="finance-value-skeleton"></span>';
+  });
+
+  ['#kpiDeltaNetProfit', '#kpiDeltaCompanyShare', '#kpiDeltaOutstanding', '#kpiDeltaSettlementRate', '#kpiDeltaLossValue', '#kpiAvgDaysHint'].forEach((selector) => {
+    const el = $(selector);
+    if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
+  });
+
+  ['#chartNetProfit', '#trendsChartNetProfit', '#trendsChartCompanyShare', '#trendsChartVoyageCount', '#trendsChartLossTrend'].forEach((selector) => {
+    const el = $(selector);
+    if (el) el.innerHTML = '<div class="finance-chart-skeleton"></div>';
+  });
+
+  const unsettledAmount = $('#unsettledOutstandingTotal');
+  if (unsettledAmount) unsettledAmount.innerHTML = '<span class="finance-value-skeleton"></span>';
+
+  const unsettledCount = $('#unsettledVoyageCount');
+  if (unsettledCount) unsettledCount.innerHTML = '<span class="finance-line-skeleton"></span>';
+
+  const topDebtors = $('#unsettledTopList');
+  if (topDebtors) {
+    topDebtors.innerHTML =
+      '<li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>' +
+      '<li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>' +
+      '<li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>';
+  }
+
+  ['#topRouteLabel', '#topVesselLabel', '#topOotwLabel', '#topRouteValue', '#topVesselValue', '#topOotwValue'].forEach((selector) => {
+    const el = $(selector);
+    if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
+  });
+}
+
+function renderOverview(data, previousData, range) {
+  const kpis = data?.kpis || {};
+  const charts = data?.charts || {};
+  const unsettled = data?.unsettled || {};
+  const topPerformers = data?.topPerformers || {};
   const previousKpis = previousData?.kpis || {};
 
   const writeMoney = (selector, value) => {
@@ -508,46 +655,52 @@ function renderOverview(currentData, previousData, range) {
     el.textContent = formatGuilders(value);
   };
 
-  writeMoney('#kpiNetProfit', kpis.netProfit);
-  writeMoney('#kpiCompanyShare', kpis.companyShareEarnings);
-  writeMoney('#kpiCrewShare', kpis.crewShare);
-  writeMoney('#kpiLossValue', kpis.freightLossesValue);
-  writeMoney('#kpiUnsettled', kpis.unsettledCompanyShareOutstanding);
+  writeMoney('#kpiNetProfit', kpis.netProfit || 0);
+  writeMoney('#kpiCompanyShare', kpis.companyShareEarnings || 0);
+  writeMoney('#kpiOutstanding', kpis.unsettledCompanyShareOutstanding || 0);
+  writeMoney('#kpiLossValue', kpis.freightLossesValue || 0);
 
-  const completed = $('#kpiCompletedVoyages');
-  if (completed) completed.textContent = String(Number(kpis.completedVoyages || 0));
+  const settlementRate = $('#kpiSettlementRate');
+  if (settlementRate) settlementRate.textContent = formatPercent(kpis.settlementRatePct || 0);
+
+  const avgDays = $('#kpiAvgDaysToSettle');
+  if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
+
+  const avgDaysHint = $('#kpiAvgDaysHint');
+  if (avgDaysHint) avgDaysHint.textContent = kpis.avgDaysToSettle == null ? 'No settled voyages in range' : 'Settled voyages only';
 
   setDelta('#kpiDeltaNetProfit', toDelta(kpis.netProfit, previousKpis.netProfit, range));
   setDelta('#kpiDeltaCompanyShare', toDelta(kpis.companyShareEarnings, previousKpis.companyShareEarnings, range));
-  setDelta('#kpiDeltaCrewShare', toDelta(kpis.crewShare, previousKpis.crewShare, range));
+  setDelta('#kpiDeltaOutstanding', toDelta(kpis.unsettledCompanyShareOutstanding, previousKpis.unsettledCompanyShareOutstanding, range, true));
+  setDelta('#kpiDeltaSettlementRate', toDelta(kpis.settlementRatePct, previousKpis.settlementRatePct, range));
   setDelta('#kpiDeltaLossValue', toDelta(kpis.freightLossesValue, previousKpis.freightLossesValue, range, true));
 
   renderLineChart($('#chartNetProfit'), charts.netProfitTrend || [], 'Net Profit', '#253475');
+
   renderLineChart($('#trendsChartNetProfit'), charts.netProfitTrend || [], 'Net Profit', '#253475');
   renderLineChart($('#trendsChartCompanyShare'), charts.companyShareTrend || [], 'Company Share Earned', '#5776b7');
+  renderCountBarChart($('#trendsChartVoyageCount'), charts.voyageCountTrend || [], 'Voyage Count', '#253475');
+
   if (isAllZeroSeries(charts.freightLossValueTrend || [])) {
     const lossTarget = $('#trendsChartLossTrend');
     if (lossTarget) lossTarget.innerHTML = '<div class="finance-chart-empty">No freight losses in this period</div>';
   } else {
-    renderLineChart($('#trendsChartLossTrend'), charts.freightLossValueTrend || [], 'Freight Loss Value', '#5776b7');
+    renderCurrencyBarChart($('#trendsChartLossTrend'), charts.freightLossValueTrend || [], 'Freight Loss Value', '#5776b7');
   }
-  renderLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'Average Profit per Voyage', '#64748b');
 
   const unsettledTotal = $('#unsettledOutstandingTotal');
   if (unsettledTotal) unsettledTotal.textContent = formatGuilders(unsettled.totalOutstanding || 0);
 
   const unsettledCount = $('#unsettledVoyageCount');
-  if (unsettledCount) {
-    unsettledCount.textContent = `Unsettled Voyages: ${Number(unsettled.totalVoyages || 0)}`;
-  }
+  if (unsettledCount) unsettledCount.textContent = `Unsettled Voyages: ${Number(unsettled.totalVoyages || 0)}`;
 
-  const top = $('#unsettledTopList');
+  const topList = $('#unsettledTopList');
   const topDebtors = Array.isArray(unsettled.topDebtors) ? unsettled.topDebtors : [];
-  if (top) {
+  if (topList) {
     if (!topDebtors.length) {
-      top.innerHTML = '<li class="finance-unsettled-item"><span class="muted">No outstanding company share</span></li>';
+      topList.innerHTML = '<li class="finance-unsettled-item"><span class="muted">No outstanding company share</span></li>';
     } else {
-      top.innerHTML = topDebtors
+      topList.innerHTML = topDebtors
         .slice(0, 3)
         .map((row) => {
           const officer = row.officerSerial ? `${text(row.officerName)} (${text(row.officerSerial)})` : text(row.officerName);
@@ -558,57 +711,95 @@ function renderOverview(currentData, previousData, range) {
         .join('');
     }
   }
-}
 
-function rangeWindow(range) {
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
+  const setTop = (labelSelector, valueSelector, payload) => {
+    const labelEl = $(labelSelector);
+    const valueEl = $(valueSelector);
+    if (labelEl) labelEl.textContent = text(payload?.label || 'No data');
+    if (valueEl) valueEl.textContent = formatGuilders(payload?.netProfit || 0);
+  };
 
-  const start = new Date(end);
-  if (range === 'week') {
-    start.setDate(end.getDate() - 6);
-  } else if (range === 'month') {
-    start.setDate(1);
-  } else if (range === '3m') {
-    start.setMonth(end.getMonth() - 2, 1);
-  } else if (range === '6m') {
-    start.setMonth(end.getMonth() - 5, 1);
-  } else {
-    start.setMonth(0, 1);
-  }
-  start.setHours(0, 0, 0, 0);
-  return { start, end };
-}
-
-function toDateInputValue(date) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function isInRange(value, start, end) {
-  if (!value) return false;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return false;
-  return date >= start && date <= end;
+  setTop('#topRouteLabel', '#topRouteValue', topPerformers?.route);
+  setTop('#topVesselLabel', '#topVesselValue', topPerformers?.vessel);
+  setTop('#topOotwLabel', '#topOotwValue', topPerformers?.ootw);
 }
 
 function renderDebtsSkeleton() {
-  const groups = $('#financeDebtsGroups');
-  if (!groups) return;
-  groups.innerHTML =
-    '<article class="finance-debt-group"><span class="finance-line-skeleton"></span><span class="finance-line-skeleton"></span></article>' +
-    '<article class="finance-debt-group"><span class="finance-line-skeleton"></span><span class="finance-line-skeleton"></span></article>';
+  const body = $('#financeDebtsBody');
+  if (!body) return;
+  body.innerHTML = '<tr><td colspan="7"><div class="finance-chart-skeleton"></div></td></tr>';
 }
 
-function toDebtSummary(groups) {
-  const safe = Array.isArray(groups) ? groups : [];
-  const outstanding = safe.reduce((sum, group) => sum + toMoney(group.outstandingTotal || 0), 0);
-  const voyages = safe.reduce((sum, group) => sum + Number(group.voyageCount || 0), 0);
-  const unique = safe.length;
-  return { outstanding: toMoney(outstanding), voyages, unique };
+function setDebtsSummary(totals) {
+  const summary = totals || {};
+  const outstanding = $('#debtSummaryOutstanding');
+  const voyages = $('#debtSummaryVoyages');
+  const ootw = $('#debtSummaryOotw');
+  if (outstanding) outstanding.textContent = formatGuilders(summary.unsettledOutstanding || 0);
+  if (voyages) voyages.textContent = formatInteger(summary.unsettledVoyages || 0);
+  if (ootw) ootw.textContent = formatInteger(summary.uniqueOotw || 0);
+}
+
+function renderDebtsRows(state) {
+  const tbody = $('#financeDebtsBody');
+  if (!tbody) return;
+
+  const rows = Array.isArray(state.debtRows) ? state.debtRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7">No employees match the current filter.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows
+    .map((row) => {
+      const canSettle = state.canSettle && String(row.companyShareStatus || '').toUpperCase() === 'UNSETTLED';
+      const officer = row.officerSerial ? `${text(row.officerName)} (${text(row.officerSerial)})` : text(row.officerName);
+      return `<tr>
+        <td>${officer}</td>
+        <td>${text(row.vesselName)} | ${text(row.vesselCallsign)}</td>
+        <td>${text(row.departurePort)} \u2192 ${text(row.destinationPort)}</td>
+        <td>${formatWhen(row.endedAt)}</td>
+        <td class="align-right">${formatGuilders(row.companyShareAmount)}</td>
+        <td><span class="finance-status-pill ${canSettle ? 'is-unsettled' : 'is-settled'}">${text(row.companyShareStatus)}</span></td>
+        <td>${
+          state.canSettle
+            ? canSettle
+              ? `<button type="button" class="btn btn-primary btn-compact" data-settle-voyage="${Number(row.voyageId || 0)}">Settle</button>`
+              : '<span class="muted">Settled</span>'
+            : '<span class="muted">—</span>'
+        }</td>
+      </tr>`;
+    })
+    .join('');
+
+  if (!state.canSettle) return;
+
+  tbody.querySelectorAll('[data-settle-voyage]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const voyageId = Number(button.getAttribute('data-settle-voyage') || 0);
+      if (!Number.isInteger(voyageId) || voyageId <= 0) return;
+      const row = rows.find((entry) => Number(entry.voyageId || 0) === voyageId);
+      if (!row) return;
+
+      state.pendingSettle = {
+        voyageId,
+        amount: toMoney(row.companyShareAmount || 0),
+        vesselName: text(row.vesselName),
+        vesselCallsign: text(row.vesselCallsign),
+        route: `${text(row.departurePort)} \u2192 ${text(row.destinationPort)}`
+      };
+
+      const message = $('#financeSettleMessage');
+      if (message) {
+        message.textContent = `Mark ${state.pendingSettle.vesselName} | ${state.pendingSettle.vesselCallsign} (${state.pendingSettle.route}) as settled for ${formatGuilders(
+          state.pendingSettle.amount
+        )}?`;
+      }
+
+      const modal = $('#financeSettleModal');
+      if (modal) modal.classList.remove('hidden');
+    });
+  });
 }
 
 function renderDebtsPagination(state) {
@@ -616,281 +807,62 @@ function renderDebtsPagination(state) {
   const prev = $('#financeDebtsPrev');
   const next = $('#financeDebtsNext');
 
-  state.debtTotalPages = Math.max(1, Math.ceil(state.debtGroups.length / state.debtPageSize));
-  state.debtPage = Math.max(1, Math.min(state.debtPage, state.debtTotalPages));
+  const currentPage = Math.max(1, Number(state.debtPage || 1));
+  const totalPages = Math.max(1, Number(state.debtTotalPages || 1));
 
-  if (pageInfo) pageInfo.textContent = `Page ${state.debtPage} of ${state.debtTotalPages}`;
-  if (prev) prev.disabled = state.debtPage <= 1;
-  if (next) next.disabled = state.debtPage >= state.debtTotalPages;
-}
-
-function deepClone(value) {
-  return JSON.parse(JSON.stringify(value ?? null));
-}
-
-function findVoyageInDebtGroups(groups, voyageId) {
-  const safeGroups = Array.isArray(groups) ? groups : [];
-  for (const group of safeGroups) {
-    const voyages = Array.isArray(group?.voyages) ? group.voyages : [];
-    const found = voyages.find((voyage) => Number(voyage?.voyageId || 0) === Number(voyageId || 0));
-    if (found) {
-      return {
-        voyage: found,
-        group
-      };
-    }
-  }
-  return null;
-}
-
-function removeVoyageFromDebtGroups(groups, voyageId) {
-  const safeGroups = Array.isArray(groups) ? groups : [];
-  return safeGroups
-    .map((group) => {
-      const voyages = Array.isArray(group?.voyages) ? group.voyages : [];
-      const nextVoyages = voyages.filter((voyage) => Number(voyage?.voyageId || 0) !== Number(voyageId || 0));
-      if (!nextVoyages.length) return null;
-      const nextOutstanding = toMoney(nextVoyages.reduce((sum, voyage) => sum + toMoney(voyage.companyShareAmount || 0), 0));
-      return {
-        ...group,
-        voyages: nextVoyages,
-        voyageCount: nextVoyages.length,
-        outstandingTotal: nextOutstanding
-      };
-    })
-    .filter(Boolean);
-}
-
-function applyOptimisticSettlementToOverview(state, settledAmount, officerEmployeeId) {
-  const overview = state.overview || {};
-  const kpis = overview.kpis || {};
-  const unsettled = overview.unsettled || {};
-
-  kpis.unsettledCompanyShareOutstanding = Math.max(0, toMoney(kpis.unsettledCompanyShareOutstanding || 0) - toMoney(settledAmount || 0));
-  unsettled.totalOutstanding = Math.max(0, toMoney(unsettled.totalOutstanding || 0) - toMoney(settledAmount || 0));
-  unsettled.totalVoyages = Math.max(0, Number(unsettled.totalVoyages || 0) - 1);
-
-  const currentTop = Array.isArray(unsettled.topDebtors) ? unsettled.topDebtors : [];
-  unsettled.topDebtors = currentTop
-    .map((row) => {
-      const sameOfficer = Number(row?.officerEmployeeId || 0) === Number(officerEmployeeId || 0);
-      if (!sameOfficer) return row;
-      const nextOutstanding = Math.max(0, toMoney(row.outstanding || 0) - toMoney(settledAmount || 0));
-      const nextCount = Math.max(0, Number(row.voyageCount || 0) - 1);
-      return {
-        ...row,
-        outstanding: nextOutstanding,
-        voyageCount: nextCount
-      };
-    })
-    .filter((row) => toMoney(row?.outstanding || 0) > 0)
-    .sort((a, b) => toMoney(b.outstanding || 0) - toMoney(a.outstanding || 0) || Number(b.voyageCount || 0) - Number(a.voyageCount || 0))
-    .slice(0, 3);
-
-  state.overview = overview;
-}
-
-function renderDebts(state) {
-  const scope = $('#debtScope')?.value || 'all';
-  const groups = Array.isArray(state.debtGroupsRaw) ? state.debtGroupsRaw : [];
-  const filtered = groups
-    .map((group) => {
-      const voyages = Array.isArray(group.voyages) ? group.voyages : [];
-      const scopedVoyages =
-        scope === 'range'
-          ? (() => {
-              const { start, end } = rangeWindow(state.range);
-              return voyages.filter((voyage) => isInRange(voyage.endedAt, start, end));
-            })()
-          : voyages;
-
-      if (!scopedVoyages.length) return null;
-
-      const outstandingTotal = toMoney(scopedVoyages.reduce((sum, voyage) => sum + toMoney(voyage.companyShareAmount || 0), 0));
-      return {
-        ...group,
-        voyages: scopedVoyages,
-        outstandingTotal,
-        voyageCount: scopedVoyages.length
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.outstandingTotal - a.outstandingTotal || b.voyageCount - a.voyageCount || text(a.officerName).localeCompare(text(b.officerName)));
-
-  state.debtGroups = filtered;
-  const summary = toDebtSummary(filtered);
-
-  const summaryOutstanding = $('#debtSummaryOutstanding');
-  const summaryVoyages = $('#debtSummaryVoyages');
-  const summaryOotw = $('#debtSummaryOotw');
-  if (summaryOutstanding) summaryOutstanding.textContent = formatGuilders(summary.outstanding);
-  if (summaryVoyages) summaryVoyages.textContent = String(summary.voyages);
-  if (summaryOotw) summaryOotw.textContent = String(summary.unique);
-
-  renderDebtsPagination(state);
-
-  const groupsHost = $('#financeDebtsGroups');
-  if (!groupsHost) return;
-
-  if (!filtered.length) {
-    groupsHost.innerHTML = '<article class="finance-debt-group"><p class="muted">No employees match the current filter.</p></article>';
-    return;
-  }
-
-  const start = (state.debtPage - 1) * state.debtPageSize;
-  const pageRows = filtered.slice(start, start + state.debtPageSize);
-
-  groupsHost.innerHTML = pageRows
-    .map((group, groupIndex) => {
-      const groupId = `debt-group-${state.debtPage}-${groupIndex}`;
-      return `<details class="finance-debt-group" ${groupIndex === 0 ? 'open' : ''}>
-        <summary>
-          <span>${text(group.officerName)}${group.officerSerial ? ` (${text(group.officerSerial)})` : ''}</span>
-          <strong>${formatGuilders(group.outstandingTotal)} · ${group.voyageCount} voyage${group.voyageCount === 1 ? '' : 's'}</strong>
-        </summary>
-        <div class="table-wrap" id="${groupId}">
-          <table class="data-table finance-data-table">
-            <thead>
-              <tr>
-                <th>Vessel</th>
-                <th>Route</th>
-                <th>Ended</th>
-                <th class="align-right">Amount ƒ</th>
-                ${state.canSettle ? '<th>Action</th>' : ''}
-              </tr>
-            </thead>
-            <tbody>
-              ${group.voyages
-                .map((voyage) => {
-                  const settable = state.canSettle && String(voyage.companyShareStatus || '').toUpperCase() === 'UNSETTLED';
-                  return `<tr>
-                    <td>${text(voyage.vesselName)} | ${text(voyage.vesselCallsign)}</td>
-                    <td>${text(voyage.departurePort)} → ${text(voyage.destinationPort)}</td>
-                    <td>${formatWhen(voyage.endedAt)}</td>
-                    <td class="align-right">${formatGuilders(voyage.companyShareAmount)}</td>
-                    ${
-                      state.canSettle
-                        ? `<td>${
-                            settable
-                              ? `<button type="button" class="btn btn-primary btn-compact" data-settle-voyage="${Number(voyage.voyageId || 0)}">Settle</button>`
-                              : '<span class="muted">Settled</span>'
-                          }</td>`
-                        : ''
-                    }
-                  </tr>`;
-                })
-                .join('')}
-            </tbody>
-          </table>
-        </div>
-      </details>`;
-    })
-    .join('');
-
-  if (!state.canSettle) return;
-
-  groupsHost.querySelectorAll('[data-settle-voyage]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const voyageId = Number(button.getAttribute('data-settle-voyage') || 0);
-      if (!Number.isInteger(voyageId) || voyageId <= 0) return;
-      const details = findVoyageInDebtGroups(state.debtGroupsRaw, voyageId);
-      if (!details?.voyage) return;
-
-      state.pendingSettle = {
-        voyageId,
-        amount: toMoney(details.voyage.companyShareAmount || 0),
-        officerEmployeeId: Number(details.group?.officerEmployeeId || 0) || null,
-        vesselName: text(details.voyage.vesselName),
-        vesselCallsign: text(details.voyage.vesselCallsign),
-        route: `${text(details.voyage.departurePort)} \u2192 ${text(details.voyage.destinationPort)}`
-      };
-
-      const modal = $('#financeSettleModal');
-      const message = $('#financeSettleMessage');
-      if (message) {
-        message.textContent = `Mark ${state.pendingSettle.vesselName} | ${state.pendingSettle.vesselCallsign} (${state.pendingSettle.route}) as settled for ${formatGuilders(
-          state.pendingSettle.amount
-        )}?`;
-      }
-      if (modal) modal.classList.remove('hidden');
-    });
-  });
+  if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+  if (prev) prev.disabled = currentPage <= 1;
+  if (next) next.disabled = currentPage >= totalPages;
 }
 
 async function loadDebts(state) {
   state.debtsLoading = true;
   renderDebtsSkeleton();
+
   try {
+    const requestedPage = state.debtPage;
     const params = new URLSearchParams();
+    params.set('page', String(state.debtPage));
+    params.set('pageSize', String(state.debtPageSize));
+
     const search = ($('#debtSearch')?.value || '').trim();
     const minOutstanding = ($('#debtMinOutstanding')?.value || '').trim();
+    const scope = ($('#debtScope')?.value || 'all').trim();
+    const onlyUnsettled = Boolean($('#debtOnlyUnsettled')?.checked);
+
     if (search) params.set('search', search);
     if (minOutstanding !== '') params.set('minOutstanding', minOutstanding);
+    params.set('scope', scope === 'range' ? 'range' : 'all');
+    params.set('range', state.range);
+    params.set('onlyUnsettled', onlyUnsettled ? '1' : '0');
 
-    const query = params.toString();
-    const data = await fetchJson(`/api/finances/debts${query ? `?${query}` : ''}`);
-    console.log('finances debts response', data);
+    const payload = await fetchJson(`/api/finances/debts?${params.toString()}`);
+    console.log('finances debts response', payload);
 
-    state.debtGroupsRaw = Array.isArray(data?.groups) ? data.groups : [];
-    state.canSettle = Boolean(data?.permissions?.canSettle);
+    state.debtRows = Array.isArray(payload?.rows) ? payload.rows : [];
+    state.debtTotalPages = Math.max(1, Number(payload?.pagination?.totalPages || 1));
+    state.debtPage = Math.max(1, Math.min(state.debtPage, state.debtTotalPages));
+    state.canSettle = Boolean(payload?.permissions?.canSettle);
     state.debtsLoaded = true;
-    renderDebts(state);
+
+    if (state.debtPage !== requestedPage) {
+      await loadDebts(state);
+      return;
+    }
+
+    setDebtsSummary(payload?.totals || {});
+    renderDebtsRows(state);
+    renderDebtsPagination(state);
     clearFeedback();
   } catch (error) {
     console.error('finances debts fetch error', error);
-    const groupsHost = $('#financeDebtsGroups');
-    if (groupsHost) {
-      groupsHost.innerHTML = '<article class="finance-debt-group"><p class="muted">Unable to load debts data.</p></article>';
-    }
+    const tbody = $('#financeDebtsBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7">Unable to load debts data.</td></tr>';
+    setDebtsSummary({ unsettledOutstanding: 0, unsettledVoyages: 0, uniqueOotw: 0 });
+    renderDebtsPagination({ debtPage: 1, debtTotalPages: 1 });
     setFeedback(`Failed to load debt data: ${error.message || 'Unknown error'}`, 'error', async () => loadDebts(state));
   } finally {
     state.debtsLoading = false;
-  }
-}
-
-function closeSettleModal(state) {
-  state.pendingSettle = null;
-  const modal = $('#financeSettleModal');
-  if (modal) modal.classList.add('hidden');
-  const confirm = $('#financeSettleConfirm');
-  if (confirm) {
-    confirm.disabled = false;
-    confirm.textContent = 'Confirm Settlement';
-  }
-}
-
-async function confirmSettlePendingVoyage(state) {
-  const pending = state.pendingSettle;
-  if (!pending?.voyageId) return;
-
-  const confirm = $('#financeSettleConfirm');
-  if (confirm) {
-    confirm.disabled = true;
-    confirm.textContent = 'Settling...';
-  }
-
-  const rollback = {
-    debtGroupsRaw: deepClone(state.debtGroupsRaw),
-    overview: deepClone(state.overview)
-  };
-
-  state.debtGroupsRaw = removeVoyageFromDebtGroups(state.debtGroupsRaw, pending.voyageId);
-  renderDebts(state);
-  applyOptimisticSettlementToOverview(state, pending.amount, pending.officerEmployeeId);
-  renderOverview(state.overview, state.overviewPrevious, state.range);
-
-  try {
-    await fetchJson(`/api/finances/debts/${encodeURIComponent(String(pending.voyageId))}/settle`, { method: 'POST' });
-    closeSettleModal(state);
-    await Promise.all([loadDebts(state), loadOverview(state)]);
-  } catch (error) {
-    console.error('finances settle error', error);
-    state.debtGroupsRaw = rollback.debtGroupsRaw || [];
-    state.overview = rollback.overview || state.overview;
-    renderDebts(state);
-    renderOverview(state.overview, state.overviewPrevious, state.range);
-    setFeedback(error.message || 'Failed to settle voyage debt.', 'error');
-    closeSettleModal(state);
   }
 }
 
@@ -915,7 +887,7 @@ function renderAuditRows(state) {
       (row) => `<tr>
         <td>${formatWhen(row.createdAt)}</td>
         <td>${text(row.vesselName)} | ${text(row.vesselCallsign)}</td>
-        <td>${text(row.departurePort)} → ${text(row.destinationPort)}</td>
+        <td>${text(row.departurePort)} \u2192 ${text(row.destinationPort)}</td>
         <td class="align-right">${formatGuilders(row.amount)}</td>
         <td>${text(row.oowName)}${row.oowSerial ? ` (${text(row.oowSerial)})` : ''}</td>
         <td>${text(row.settledByName)}${row.settledByDiscordId ? ` (${text(row.settledByDiscordId)})` : ''}</td>
@@ -928,15 +900,20 @@ function renderAuditPagination(state) {
   const info = $('#financeAuditPageInfo');
   const prev = $('#financeAuditPrev');
   const next = $('#financeAuditNext');
-  if (info) info.textContent = `Page ${state.auditPage} of ${state.auditTotalPages}`;
-  if (prev) prev.disabled = state.auditPage <= 1;
-  if (next) next.disabled = state.auditPage >= state.auditTotalPages;
+  const currentPage = Math.max(1, Number(state.auditPage || 1));
+  const totalPages = Math.max(1, Number(state.auditTotalPages || 1));
+
+  if (info) info.textContent = `Page ${currentPage} of ${totalPages}`;
+  if (prev) prev.disabled = currentPage <= 1;
+  if (next) next.disabled = currentPage >= totalPages;
 }
 
 async function loadAudit(state) {
   state.auditLoading = true;
   renderAuditSkeleton();
+
   try {
+    const requestedPage = state.auditPage;
     const params = new URLSearchParams();
     params.set('page', String(state.auditPage));
     params.set('pageSize', String(state.auditPageSize));
@@ -955,14 +932,18 @@ async function loadAudit(state) {
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo) params.set('dateTo', dateTo);
 
-    const data = await fetchJson(`/api/finances/audit?${params.toString()}`);
-    console.log('finances audit response', data);
+    const payload = await fetchJson(`/api/finances/audit?${params.toString()}`);
+    console.log('finances audit response', payload);
 
-    state.auditRows = Array.isArray(data?.rows) ? data.rows : [];
-    const pagination = data?.pagination || {};
-    state.auditTotalPages = Math.max(1, Number(pagination.totalPages || 1));
+    state.auditRows = Array.isArray(payload?.rows) ? payload.rows : [];
+    state.auditTotalPages = Math.max(1, Number(payload?.pagination?.totalPages || 1));
     state.auditPage = Math.max(1, Math.min(state.auditPage, state.auditTotalPages));
     state.auditLoaded = true;
+
+    if (state.auditPage !== requestedPage) {
+      await loadAudit(state);
+      return;
+    }
 
     renderAuditRows(state);
     renderAuditPagination(state);
@@ -970,9 +951,8 @@ async function loadAudit(state) {
   } catch (error) {
     console.error('finances audit fetch error', error);
     const tbody = $('#financeAuditBody');
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="6">Unable to load audit data.</td></tr>';
-    }
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6">Unable to load audit data.</td></tr>';
+    renderAuditPagination({ auditPage: 1, auditTotalPages: 1 });
     setFeedback(`Failed to load audit data: ${error.message || 'Unknown error'}`, 'error', async () => loadAudit(state));
   } finally {
     state.auditLoading = false;
@@ -982,6 +962,7 @@ async function loadAudit(state) {
 async function loadOverview(state) {
   state.overviewLoading = true;
   renderOverviewSkeleton();
+
   try {
     console.log('fetch finances', state.range);
     const [current, previous] = await Promise.all([
@@ -989,13 +970,20 @@ async function loadOverview(state) {
       fetchJson(`/api/finances/overview?range=${encodeURIComponent(state.range)}&unsettledScope=range&offset=1`)
     ]);
     console.log('finances overview response', current);
+
     state.overview = current || {};
     state.overviewPrevious = previous || {};
     renderOverview(state.overview, state.overviewPrevious, state.range);
     clearFeedback();
 
     if (state.debtsLoaded && ($('#debtScope')?.value || 'all') === 'range') {
-      renderDebts(state);
+      state.debtPage = 1;
+      await loadDebts(state);
+    }
+
+    if (state.auditLoaded) {
+      state.auditPage = 1;
+      await loadAudit(state);
     }
   } catch (error) {
     console.error('finances overview fetch error', error);
@@ -1005,29 +993,67 @@ async function loadOverview(state) {
   }
 }
 
+function closeSettleModal(state) {
+  state.pendingSettle = null;
+  const modal = $('#financeSettleModal');
+  if (modal) modal.classList.add('hidden');
+
+  const confirm = $('#financeSettleConfirm');
+  if (confirm) {
+    confirm.disabled = false;
+    confirm.textContent = 'Confirm Settlement';
+  }
+}
+
+async function confirmSettlePendingVoyage(state) {
+  const pending = state.pendingSettle;
+  if (!pending?.voyageId) return;
+
+  const confirm = $('#financeSettleConfirm');
+  if (confirm) {
+    confirm.disabled = true;
+    confirm.textContent = 'Settling...';
+  }
+
+  try {
+    await fetchJson(`/api/finances/debts/${encodeURIComponent(String(pending.voyageId))}/settle`, { method: 'POST' });
+    closeSettleModal(state);
+    setFeedback('Company share marked as settled.', 'success');
+
+    if (state.activeTab === 'debts' || state.debtsLoaded) {
+      await loadDebts(state);
+    }
+    await loadOverview(state);
+  } catch (error) {
+    console.error('finances settle error', error);
+    setFeedback(error.message || 'Failed to settle voyage debt.', 'error');
+    closeSettleModal(state);
+  }
+}
+
 async function handleTabChange(state, tab) {
-  state.activeTab = normalizeFinanceTab(tab);
-  setActiveTab(state.activeTab);
+  const next = normalizeFinanceTab(tab);
+  state.activeTab = next;
+  setActiveTab(next);
   updateUrlState(state);
 
-  if (state.activeTab === 'overview' || state.activeTab === 'trends') {
-    if (!state.overview && !state.overviewLoading) {
-      await loadOverview(state);
-    }
+  if ((next === 'overview' || next === 'trends') && !state.overview && !state.overviewLoading) {
+    await loadOverview(state);
     return;
   }
 
-  if (state.activeTab === 'debts' && !state.debtsLoaded && !state.debtsLoading) {
+  if (next === 'debts' && !state.debtsLoaded && !state.debtsLoading) {
     await loadDebts(state);
     return;
   }
 
-  if (state.activeTab === 'audit' && !state.auditLoaded && !state.auditLoading) {
+  if (next === 'audit' && !state.auditLoaded && !state.auditLoading) {
     await loadAudit(state);
   }
 }
 
 async function init() {
+  renderIcons();
   document.documentElement.classList.add('intranet-no-scroll');
   document.body.classList.add('intranet-no-scroll');
 
@@ -1041,18 +1067,17 @@ async function init() {
     overviewLoading: false,
     debtsLoaded: false,
     debtsLoading: false,
-    debtGroupsRaw: [],
-    debtGroups: [],
+    debtRows: [],
     debtPage: 1,
+    debtPageSize: 10,
     debtTotalPages: 1,
-    debtPageSize: 3,
     canSettle: false,
     auditLoaded: false,
     auditLoading: false,
     auditRows: [],
     auditPage: 1,
-    auditTotalPages: 1,
     auditPageSize: 12,
+    auditTotalPages: 1,
     pendingSettle: null
   };
 
@@ -1091,7 +1116,7 @@ async function init() {
 
   $$('[data-finance-range]').forEach((button) => {
     button.addEventListener('click', async () => {
-      const range = normalizeFinanceRange(button.getAttribute('data-finance-range') || 'week');
+      const range = normalizeFinanceRange(button.getAttribute('data-finance-range'));
       if (state.range === range && state.overview) return;
       state.range = range;
       setActiveRange(range);
@@ -1102,16 +1127,14 @@ async function init() {
 
   $$('[data-finance-tab]').forEach((button) => {
     button.addEventListener('click', async () => {
-      const tab = button.getAttribute('data-finance-tab') || 'overview';
-      await handleTabChange(state, tab);
+      await handleTabChange(state, button.getAttribute('data-finance-tab') || 'overview');
     });
   });
 
   $$('[data-finance-open-tab]').forEach((link) => {
     link.addEventListener('click', async (event) => {
       event.preventDefault();
-      const tab = link.getAttribute('data-finance-open-tab') || 'debts';
-      await handleTabChange(state, tab);
+      await handleTabChange(state, link.getAttribute('data-finance-open-tab') || 'debts');
     });
   });
 
@@ -1119,11 +1142,7 @@ async function init() {
   const settleCancel = $('#financeSettleCancel');
   const settleConfirm = $('#financeSettleConfirm');
   if (settleCancel) settleCancel.addEventListener('click', () => closeSettleModal(state));
-  if (settleConfirm) {
-    settleConfirm.addEventListener('click', async () => {
-      await confirmSettlePendingVoyage(state);
-    });
-  }
+  if (settleConfirm) settleConfirm.addEventListener('click', async () => confirmSettlePendingVoyage(state));
   if (settleModal) {
     settleModal.addEventListener('click', (event) => {
       if (event.target === settleModal) closeSettleModal(state);
@@ -1133,20 +1152,20 @@ async function init() {
     if (event.key === 'Escape' && state.pendingSettle) closeSettleModal(state);
   });
 
-  const debtPrev = $('#financeDebtsPrev');
-  const debtNext = $('#financeDebtsNext');
-  if (debtPrev) {
-    debtPrev.addEventListener('click', () => {
-      if (state.debtPage <= 1) return;
+  const debtsPrev = $('#financeDebtsPrev');
+  const debtsNext = $('#financeDebtsNext');
+  if (debtsPrev) {
+    debtsPrev.addEventListener('click', async () => {
+      if (state.debtPage <= 1 || state.debtsLoading) return;
       state.debtPage -= 1;
-      renderDebts(state);
+      await loadDebts(state);
     });
   }
-  if (debtNext) {
-    debtNext.addEventListener('click', () => {
-      if (state.debtPage >= state.debtTotalPages) return;
+  if (debtsNext) {
+    debtsNext.addEventListener('click', async () => {
+      if (state.debtPage >= state.debtTotalPages || state.debtsLoading) return;
       state.debtPage += 1;
-      renderDebts(state);
+      await loadDebts(state);
     });
   }
 
@@ -1162,27 +1181,24 @@ async function init() {
   const debtSearch = $('#debtSearch');
   const debtMin = $('#debtMinOutstanding');
   const debtScope = $('#debtScope');
+  const debtOnlyUnsettled = $('#debtOnlyUnsettled');
   if (debtSearch) debtSearch.addEventListener('input', scheduleDebtReload);
   if (debtMin) debtMin.addEventListener('input', scheduleDebtReload);
-  if (debtScope) {
-    debtScope.addEventListener('change', () => {
-      state.debtPage = 1;
-      if (state.debtsLoaded) renderDebts(state);
-    });
-  }
+  if (debtScope) debtScope.addEventListener('change', scheduleDebtReload);
+  if (debtOnlyUnsettled) debtOnlyUnsettled.addEventListener('change', scheduleDebtReload);
 
   const auditPrev = $('#financeAuditPrev');
   const auditNext = $('#financeAuditNext');
   if (auditPrev) {
     auditPrev.addEventListener('click', async () => {
-      if (state.auditPage <= 1) return;
+      if (state.auditPage <= 1 || state.auditLoading) return;
       state.auditPage -= 1;
       await loadAudit(state);
     });
   }
   if (auditNext) {
     auditNext.addEventListener('click', async () => {
-      if (state.auditPage >= state.auditTotalPages) return;
+      if (state.auditPage >= state.auditTotalPages || state.auditLoading) return;
       state.auditPage += 1;
       await loadAudit(state);
     });
@@ -1205,6 +1221,12 @@ async function init() {
   if (auditDateTo) auditDateTo.addEventListener('change', scheduleAuditReload);
 
   await loadOverview(state);
+
+  if (state.activeTab === 'debts') {
+    await loadDebts(state);
+  } else if (state.activeTab === 'audit') {
+    await loadAudit(state);
+  }
 }
 
 init().catch((error) => {

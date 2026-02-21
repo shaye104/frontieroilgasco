@@ -1132,12 +1132,12 @@ textarea:focus {
 .finance-axis-y-label,
 .finance-axis-x-label {
   fill: #475569;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
 }
 
 .finance-line-path {
-  stroke-width: 2.8;
+  stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -1175,7 +1175,7 @@ textarea:focus {
 }
 
 .finance-tooltip-title {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 0.3rem;
@@ -1186,7 +1186,7 @@ textarea:focus {
   align-items: center;
   justify-content: space-between;
   gap: 0.7rem;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #334155;
 }
 
@@ -1233,6 +1233,14 @@ textarea:focus {
   place-items: center;
   color: #64748b;
   font-size: 0.85rem;
+}
+
+.finance-bar-rect {
+  transition: opacity 0.14s ease;
+}
+
+.finance-bar-rect:hover {
+  opacity: 0.86;
 }
 
 .ship-status-toggle-wrap {

@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221m" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260221m" />
-    <link rel="stylesheet" href="/assets/css/components.css?v=20260221m" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221m" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221n" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221n" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221n" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221n" />
   </head>
   <body class="page page-intranet">
     <header class="site-header">
@@ -54,38 +54,40 @@
           <section id="financeTabOverview" class="finance-tab-panel is-active" data-finance-panel="overview">
             <div class="finance-kpi-grid">
               <article class="finance-kpi">
-                <span class="finance-kpi-icon" aria-hidden="true">↗</span>
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="trending-up"></span>
                 <p class="finance-kpi-label">Net Profit</p>
                 <p id="kpiNetProfit" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
                 <p id="kpiDeltaNetProfit" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
-                <span class="finance-kpi-icon" aria-hidden="true">🏢</span>
-                <p class="finance-kpi-label">Company Share (10%)</p>
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="building"></span>
+                <p class="finance-kpi-label">Company Share Earned</p>
                 <p id="kpiCompanyShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
                 <p id="kpiDeltaCompanyShare" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
-                <span class="finance-kpi-icon" aria-hidden="true">👥</span>
-                <p class="finance-kpi-label">Crew Share (90%)</p>
-                <p id="kpiCrewShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-                <p id="kpiDeltaCrewShare" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="hourglass"></span>
+                <p class="finance-kpi-label">Outstanding</p>
+                <p id="kpiOutstanding" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaOutstanding" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
-                <span class="finance-kpi-icon" aria-hidden="true">📦</span>
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="check-circle"></span>
+                <p class="finance-kpi-label">Settlement Rate</p>
+                <p id="kpiSettlementRate" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaSettlementRate" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="clock"></span>
+                <p class="finance-kpi-label">Avg Days to Settle</p>
+                <p id="kpiAvgDaysToSettle" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiAvgDaysHint" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="package-x"></span>
                 <p class="finance-kpi-label">Freight Loss Value</p>
                 <p id="kpiLossValue" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
                 <p id="kpiDeltaLossValue" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
-              </article>
-              <article class="finance-kpi">
-                <span class="finance-kpi-icon" aria-hidden="true">✓</span>
-                <p class="finance-kpi-label">Completed Voyages</p>
-                <p id="kpiCompletedVoyages" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-              </article>
-              <article class="finance-kpi">
-                <span class="finance-kpi-icon" aria-hidden="true">⏳</span>
-                <p class="finance-kpi-label">Unsettled Outstanding</p>
-                <p id="kpiUnsettled" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
               </article>
             </div>
 
@@ -111,6 +113,33 @@
                 <a class="btn btn-secondary finance-unsettled-link" href="/finances?tab=debts" data-finance-open-tab="debts">View Debts &rarr;</a>
               </article>
             </div>
+
+            <div class="finance-performer-strip">
+              <article class="finance-performer-card">
+                <div class="finance-performer-head">
+                  <span class="finance-inline-icon" aria-hidden="true" data-icon="route"></span>
+                  <span>Top Route</span>
+                </div>
+                <p id="topRouteLabel" class="finance-performer-title">—</p>
+                <p id="topRouteValue" class="finance-performer-value">ƒ 0</p>
+              </article>
+              <article class="finance-performer-card">
+                <div class="finance-performer-head">
+                  <span class="finance-inline-icon" aria-hidden="true" data-icon="ship"></span>
+                  <span>Top Vessel</span>
+                </div>
+                <p id="topVesselLabel" class="finance-performer-title">—</p>
+                <p id="topVesselValue" class="finance-performer-value">ƒ 0</p>
+              </article>
+              <article class="finance-performer-card">
+                <div class="finance-performer-head">
+                  <span class="finance-inline-icon" aria-hidden="true" data-icon="users"></span>
+                  <span>Top OOTW</span>
+                </div>
+                <p id="topOotwLabel" class="finance-performer-title">—</p>
+                <p id="topOotwValue" class="finance-performer-value">ƒ 0</p>
+              </article>
+            </div>
           </section>
 
           <section id="financeTabTrends" class="finance-tab-panel hidden" data-finance-panel="trends">
@@ -128,8 +157,8 @@
                 <div id="trendsChartLossTrend" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
-                <h3>Average Profit per Voyage</h3>
-                <div id="trendsChartAvgProfit" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+                <h3>Voyage Count Trend</h3>
+                <div id="trendsChartVoyageCount" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
             </div>
           </section>
@@ -152,6 +181,10 @@
                     <option value="range">This Range</option>
                   </select>
                 </div>
+                <div class="finance-toggle-wrap">
+                  <label for="debtOnlyUnsettled">Only unsettled</label>
+                  <input id="debtOnlyUnsettled" type="checkbox" checked />
+                </div>
               </div>
               <div class="finance-summary-strip">
                 <article class="finance-summary-chip"><span>Total Outstanding</span><strong id="debtSummaryOutstanding">ƒ 0</strong></article>
@@ -160,8 +193,25 @@
               </div>
             </article>
 
-            <article class="finance-chart-card finance-debts-group-card">
-              <div id="financeDebtsGroups" class="finance-debt-groups"></div>
+            <article class="finance-chart-card finance-table-card">
+              <div class="table-wrap">
+                <table class="data-table finance-data-table">
+                  <thead>
+                    <tr>
+                      <th>OOTW</th>
+                      <th>Vessel</th>
+                      <th>Route</th>
+                      <th>Ended</th>
+                      <th class="align-right">Amount ƒ</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="financeDebtsBody">
+                    <tr><td colspan="7"><div class="finance-chart-skeleton"></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
               <div class="pagination-row">
                 <button id="financeDebtsPrev" class="btn btn-secondary" type="button">Previous</button>
                 <span id="financeDebtsPageInfo" class="pagination-info">Page 1 of 1</span>
@@ -228,6 +278,6 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221m"></script>
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221n"></script>
   </body>
 </html>
