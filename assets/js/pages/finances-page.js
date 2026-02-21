@@ -347,14 +347,19 @@ function renderCartesianLineChart(target, lines, options = {}) {
   }
 
   const width = Number(options.width || 760);
-  const height = Number(options.height || 320);
+  const height = Number(options.height || 340);
   const valueFormatter = typeof options.valueFormatter === 'function' ? options.valueFormatter : formatGuilders;
   const tickFormatter = typeof options.tickFormatter === 'function' ? options.tickFormatter : valueFormatter;
 
-  const plotLeft = 74;
-  const plotRight = width - 18;
-  const plotTop = 16;
-  const plotBottom = height - 74;
+  const marginTop = Number(options.marginTop || 12);
+  const marginRight = Number(options.marginRight || 20);
+  const marginBottom = Number(options.marginBottom || 86);
+  const marginLeft = Number(options.marginLeft || 74);
+
+  const plotLeft = marginLeft;
+  const plotRight = width - marginRight;
+  const plotTop = marginTop;
+  const plotBottom = height - marginBottom;
   const plotWidth = Math.max(1, plotRight - plotLeft);
   const plotHeight = Math.max(1, plotBottom - plotTop);
   const steps = Math.max(points.length - 1, 1);
@@ -397,7 +402,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
       const show = idx % xLabelStep === 0 || idx === points.length - 1;
       if (!show) return '';
       const x = xAt(idx);
-      return `<text class="finance-axis-x-label" x="${x}" y="${height - 32}" text-anchor="middle">${text(point.label)}</text>`;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 26}" text-anchor="middle">${text(point.label)}</text>`;
     })
     .join('');
 
@@ -456,7 +461,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
       })
       .join('');
 
-    tooltip.innerHTML = `<div class="finance-tooltip-title">${text(points[idx].label)}</div>${linesHtml}`;
+    tooltip.innerHTML = `<div class="finance-tooltip-title">${text(points[idx].tooltipLabel || points[idx].label)}</div>${linesHtml}`;
     tooltip.classList.remove('hidden');
     hoverLine.classList.remove('hidden');
 
@@ -504,14 +509,19 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
   }
 
   const width = Number(options.width || 760);
-  const height = Number(options.height || 320);
+  const height = Number(options.height || 340);
   const valueFormatter = typeof options.valueFormatter === 'function' ? options.valueFormatter : formatInteger;
   const tickFormatter = typeof options.tickFormatter === 'function' ? options.tickFormatter : valueFormatter;
 
-  const plotLeft = 74;
-  const plotRight = width - 18;
-  const plotTop = 16;
-  const plotBottom = height - 74;
+  const marginTop = Number(options.marginTop || 12);
+  const marginRight = Number(options.marginRight || 20);
+  const marginBottom = Number(options.marginBottom || 86);
+  const marginLeft = Number(options.marginLeft || 74);
+
+  const plotLeft = marginLeft;
+  const plotRight = width - marginRight;
+  const plotTop = marginTop;
+  const plotBottom = height - marginBottom;
   const plotWidth = Math.max(1, plotRight - plotLeft);
   const plotHeight = Math.max(1, plotBottom - plotTop);
 
@@ -544,7 +554,7 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
       const show = idx % xLabelStep === 0 || idx === points.length - 1;
       if (!show) return '';
       const x = plotLeft + (idx + 0.5) * band;
-      return `<text class="finance-axis-x-label" x="${x}" y="${height - 32}" text-anchor="middle">${text(point.label)}</text>`;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 26}" text-anchor="middle">${text(point.label)}</text>`;
     })
     .join('');
 
@@ -1214,8 +1224,6 @@ async function handleTabChange(state, tab) {
 
 async function init() {
   renderIcons();
-  document.documentElement.classList.add('intranet-no-scroll');
-  document.body.classList.add('intranet-no-scroll');
 
   const query = new URL(window.location.href).searchParams;
   const state = {
