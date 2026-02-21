@@ -210,19 +210,16 @@ p {
 @media (min-width: 1024px) {
   html.intranet-no-scroll,
   body.page-intranet.intranet-no-scroll {
-    min-height: 100dvh;
+    min-height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
   }
 
   body.page-intranet.intranet-no-scroll {
-    display: flex;
-    flex-direction: column;
+    display: block;
   }
 
   body.page-intranet.intranet-no-scroll main.section {
-    flex: 1 1 auto;
-    min-height: 0;
     padding: 0.75rem 0;
     overflow: visible;
   }
