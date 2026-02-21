@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221q" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260221q" />
-    <link rel="stylesheet" href="/assets/css/components.css?v=20260221q" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221q" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221r" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221r" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221r" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221r" />
   </head>
   <body class="page page-intranet">
     <header class="site-header">
@@ -129,47 +129,49 @@
               </article>
             </div>
 
-            <div class="finance-performer-strip">
-              <article class="finance-performer-card">
-                <div class="finance-performer-head">
-                  <span class="finance-inline-icon" aria-hidden="true" data-icon="route"></span>
-                  <span>Top Route</span>
-                </div>
-                <p id="topRouteLabel" class="finance-performer-title">—</p>
-                <p id="topRouteValue" class="finance-performer-value">ƒ 0</p>
-              </article>
-              <article class="finance-performer-card">
-                <div class="finance-performer-head">
-                  <span class="finance-inline-icon" aria-hidden="true" data-icon="ship"></span>
-                  <span>Top Vessel</span>
-                </div>
-                <p id="topVesselLabel" class="finance-performer-title">—</p>
-                <p id="topVesselValue" class="finance-performer-value">ƒ 0</p>
-              </article>
-              <article class="finance-performer-card">
-                <div class="finance-performer-head">
-                  <span class="finance-inline-icon" aria-hidden="true" data-icon="users"></span>
-                  <span>Top OOTW</span>
-                </div>
-                <p id="topOotwLabel" class="finance-performer-title">—</p>
-                <p id="topOotwValue" class="finance-performer-value">ƒ 0</p>
-              </article>
-            </div>
+            <article class="finance-chart-card finance-settlement-health-card">
+              <div class="finance-chart-head-row">
+                <h3>Settlement Health</h3>
+                <span class="finance-inline-caption">Current period health + outstanding trend</span>
+              </div>
+              <div class="finance-settlement-health-grid">
+                <article class="finance-settlement-chip">
+                  <span>Total Outstanding</span>
+                  <strong id="healthOutstanding">ƒ 0</strong>
+                </article>
+                <article class="finance-settlement-chip">
+                  <span>Settlement Rate</span>
+                  <strong id="healthSettlementRate">0%</strong>
+                </article>
+                <article class="finance-settlement-chip">
+                  <span>Avg Days to Settle</span>
+                  <strong id="healthAvgDays">—</strong>
+                </article>
+                <article class="finance-settlement-chip">
+                  <span>Overdue (&gt;5d)</span>
+                  <strong id="healthOverdue">0</strong>
+                </article>
+              </div>
+              <div id="healthOutstandingSparkline" class="finance-health-sparkline">
+                <div class="finance-chart-skeleton"></div>
+              </div>
+            </article>
           </section>
 
           <section id="financeTabTrends" class="finance-tab-panel hidden" data-finance-panel="trends">
             <div class="finance-main-chart-grid finance-trends-grid">
               <article class="finance-chart-card">
-                <h3>Outstanding Company Share Trend</h3>
-                <div id="trendsChartOutstanding" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+                <h3>Net Profit vs Company Share vs Freight Loss</h3>
+                <p id="trendsFinanceMixHint" class="finance-inline-caption"></p>
+                <div id="trendsChartFinanceMix" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
                 <h3>Voyage Count Trend</h3>
                 <div id="trendsChartVoyageCount" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
-                <h3>Freight Loss Value Trend</h3>
-                <div id="trendsChartLossTrend" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+                <h3>Average Net Profit / Voyage</h3>
+                <div id="trendsChartAvgProfit" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
                 <div class="finance-chart-head-row">
@@ -300,6 +302,6 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221q"></script>
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221r"></script>
   </body>
 </html>

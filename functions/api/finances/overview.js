@@ -144,16 +144,11 @@ function pickTop(map) {
   return entries[0];
 }
 
-function pickTopRows(map, limit = 5) {
+function toSortedProfitRows(map) {
   return [...map.entries()]
     .map(([label, netProfit]) => ({ label: String(label || '').trim() || 'Unknown', netProfit: toMoney(netProfit || 0) }))
     .sort((a, b) => b.netProfit - a.netProfit || a.label.localeCompare(b.label))
-    .slice(0, Math.max(1, Number(limit || 5)))
-    .map((row, index) => ({
-      rank: index + 1,
-      label: row.label,
-      netProfit: toMoney(row.netProfit)
-    }));
+    .map((row, index) => ({ rank: index + 1, label: row.label, netProfit: toMoney(row.netProfit) }));
 }
 
 function calcSettledDays(endedAt, settledAt) {
@@ -467,9 +462,9 @@ export async function onRequestGet(context) {
         topDebtors
       },
       breakdowns: {
-        byRoute: pickTopRows(routeProfit, 5),
-        byVessel: pickTopRows(vesselProfit, 5),
-        byOotw: pickTopRows(ootwProfit, 5)
+        byRoute: toSortedProfitRows(routeProfit),
+        byVessel: toSortedProfitRows(vesselProfit),
+        byOotw: toSortedProfitRows(ootwProfit)
       },
       topPerformers: {
         route: pickTop(routeProfit),
