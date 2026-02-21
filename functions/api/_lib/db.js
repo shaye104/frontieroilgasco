@@ -44,7 +44,9 @@ export async function ensureCoreSchema(env) {
     ['fleet.manage', 'voyages', 'Manage Fleet', 'Manage fleet assignments/settings.'],
     ['finances.view', 'finances', 'View Finances', 'View the finance dashboard and debt summaries.'],
     ['finances.debts.settle', 'finances', 'Settle Finance Debts', 'Settle outstanding company share debts.'],
-    ['finances.audit.view', 'finances', 'View Finance Audit', 'View finance settlement audit logs.']
+    ['finances.audit.view', 'finances', 'View Finance Audit', 'View finance settlement audit logs.'],
+    ['college.view', 'college', 'View College', 'Access the college training centre.'],
+    ['college.manage', 'college', 'Manage College', 'Manage college deadlines and pass overrides.']
   ];
 
   const statements = [
@@ -61,6 +63,10 @@ export async function ensureCoreSchema(env) {
       grade TEXT,
       serial_number TEXT,
       employee_status TEXT,
+      user_status TEXT NOT NULL DEFAULT 'ACTIVE_STAFF',
+      college_start_at TEXT,
+      college_due_at TEXT,
+      college_passed_at TEXT,
       hire_date TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -383,6 +389,77 @@ export async function ensureCoreSchema(env) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(response_id) REFERENCES form_responses(id),
       FOREIGN KEY(question_id) REFERENCES form_questions(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_courses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL UNIQUE,
+      title TEXT NOT NULL,
+      description TEXT,
+      is_required_for_applicants INTEGER NOT NULL DEFAULT 0,
+      published INTEGER NOT NULL DEFAULT 1,
+      estimated_minutes INTEGER NOT NULL DEFAULT 60,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_course_modules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      order_index INTEGER NOT NULL DEFAULT 0,
+      content_type TEXT NOT NULL DEFAULT 'markdown',
+      content TEXT,
+      attachment_url TEXT,
+      video_url TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(course_id, order_index),
+      FOREIGN KEY(course_id) REFERENCES college_courses(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_enrollments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_employee_id INTEGER NOT NULL,
+      course_id INTEGER NOT NULL,
+      enrolled_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      required INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'in_progress',
+      final_quiz_passed INTEGER NOT NULL DEFAULT 0,
+      terms_acknowledged INTEGER NOT NULL DEFAULT 0,
+      practical_approved INTEGER NOT NULL DEFAULT 0,
+      completed_at TEXT,
+      passed_at TEXT,
+      UNIQUE(user_employee_id, course_id),
+      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(course_id) REFERENCES college_courses(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_module_progress (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_employee_id INTEGER NOT NULL,
+      module_id INTEGER NOT NULL,
+      completed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_employee_id, module_id),
+      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(module_id) REFERENCES college_course_modules(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_library_documents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'General',
+      tags TEXT,
+      summary TEXT,
+      document_url TEXT,
+      published INTEGER NOT NULL DEFAULT 1,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_audit_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_employee_id INTEGER NOT NULL,
+      action TEXT NOT NULL,
+      performed_by_employee_id INTEGER,
+      meta_json TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(performed_by_employee_id) REFERENCES employees(id)
     )`
   ];
 
@@ -427,7 +504,22 @@ export async function ensureCoreSchema(env) {
   if (!rankColumnNames.has('updated_at')) {
     await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN updated_at TEXT`).run();
   }
+  const employeeColumns = await env.DB.prepare(`PRAGMA table_info(employees)`).all();
+  const employeeColumnNames = new Set((employeeColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!employeeColumnNames.has('user_status')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN user_status TEXT NOT NULL DEFAULT 'ACTIVE_STAFF'`).run();
+  }
+  if (!employeeColumnNames.has('college_start_at')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN college_start_at TEXT`).run();
+  }
+  if (!employeeColumnNames.has('college_due_at')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN college_due_at TEXT`).run();
+  }
+  if (!employeeColumnNames.has('college_passed_at')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN college_passed_at TEXT`).run();
+  }
   await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
+  await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();
   await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
   await env.DB
     .prepare(
@@ -447,7 +539,13 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_created_at ON finance_cash_ledger_entries(created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_type ON finance_cash_ledger_entries(type)`,
     `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_deleted_at ON finance_cash_ledger_entries(deleted_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_finance_cashflow_audit_created_at ON finance_cashflow_audit(created_at DESC)`
+    `CREATE INDEX IF NOT EXISTS idx_finance_cashflow_audit_created_at ON finance_cashflow_audit(created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_user_status ON employees(user_status)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_enrollments_user ON college_enrollments(user_employee_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_modules_course ON college_course_modules(course_id, order_index)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS ux_college_modules_course_order ON college_course_modules(course_id, order_index)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_module_progress_user_module ON college_module_progress(user_employee_id, module_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_library_documents_category ON college_library_documents(category)`
   ];
   for (const sql of optionalIndexStatements) {
     try {
@@ -547,6 +645,9 @@ export async function ensureCoreSchema(env) {
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'finances.view')`)
         .bind(employeeRole.id),
       env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'college.view')`)
+        .bind(employeeRole.id),
+      env.DB
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'fleet.read')`)
         .bind(employeeRole.id)
     ]);
@@ -559,6 +660,60 @@ export async function ensureCoreSchema(env) {
       )
       .bind(employeeRole.id)
       .run();
+  }
+
+  await env.DB.batch([
+    env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO college_courses
+         (code, title, description, is_required_for_applicants, published, estimated_minutes, updated_at)
+         VALUES
+         ('COL-IND-001', 'Core Induction', 'Mandatory induction for accepted applicants.', 1, 1, 90, CURRENT_TIMESTAMP)`
+      ),
+    env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO college_library_documents
+         (title, category, tags, summary, document_url, published, updated_at)
+         VALUES
+         ('Fleet Safety SOP', 'Safety', 'safety,sop,operations', 'Core safety operating procedures for voyages.', '/forms', 1, CURRENT_TIMESTAMP)`
+      ),
+    env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO college_library_documents
+         (title, category, tags, summary, document_url, published, updated_at)
+         VALUES
+         ('Navigation Standards', 'Navigation', 'navigation,route,bridge', 'Navigation and route-planning standards.', '/voyages/my', 1, CURRENT_TIMESTAMP)`
+      )
+  ]);
+
+  const inductionCourse = await env.DB.prepare(`SELECT id FROM college_courses WHERE code = 'COL-IND-001' LIMIT 1`).first();
+  if (inductionCourse?.id) {
+    await env.DB.batch([
+      env.DB
+        .prepare(
+          `INSERT OR IGNORE INTO college_course_modules
+           (course_id, title, order_index, content_type, content, updated_at)
+           VALUES
+           (?, 'Welcome & Expectations', 1, 'markdown', '# Welcome\nComplete all modules and pass your induction within 14 days of acceptance.', CURRENT_TIMESTAMP)`
+        )
+        .bind(inductionCourse.id),
+      env.DB
+        .prepare(
+          `INSERT OR IGNORE INTO college_course_modules
+           (course_id, title, order_index, content_type, content, updated_at)
+           VALUES
+           (?, 'Safety Fundamentals', 2, 'markdown', 'Review safety procedures and emergency protocols before active duty.', CURRENT_TIMESTAMP)`
+        )
+        .bind(inductionCourse.id),
+      env.DB
+        .prepare(
+          `INSERT OR IGNORE INTO college_course_modules
+           (course_id, title, order_index, content_type, content, updated_at)
+           VALUES
+           (?, 'Final Quiz', 3, 'quiz', 'Final knowledge check. Passing this marks your final assessment complete.', CURRENT_TIMESTAMP)`
+        )
+        .bind(inductionCourse.id)
+    ]);
   }
 }
 

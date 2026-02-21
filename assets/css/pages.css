@@ -1186,6 +1186,363 @@
   }
 }
 
+.college-page-header {
+  padding-bottom: 0.2rem;
+}
+
+.college-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.95rem;
+}
+
+.college-head h1 {
+  margin-bottom: 0.25rem;
+  color: var(--color-primary);
+}
+
+.college-subtitle {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.94rem;
+}
+
+.college-tabs {
+  margin-top: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.college-tab {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.4rem 0.72rem;
+  cursor: pointer;
+}
+
+.college-tab.is-active,
+.college-tab[aria-current='page'] {
+  background: #eaf0ff;
+  border-color: #cdd9f2;
+  color: #253475;
+}
+
+.college-shell {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+  padding-bottom: clamp(4rem, 10vh, 6rem);
+}
+
+.college-tab-panel.hidden {
+  display: none !important;
+}
+
+.college-tab-panel {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.college-banner {
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  padding: 0.6rem 0.8rem;
+}
+
+.college-banner p {
+  margin: 0;
+}
+
+.college-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.8rem;
+}
+
+.college-kpi {
+  border: 1px solid #dfe8f5;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.75rem 0.85rem;
+  min-width: 0;
+}
+
+.college-kpi-label {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.college-kpi-value {
+  margin: 0.2rem 0 0;
+  color: #0f172a;
+  font-weight: 800;
+  font-size: clamp(1.4rem, 1.9vw, 2rem);
+  line-height: 1.05;
+}
+
+.college-kpi-meta {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.college-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+  margin-top: 0.45rem;
+}
+
+.college-progress-track span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #253475;
+}
+
+.college-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  width: fit-content;
+  border-radius: 999px;
+  border: 1px solid #d8e6ff;
+  background: #eef4ff;
+  color: #1e3a8a;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  margin: 0.2rem 0 0;
+}
+
+.college-status-pill.is-overdue {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
+.college-status-pill.is-passed {
+  border-color: #bbf7d0;
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.college-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.college-main-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.8rem;
+}
+
+.college-card,
+.college-course-sidebar,
+.college-course-content {
+  border: 1px solid #dfe8f5;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.75rem 0.85rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.college-card h3,
+.college-course-sidebar h3,
+.college-course-content h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+}
+
+.college-course-list,
+.college-library-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.college-course-card,
+.college-library-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.55rem 0.65rem;
+}
+
+.college-course-card h4,
+.college-library-card h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.college-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.college-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.82rem;
+  color: #1e293b;
+}
+
+.college-checklist-item.is-done {
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+}
+
+.college-check-status {
+  font-weight: 700;
+  color: #64748b;
+  min-width: 58px;
+}
+
+.college-checklist-item.is-done .college-check-status {
+  color: #166534;
+}
+
+.college-course-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.college-course-sidebar {
+  max-height: min(72vh, 860px);
+  overflow-y: auto;
+}
+
+.college-course-group {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.college-course-group.is-active {
+  border-color: #c7d2fe;
+}
+
+.college-course-group-head {
+  width: 100%;
+  border: none;
+  background: #f8fafc;
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.college-module-list {
+  display: grid;
+}
+
+.college-module-item {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 0.42rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.8rem;
+  color: #1e293b;
+}
+
+.college-module-item.is-active {
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.college-module-item small {
+  color: #64748b;
+}
+
+.college-module-body {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.7rem;
+  min-height: 180px;
+  font-size: 0.86rem;
+  color: #334155;
+  margin-bottom: 0.6rem;
+  overflow-wrap: anywhere;
+}
+
+.college-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.45rem 0;
+}
+
+.college-tag {
+  font-size: 0.7rem;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-radius: 999px;
+  padding: 0.14rem 0.46rem;
+}
+
+.college-empty {
+  border: 1px dashed #d7e2f0;
+  border-radius: 10px;
+  padding: 0.9rem;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.college-requirements-modal {
+  width: min(560px, 100%);
+}
+
+@media (max-width: 1023px) {
+  .college-course-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .college-course-sidebar {
+    max-height: none;
+  }
+}
+
 .my-details-shell {
   width: 100%;
   max-width: 1360px;

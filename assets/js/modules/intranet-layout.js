@@ -33,21 +33,35 @@ function ensureNavbarFallback(session) {
   const nav = document.querySelector('.site-nav');
   if (!nav) return;
 
+  const restrictedCollegeOnly =
+    !session?.isAdmin &&
+    String(session?.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' &&
+    !session?.collegePassedAt;
+
   const links = [...nav.querySelectorAll('a[href]')];
   const hasAnyLink = links.length > 0;
   const hasFinances = links.some(
     (link) => normalizePathname(new URL(link.getAttribute('href') || '', window.location.origin).pathname) === '/finances'
   );
+  const hasCollege = links.some(
+    (link) => normalizePathname(new URL(link.getAttribute('href') || '', window.location.origin).pathname) === '/college'
+  );
 
-  if (hasAnyLink && hasFinances) return;
+  if (restrictedCollegeOnly && hasAnyLink && hasCollege && links.length === 1) return;
+  if (!restrictedCollegeOnly && hasAnyLink && hasFinances) return;
 
   nav.innerHTML = '';
-  nav.append(buildLink('/my-details', 'My Details'));
-  nav.append(buildLink('/voyages/my', 'Voyages'));
-  nav.append(buildLink('/my-fleet', 'My Fleet'));
-  nav.append(buildLink('/forms', 'Forms'));
-  nav.append(buildLink('/finances', 'Finances'));
-  if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
+  if (restrictedCollegeOnly) {
+    nav.append(buildLink('/college', 'College'));
+  } else {
+    nav.append(buildLink('/my-details', 'My Details'));
+    nav.append(buildLink('/voyages/my', 'Voyages'));
+    nav.append(buildLink('/my-fleet', 'My Fleet'));
+    nav.append(buildLink('/forms', 'Forms'));
+    nav.append(buildLink('/college', 'College'));
+    nav.append(buildLink('/finances', 'Finances'));
+    if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
+  }
 
   const spacer = document.createElement('span');
   spacer.className = 'nav-spacer';

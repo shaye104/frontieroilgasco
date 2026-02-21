@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-21T15:41:48.961Z
+Generated: 2026-02-21T16:20:02.682Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -13,6 +13,7 @@ SITE STRUCTURE
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
 - cargo-admin.html | title: Frontier Oil & Gas Company | Voyage Config | primary heading: Voyage Config
+- college.html | title: Frontier Oil & Gas Company | College | primary heading: College
 - employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
 - finances-analytics.html | title: Frontier Oil & Gas Company | Finance Analytics | primary heading: Finances
 - finances-audit.html | title: Frontier Oil & Gas Company | Finance Audit | primary heading: Finances
@@ -74,6 +75,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/admin-panel-page.js | exports: No public exports
 - assets/js/pages/application-page.js | exports: No public exports
 - assets/js/pages/cargo-admin-page.js | exports: No public exports
+- assets/js/pages/college-page.js | exports: No public exports
 - assets/js/pages/employee-profile-page.js | exports: No public exports
 - assets/js/pages/finances-analytics-page.js | exports: No public exports
 - assets/js/pages/finances-audit-page.js | exports: No public exports

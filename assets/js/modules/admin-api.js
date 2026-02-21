@@ -540,6 +540,9 @@ export function prefetchRouteData(pathname, session) {
   if (route === '/forms') {
     return prefetchJson('/api/forms');
   }
+  if (route === '/college') {
+    return Promise.all([prefetchJson('/api/college/me'), prefetchJson('/api/college/library')]).then(() => null);
+  }
   if (route === '/finances') {
     return prefetchJson('/api/finances/overview?range=month&unsettledScope=all');
   }

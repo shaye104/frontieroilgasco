@@ -37,6 +37,7 @@ const INTRANET_NAV_ITEMS = [
   { href: '/voyages/my', label: 'Voyages' },
   { href: '/my-fleet', label: 'My Fleet' },
   { href: '/forms', label: 'Forms' },
+  { href: '/college', label: 'College' },
   { href: '/finances', label: 'Finances' },
   { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
 ];
@@ -67,11 +68,20 @@ export function renderIntranetNavbar(session) {
   if (!nav) return;
 
   nav.innerHTML = '';
-  INTRANET_NAV_ITEMS.forEach((item) => {
-    if (!canRenderNavItem(session, item)) return;
-    const link = buildNavLink(item.href, item.label);
-    nav.append(link);
-  });
+  const restrictedCollegeOnly =
+    !session?.isAdmin &&
+    String(session?.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' &&
+    !session?.collegePassedAt;
+
+  if (restrictedCollegeOnly) {
+    nav.append(buildNavLink('/college', 'College'));
+  } else {
+    INTRANET_NAV_ITEMS.forEach((item) => {
+      if (!canRenderNavItem(session, item)) return;
+      const link = buildNavLink(item.href, item.label);
+      nav.append(link);
+    });
+  }
 
   const spacer = document.createElement('span');
   spacer.className = 'nav-spacer';

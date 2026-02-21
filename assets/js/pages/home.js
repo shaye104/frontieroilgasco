@@ -10,7 +10,11 @@ async function initHomePage() {
     const response = await fetch('/api/auth/session', { method: 'GET', credentials: 'include' });
     const session = response.ok ? await response.json() : { loggedIn: false };
     if (session.loggedIn) {
-      window.location.href = '/my-details';
+      const collegeRestricted =
+        !session.isAdmin &&
+        String(session.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' &&
+        !session.collegePassedAt;
+      window.location.href = collegeRestricted ? '/college' : '/my-details';
       return;
     }
   } catch {

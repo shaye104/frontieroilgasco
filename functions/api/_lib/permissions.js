@@ -114,6 +114,14 @@ export const PERMISSION_GROUPS = [
       { key: 'finances.debts.settle', label: 'Settle Finance Debts', description: 'Settle outstanding company share debts.' },
       { key: 'finances.audit.view', label: 'View Finance Audit', description: 'View finance settlement audit logs.' }
     ]
+  },
+  {
+    key: 'college',
+    label: 'College',
+    permissions: [
+      { key: 'college.view', label: 'View College', description: 'Access the college training centre.' },
+      { key: 'college.manage', label: 'Manage College', description: 'Manage college deadlines and pass overrides.' }
+    ]
   }
 ];
 

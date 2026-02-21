@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier College training centre." />
+    <title>Frontier Oil & Gas Company | College</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221college1" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221college1" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221college1" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221college1" />
+  </head>
+  <body class="page page-intranet page-college">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">FOG</span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel college-page-header">
+          <div class="college-head">
+            <div>
+              <h1>College</h1>
+              <p class="college-subtitle">Training centre, onboarding courses, and reference library</p>
+            </div>
+          </div>
+          <nav class="college-tabs" aria-label="College sections">
+            <button class="college-tab is-active" type="button" data-college-tab="overview" aria-current="page">Overview</button>
+            <button class="college-tab" type="button" data-college-tab="courses">Courses</button>
+            <button class="college-tab" type="button" data-college-tab="library">Library</button>
+          </nav>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="collegeFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="college-shell hidden">
+          <section id="collegeTabOverview" class="college-tab-panel is-active" data-college-panel="overview">
+            <article id="collegeApplicantBanner" class="college-banner hidden">
+              <p>You currently have limited access while completing College.</p>
+            </article>
+
+            <div class="college-kpi-grid">
+              <article id="collegeDueCard" class="college-kpi">
+                <p class="college-kpi-label">Due In</p>
+                <p id="collegeDueCountdown" class="college-kpi-value">—</p>
+                <p id="collegeDueDate" class="college-kpi-meta">Due date: —</p>
+              </article>
+              <article class="college-kpi">
+                <p class="college-kpi-label">Overall Progress</p>
+                <p id="collegeProgressValue" class="college-kpi-value">0%</p>
+                <div class="college-progress-track"><span id="collegeProgressBar"></span></div>
+              </article>
+              <article class="college-kpi">
+                <p class="college-kpi-label">Status</p>
+                <p id="collegeStatusPill" class="college-status-pill">Active</p>
+                <p id="collegeStatusMeta" class="college-kpi-meta">—</p>
+              </article>
+            </div>
+
+            <div id="collegeApplicantActions" class="college-actions hidden">
+              <button id="collegeContinueBtn" type="button" class="btn btn-primary">Continue Course</button>
+              <button id="collegeRequirementsBtn" type="button" class="btn btn-secondary">View Requirements</button>
+              <button id="collegeAcknowledgeTermsBtn" type="button" class="btn btn-secondary">Acknowledge Terms</button>
+            </div>
+
+            <div id="collegeStaffOverview" class="college-main-grid hidden">
+              <article class="college-card">
+                <h3>My Enrollments</h3>
+                <div id="collegeStaffEnrollments" class="college-course-list"></div>
+              </article>
+              <article class="college-card">
+                <h3>College Library</h3>
+                <div id="collegeStaffLibraryPreview" class="college-library-list"></div>
+              </article>
+            </div>
+
+            <div id="collegeApplicantOverview" class="college-main-grid hidden">
+              <article class="college-card">
+                <h3>Courses</h3>
+                <div id="collegeApplicantCourses" class="college-course-list"></div>
+              </article>
+              <article class="college-card">
+                <h3>Checklist</h3>
+                <ul id="collegeChecklist" class="college-checklist"></ul>
+              </article>
+            </div>
+          </section>
+
+          <section id="collegeTabCourses" class="college-tab-panel hidden" data-college-panel="courses">
+            <div class="college-course-layout">
+              <aside class="college-course-sidebar card">
+                <h3>Courses &amp; Modules</h3>
+                <div id="collegeCourseSidebar"></div>
+              </aside>
+              <article class="college-course-content card">
+                <h3 id="collegeModuleTitle">Select a module</h3>
+                <p id="collegeModuleMeta" class="college-kpi-meta"></p>
+                <div id="collegeModuleBody" class="college-module-body"></div>
+                <div class="college-actions">
+                  <button id="collegeMarkCompleteBtn" type="button" class="btn btn-primary hidden">Mark as Complete</button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="collegeTabLibrary" class="college-tab-panel hidden" data-college-panel="library">
+            <article class="college-card">
+              <div class="filter-row">
+                <div>
+                  <label for="collegeLibrarySearch">Search</label>
+                  <input id="collegeLibrarySearch" type="text" placeholder="Title, summary, tags" />
+                </div>
+                <div>
+                  <label for="collegeLibraryCategory">Category</label>
+                  <input id="collegeLibraryCategory" type="text" placeholder="e.g. Safety" />
+                </div>
+              </div>
+              <div id="collegeLibraryRows" class="college-library-list"></div>
+            </article>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <div id="collegeRequirementsModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="collegeRequirementsTitle">
+      <div class="modal-card college-requirements-modal">
+        <h3 id="collegeRequirementsTitle">College Requirements</h3>
+        <ul id="collegeRequirementsList" class="college-checklist"></ul>
+        <div class="college-actions">
+          <button id="collegeRequirementsClose" type="button" class="btn btn-secondary">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/assets/js/pages/college-page.js?v=20260221college1"></script>
+  </body>
+</html>

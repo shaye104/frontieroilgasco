@@ -38,6 +38,17 @@
 /finances/audit /finances?tab=audit 302
 /finances/audit/ /finances?tab=audit 302
 
+/college /college.html 200
+/college/ /college.html 200
+/college/courses /college.html?tab=courses 302
+/college/courses/ /college.html?tab=courses 302
+/college/courses/:id /college.html?tab=courses&courseId=:id 302
+/college/courses/:id/ /college.html?tab=courses&courseId=:id 302
+/college/courses/:courseId/modules/:moduleId /college.html?tab=courses&courseId=:courseId&moduleId=:moduleId 302
+/college/courses/:courseId/modules/:moduleId/ /college.html?tab=courses&courseId=:courseId&moduleId=:moduleId 302
+/college/library /college.html?tab=library 302
+/college/library/ /college.html?tab=library 302
+
 /admin /admin-panel 200
 /admin/ /admin-panel 200
 /admin/config /admin-config 200

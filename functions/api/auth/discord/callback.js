@@ -27,6 +27,15 @@ function toMyDetailsUrl(requestUrl, params = {}) {
   return target.toString();
 }
 
+function toCollegeUrl(requestUrl, params = {}) {
+  const source = new URL(requestUrl);
+  const target = new URL('/college', `${source.protocol}//${source.host}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v) target.searchParams.set(k, v);
+  });
+  return target.toString();
+}
+
 async function fetchDiscordUser(accessToken) {
   const response = await fetch('https://discord.com/api/users/@me', {
     headers: { Authorization: `Bearer ${accessToken}` }
@@ -117,8 +126,11 @@ export async function onRequest(context) {
     return redirect(toAccessDeniedUrl(request.url, { reason: 'session_build_failed' }));
   }
 
+  const userStatus = String(employee?.user_status || '').trim().toUpperCase() || 'ACTIVE_STAFF';
+  const isCollegeRestricted = userStatus === 'APPLICANT_ACCEPTED' && !employee?.college_passed_at;
   const hasEntryPermission = hasPermission({ permissions: permissionContext.permissions }, 'my_details.view');
-  if (!isAdminUser && !hasEntryPermission) {
+  const hasCollegePermission = hasPermission({ permissions: permissionContext.permissions }, 'college.view');
+  if (!isAdminUser && !hasEntryPermission && !(isCollegeRestricted || hasCollegePermission)) {
     const clearStateCookie = serializeCookie('fog_oauth_state', '', {
       path: '/',
       httpOnly: true,
@@ -157,6 +169,11 @@ export async function onRequest(context) {
     isAdmin: isAdminUser,
     hasEmployee: Boolean(employee),
     accessPending: !isAdminUser && !employee,
+    userStatus,
+    collegeStartAt: employee?.college_start_at || null,
+    collegeDueAt: employee?.college_due_at || null,
+    collegePassedAt: employee?.college_passed_at || null,
+    collegeRestricted: isCollegeRestricted,
     exp: Date.now() + 8 * 60 * 60 * 1000
   });
 
@@ -176,5 +193,5 @@ export async function onRequest(context) {
     maxAge: 8 * 60 * 60
   });
 
-  return redirect(toMyDetailsUrl(request.url), [clearStateCookie, sessionCookie]);
+  return redirect(isCollegeRestricted ? toCollegeUrl(request.url) : toMyDetailsUrl(request.url), [clearStateCookie, sessionCookie]);
 }

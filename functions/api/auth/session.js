@@ -45,6 +45,21 @@ export async function onRequest(context) {
     hasFormsAdmin: hasPermission({ permissions: permissionContext?.permissions || [] }, 'forms.manage'),
     hasEmployee: payload.isAdmin ? true : Boolean(employee),
     accessPending: payload.isAdmin ? false : !employee,
+    userStatus: String(employee?.user_status || payload.userStatus || '').trim() || 'ACTIVE_STAFF',
+    collegeStartAt: employee?.college_start_at || payload.collegeStartAt || null,
+    collegeDueAt: employee?.college_due_at || payload.collegeDueAt || null,
+    collegePassedAt: employee?.college_passed_at || payload.collegePassedAt || null,
+    collegeRestricted:
+      !payload.isAdmin &&
+      (String(employee?.user_status || payload.userStatus || '')
+        .trim()
+        .toUpperCase() === 'APPLICANT_ACCEPTED') &&
+      !(employee?.college_passed_at || payload.collegePassedAt),
+    canAccessCollege:
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.view') ||
+      (String(employee?.user_status || payload.userStatus || '')
+        .trim()
+        .toUpperCase() === 'APPLICANT_ACCEPTED'),
     canAccessAdminPanel: hasPermission({ permissions: permissionContext?.permissions || [] }, 'admin.access'),
     canManageRoles: hasPermission({ permissions: permissionContext?.permissions || [] }, 'user_groups.manage'),
     canManageConfig: hasPermission({ permissions: permissionContext?.permissions || [] }, 'config.manage'),

@@ -1,4 +1,5 @@
 import { readSessionFromRequest } from './api/auth/_lib/auth.js';
+import { getEmployeeByDiscordUserId } from './api/_lib/db.js';
 
 function normalizePath(pathname) {
   if (!pathname || pathname === '/') return '/';
@@ -10,6 +11,22 @@ function toLoginRedirect(url) {
   target.searchParams.set('auth', 'denied');
   target.searchParams.set('reason', 'login_required');
   return target.toString();
+}
+
+function toCollegeRedirect(url) {
+  return new URL('/college', url.origin).toString();
+}
+
+function isCollegePath(pathname) {
+  return pathname === '/college' || pathname === '/college.html' || pathname.startsWith('/college/');
+}
+
+function isAllowedRestrictedApiPath(pathname) {
+  if (!pathname.startsWith('/api/')) return false;
+  if (pathname.startsWith('/api/college')) return true;
+  if (pathname === '/api/auth/session' || pathname === '/api/auth/logout') return true;
+  if (pathname.startsWith('/api/auth/discord/')) return true;
+  return false;
 }
 
 function isProtectedPath(pathname) {
@@ -37,6 +54,8 @@ function isProtectedPath(pathname) {
     '/finances-debts.html',
     '/finances-audit',
     '/finances-audit.html',
+    '/college',
+    '/college.html',
     '/form-fill',
     '/form-fill.html',
     '/forms-categories',
@@ -74,6 +93,7 @@ function isProtectedPath(pathname) {
   if (pathname.startsWith('/admin/')) return true;
   if (pathname.startsWith('/forms/')) return true;
   if (pathname.startsWith('/finances/')) return true;
+  if (pathname.startsWith('/college/')) return true;
   return false;
 }
 
@@ -83,7 +103,6 @@ export async function onRequest(context) {
     const pathname = normalizePath(url.pathname);
 
     if (
-      pathname.startsWith('/api/') ||
       pathname.startsWith('/assets/') ||
       pathname === '/favicon.ico' ||
       pathname === '/_redirects' ||
@@ -96,9 +115,31 @@ export async function onRequest(context) {
 
     const session = await readSessionFromRequest(context.env, context.request);
     const isLoggedIn = Boolean(session);
+    const isApiPath = pathname.startsWith('/api/');
+    let collegeRestricted = false;
+
+    if (isLoggedIn && !session.isAdmin && session.userId) {
+      try {
+        const employee = await getEmployeeByDiscordUserId(context.env, session.userId);
+        const userStatus = String(employee?.user_status || session.userStatus || '').trim().toUpperCase();
+        collegeRestricted = userStatus === 'APPLICANT_ACCEPTED' && !(employee?.college_passed_at || session.collegePassedAt);
+      } catch {
+        collegeRestricted = String(session.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' && !session.collegePassedAt;
+      }
+    }
+
+    if (isApiPath) {
+      if (isLoggedIn && collegeRestricted && !isAllowedRestrictedApiPath(pathname)) {
+        return new Response(JSON.stringify({ error: 'College restricted access. Complete onboarding to unlock the full intranet.' }), {
+          status: 403,
+          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+        });
+      }
+      return context.next();
+    }
 
     if (pathname === '/dashboard') {
-      return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
+      return Response.redirect(new URL(collegeRestricted ? '/college' : '/my-details', url.origin).toString(), 302);
     }
 
     if (pathname === '/intranet' || pathname === '/intranet.html') {
@@ -110,17 +151,21 @@ export async function onRequest(context) {
         return context.next();
       }
       if (isLoggedIn) {
-        return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
+        return Response.redirect(new URL(collegeRestricted ? '/college' : '/my-details', url.origin).toString(), 302);
       }
       return context.next();
     }
 
     if (isLoggedIn && (pathname === '/' || pathname === '/index.html')) {
-      return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
+      return Response.redirect(new URL(collegeRestricted ? '/college' : '/my-details', url.origin).toString(), 302);
     }
 
     if (!isLoggedIn && isProtectedPath(pathname)) {
       return Response.redirect(toLoginRedirect(url), 302);
+    }
+
+    if (isLoggedIn && collegeRestricted && !isCollegePath(pathname)) {
+      return Response.redirect(toCollegeRedirect(url), 302);
     }
 
     return context.next();
