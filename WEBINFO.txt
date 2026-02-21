@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-21T00:53:05.880Z
+Generated: 2026-02-21T01:08:09.252Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -14,8 +14,9 @@ SITE STRUCTURE
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
 - cargo-admin.html | title: Frontier Oil & Gas Company | Voyage Config | primary heading: Voyage Config
 - employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
-- finances-audit.html | title: Frontier Oil & Gas Company | Finance Audit | primary heading: Finance Settlement Audit
-- finances-debts.html | title: Frontier Oil & Gas Company | Finance Debts | primary heading: Unsettled Company Share Debts
+- finances-analytics.html | title: Frontier Oil & Gas Company | Finance Analytics | primary heading: Finances
+- finances-audit.html | title: Frontier Oil & Gas Company | Finance Audit | primary heading: Finances
+- finances-debts.html | title: Frontier Oil & Gas Company | Finance Debts | primary heading: Finances
 - finances.html | title: Frontier Oil & Gas Company | Finances | primary heading: Finances
 - form-fill.html | title: Frontier Oil & Gas Company | Fill Form | primary heading: Form
 - forms-admin.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
@@ -74,6 +75,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/application-page.js | exports: No public exports
 - assets/js/pages/cargo-admin-page.js | exports: No public exports
 - assets/js/pages/employee-profile-page.js | exports: No public exports
+- assets/js/pages/finances-analytics-page.js | exports: No public exports
 - assets/js/pages/finances-audit-page.js | exports: No public exports
 - assets/js/pages/finances-debts-page.js | exports: No public exports
 - assets/js/pages/finances-page.js | exports: No public exports

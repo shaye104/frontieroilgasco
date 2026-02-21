@@ -26,21 +26,27 @@
 
     <main class="section">
       <div class="container intranet-layout">
-        <section class="panel">
-          <div class="modal-header">
-            <h1>Finance Settlement Audit</h1>
-            <div class="modal-actions">
-              <a class="btn btn-secondary" href="/finances/debts">&larr; Back to Debts</a>
+        <section class="panel finance-page-header">
+          <div class="finance-head">
+            <div>
+              <h1>Finances</h1>
+              <p class="finance-subtitle">Settlement audit log</p>
             </div>
           </div>
+          <nav class="finance-tabs" aria-label="Finance sections">
+            <a class="finance-tab" href="/finances">Overview</a>
+            <a class="finance-tab" href="/finances/analytics">Analytics</a>
+            <a class="finance-tab" href="/finances/debts">Debts</a>
+            <a class="finance-tab is-active" href="/finances/audit" aria-current="page">Audit</a>
+          </nav>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="auditFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="hidden">
-          <article class="panel">
+        <section id="protectedContent" class="finance-table-shell hidden">
+          <article class="finance-chart-card finance-table-card">
             <div class="table-wrap">
-              <table class="data-table">
+              <table class="data-table finance-data-table">
                 <thead>
                   <tr>
                     <th>Timestamp</th>
@@ -52,7 +58,9 @@
                     <th>OOTW</th>
                   </tr>
                 </thead>
-                <tbody id="financeAuditBody"></tbody>
+                <tbody id="financeAuditBody">
+                  <tr><td colspan="7"><div class="finance-chart-skeleton"></div></td></tr>
+                </tbody>
               </table>
             </div>
             <div class="pagination-row">
@@ -71,6 +79,6 @@
       </div>
     </footer>
 
-    <script type="module" src="/assets/js/pages/finances-audit-page.js?v=20260221e"></script>
+    <script type="module" src="/assets/js/pages/finances-audit-page.js?v=20260221f"></script>
   </body>
 </html>

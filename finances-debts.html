@@ -26,20 +26,25 @@
 
     <main class="section">
       <div class="container intranet-layout">
-        <section class="panel">
-          <div class="modal-header">
-            <h1>Unsettled Company Share Debts</h1>
-            <div class="modal-actions">
-              <a class="btn btn-secondary" href="/finances">&larr; Back to Finances</a>
-              <a id="financeAuditLink" class="btn btn-secondary hidden" href="/finances/audit">Settlement Audit</a>
+        <section class="panel finance-page-header">
+          <div class="finance-head">
+            <div>
+              <h1>Finances</h1>
+              <p class="finance-subtitle">Unsettled company share debts</p>
             </div>
           </div>
+          <nav class="finance-tabs" aria-label="Finance sections">
+            <a class="finance-tab" href="/finances">Overview</a>
+            <a class="finance-tab" href="/finances/analytics">Analytics</a>
+            <a class="finance-tab is-active" href="/finances/debts" aria-current="page">Debts</a>
+            <a class="finance-tab" href="/finances/audit">Audit</a>
+          </nav>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="debtsFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="hidden">
-          <article class="panel">
+        <section id="protectedContent" class="finance-table-shell hidden">
+          <article class="finance-chart-card finance-filter-card">
             <div class="filter-row">
               <div>
                 <label for="debtSearch">Search OOTW / Vessel / Route</label>
@@ -50,10 +55,34 @@
                 <input id="debtMinOutstanding" type="number" min="0" step="1" />
               </div>
             </div>
-            <p id="debtTotals" class="muted"></p>
+            <p id="debtTotals" class="muted">Outstanding: ƒ 0</p>
           </article>
 
-          <section id="debtGroups" class="finance-debt-groups"></section>
+          <article class="finance-chart-card finance-table-card">
+            <div class="table-wrap">
+              <table class="data-table finance-data-table">
+                <thead>
+                  <tr>
+                    <th>OOTW</th>
+                    <th>Vessel</th>
+                    <th>Route</th>
+                    <th>Ended</th>
+                    <th class="align-right">Company Share (10%)</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="financeDebtsBody">
+                  <tr><td colspan="7"><div class="finance-chart-skeleton"></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination-row">
+              <button id="financeDebtsPrev" class="btn btn-secondary" type="button">Previous</button>
+              <span id="financeDebtsPageInfo" class="pagination-info">Page 1 of 1</span>
+              <button id="financeDebtsNext" class="btn btn-secondary" type="button">Next</button>
+            </div>
+          </article>
         </section>
       </div>
     </main>
@@ -64,6 +93,6 @@
       </div>
     </footer>
 
-    <script type="module" src="/assets/js/pages/finances-debts-page.js?v=20260221e"></script>
+    <script type="module" src="/assets/js/pages/finances-debts-page.js?v=20260221f"></script>
   </body>
 </html>

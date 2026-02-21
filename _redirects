@@ -29,6 +29,8 @@
 
 /finances/debts /finances-debts 200
 /finances/debts/ /finances-debts 200
+/finances/analytics /finances-analytics 200
+/finances/analytics/ /finances-analytics 200
 /finances/audit /finances-audit 200
 /finances/audit/ /finances-audit 200
 

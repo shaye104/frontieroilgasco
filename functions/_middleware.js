@@ -31,6 +31,8 @@ function isProtectedPath(pathname) {
     '/forms-config',
     '/finances',
     '/finances.html',
+    '/finances-analytics',
+    '/finances-analytics.html',
     '/finances-debts',
     '/finances-debts.html',
     '/finances-audit',

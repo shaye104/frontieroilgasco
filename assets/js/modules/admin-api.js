@@ -543,6 +543,9 @@ export function prefetchRouteData(pathname, session) {
   if (route === '/finances') {
     return prefetchJson('/api/finances/overview?range=month&unsettledScope=all');
   }
+  if (route === '/finances/analytics') {
+    return prefetchJson('/api/finances/overview?range=month&unsettledScope=range');
+  }
   if (route === '/finances/debts') {
     return prefetchJson('/api/finances/debts');
   }

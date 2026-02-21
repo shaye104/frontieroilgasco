@@ -1,5 +1,5 @@
 import { initFinancesAudit } from '../modules/finances.js';
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260221e';
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260221f';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({
@@ -14,7 +14,8 @@ initIntranetPageGuard({
     tableBodySelector: '#financeAuditBody',
     pageInfoSelector: '#financeAuditPageInfo',
     prevButtonSelector: '#financeAuditPrev',
-    nextButtonSelector: '#financeAuditNext'
+    nextButtonSelector: '#financeAuditNext',
+    pageSize: 10
   });
 });
 
