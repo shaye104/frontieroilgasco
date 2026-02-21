@@ -229,6 +229,7 @@ export async function onRequestPost(context) {
   if (!type) return json({ error: 'Type must be IN or OUT.' }, 400);
   if (!amount) return json({ error: 'Amount must be a positive whole number.' }, 400);
   if (!reason) return json({ error: 'Reason must be at least 5 characters.' }, 400);
+  if (!category) return json({ error: 'Category is required.' }, 400);
 
   if (voyageId) {
     const voyage = await env.DB.prepare(`SELECT id FROM voyages WHERE id = ?`).bind(voyageId).first();

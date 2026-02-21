@@ -367,7 +367,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
 
   const marginTop = Number(options.marginTop || 12);
   const marginRight = Number(options.marginRight || 20);
-  const marginBottom = Number(options.marginBottom || 86);
+  const marginBottom = Number(options.marginBottom || 98);
   const marginLeft = Number(options.marginLeft || 74);
 
   const plotLeft = marginLeft;
@@ -416,7 +416,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
       const show = idx % xLabelStep === 0 || idx === points.length - 1;
       if (!show) return '';
       const x = xAt(idx);
-      return `<text class="finance-axis-x-label" x="${x}" y="${height - 26}" text-anchor="middle">${text(point.label)}</text>`;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 34}" text-anchor="middle">${text(point.label)}</text>`;
     })
     .join('');
 
@@ -529,7 +529,7 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
 
   const marginTop = Number(options.marginTop || 12);
   const marginRight = Number(options.marginRight || 20);
-  const marginBottom = Number(options.marginBottom || 86);
+  const marginBottom = Number(options.marginBottom || 98);
   const marginLeft = Number(options.marginLeft || 74);
 
   const plotLeft = marginLeft;
@@ -568,7 +568,7 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
       const show = idx % xLabelStep === 0 || idx === points.length - 1;
       if (!show) return '';
       const x = plotLeft + (idx + 0.5) * band;
-      return `<text class="finance-axis-x-label" x="${x}" y="${height - 26}" text-anchor="middle">${text(point.label)}</text>`;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 34}" text-anchor="middle">${text(point.label)}</text>`;
     })
     .join('');
 
@@ -692,6 +692,44 @@ function renderProfitDriversChart(target, breakdowns, mode) {
 
   const legendLabel = safeMode === 'vessel' ? 'Profit by Vessel' : safeMode === 'ootw' ? 'Profit by OOTW' : 'Profit by Route';
   renderCurrencyBarChart(target, points, legendLabel, '#2b4aa2');
+}
+
+function renderProfitDriversTable(target, breakdowns, mode) {
+  if (!target) return;
+  const safeMode = normalizeBreakdownMode(mode);
+  const source = safeMode === 'vessel' ? breakdowns?.byVessel : safeMode === 'ootw' ? breakdowns?.byOotw : breakdowns?.byRoute;
+  const rawRows = Array.isArray(source) ? source : [];
+
+  const rows = rawRows
+    .map((row) => ({ label: text(row?.label || 'Unknown'), netProfit: toMoney(row?.netProfit || 0) }))
+    .sort((a, b) => b.netProfit - a.netProfit || a.label.localeCompare(b.label))
+    .slice(0, 5);
+
+  if (!rows.length) {
+    target.innerHTML = '<div class="finance-inline-caption">No profit driver data in this period.</div>';
+    return;
+  }
+
+  target.innerHTML = `
+    <table class="finance-profit-driver-table">
+      <thead>
+        <tr>
+          <th>Top ${safeMode === 'vessel' ? 'Vessels' : safeMode === 'ootw' ? 'OOTW' : 'Routes'}</th>
+          <th class="align-right">Net Profit</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows
+          .map(
+            (row) => `<tr>
+              <td>${text(row.label)}</td>
+              <td class="align-right">${formatGuilders(row.netProfit)}</td>
+            </tr>`
+          )
+          .join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 function alignProfitLossSeries(profitSeries, lossSeries) {
@@ -855,6 +893,9 @@ function renderOverviewSkeleton() {
     if (el) el.innerHTML = '<div class="finance-chart-skeleton"></div>';
   });
 
+  const driversTable = $('#trendsDriversTable');
+  if (driversTable) driversTable.innerHTML = '<div class="finance-chart-skeleton"></div>';
+
   const unsettledAmount = $('#unsettledOutstandingTotal');
   if (unsettledAmount) unsettledAmount.innerHTML = '<span class="finance-value-skeleton"></span>';
 
@@ -932,11 +973,13 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
     renderNoData($('#trendsChartVoyageCount'), 'No voyages in this period');
     renderNoData($('#trendsChartAvgProfit'), 'No voyages in this period');
     renderNoData($('#trendsChartProfitDrivers'), 'No voyages in this period');
+    renderProfitDriversTable($('#trendsDriversTable'), {}, breakdownMode);
   } else {
     renderRevenueProfitLossChart($('#trendsChartOutstanding'), charts.grossRevenueTrend || [], charts.netProfitTrend || [], charts.freightLossValueTrend || []);
     renderCountBarChart($('#trendsChartVoyageCount'), charts.voyageCountTrend || [], 'Voyage Count', '#253475');
     renderLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'Avg Net Profit / Voyage', '#2b4aa2');
     renderProfitDriversChart($('#trendsChartProfitDrivers'), breakdowns, breakdownMode);
+    renderProfitDriversTable($('#trendsDriversTable'), breakdowns, breakdownMode);
   }
 
   const unsettledTotal = $('#unsettledOutstandingTotal');
@@ -1010,16 +1053,33 @@ function setCashflowType(state, type) {
 }
 
 function setCashflowFormEnabled(canManage) {
+  const openButton = $('#cashflowOpenModal');
+  if (openButton) {
+    openButton.disabled = !canManage;
+    openButton.classList.toggle('hidden', !canManage);
+  }
+
   const form = $('#cashflowEntryForm');
   if (!form) return;
   form.querySelectorAll('input, textarea, select, button').forEach((field) => {
     field.disabled = !canManage;
   });
   if (!canManage) {
+    closeCashflowModal();
     setInlineFeedback('#cashflowEntryFeedback', 'You do not have permission to add cashflow entries.', 'error');
   } else {
     setInlineFeedback('#cashflowEntryFeedback', '');
   }
+}
+
+function openCashflowModal() {
+  const modal = $('#cashflowEntryModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeCashflowModal() {
+  const modal = $('#cashflowEntryModal');
+  if (modal) modal.classList.add('hidden');
 }
 
 function renderCashflowSkeleton() {
@@ -1145,7 +1205,6 @@ async function loadCashflow(state) {
     if (createdBy) params.set('createdBy', createdBy);
 
     const payload = await fetchJson(`/api/finances/cashflow?${params.toString()}`);
-    console.log('finances cashflow response', payload);
 
     state.cashflowKpis = payload?.kpis || {};
     state.cashflowRows = Array.isArray(payload?.rows) ? payload.rows : [];
@@ -1191,6 +1250,10 @@ async function submitCashflowEntry(state) {
     setInlineFeedback('#cashflowEntryFeedback', 'Reason must be at least 5 characters.', 'error');
     return;
   }
+  if (!category) {
+    setInlineFeedback('#cashflowEntryFeedback', 'Category is required.', 'error');
+    return;
+  }
 
   const voyageId = parseRelatedVoyageId(relatedVoyageRaw, state);
   if (relatedVoyageRaw.trim() && !voyageId) {
@@ -1220,6 +1283,7 @@ async function submitCashflowEntry(state) {
     if (form) form.reset();
     setCashflowType(state, 'IN');
     setInlineFeedback('#cashflowEntryFeedback', 'Cashflow entry saved.', 'success');
+    closeCashflowModal();
 
     state.cashflowPage = 1;
     await loadCashflow(state);
@@ -1244,6 +1308,7 @@ function setBreakdownMode(state, mode) {
 
   if (!state.overview || state.overviewLoading) return;
   renderProfitDriversChart($('#trendsChartProfitDrivers'), state.overview?.breakdowns || {}, state.breakdownMode);
+  renderProfitDriversTable($('#trendsDriversTable'), state.overview?.breakdowns || {}, state.breakdownMode);
 }
 
 function renderDebtsSkeleton() {
@@ -1360,7 +1425,6 @@ async function loadDebts(state) {
     params.set('onlyUnsettled', onlyUnsettled ? '1' : '0');
 
     const payload = await fetchJson(`/api/finances/debts?${params.toString()}`);
-    console.log('finances debts response', payload);
 
     state.debtRows = Array.isArray(payload?.rows) ? payload.rows : [];
     state.debtTotalPages = Math.max(1, Number(payload?.pagination?.totalPages || 1));
@@ -1456,7 +1520,6 @@ async function loadAudit(state) {
     if (dateTo) params.set('dateTo', dateTo);
 
     const payload = await fetchJson(`/api/finances/audit?${params.toString()}`);
-    console.log('finances audit response', payload);
 
     state.auditRows = Array.isArray(payload?.rows) ? payload.rows : [];
     state.auditTotalPages = Math.max(1, Number(payload?.pagination?.totalPages || 1));
@@ -1487,12 +1550,10 @@ async function loadOverview(state) {
   renderOverviewSkeleton();
 
   try {
-    console.log('fetch finances', state.range);
     const [current, previous] = await Promise.all([
       fetchJson(`/api/finances/overview?range=${encodeURIComponent(state.range)}&unsettledScope=range`),
       fetchJson(`/api/finances/overview?range=${encodeURIComponent(state.range)}&unsettledScope=range&offset=1`)
     ]);
-    console.log('finances overview response', current);
 
     state.overview = current || {};
     state.overviewPrevious = previous || {};
@@ -1692,19 +1753,41 @@ async function init() {
 
   setBreakdownMode(state, state.breakdownMode);
   setCashflowType(state, state.cashflowEntryType);
+  setCashflowFormEnabled(false);
 
   const settleModal = $('#financeSettleModal');
   const settleCancel = $('#financeSettleCancel');
   const settleConfirm = $('#financeSettleConfirm');
+  const cashflowModal = $('#cashflowEntryModal');
+  const cashflowOpen = $('#cashflowOpenModal');
+  const cashflowClose = $('#cashflowModalClose');
+  const cashflowCancel = $('#cashflowCancel');
   if (settleCancel) settleCancel.addEventListener('click', () => closeSettleModal(state));
   if (settleConfirm) settleConfirm.addEventListener('click', async () => confirmSettlePendingVoyage(state));
+  if (cashflowOpen) {
+    cashflowOpen.addEventListener('click', () => {
+      if (!state.cashflowCanManage) {
+        setInlineFeedback('#cashflowEntryFeedback', 'You do not have permission to add cashflow entries.', 'error');
+        return;
+      }
+      openCashflowModal();
+    });
+  }
+  if (cashflowClose) cashflowClose.addEventListener('click', () => closeCashflowModal());
+  if (cashflowCancel) cashflowCancel.addEventListener('click', () => closeCashflowModal());
   if (settleModal) {
     settleModal.addEventListener('click', (event) => {
       if (event.target === settleModal) closeSettleModal(state);
     });
   }
+  if (cashflowModal) {
+    cashflowModal.addEventListener('click', (event) => {
+      if (event.target === cashflowModal) closeCashflowModal();
+    });
+  }
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && state.pendingSettle) closeSettleModal(state);
+    if (event.key === 'Escape' && !state.pendingSettle) closeCashflowModal();
   });
 
   const debtsPrev = $('#financeDebtsPrev');

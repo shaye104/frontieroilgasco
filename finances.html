@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221z" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260221z" />
-    <link rel="stylesheet" href="/assets/css/components.css?v=20260221z" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221z" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221ac" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221ac" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221ac" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221ac" />
   </head>
   <body class="page page-intranet page-finances">
     <header class="site-header">
@@ -74,7 +74,7 @@
               </article>
               <article class="finance-kpi">
                 <span class="finance-kpi-icon" aria-hidden="true" data-icon="cloud"></span>
-                <p class="finance-kpi-label">CO2 Emissions</p>
+                <p class="finance-kpi-label">CO₂ Emissions</p>
                 <p id="kpiEmissions" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
                 <p id="kpiDeltaEmissions" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
@@ -182,6 +182,9 @@
                   </div>
                 </div>
                 <div id="trendsChartProfitDrivers" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+                <div id="trendsDriversTable" class="finance-profit-driver-table-wrap">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
               </article>
             </div>
           </section>
@@ -217,36 +220,6 @@
             </article>
 
             <article class="finance-chart-card finance-table-card">
-              <div class="filter-row">
-                <div>
-                  <label for="cashflowSearch">Search</label>
-                  <input id="cashflowSearch" type="text" placeholder="Reason, category, user, voyage" />
-                </div>
-                <div>
-                  <label for="cashflowDateFrom">From</label>
-                  <input id="cashflowDateFrom" type="date" />
-                </div>
-                <div>
-                  <label for="cashflowDateTo">To</label>
-                  <input id="cashflowDateTo" type="date" />
-                </div>
-                <div>
-                  <label for="cashflowFilterCategory">Category</label>
-                  <select id="cashflowFilterCategory">
-                    <option value="">All categories</option>
-                    <option value="Repairs">Repairs</option>
-                    <option value="Fuel">Fuel</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Investment">Investment</option>
-                    <option value="Operational Revenue">Operational Revenue</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="cashflowCreatedBy">Created By</label>
-                  <input id="cashflowCreatedBy" type="text" placeholder="Username / ID" />
-                </div>
-              </div>
               <div class="table-wrap">
                 <table class="data-table finance-data-table">
                   <thead>
@@ -346,48 +319,47 @@
             </div>
 
             <article class="finance-chart-card finance-cashflow-entry-card">
-              <h3>Add Entry</h3>
-              <form id="cashflowEntryForm" class="finance-cashflow-entry-form">
-                <div class="finance-cashflow-type-wrap">
-                  <label>Type</label>
-                  <div class="segmented-control finance-cashflow-type-control" role="group" aria-label="Cashflow entry type">
-                    <button type="button" class="segmented-btn is-active" data-cashflow-type="IN">IN</button>
-                    <button type="button" class="segmented-btn" data-cashflow-type="OUT">OUT</button>
-                  </div>
-                  <input id="cashflowType" type="hidden" value="IN" />
-                </div>
+              <div class="finance-cashflow-entry-head">
                 <div>
-                  <label for="cashflowAmount">Amount (ƒ)</label>
-                  <input id="cashflowAmount" type="number" min="1" step="1" required />
+                  <h3>Cashflow Ledger</h3>
+                  <p class="finance-inline-caption">Track manual financial adjustments and settlement inflows.</p>
                 </div>
-                <div>
-                  <label for="cashflowCategory">Category</label>
-                  <select id="cashflowCategory">
-                    <option value="">Select category</option>
-                    <option value="Repairs">Repairs</option>
-                    <option value="Fuel">Fuel</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Investment">Investment</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="cashflowRelatedVoyage">Related Voyage</label>
-                  <input id="cashflowRelatedVoyage" type="text" list="cashflowVoyageOptions" placeholder="Optional" />
-                  <datalist id="cashflowVoyageOptions"></datalist>
-                </div>
-                <div class="finance-cashflow-entry-wide">
-                  <label for="cashflowReason">Reason</label>
-                  <textarea id="cashflowReason" rows="3" minlength="5" required></textarea>
-                </div>
-                <div class="finance-cashflow-entry-actions">
-                  <button id="cashflowSubmit" type="submit" class="btn btn-primary">Submit Entry</button>
-                </div>
-              </form>
+                <button id="cashflowOpenModal" type="button" class="btn btn-primary">New Cashflow Entry</button>
+              </div>
               <div id="cashflowEntryFeedback" class="feedback" role="status" aria-live="polite"></div>
             </article>
 
             <article class="finance-chart-card finance-table-card">
+              <div class="filter-row">
+                <div>
+                  <label for="cashflowSearch">Search</label>
+                  <input id="cashflowSearch" type="text" placeholder="Reason, category, user, voyage" />
+                </div>
+                <div>
+                  <label for="cashflowDateFrom">From</label>
+                  <input id="cashflowDateFrom" type="date" />
+                </div>
+                <div>
+                  <label for="cashflowDateTo">To</label>
+                  <input id="cashflowDateTo" type="date" />
+                </div>
+                <div>
+                  <label for="cashflowFilterCategory">Category</label>
+                  <select id="cashflowFilterCategory">
+                    <option value="">All categories</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Fuel">Fuel</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Operational Revenue">Operational Revenue</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="cashflowCreatedBy">Created By</label>
+                  <input id="cashflowCreatedBy" type="text" placeholder="Username / ID" />
+                </div>
+              </div>
               <div class="table-wrap">
                 <table class="data-table finance-data-table">
                   <thead>
@@ -429,6 +401,54 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221z"></script>
+    <div id="cashflowEntryModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cashflowEntryTitle">
+      <div class="modal-card finance-cashflow-modal">
+        <div class="finance-cashflow-modal-head">
+          <h3 id="cashflowEntryTitle">New Cashflow Entry</h3>
+          <button id="cashflowModalClose" type="button" class="btn btn-secondary">Close</button>
+        </div>
+        <form id="cashflowEntryForm" class="finance-cashflow-entry-form">
+          <div class="finance-cashflow-type-wrap">
+            <label>Type</label>
+            <div class="segmented-control finance-cashflow-type-control" role="group" aria-label="Cashflow entry type">
+              <button type="button" class="segmented-btn is-active" data-cashflow-type="IN">IN</button>
+              <button type="button" class="segmented-btn" data-cashflow-type="OUT">OUT</button>
+            </div>
+            <input id="cashflowType" type="hidden" value="IN" />
+          </div>
+          <div>
+            <label for="cashflowAmount">Amount (ƒ)</label>
+            <input id="cashflowAmount" type="number" min="1" step="1" required />
+          </div>
+          <div>
+            <label for="cashflowCategory">Category</label>
+            <select id="cashflowCategory" required>
+              <option value="">Select category</option>
+              <option value="Repairs">Repairs</option>
+              <option value="Fuel">Fuel</option>
+              <option value="Admin">Admin</option>
+              <option value="Investment">Investment</option>
+              <option value="Operational Revenue">Operational Revenue</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="cashflowRelatedVoyage">Related Voyage</label>
+            <input id="cashflowRelatedVoyage" type="text" list="cashflowVoyageOptions" placeholder="Optional" />
+            <datalist id="cashflowVoyageOptions"></datalist>
+          </div>
+          <div class="finance-cashflow-entry-wide">
+            <label for="cashflowReason">Reason</label>
+            <textarea id="cashflowReason" rows="3" minlength="5" required></textarea>
+          </div>
+          <div class="finance-cashflow-entry-actions">
+            <button id="cashflowCancel" type="button" class="btn btn-secondary">Cancel</button>
+            <button id="cashflowSubmit" type="submit" class="btn btn-primary">Submit Entry</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221ac"></script>
   </body>
 </html>

@@ -1,7 +1,7 @@
 import { toMoney } from './finances.js';
 
 export const CASHFLOW_TYPES = new Set(['IN', 'OUT']);
-export const CASHFLOW_CATEGORIES = ['Repairs', 'Fuel', 'Admin', 'Investment', 'Other'];
+export const CASHFLOW_CATEGORIES = ['Repairs', 'Fuel', 'Admin', 'Investment', 'Operational Revenue', 'Other'];
 
 export function normalizeCashflowType(value) {
   const type = String(value || '').trim().toUpperCase();
