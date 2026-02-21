@@ -10,6 +10,12 @@
 /voyages/archive/ /voyage-archive.html 200
 /voyages/:id /voyage-details.html 200
 /voyages/:id/ /voyage-details.html 200
+/finances /finances.html 200
+/finances/ /finances.html 200
+/finances/debts /finances-debts.html 200
+/finances/debts/ /finances-debts.html 200
+/finances/audit /finances-audit.html 200
+/finances/audit/ /finances-audit.html 200
 /admin /admin-panel.html 200
 /admin/ /admin-panel.html 200
 /admin/user-groups /roles.html 200

@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier intranet admin panel." />
-    <title>Frontier Oil & Gas Company | Admin Panel</title>
+    <meta name="description" content="Frontier unsettled company share debts." />
+    <title>Frontier Oil & Gas Company | Finance Debts</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -27,21 +27,33 @@
     <main class="section">
       <div class="container intranet-layout">
         <section class="panel">
-          <h1>Admin Panel</h1>
+          <div class="modal-header">
+            <h1>Unsettled Company Share Debts</h1>
+            <div class="modal-actions">
+              <a class="btn btn-secondary" href="/finances">&larr; Back to Finances</a>
+              <a id="financeAuditLink" class="btn btn-secondary hidden" href="/finances/audit">Settlement Audit</a>
+            </div>
+          </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="debtsFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="panel hidden">
-          <h2>Administration</h2>
-          <ul class="link-list">
-            <li><a id="adminLinkEmployees" class="hidden" href="manage-employees.html">Manage Employees</a></li>
-            <li><a id="adminLinkConfig" class="hidden" href="admin-config.html">System Config</a></li>
-            <li><a id="adminLinkCargo" class="hidden" href="cargo-admin.html">Voyage Config</a></li>
-            <li><a id="adminLinkRoles" class="hidden" href="/admin/user-groups">User Groups</a></li>
-            <li><a id="adminLinkUserRanks" class="hidden" href="/admin/user-ranks">User Ranks</a></li>
-            <li><a id="adminLinkActivityTracker" class="hidden" href="activity-tracker.html">Activity Tracker</a></li>
-            <li><a id="adminLinkFinanceAudit" class="hidden" href="/finances/audit">Finance Audit</a></li>
-          </ul>
+        <section id="protectedContent" class="hidden">
+          <article class="panel">
+            <div class="filter-row">
+              <div>
+                <label for="debtSearch">Search OOTW / Vessel / Route</label>
+                <input id="debtSearch" type="text" />
+              </div>
+              <div>
+                <label for="debtMinOutstanding">Only show &gt;= ƒ X</label>
+                <input id="debtMinOutstanding" type="number" min="0" step="1" />
+              </div>
+            </div>
+            <p id="debtTotals" class="muted"></p>
+          </article>
+
+          <section id="debtGroups" class="finance-debt-groups"></section>
         </section>
       </div>
     </main>
@@ -52,6 +64,6 @@
       </div>
     </footer>
 
-    <script type="module" src="assets/js/pages/admin-panel-page.js"></script>
+    <script type="module" src="assets/js/pages/finances-debts-page.js"></script>
   </body>
 </html>

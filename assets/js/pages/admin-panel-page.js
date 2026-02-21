@@ -16,6 +16,7 @@ initIntranetPageGuard({
   const rolesLink = document.querySelector('#adminLinkRoles');
   const userRanksLink = document.querySelector('#adminLinkUserRanks');
   const activityTrackerLink = document.querySelector('#adminLinkActivityTracker');
+  const financeAuditLink = document.querySelector('#adminLinkFinanceAudit');
 
   if (employeesLink && hasPermission(session, 'employees.read')) employeesLink.classList.remove('hidden');
   if (configLink && hasPermission(session, 'config.manage')) configLink.classList.remove('hidden');
@@ -25,6 +26,7 @@ initIntranetPageGuard({
   if (rolesLink && hasPermission(session, 'user_groups.manage')) rolesLink.classList.remove('hidden');
   if (userRanksLink && hasPermission(session, 'user_ranks.manage')) userRanksLink.classList.remove('hidden');
   if (activityTrackerLink && hasPermission(session, 'activity_tracker.view')) activityTrackerLink.classList.remove('hidden');
+  if (financeAuditLink && hasPermission(session, 'finances.audit.view')) financeAuditLink.classList.remove('hidden');
 });
 
 initializeYear();

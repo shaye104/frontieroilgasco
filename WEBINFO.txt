@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-20T23:42:31.329Z
+Generated: 2026-02-21T00:07:20.621Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -14,6 +14,9 @@ SITE STRUCTURE
 - application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
 - cargo-admin.html | title: Frontier Oil & Gas Company | Voyage Config | primary heading: Voyage Config
 - employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
+- finances-audit.html | title: Frontier Oil & Gas Company | Finance Audit | primary heading: Finance Settlement Audit
+- finances-debts.html | title: Frontier Oil & Gas Company | Finance Debts | primary heading: Unsettled Company Share Debts
+- finances.html | title: Frontier Oil & Gas Company | Finances | primary heading: Finances
 - form-fill.html | title: Frontier Oil & Gas Company | Fill Form | primary heading: Form
 - forms-admin.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
 - forms-builder.html | title: Frontier Oil & Gas Company | Form Builder | primary heading: Form Builder
@@ -36,12 +39,13 @@ SITE STRUCTURE
 
 JAVASCRIPT MODULES
 - assets/js/modules/activity-tracker.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, cancelVoyage, createAdminRole, createCargoType, createConfigValue, createEmployee, createFormAdmin, createFormCategory, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteCargoType, deleteConfigValue, deleteFormAdmin, deleteFormCategory, deleteUserRank, deleteVoyageConfigValue, endVoyage, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFormAdmin, getFormResponse, getMyDetails, getRankPermissions, getSession, getVoyage, getVoyageManifest, getVoyageOverview, listAccessRequests, listAccessibleFormResponses, listActivityTracker, listAvailableForms, listCargoTypes, listCargoTypesAdmin, listEmployees, listFormCategories, listFormResponses, listFormsAdmin, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, processAccessRequest, reorderAdminRole, saveRankPermissions, searchEmployees, startVoyage, submitFormResponse, updateAdminRole, updateCargoType, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus
+- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, cancelVoyage, createAdminRole, createCargoType, createConfigValue, createEmployee, createFormAdmin, createFormCategory, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteCargoType, deleteConfigValue, deleteFormAdmin, deleteFormCategory, deleteUserRank, deleteVoyageConfigValue, endVoyage, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFinancesOverview, getFormAdmin, getFormResponse, getMyDetails, getRankPermissions, getSession, getVoyage, getVoyageManifest, getVoyageOverview, listAccessRequests, listAccessibleFormResponses, listActivityTracker, listAvailableForms, listCargoTypes, listCargoTypesAdmin, listEmployees, listFinanceAudit, listFinanceDebts, listFormCategories, listFormResponses, listFormsAdmin, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, processAccessRequest, reorderAdminRole, saveRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitFormResponse, updateAdminRole, updateCargoType, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus
 - assets/js/modules/admin-config-menu.js | exports: No public exports
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/cargo-admin.js | exports: No public exports
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/employee-profile.js | exports: No public exports
+- assets/js/modules/finances.js | exports: No public exports
 - assets/js/modules/form-fill.js | exports: No public exports
 - assets/js/modules/forms-admin.js | exports: No public exports
 - assets/js/modules/forms-builder-admin.js | exports: No public exports
@@ -70,6 +74,9 @@ JAVASCRIPT MODULES
 - assets/js/pages/application-page.js | exports: No public exports
 - assets/js/pages/cargo-admin-page.js | exports: No public exports
 - assets/js/pages/employee-profile-page.js | exports: No public exports
+- assets/js/pages/finances-audit-page.js | exports: No public exports
+- assets/js/pages/finances-debts-page.js | exports: No public exports
+- assets/js/pages/finances-page.js | exports: No public exports
 - assets/js/pages/form-fill-page.js | exports: No public exports
 - assets/js/pages/forms-admin-page.js | exports: No public exports
 - assets/js/pages/forms-builder-page.js | exports: No public exports

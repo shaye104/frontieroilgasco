@@ -105,6 +105,15 @@ export const PERMISSION_GROUPS = [
       { key: 'fleet.read', label: 'View Fleet', description: 'View fleet information.' },
       { key: 'fleet.manage', label: 'Manage Fleet', description: 'Manage fleet assignments/settings.' }
     ]
+  },
+  {
+    key: 'finances',
+    label: 'Finances',
+    permissions: [
+      { key: 'finances.view', label: 'View Finances', description: 'View the finance dashboard and debt summaries.' },
+      { key: 'finances.debts.settle', label: 'Settle Finance Debts', description: 'Settle outstanding company share debts.' },
+      { key: 'finances.audit.view', label: 'View Finance Audit', description: 'View finance settlement audit logs.' }
+    ]
   }
 ];
 

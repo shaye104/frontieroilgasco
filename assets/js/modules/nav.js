@@ -70,13 +70,16 @@ export function renderIntranetNavbar(session) {
   const voyagesLink = buildNavLink('/voyages/my', 'Voyages');
   const fleetLink = buildNavLink('/my-fleet', 'My Fleet');
   const formsLink = buildNavLink('/forms', 'Forms');
+  const financesLink = buildNavLink('/finances', 'Finances');
   nav.append(myDetailsLink);
   nav.append(voyagesLink);
   nav.append(fleetLink);
   nav.append(formsLink);
+  if (hasPermission(session, 'finances.view')) nav.append(financesLink);
   wireLinkPrefetch(myDetailsLink, session);
   wireLinkPrefetch(voyagesLink, session);
   wireLinkPrefetch(formsLink, session);
+  wireLinkPrefetch(financesLink, session);
 
   if (hasPermission(session, 'admin.access')) {
     const adminLink = buildNavLink('/admin', 'Admin Panel');

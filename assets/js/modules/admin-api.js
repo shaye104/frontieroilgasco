@@ -311,6 +311,35 @@ export function getVoyageOverview(options = {}) {
   return requestJson(`/api/voyages?${params.toString()}`, { method: 'GET', cacheTtlMs: 20000 });
 }
 
+export function getFinancesOverview(range = 'month', unsettledScope = 'all') {
+  const params = new URLSearchParams();
+  params.set('range', String(range || 'month'));
+  params.set('unsettledScope', String(unsettledScope || 'all'));
+  return requestJson(`/api/finances/overview?${params.toString()}`, { method: 'GET', cacheTtlMs: 20000 });
+}
+
+export function listFinanceDebts(options = {}) {
+  const params = new URLSearchParams();
+  if (options.search) params.set('search', String(options.search));
+  if (options.minOutstanding !== undefined && options.minOutstanding !== null && String(options.minOutstanding).trim() !== '') {
+    params.set('minOutstanding', String(options.minOutstanding));
+  }
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/finances/debts${suffix}`, { method: 'GET', cacheTtlMs: 15000 });
+}
+
+export function settleFinanceDebt(voyageId) {
+  return requestJson(`/api/finances/debts/${encodeURIComponent(String(voyageId))}/settle`, { method: 'POST' });
+}
+
+export function listFinanceAudit(options = {}) {
+  const params = new URLSearchParams();
+  if (options.page) params.set('page', String(options.page));
+  if (options.pageSize) params.set('pageSize', String(options.pageSize));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/finances/audit${suffix}`, { method: 'GET', cacheTtlMs: 15000 });
+}
+
 export function listActivityTracker(options = {}) {
   const params = new URLSearchParams();
   if (options.search) params.set('search', String(options.search));
@@ -510,6 +539,15 @@ export function prefetchRouteData(pathname, session) {
   }
   if (route === '/forms') {
     return prefetchJson('/api/forms');
+  }
+  if (route === '/finances') {
+    return prefetchJson('/api/finances/overview?range=month&unsettledScope=all');
+  }
+  if (route === '/finances/debts') {
+    return prefetchJson('/api/finances/debts');
+  }
+  if (route === '/finances/audit') {
+    return prefetchJson('/api/finances/audit?page=1&pageSize=25');
   }
   if (route === '/admin') {
     const isAdmin = Boolean(session?.permissions?.includes?.('admin.access') || session?.isAdmin);

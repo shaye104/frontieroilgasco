@@ -140,13 +140,29 @@ export async function onRequestPost(context) {
            effective_sell = ?,
            profit = ?,
            company_share = ?,
+           company_share_amount = ?,
+           company_share_status = 'UNSETTLED',
+           company_share_settled_at = NULL,
+           company_share_settled_by_employee_id = NULL,
+           company_share_settled_by_discord_id = NULL,
            cargo_lost_json = ?,
            settlement_lines_json = ?,
            ended_at = CURRENT_TIMESTAMP,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`
     )
-    .bind(sellMultiplier, null, totalCost, totalRevenue, profit, companyShare, JSON.stringify(cargoLost), JSON.stringify(settlementLines), voyageId)
+    .bind(
+      sellMultiplier,
+      null,
+      totalCost,
+      totalRevenue,
+      profit,
+      companyShare,
+      companyShare,
+      JSON.stringify(cargoLost),
+      JSON.stringify(settlementLines),
+      voyageId
+    )
     .run();
 
   return json({

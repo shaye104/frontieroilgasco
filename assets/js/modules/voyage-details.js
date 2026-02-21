@@ -602,6 +602,7 @@ export async function initVoyageDetails(config) {
   function renderProfileReadOnly() {
     const voyage = detail.voyage;
     const crewNames = (detail.crew || []).map((entry) => text(entry.roblox_username)).join(', ') || 'N/A';
+    const companyShareStatus = String(voyage.company_share_status || 'UNSETTLED').trim().toUpperCase();
     const rows = [
       { label: 'Started', value: formatWhen(voyage.started_at), area: 'started' },
       { label: 'Ended', value: voyage.status === 'ENDED' ? formatWhen(voyage.ended_at) : 'N/A', area: 'ended' },
@@ -611,7 +612,8 @@ export async function initVoyageDetails(config) {
       { label: 'Vessel Class', value: text(voyage.vessel_class), area: 'vessel-class' },
       { label: 'Vessel Callsign', value: text(voyage.vessel_callsign), area: 'vessel-callsign' },
       { label: 'Officer of the Watch', value: text(voyage.officer_name), area: 'oow' },
-      { label: 'Crew Complement', value: crewNames, area: 'crew' }
+      { label: 'Crew Complement', value: crewNames, area: 'crew' },
+      { label: 'Company Share Status', value: voyage.status === 'ENDED' ? companyShareStatus : 'N/A', area: 'share-status' }
     ];
     fieldList.innerHTML = `<div class="voyage-profile-grid">${rows
       .map(

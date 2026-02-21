@@ -35,7 +35,10 @@ export async function ensureCoreSchema(env) {
     ['voyages.config.manage', 'voyages', 'Manage Voyage Config', 'Manage voyage config lists for ports and vessels.'],
     ['cargo.manage', 'voyages', 'Manage Cargo', 'Manage cargo type definitions for manifests.'],
     ['fleet.read', 'voyages', 'View Fleet', 'View fleet information.'],
-    ['fleet.manage', 'voyages', 'Manage Fleet', 'Manage fleet assignments/settings.']
+    ['fleet.manage', 'voyages', 'Manage Fleet', 'Manage fleet assignments/settings.'],
+    ['finances.view', 'finances', 'View Finances', 'View the finance dashboard and debt summaries.'],
+    ['finances.debts.settle', 'finances', 'Settle Finance Debts', 'Settle outstanding company share debts.'],
+    ['finances.audit.view', 'finances', 'View Finance Audit', 'View finance settlement audit logs.']
   ];
 
   const statements = [
@@ -206,6 +209,11 @@ export async function ensureCoreSchema(env) {
       effective_sell REAL,
       profit REAL,
       company_share REAL,
+      company_share_status TEXT NOT NULL DEFAULT 'UNSETTLED',
+      company_share_settled_at TEXT,
+      company_share_settled_by_employee_id INTEGER,
+      company_share_settled_by_discord_id TEXT,
+      company_share_amount REAL,
       cargo_lost_json TEXT,
       settlement_lines_json TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -254,6 +262,23 @@ export async function ensureCoreSchema(env) {
       FOREIGN KEY(voyage_id) REFERENCES voyages(id),
       FOREIGN KEY(author_employee_id) REFERENCES employees(id)
     )`,
+    `CREATE TABLE IF NOT EXISTS finance_settlement_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      voyage_id INTEGER NOT NULL,
+      action TEXT NOT NULL,
+      amount REAL NOT NULL DEFAULT 0,
+      settled_by_employee_id INTEGER,
+      settled_by_discord_user_id TEXT,
+      oow_employee_id INTEGER,
+      details_json TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(voyage_id) REFERENCES voyages(id),
+      FOREIGN KEY(settled_by_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(oow_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_voyages_company_share_status ON voyages(company_share_status)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyages_ended_at ON voyages(ended_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_settlement_audit_created_at ON finance_settlement_audit(created_at DESC)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS ux_voyages_active_vessel_callsign
      ON voyages (LOWER(vessel_name), LOWER(vessel_callsign))
      WHERE status = 'ONGOING'`,
@@ -334,6 +359,21 @@ export async function ensureCoreSchema(env) {
   if (!voyageColumnNames.has('settlement_lines_json')) {
     await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN settlement_lines_json TEXT`).run();
   }
+  if (!voyageColumnNames.has('company_share_status')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_status TEXT NOT NULL DEFAULT 'UNSETTLED'`).run();
+  }
+  if (!voyageColumnNames.has('company_share_settled_at')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_at TEXT`).run();
+  }
+  if (!voyageColumnNames.has('company_share_settled_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_by_employee_id INTEGER`).run();
+  }
+  if (!voyageColumnNames.has('company_share_settled_by_discord_id')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_by_discord_id TEXT`).run();
+  }
+  if (!voyageColumnNames.has('company_share_amount')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_amount REAL`).run();
+  }
   const voyageLogColumns = await env.DB.prepare(`PRAGMA table_info(voyage_logs)`).all();
   const voyageLogColumnNames = new Set((voyageLogColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
   if (!voyageLogColumnNames.has('log_type')) {
@@ -351,6 +391,16 @@ export async function ensureCoreSchema(env) {
     await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN updated_at TEXT`).run();
   }
   await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
+  await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
+  await env.DB
+    .prepare(
+      `UPDATE voyages
+       SET company_share_status = CASE
+         WHEN status = 'ENDED' THEN COALESCE(NULLIF(company_share_status, ''), 'UNSETTLED')
+         ELSE COALESCE(NULLIF(company_share_status, ''), 'UNSETTLED')
+       END`
+    )
+    .run();
 
   await env.DB.batch(
     permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>
@@ -416,6 +466,9 @@ export async function ensureCoreSchema(env) {
         .bind(employeeRole.id),
       env.DB
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'voyages.read')`)
+        .bind(employeeRole.id),
+      env.DB
+        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'finances.view')`)
         .bind(employeeRole.id),
       env.DB
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'fleet.read')`)

@@ -24,6 +24,10 @@ function isProtectedPath(pathname) {
     '/my-fleet.html',
     '/forms',
     '/forms.html',
+    '/finances',
+    '/finances.html',
+    '/finances-debts.html',
+    '/finances-audit.html',
     '/form-fill.html',
     '/forms-config.html',
     '/forms-categories.html',
@@ -45,6 +49,7 @@ function isProtectedPath(pathname) {
   if (pathname.startsWith('/voyages/')) return true;
   if (pathname.startsWith('/admin/')) return true;
   if (pathname.startsWith('/forms/')) return true;
+  if (pathname.startsWith('/finances/')) return true;
   return false;
 }
 
