@@ -442,13 +442,13 @@
 }
 
 .finance-chart-host {
-  height: 292px;
-  min-height: 292px;
+  height: 320px;
+  min-height: 320px;
 }
 
 .finance-trends-grid .finance-chart-host {
-  height: 276px;
-  min-height: 276px;
+  height: 300px;
+  min-height: 300px;
 }
 
 .finance-overview-main {
@@ -464,8 +464,8 @@
 }
 
 .finance-overview-primary .finance-chart-host {
-  height: 324px;
-  min-height: 324px;
+  height: 340px;
+  min-height: 340px;
 }
 
 .finance-overview-side {
@@ -902,13 +902,13 @@
   }
 
   body.page-intranet.intranet-no-scroll .finance-overview-primary .finance-chart-host {
-    height: 324px;
-    min-height: 324px;
+    height: 340px;
+    min-height: 340px;
   }
 
   body.page-intranet.intranet-no-scroll .finance-trends-grid .finance-chart-host {
-    height: 276px;
-    min-height: 276px;
+    height: 300px;
+    min-height: 300px;
   }
 
   body.page-intranet.intranet-no-scroll .finance-debts-group-card,
@@ -957,8 +957,8 @@
   .finance-chart-host,
   .finance-overview-primary .finance-chart-host,
   .finance-trends-grid .finance-chart-host {
-    height: 248px;
-    min-height: 248px;
+    height: 280px;
+    min-height: 280px;
   }
 }
 

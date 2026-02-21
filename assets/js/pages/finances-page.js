@@ -347,14 +347,14 @@ function renderCartesianLineChart(target, lines, options = {}) {
   }
 
   const width = Number(options.width || 760);
-  const height = Number(options.height || 306);
+  const height = Number(options.height || 320);
   const valueFormatter = typeof options.valueFormatter === 'function' ? options.valueFormatter : formatGuilders;
   const tickFormatter = typeof options.tickFormatter === 'function' ? options.tickFormatter : valueFormatter;
 
   const plotLeft = 74;
   const plotRight = width - 18;
   const plotTop = 16;
-  const plotBottom = height - 48;
+  const plotBottom = height - 74;
   const plotWidth = Math.max(1, plotRight - plotLeft);
   const plotHeight = Math.max(1, plotBottom - plotTop);
   const steps = Math.max(points.length - 1, 1);
@@ -397,7 +397,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
       const show = idx % xLabelStep === 0 || idx === points.length - 1;
       if (!show) return '';
       const x = xAt(idx);
-      return `<text class="finance-axis-x-label" x="${x}" y="${height - 16}" text-anchor="middle">${text(point.label)}</text>`;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 32}" text-anchor="middle">${text(point.label)}</text>`;
     })
     .join('');
 
@@ -504,14 +504,14 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
   }
 
   const width = Number(options.width || 760);
-  const height = Number(options.height || 306);
+  const height = Number(options.height || 320);
   const valueFormatter = typeof options.valueFormatter === 'function' ? options.valueFormatter : formatInteger;
   const tickFormatter = typeof options.tickFormatter === 'function' ? options.tickFormatter : valueFormatter;
 
   const plotLeft = 74;
   const plotRight = width - 18;
   const plotTop = 16;
-  const plotBottom = height - 48;
+  const plotBottom = height - 74;
   const plotWidth = Math.max(1, plotRight - plotLeft);
   const plotHeight = Math.max(1, plotBottom - plotTop);
 
@@ -544,7 +544,7 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
       const show = idx % xLabelStep === 0 || idx === points.length - 1;
       if (!show) return '';
       const x = plotLeft + (idx + 0.5) * band;
-      return `<text class="finance-axis-x-label" x="${x}" y="${height - 16}" text-anchor="middle">${text(point.label)}</text>`;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 32}" text-anchor="middle">${text(point.label)}</text>`;
     })
     .join('');
 
