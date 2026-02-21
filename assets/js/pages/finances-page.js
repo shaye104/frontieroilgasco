@@ -53,6 +53,13 @@ function formatGuilders(value) {
   return `\u0192 ${toMoney(value).toLocaleString()}`;
 }
 
+function formatGuildersCompact(value) {
+  const abs = Math.abs(toMoney(value));
+  if (abs >= 1000000) return `\u0192 ${Math.round(toMoney(value) / 100000) / 10}m`;
+  if (abs >= 1000) return `\u0192 ${Math.round(toMoney(value) / 100) / 10}k`;
+  return formatGuilders(value);
+}
+
 function formatInteger(value) {
   const num = Number(value || 0);
   return Number.isFinite(num) ? Math.round(num).toLocaleString() : '0';
@@ -582,14 +589,14 @@ function renderLineChart(target, series, lineLabel, color) {
   const points = normalizeSeriesPoints(series);
   renderCartesianLineChart(target, [{ label: lineLabel, color, points }], {
     valueFormatter: formatGuilders,
-    tickFormatter: formatGuilders
+    tickFormatter: formatGuildersCompact
   });
 }
 
 function renderCurrencyBarChart(target, series, label, color) {
   renderCartesianBarChart(target, series, label, color, {
     valueFormatter: formatGuilders,
-    tickFormatter: formatGuilders
+    tickFormatter: formatGuildersCompact
   });
 }
 
