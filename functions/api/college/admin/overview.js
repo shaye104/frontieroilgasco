@@ -12,43 +12,52 @@ function text(value) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const { errorResponse } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse } = await requireCollegeSession(context, { requiredAnyCapabilities: ['college:admin', 'progress:view'] });
   if (errorResponse) return errorResponse;
 
   const nowIso = new Date().toISOString();
   const dueSoonIso = new Date(Date.now() + 3 * 86400000).toISOString();
   const thirtyDaysAgoIso = new Date(Date.now() - 30 * 86400000).toISOString();
 
-  const [activeTraineesRow, dueSoonRow, overdueRow, accepted30Row, passed30Row, pendingMarkingRow, draftCoursesRow, draftModulesRow, draftLibraryRow, overdueRowsResult] =
+  const [
+    activeTraineesRow,
+    dueSoonRow,
+    overdueRow,
+    accepted30Row,
+    passed30Row,
+    avgDaysToPassRow,
+    pendingMarkingRow,
+    draftCoursesRow,
+    draftModulesRow,
+    draftLibraryRow,
+    overdueRowsResult
+  ] =
     await Promise.all([
       env.DB
         .prepare(
           `SELECT COUNT(*) AS total
-           FROM employees
-           WHERE user_status = 'APPLICANT_ACCEPTED'
-             AND college_passed_at IS NULL`
+           FROM college_profiles
+           WHERE trainee_status = 'TRAINEE_ACTIVE'`
         )
         .first(),
       env.DB
         .prepare(
           `SELECT COUNT(*) AS total
-           FROM employees
-           WHERE user_status = 'APPLICANT_ACCEPTED'
-             AND college_passed_at IS NULL
-             AND college_due_at IS NOT NULL
-             AND college_due_at >= ?
-             AND college_due_at <= ?`
+           FROM college_profiles
+           WHERE trainee_status = 'TRAINEE_ACTIVE'
+             AND due_at IS NOT NULL
+             AND due_at >= ?
+             AND due_at <= ?`
         )
         .bind(nowIso, dueSoonIso)
         .first(),
       env.DB
         .prepare(
           `SELECT COUNT(*) AS total
-           FROM employees
-           WHERE user_status = 'APPLICANT_ACCEPTED'
-             AND college_passed_at IS NULL
-             AND college_due_at IS NOT NULL
-             AND college_due_at < ?`
+           FROM college_profiles
+           WHERE trainee_status = 'TRAINEE_ACTIVE'
+             AND due_at IS NOT NULL
+             AND due_at < ?`
         )
         .bind(nowIso)
         .first(),
@@ -67,6 +76,19 @@ export async function onRequestGet(context) {
            FROM college_audit_events
            WHERE action = 'passed'
              AND created_at >= ?`
+        )
+        .bind(thirtyDaysAgoIso)
+        .first(),
+      env.DB
+        .prepare(
+          `SELECT
+             AVG(
+               (julianday(COALESCE(passed_at, CURRENT_TIMESTAMP)) - julianday(start_at))
+             ) AS avg_days
+           FROM college_profiles
+           WHERE passed_at IS NOT NULL
+             AND start_at IS NOT NULL
+             AND passed_at >= ?`
         )
         .bind(thirtyDaysAgoIso)
         .first(),
@@ -105,13 +127,13 @@ export async function onRequestGet(context) {
              e.id,
              e.roblox_username,
              e.serial_number,
-             e.college_due_at
-           FROM employees e
-           WHERE e.user_status = 'APPLICANT_ACCEPTED'
-             AND e.college_passed_at IS NULL
-             AND e.college_due_at IS NOT NULL
-             AND e.college_due_at < ?
-           ORDER BY e.college_due_at ASC
+             cp.due_at AS college_due_at
+           FROM college_profiles cp
+           INNER JOIN employees e ON e.id = cp.user_employee_id
+           WHERE cp.trainee_status = 'TRAINEE_ACTIVE'
+             AND cp.due_at IS NOT NULL
+             AND cp.due_at < ?
+           ORDER BY cp.due_at ASC
            LIMIT 10`
         )
         .bind(nowIso)
@@ -130,7 +152,8 @@ export async function onRequestGet(context) {
         activeTrainees: Math.max(0, toInt(activeTraineesRow?.total)),
         dueSoon: Math.max(0, toInt(dueSoonRow?.total)),
         overdue: Math.max(0, toInt(overdueRow?.total)),
-        passRate30
+        passRate30,
+        avgDaysToPass: avgDaysToPassRow?.avg_days == null ? null : Math.max(0, Number(avgDaysToPassRow.avg_days.toFixed(1)))
       },
       actionNeeded: {
         overdueTrainees: (overdueRowsResult?.results || []).map((row) => ({
@@ -149,4 +172,3 @@ export async function onRequestGet(context) {
     { cacheControl: 'private, max-age=15, stale-while-revalidate=30' }
   );
 }
-

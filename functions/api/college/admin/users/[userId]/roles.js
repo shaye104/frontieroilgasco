@@ -13,7 +13,7 @@ function uniqueRoles(values) {
 
 export async function onRequestGet(context) {
   const { env, params } = context;
-  const { errorResponse } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse } = await requireCollegeSession(context, { requiredCapabilities: ['college:admin'] });
   if (errorResponse) return errorResponse;
 
   const employeeId = toId(params?.userId);
@@ -35,7 +35,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env, params, request } = context;
-  const { errorResponse, session } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse, session } = await requireCollegeSession(context, { requiredCapabilities: ['college:admin'] });
   if (errorResponse) return errorResponse;
 
   const employeeId = toId(params?.userId);
@@ -43,6 +43,14 @@ export async function onRequestPost(context) {
 
   const employee = await env.DB.prepare(`SELECT id FROM employees WHERE id = ?`).bind(employeeId).first();
   if (!employee) return json({ error: 'Employee not found.' }, 404);
+
+  const currentRolesResult = await env.DB
+    .prepare(`SELECT role_key FROM college_role_assignments WHERE employee_id = ? ORDER BY role_key ASC`)
+    .bind(employeeId)
+    .all();
+  const currentRoles = (currentRolesResult?.results || [])
+    .map((row) => normalizeCollegeRoleKey(row.role_key))
+    .filter(Boolean);
 
   let payload;
   try {
@@ -77,9 +85,16 @@ export async function onRequestPost(context) {
        (user_employee_id, action, performed_by_employee_id, meta_json, created_at)
        VALUES (?, 'role_update', ?, ?, CURRENT_TIMESTAMP)`
     )
-    .bind(employeeId, Number(session.employee?.id || 0) || null, JSON.stringify({ roles }))
+    .bind(
+      employeeId,
+      Number(session.employee?.id || 0) || null,
+      JSON.stringify({
+        target: { type: 'college_role_assignment', userEmployeeId: employeeId },
+        before: { roles: currentRoles },
+        after: { roles }
+      })
+    )
     .run();
 
   return json({ ok: true, roles });
 }
-

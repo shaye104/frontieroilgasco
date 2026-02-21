@@ -1,6 +1,5 @@
 import { cachedJson, json } from '../../auth/_lib/auth.js';
 import { requireCollegeSession } from '../../_lib/college.js';
-import { hasPermission } from '../../_lib/permissions.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -17,20 +16,15 @@ function toBoundedInt(value, fallback, min, max) {
   return Math.min(max, Math.max(min, n));
 }
 
-function canManageExams(session, roleKeys) {
-  return (
-    Boolean(session?.isAdmin) ||
-    hasPermission(session, 'admin.override') ||
-    hasPermission(session, 'college.exams.manage') ||
-    Array.isArray(roleKeys) && roleKeys.includes('COLLEGE_ADMIN')
-  );
-}
-
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const { errorResponse, session, roleKeys } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse, capabilities } = await requireCollegeSession(context, {
+    requiredAnyCapabilities: ['college:admin', 'exam:view', 'exam:mark']
+  });
   if (errorResponse) return errorResponse;
-  if (!canManageExams(session, roleKeys)) return json({ error: 'Forbidden. Missing required permission.' }, 403);
+  if (!(capabilities?.['college:admin'] || capabilities?.['exam:view'] || capabilities?.['exam:mark'])) {
+    return json({ error: 'Forbidden. Missing required permission.' }, 403);
+  }
 
   const url = new URL(request.url);
   const courseId = toId(url.searchParams.get('courseId'));
@@ -101,9 +95,13 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env, request } = context;
-  const { errorResponse, session, roleKeys, employee } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse, employee, capabilities } = await requireCollegeSession(context, {
+    requiredAnyCapabilities: ['college:admin', 'course:manage', 'exam:mark']
+  });
   if (errorResponse) return errorResponse;
-  if (!canManageExams(session, roleKeys)) return json({ error: 'Forbidden. Missing required permission.' }, 403);
+  if (!(capabilities?.['college:admin'] || capabilities?.['course:manage'] || capabilities?.['exam:mark'])) {
+    return json({ error: 'Forbidden. Missing required permission.' }, 403);
+  }
 
   let payload;
   try {

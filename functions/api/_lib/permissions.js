@@ -9,7 +9,33 @@ const PERMISSION_ALIASES = {
   'roles.assign': 'user_groups.assign',
   'user_groups.read': 'roles.read',
   'user_groups.manage': 'roles.manage',
-  'user_groups.assign': 'roles.assign'
+  'user_groups.assign': 'roles.assign',
+
+  // College capability aliases (legacy <-> capability keys)
+  'college:admin': 'college.manage',
+  'college:read': 'college.view',
+  'college:manage_users': 'college.manage',
+  'college:manage_courses': 'college.courses.manage',
+  'college:manage_library': 'college.library.manage',
+  'college:manage_exams': 'college.exams.manage',
+  'college:mark_exams': 'college.exams.grade',
+  'college:audit_read': 'college.manage',
+  'course:manage': 'college.courses.manage',
+  'enrollment:manage': 'college.enrollments.manage',
+  'progress:view': 'college.manage',
+  'progress:override': 'college.exams.grade',
+  'exam:view': 'college.exams.manage',
+  'exam:mark': 'college.exams.grade',
+  'library:manage': 'college.library.manage',
+  'library:view': 'college.view',
+
+  'college.manage': 'college:admin',
+  'college.view': 'college:read',
+  'college.courses.manage': 'course:manage',
+  'college.enrollments.manage': 'enrollment:manage',
+  'college.exams.grade': 'exam:mark',
+  'college.exams.manage': 'exam:view',
+  'college.library.manage': 'library:manage'
 };
 
 export const PERMISSION_GROUPS = [
@@ -126,7 +152,23 @@ export const PERMISSION_GROUPS = [
       { key: 'college.courses.manage', label: 'Manage College Courses', description: 'Create and update college courses/modules.' },
       { key: 'college.library.manage', label: 'Manage College Library', description: 'Create and publish college library documents.' },
       { key: 'college.exams.manage', label: 'Manage College Exams', description: 'Create/update college exams and question banks.' },
-      { key: 'college.exams.grade', label: 'Grade College Exams', description: 'Grade and override exam attempts.' }
+      { key: 'college.exams.grade', label: 'Grade College Exams', description: 'Grade and override exam attempts.' },
+      { key: 'college:read', label: 'College Read', description: 'Read college training pages and allowed resources.' },
+      { key: 'college:manage_users', label: 'College Manage Users', description: 'Create, extend, fail, pass, and withdraw trainees.' },
+      { key: 'college:manage_courses', label: 'College Manage Courses', description: 'Create, edit, publish, and archive courses/modules.' },
+      { key: 'college:manage_library', label: 'College Manage Library', description: 'Create, edit, publish, and archive library documents.' },
+      { key: 'college:manage_exams', label: 'College Manage Exams', description: 'Create and maintain exams and question banks.' },
+      { key: 'college:mark_exams', label: 'College Mark Exams', description: 'Mark exam attempts and override module completion.' },
+      { key: 'college:audit_read', label: 'College Audit Read', description: 'Read college audit log events.' },
+      { key: 'college:admin', label: 'College Admin', description: 'Manage all college administration features.' },
+      { key: 'course:manage', label: 'Course Manage', description: 'Create, edit, publish, and archive courses/modules/material.' },
+      { key: 'enrollment:manage', label: 'Enrollment Manage', description: 'Manage course enrollments and required flags.' },
+      { key: 'progress:view', label: 'Progress View', description: 'View progress for other users.' },
+      { key: 'progress:override', label: 'Progress Override', description: 'Override module progress and assessment outcomes.' },
+      { key: 'exam:view', label: 'Exam View', description: 'View exam definitions and attempts.' },
+      { key: 'exam:mark', label: 'Exam Mark', description: 'Mark exam attempts pass/fail.' },
+      { key: 'library:manage', label: 'Library Manage', description: 'Create, update, map, and publish college library docs.' },
+      { key: 'library:view', label: 'Library View', description: 'View college library documents per visibility rules.' }
     ]
   }
 ];

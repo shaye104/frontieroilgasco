@@ -16,7 +16,7 @@ function text(value) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const { errorResponse } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse } = await requireCollegeSession(context, { requiredCapabilities: ['enrollment:manage'] });
   if (errorResponse) return errorResponse;
 
   const url = new URL(request.url);
@@ -110,7 +110,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env, request } = context;
-  const { errorResponse, session } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse, session } = await requireCollegeSession(context, { requiredCapabilities: ['enrollment:manage'] });
   if (errorResponse) return errorResponse;
 
   let payload;
@@ -157,9 +157,13 @@ export async function onRequestPost(context) {
         employeeId,
         Number(session.employee?.id || 0) || null,
         JSON.stringify({
-          courseId,
-          courseTitle: text(course.title),
-          required: required === 1
+          target: { type: 'enrollment', userEmployeeId: employeeId, courseId },
+          before: null,
+          after: {
+            courseId,
+            courseTitle: text(course.title),
+            required: required === 1
+          }
         })
       )
   ]);
@@ -167,3 +171,61 @@ export async function onRequestPost(context) {
   return json({ ok: true });
 }
 
+export async function onRequestDelete(context) {
+  const { env, request } = context;
+  const { errorResponse, session } = await requireCollegeSession(context, { requiredCapabilities: ['enrollment:manage'] });
+  if (errorResponse) return errorResponse;
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    payload = {};
+  }
+
+  const employeeId = toId(payload?.employeeId);
+  const courseId = toId(payload?.courseId);
+  if (!employeeId || !courseId) return json({ error: 'employeeId and courseId are required.' }, 400);
+
+  const existing = await env.DB
+    .prepare(
+      `SELECT id, required, status, completed_at, passed_at
+       FROM college_enrollments
+       WHERE user_employee_id = ? AND course_id = ?`
+    )
+    .bind(employeeId, courseId)
+    .first();
+  if (!existing) return json({ error: 'Enrollment not found.' }, 404);
+
+  await env.DB.batch([
+    env.DB
+      .prepare(
+        `UPDATE college_enrollments
+         SET status = 'removed'
+         WHERE user_employee_id = ? AND course_id = ?`
+      )
+      .bind(employeeId, courseId),
+    env.DB
+      .prepare(
+        `INSERT INTO college_audit_events
+         (user_employee_id, action, performed_by_employee_id, meta_json, created_at)
+         VALUES (?, 'enrollment_remove', ?, ?, CURRENT_TIMESTAMP)`
+      )
+      .bind(
+        employeeId,
+        Number(session.employee?.id || 0) || null,
+        JSON.stringify({
+          target: { type: 'enrollment', userEmployeeId: employeeId, courseId },
+          before: {
+            required: Number(existing.required || 0) === 1,
+            status: text(existing.status),
+            completedAt: existing.completed_at || null,
+            passedAt: existing.passed_at || null
+          },
+          after: null
+        })
+      )
+  ]);
+
+  return json({ ok: true });
+}

@@ -52,7 +52,23 @@ export async function ensureCoreSchema(env) {
     ['college.courses.manage', 'college', 'Manage College Courses', 'Create and update college courses and modules.'],
     ['college.library.manage', 'college', 'Manage College Library', 'Create and publish college library documents.'],
     ['college.exams.manage', 'college', 'Manage College Exams', 'Create and update college exams and question banks.'],
-    ['college.exams.grade', 'college', 'Grade College Exams', 'Grade college assessment attempts and overrides.']
+    ['college.exams.grade', 'college', 'Grade College Exams', 'Grade college assessment attempts and overrides.'],
+    ['college:read', 'college', 'College Read', 'Read college pages and allowed learning resources.'],
+    ['college:manage_users', 'college', 'College Manage Users', 'Create/extend/withdraw trainees and manage trainee lifecycle.'],
+    ['college:manage_courses', 'college', 'College Manage Courses', 'Create, edit, publish, and archive courses/modules.'],
+    ['college:manage_library', 'college', 'College Manage Library', 'Create, edit, publish, and archive college documents.'],
+    ['college:manage_exams', 'college', 'College Manage Exams', 'Create and maintain exams/question banks.'],
+    ['college:mark_exams', 'college', 'College Mark Exams', 'Grade attempts and override module completion.'],
+    ['college:audit_read', 'college', 'College Audit Read', 'Read college audit events.'],
+    ['college:admin', 'college', 'College Admin', 'Manage all college administration features.'],
+    ['course:manage', 'college', 'Course Manage', 'Create, edit, publish, and archive courses/modules/material.'],
+    ['enrollment:manage', 'college', 'Enrollment Manage', 'Manage course enrollments and required flags.'],
+    ['progress:view', 'college', 'Progress View', 'View progress for other users.'],
+    ['progress:override', 'college', 'Progress Override', 'Override module progress and assessment outcomes.'],
+    ['exam:view', 'college', 'Exam View', 'View exam definitions and attempts.'],
+    ['exam:mark', 'college', 'Exam Mark', 'Mark exam attempts pass/fail.'],
+    ['library:manage', 'college', 'Library Manage', 'Create, update, map, and publish college library docs.'],
+    ['library:view', 'college', 'Library View', 'View college library documents per visibility rules.']
   ];
 
   const statements = [
@@ -404,6 +420,7 @@ export async function ensureCoreSchema(env) {
       visibility TEXT NOT NULL DEFAULT 'all',
       is_required_for_applicants INTEGER NOT NULL DEFAULT 0,
       published INTEGER NOT NULL DEFAULT 1,
+      archived_at TEXT,
       estimated_minutes INTEGER NOT NULL DEFAULT 60,
       created_by_employee_id INTEGER,
       updated_by_employee_id INTEGER,
@@ -417,11 +434,14 @@ export async function ensureCoreSchema(env) {
       order_index INTEGER NOT NULL DEFAULT 0,
       content_type TEXT NOT NULL DEFAULT 'markdown',
       completion_rule TEXT NOT NULL DEFAULT 'manual',
+      self_completable INTEGER NOT NULL DEFAULT 0,
+      required INTEGER NOT NULL DEFAULT 1,
       content TEXT,
       content_link TEXT,
       attachment_url TEXT,
       video_url TEXT,
       published INTEGER NOT NULL DEFAULT 1,
+      archived_at TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(course_id, order_index),
@@ -439,6 +459,7 @@ export async function ensureCoreSchema(env) {
       practical_approved INTEGER NOT NULL DEFAULT 0,
       completed_at TEXT,
       passed_at TEXT,
+      withdrawn_at TEXT,
       UNIQUE(user_employee_id, course_id),
       FOREIGN KEY(user_employee_id) REFERENCES employees(id),
       FOREIGN KEY(course_id) REFERENCES college_courses(id)
@@ -447,10 +468,15 @@ export async function ensureCoreSchema(env) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_employee_id INTEGER NOT NULL,
       module_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'available',
+      requested_at TEXT,
       completed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      completed_by_employee_id INTEGER,
+      completion_meta_json TEXT,
       UNIQUE(user_employee_id, module_id),
       FOREIGN KEY(user_employee_id) REFERENCES employees(id),
-      FOREIGN KEY(module_id) REFERENCES college_course_modules(id)
+      FOREIGN KEY(module_id) REFERENCES college_course_modules(id),
+      FOREIGN KEY(completed_by_employee_id) REFERENCES employees(id)
     )`,
     `CREATE TABLE IF NOT EXISTS college_library_documents (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -463,11 +489,22 @@ export async function ensureCoreSchema(env) {
       visibility TEXT NOT NULL DEFAULT 'public',
       course_id INTEGER,
       published INTEGER NOT NULL DEFAULT 1,
+      archived_at TEXT,
       updated_by_employee_id INTEGER,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(course_id) REFERENCES college_courses(id),
       FOREIGN KEY(updated_by_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_library_doc_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      doc_id INTEGER NOT NULL,
+      course_id INTEGER,
+      module_id INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(doc_id) REFERENCES college_library_documents(id),
+      FOREIGN KEY(course_id) REFERENCES college_courses(id),
+      FOREIGN KEY(module_id) REFERENCES college_course_modules(id)
     )`,
     `CREATE TABLE IF NOT EXISTS college_role_assignments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -499,6 +536,7 @@ export async function ensureCoreSchema(env) {
       attempt_limit INTEGER NOT NULL DEFAULT 3,
       time_limit_minutes INTEGER,
       published INTEGER NOT NULL DEFAULT 0,
+      archived_at TEXT,
       created_by_employee_id INTEGER,
       updated_by_employee_id INTEGER,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -536,6 +574,21 @@ export async function ensureCoreSchema(env) {
       FOREIGN KEY(exam_id) REFERENCES college_exams(id),
       FOREIGN KEY(user_employee_id) REFERENCES employees(id),
       FOREIGN KEY(graded_by_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_profiles (
+      user_employee_id INTEGER PRIMARY KEY,
+      trainee_status TEXT NOT NULL DEFAULT 'NOT_A_TRAINEE',
+      start_at TEXT,
+      due_at TEXT,
+      passed_at TEXT,
+      failed_at TEXT,
+      assigned_by_user_employee_id INTEGER,
+      last_activity_at TEXT,
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(assigned_by_user_employee_id) REFERENCES employees(id)
     )`
   ];
 
@@ -605,16 +658,47 @@ export async function ensureCoreSchema(env) {
   if (!courseColumnNames.has('updated_by_employee_id')) {
     await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN updated_by_employee_id INTEGER`).run();
   }
+  if (!courseColumnNames.has('archived_at')) {
+    await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN archived_at TEXT`).run();
+  }
   const moduleColumns = await env.DB.prepare(`PRAGMA table_info(college_course_modules)`).all();
   const moduleColumnNames = new Set((moduleColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
   if (!moduleColumnNames.has('completion_rule')) {
     await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN completion_rule TEXT NOT NULL DEFAULT 'manual'`).run();
+  }
+  if (!moduleColumnNames.has('self_completable')) {
+    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN self_completable INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!moduleColumnNames.has('required')) {
+    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN required INTEGER NOT NULL DEFAULT 1`).run();
   }
   if (!moduleColumnNames.has('content_link')) {
     await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN content_link TEXT`).run();
   }
   if (!moduleColumnNames.has('published')) {
     await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN published INTEGER NOT NULL DEFAULT 1`).run();
+  }
+  if (!moduleColumnNames.has('archived_at')) {
+    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN archived_at TEXT`).run();
+  }
+  const enrollmentColumns = await env.DB.prepare(`PRAGMA table_info(college_enrollments)`).all();
+  const enrollmentColumnNames = new Set((enrollmentColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!enrollmentColumnNames.has('withdrawn_at')) {
+    await env.DB.prepare(`ALTER TABLE college_enrollments ADD COLUMN withdrawn_at TEXT`).run();
+  }
+  const moduleProgressColumns = await env.DB.prepare(`PRAGMA table_info(college_module_progress)`).all();
+  const moduleProgressColumnNames = new Set((moduleProgressColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!moduleProgressColumnNames.has('status')) {
+    await env.DB.prepare(`ALTER TABLE college_module_progress ADD COLUMN status TEXT NOT NULL DEFAULT 'available'`).run();
+  }
+  if (!moduleProgressColumnNames.has('requested_at')) {
+    await env.DB.prepare(`ALTER TABLE college_module_progress ADD COLUMN requested_at TEXT`).run();
+  }
+  if (!moduleProgressColumnNames.has('completed_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE college_module_progress ADD COLUMN completed_by_employee_id INTEGER`).run();
+  }
+  if (!moduleProgressColumnNames.has('completion_meta_json')) {
+    await env.DB.prepare(`ALTER TABLE college_module_progress ADD COLUMN completion_meta_json TEXT`).run();
   }
   const libraryColumns = await env.DB.prepare(`PRAGMA table_info(college_library_documents)`).all();
   const libraryColumnNames = new Set((libraryColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
@@ -630,10 +714,163 @@ export async function ensureCoreSchema(env) {
   if (!libraryColumnNames.has('updated_by_employee_id')) {
     await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN updated_by_employee_id INTEGER`).run();
   }
+  if (!libraryColumnNames.has('archived_at')) {
+    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN archived_at TEXT`).run();
+  }
+  const examColumns = await env.DB.prepare(`PRAGMA table_info(college_exams)`).all();
+  const examColumnNames = new Set((examColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!examColumnNames.has('archived_at')) {
+    await env.DB.prepare(`ALTER TABLE college_exams ADD COLUMN archived_at TEXT`).run();
+  }
+  const collegeProfileColumns = await env.DB.prepare(`PRAGMA table_info(college_profiles)`).all();
+  const collegeProfileColumnNames = new Set((collegeProfileColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!collegeProfileColumnNames.size) {
+    await env.DB
+      .prepare(
+        `CREATE TABLE IF NOT EXISTS college_profiles (
+          user_employee_id INTEGER PRIMARY KEY,
+          trainee_status TEXT NOT NULL DEFAULT 'NOT_A_TRAINEE',
+          start_at TEXT,
+          due_at TEXT,
+          passed_at TEXT,
+          failed_at TEXT,
+          assigned_by_user_employee_id INTEGER,
+          last_activity_at TEXT,
+          notes TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(user_employee_id) REFERENCES employees(id),
+          FOREIGN KEY(assigned_by_user_employee_id) REFERENCES employees(id)
+        )`
+      )
+      .run();
+  } else {
+    if (!collegeProfileColumnNames.has('trainee_status')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN trainee_status TEXT NOT NULL DEFAULT 'NOT_A_TRAINEE'`).run();
+    }
+    if (!collegeProfileColumnNames.has('start_at')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN start_at TEXT`).run();
+    }
+    if (!collegeProfileColumnNames.has('due_at')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN due_at TEXT`).run();
+    }
+    if (!collegeProfileColumnNames.has('passed_at')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN passed_at TEXT`).run();
+    }
+    if (!collegeProfileColumnNames.has('failed_at')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN failed_at TEXT`).run();
+    }
+    if (!collegeProfileColumnNames.has('assigned_by_user_employee_id')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN assigned_by_user_employee_id INTEGER`).run();
+    }
+    if (!collegeProfileColumnNames.has('last_activity_at')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN last_activity_at TEXT`).run();
+    }
+    if (!collegeProfileColumnNames.has('notes')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN notes TEXT`).run();
+    }
+    if (!collegeProfileColumnNames.has('created_at')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+    }
+    if (!collegeProfileColumnNames.has('updated_at')) {
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+    }
+  }
+  await env.DB
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS college_library_doc_links (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        doc_id INTEGER NOT NULL,
+        course_id INTEGER,
+        module_id INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(doc_id) REFERENCES college_library_documents(id),
+        FOREIGN KEY(course_id) REFERENCES college_courses(id),
+        FOREIGN KEY(module_id) REFERENCES college_course_modules(id)
+      )`
+    )
+    .run();
+  await env.DB
+    .prepare(
+      `INSERT OR IGNORE INTO college_library_doc_links (doc_id, course_id, module_id, created_at)
+       SELECT d.id, d.course_id, NULL, COALESCE(d.created_at, CURRENT_TIMESTAMP)
+       FROM college_library_documents d
+       WHERE d.course_id IS NOT NULL`
+    )
+    .run();
   await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
   await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();
+  await env.DB
+    .prepare(
+      `INSERT OR IGNORE INTO college_profiles
+       (user_employee_id, trainee_status, start_at, due_at, passed_at, failed_at, assigned_by_user_employee_id, last_activity_at, created_at, updated_at)
+       SELECT
+         e.id,
+         CASE
+           WHEN e.college_passed_at IS NOT NULL THEN 'TRAINEE_PASSED'
+           WHEN UPPER(COALESCE(e.user_status, '')) = 'APPLICANT_ACCEPTED' THEN 'TRAINEE_ACTIVE'
+           ELSE 'NOT_A_TRAINEE'
+         END,
+         e.college_start_at,
+         e.college_due_at,
+         e.college_passed_at,
+         NULL,
+         NULL,
+         CURRENT_TIMESTAMP,
+         CURRENT_TIMESTAMP,
+         CURRENT_TIMESTAMP
+       FROM employees e`
+    )
+    .run();
+  await env.DB
+    .prepare(
+      `UPDATE college_profiles
+       SET
+         trainee_status = CASE
+           WHEN trainee_status IS NULL OR TRIM(trainee_status) = '' THEN
+             CASE
+               WHEN passed_at IS NOT NULL THEN 'TRAINEE_PASSED'
+               WHEN due_at IS NOT NULL THEN 'TRAINEE_ACTIVE'
+               ELSE 'NOT_A_TRAINEE'
+             END
+           ELSE UPPER(TRIM(trainee_status))
+         END,
+         start_at = COALESCE(start_at, (
+           SELECT college_start_at FROM employees e WHERE e.id = college_profiles.user_employee_id
+         )),
+         due_at = COALESCE(due_at, (
+           SELECT college_due_at FROM employees e WHERE e.id = college_profiles.user_employee_id
+         )),
+         passed_at = COALESCE(passed_at, (
+           SELECT college_passed_at FROM employees e WHERE e.id = college_profiles.user_employee_id
+         )),
+         updated_at = CURRENT_TIMESTAMP`
+    )
+    .run();
   await env.DB.prepare(`UPDATE college_courses SET visibility = COALESCE(NULLIF(TRIM(visibility), ''), 'all')`).run();
-  await env.DB.prepare(`UPDATE college_library_documents SET visibility = COALESCE(NULLIF(TRIM(visibility), ''), 'public')`).run();
+  await env.DB.prepare(`UPDATE college_library_documents SET visibility = COALESCE(NULLIF(TRIM(visibility), ''), 'PUBLIC')`).run();
+  await env.DB
+    .prepare(
+      `UPDATE college_library_documents
+       SET visibility = CASE LOWER(TRIM(visibility))
+         WHEN 'public' THEN 'PUBLIC'
+         WHEN 'staff' THEN 'STAFF'
+         WHEN 'enrolled' THEN 'COURSE_LINKED'
+         WHEN 'course_linked' THEN 'COURSE_LINKED'
+         ELSE 'PUBLIC'
+       END`
+    )
+    .run();
+  await env.DB
+    .prepare(
+      `UPDATE college_module_progress
+       SET status = CASE
+         WHEN completed_at IS NOT NULL THEN 'complete'
+         WHEN requested_at IS NOT NULL THEN 'awaiting_marking'
+         ELSE COALESCE(NULLIF(TRIM(status), ''), 'available')
+       END`
+    )
+    .run();
   await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
   await env.DB
     .prepare(
@@ -662,10 +899,18 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_college_library_documents_category ON college_library_documents(category)`,
     `CREATE INDEX IF NOT EXISTS idx_college_library_documents_visibility ON college_library_documents(visibility)`,
     `CREATE INDEX IF NOT EXISTS idx_college_library_documents_course ON college_library_documents(course_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_library_doc_links_doc ON college_library_doc_links(doc_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_library_doc_links_course ON college_library_doc_links(course_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_library_doc_links_module ON college_library_doc_links(module_id)`,
     `CREATE INDEX IF NOT EXISTS idx_college_roles_employee ON college_role_assignments(employee_id, role_key)`,
     `CREATE INDEX IF NOT EXISTS idx_college_courses_visibility ON college_courses(visibility)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_courses_archived_at ON college_courses(archived_at)`,
     `CREATE INDEX IF NOT EXISTS idx_college_exams_course ON college_exams(course_id, published)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_exam_attempts_exam_user ON college_exam_attempts(exam_id, user_employee_id)`
+    `CREATE INDEX IF NOT EXISTS idx_college_exams_archived_at ON college_exams(archived_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_exam_attempts_exam_user ON college_exam_attempts(exam_id, user_employee_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_profiles_status_due ON college_profiles(trainee_status, due_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_library_docs_archived_at ON college_library_documents(archived_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_modules_archived_at ON college_course_modules(archived_at)`
   ];
   for (const sql of optionalIndexStatements) {
     try {

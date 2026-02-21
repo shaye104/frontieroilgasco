@@ -9,7 +9,108 @@ export const USER_STATUSES = {
   COLLEGE_ADMIN: 'COLLEGE_ADMIN'
 };
 
-export const COLLEGE_ROLE_KEYS = ['COLLEGE_ADMIN', 'INSTRUCTOR', 'EXAMINER', 'TRAINEE'];
+export const COLLEGE_TRAINEE_STATUSES = {
+  NOT_A_TRAINEE: 'NOT_A_TRAINEE',
+  TRAINEE_ACTIVE: 'TRAINEE_ACTIVE',
+  TRAINEE_PASSED: 'TRAINEE_PASSED',
+  TRAINEE_FAILED: 'TRAINEE_FAILED',
+  TRAINEE_WITHDRAWN: 'TRAINEE_WITHDRAWN'
+};
+
+export const COLLEGE_ROLE_KEYS = ['COLLEGE_ADMIN', 'INSTRUCTOR', 'EXAMINER', 'TRAINEE', 'STAFF_VIEWER'];
+export const COLLEGE_CAPABILITIES = [
+  'college:read',
+  'college:admin',
+  'college:manage_users',
+  'college:manage_courses',
+  'college:manage_library',
+  'college:manage_exams',
+  'college:mark_exams',
+  'college:audit_read',
+  'course:manage',
+  'enrollment:manage',
+  'progress:view',
+  'progress:override',
+  'exam:view',
+  'exam:mark',
+  'library:manage',
+  'library:view'
+];
+
+const COLLEGE_CAPABILITY_PERMISSION_MAP = {
+  'college:read': ['college:read', 'college.view', 'library:view', 'college:admin'],
+  'college:admin': [
+    'college:admin',
+    'college.manage',
+    'college.roles.manage',
+    'college.enrollments.manage',
+    'college.courses.manage',
+    'college.library.manage',
+    'college.exams.manage',
+    'admin.override'
+  ],
+  'college:manage_users': [
+    'college:manage_users',
+    'college.manage',
+    'college.roles.manage',
+    'college.enrollments.manage',
+    'college:admin'
+  ],
+  'college:manage_courses': ['college:manage_courses', 'college.courses.manage', 'course:manage', 'college:admin'],
+  'college:manage_library': ['college:manage_library', 'college.library.manage', 'library:manage', 'college:admin'],
+  'college:manage_exams': ['college:manage_exams', 'college.exams.manage', 'exam:view', 'college:admin'],
+  'college:mark_exams': ['college:mark_exams', 'college.exams.grade', 'exam:mark', 'college:admin'],
+  'college:audit_read': ['college:audit_read', 'college.manage', 'college:admin'],
+  'course:manage': ['course:manage', 'college.courses.manage', 'college.manage', 'college:admin'],
+  'enrollment:manage': ['enrollment:manage', 'college.enrollments.manage', 'college.manage', 'college:admin'],
+  'progress:view': ['progress:view', 'college.manage', 'college:admin'],
+  'progress:override': ['progress:override', 'college.exams.grade', 'college.manage', 'college:admin'],
+  'exam:view': ['exam:view', 'college.exams.manage', 'college.exams.grade', 'college.manage', 'college:admin'],
+  'exam:mark': ['exam:mark', 'college.exams.grade', 'college.manage', 'college:admin'],
+  'library:manage': ['library:manage', 'college.library.manage', 'college.manage', 'college:admin'],
+  'library:view': ['library:view', 'college.view', 'college.manage', 'college:admin']
+};
+
+const COLLEGE_ROLE_CAPABILITIES = {
+  COLLEGE_ADMIN: COLLEGE_CAPABILITIES,
+  INSTRUCTOR: [
+    'college:read',
+    'college:manage_courses',
+    'college:manage_library',
+    'college:mark_exams',
+    'course:manage',
+    'progress:view',
+    'exam:view',
+    'library:manage',
+    'library:view'
+  ],
+  EXAMINER: [
+    'college:read',
+    'college:manage_exams',
+    'college:mark_exams',
+    'exam:view',
+    'exam:mark',
+    'progress:view',
+    'progress:override',
+    'library:view'
+  ],
+  TRAINEE: ['college:read', 'library:view'],
+  STAFF_VIEWER: ['college:read', 'library:view']
+};
+
+function normalizeTraineeStatus(value) {
+  const status = String(value || '').trim().toUpperCase();
+  if (Object.values(COLLEGE_TRAINEE_STATUSES).includes(status)) return status;
+  return COLLEGE_TRAINEE_STATUSES.NOT_A_TRAINEE;
+}
+
+function deriveLegacyTraineeStatus(employee = null) {
+  if (!employee) return COLLEGE_TRAINEE_STATUSES.NOT_A_TRAINEE;
+  if (employee.college_passed_at) return COLLEGE_TRAINEE_STATUSES.TRAINEE_PASSED;
+  const userStatus = normalizeUserStatus(employee.user_status);
+  if (userStatus === USER_STATUSES.APPLICANT_ACCEPTED) return COLLEGE_TRAINEE_STATUSES.TRAINEE_ACTIVE;
+  return COLLEGE_TRAINEE_STATUSES.NOT_A_TRAINEE;
+}
 
 export function normalizeCollegeRoleKey(value) {
   const role = String(value || '').trim().toUpperCase();
@@ -32,16 +133,115 @@ export async function getCollegeRoleKeysForEmployee(env, employeeId) {
   return [...new Set((rows?.results || []).map((row) => normalizeCollegeRoleKey(row.role_key)).filter(Boolean))];
 }
 
-function hasCollegeManagePermission(session) {
-  return (
-    hasPermission(session, 'college.manage') ||
-    hasPermission(session, 'college.roles.manage') ||
-    hasPermission(session, 'college.enrollments.manage') ||
-    hasPermission(session, 'college.courses.manage') ||
-    hasPermission(session, 'college.library.manage') ||
-    hasPermission(session, 'college.exams.manage') ||
-    hasPermission(session, 'admin.override')
-  );
+export async function getCollegeProfileForEmployee(env, employee = null) {
+  const employeeId = Number(employee?.id || 0);
+  if (!Number.isInteger(employeeId) || employeeId <= 0) return null;
+
+  const existing = await env.DB
+    .prepare(
+      `SELECT
+         user_employee_id,
+         trainee_status,
+         start_at,
+         due_at,
+         passed_at,
+         failed_at,
+         assigned_by_user_employee_id,
+         last_activity_at,
+         notes
+       FROM college_profiles
+       WHERE user_employee_id = ?
+       LIMIT 1`
+    )
+    .bind(employeeId)
+    .first();
+  if (existing) {
+    return {
+      userEmployeeId: Number(existing.user_employee_id || 0),
+      traineeStatus: normalizeTraineeStatus(existing.trainee_status),
+      startAt: existing.start_at || null,
+      dueAt: existing.due_at || null,
+      passedAt: existing.passed_at || null,
+      failedAt: existing.failed_at || null,
+      assignedByUserEmployeeId: Number(existing.assigned_by_user_employee_id || 0) || null,
+      lastActivityAt: existing.last_activity_at || null,
+      notes: String(existing.notes || '').trim() || null
+    };
+  }
+
+  const legacyStatus = deriveLegacyTraineeStatus(employee);
+  await env.DB
+    .prepare(
+      `INSERT OR IGNORE INTO college_profiles
+       (user_employee_id, trainee_status, start_at, due_at, passed_at, assigned_by_user_employee_id, last_activity_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+    )
+    .bind(
+      employeeId,
+      legacyStatus,
+      employee?.college_start_at || null,
+      employee?.college_due_at || null,
+      employee?.college_passed_at || null
+    )
+    .run();
+
+  return {
+    userEmployeeId: employeeId,
+    traineeStatus: legacyStatus,
+    startAt: employee?.college_start_at || null,
+    dueAt: employee?.college_due_at || null,
+    passedAt: employee?.college_passed_at || null,
+    failedAt: null,
+    assignedByUserEmployeeId: null,
+    lastActivityAt: null,
+    notes: null
+  };
+}
+
+function normalizeCapability(value) {
+  const capability = String(value || '').trim();
+  return COLLEGE_CAPABILITIES.includes(capability) ? capability : null;
+}
+
+export function hasCollegeCapability(session, roleKeys = [], capability, options = {}) {
+  const normalizedCapability = normalizeCapability(capability);
+  if (!normalizedCapability) return false;
+  if (
+    session?.isAdmin ||
+    hasPermission(session, 'admin.override') ||
+    hasPermission(session, 'super.admin') ||
+    hasPermission(session, 'admin.access')
+  ) {
+    return true;
+  }
+
+  const restricted = Boolean(options.restricted);
+  const permittedByRole = (Array.isArray(roleKeys) ? roleKeys : []).some((roleKey) => {
+    const normalizedRole = normalizeCollegeRoleKey(roleKey);
+    if (!normalizedRole) return false;
+    const capabilities = COLLEGE_ROLE_CAPABILITIES[normalizedRole] || [];
+    return capabilities.includes(normalizedCapability);
+  });
+  if (permittedByRole) return true;
+
+  const permissionCandidates = COLLEGE_CAPABILITY_PERMISSION_MAP[normalizedCapability] || [normalizedCapability];
+  if (permissionCandidates.some((permissionKey) => hasPermission(session, permissionKey))) return true;
+
+  if (restricted && normalizedCapability === 'library:view') return true;
+  return false;
+}
+
+export function getCollegeCapabilities(session, roleKeys = [], options = {}) {
+  const restricted = Boolean(options.restricted);
+  const capabilityState = {};
+  COLLEGE_CAPABILITIES.forEach((capability) => {
+    capabilityState[capability] = hasCollegeCapability(session, roleKeys, capability, { restricted });
+  });
+  return capabilityState;
+}
+
+function hasCollegeManagePermission(session, roleKeys = []) {
+  return hasCollegeCapability(session, roleKeys, 'college:admin');
 }
 
 export function normalizeUserStatus(value) {
@@ -51,10 +251,10 @@ export function normalizeUserStatus(value) {
   return USER_STATUSES.ACTIVE_STAFF;
 }
 
-export function isCollegeRestrictedEmployee(employee) {
+export function isCollegeRestrictedEmployee(employee, collegeProfile = null) {
   if (!employee) return false;
-  const status = normalizeUserStatus(employee.user_status);
-  if (status !== USER_STATUSES.APPLICANT_ACCEPTED) return false;
+  const traineeStatus = normalizeTraineeStatus(collegeProfile?.traineeStatus || collegeProfile?.trainee_status || deriveLegacyTraineeStatus(employee));
+  if (traineeStatus !== COLLEGE_TRAINEE_STATUSES.TRAINEE_ACTIVE) return false;
   return !employee.college_passed_at;
 }
 
@@ -78,9 +278,19 @@ export async function requireCollegeSession(context, options = {}) {
   }
 
   const roleKeys = employee?.id ? await getCollegeRoleKeysForEmployee(env, employee.id) : [];
-  const isRestricted = isCollegeRestrictedEmployee(employee);
-  const canManage = hasCollegeManagePermission(session) || roleKeys.includes('COLLEGE_ADMIN');
-  const canView = canManage || hasPermission(session, 'college.view') || session.isAdmin || isRestricted;
+  const collegeProfile = employee?.id ? await getCollegeProfileForEmployee(env, employee) : null;
+  const traineeStatus = normalizeTraineeStatus(collegeProfile?.traineeStatus || deriveLegacyTraineeStatus(employee));
+  const isRestricted = isCollegeRestrictedEmployee(employee, collegeProfile);
+  const capabilities = getCollegeCapabilities(session, roleKeys, { restricted: isRestricted });
+  const canManage = Boolean(
+    hasCollegeManagePermission(session, roleKeys) ||
+      capabilities['college:manage_users'] ||
+      capabilities['college:manage_courses'] ||
+      capabilities['college:manage_library'] ||
+      capabilities['college:manage_exams'] ||
+      capabilities['college:mark_exams']
+  );
+  const canView = Boolean(canManage || capabilities['college:read'] || capabilities['library:view'] || session?.isAdmin || isRestricted);
 
   if (!canView) {
     return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null, employee: null, isRestricted: false };
@@ -90,7 +300,21 @@ export async function requireCollegeSession(context, options = {}) {
     return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null, employee: null, isRestricted: false };
   }
 
-  return { errorResponse: null, session, employee, isRestricted, roleKeys, canManage };
+  const requiredCapabilities = Array.isArray(options.requiredCapabilities)
+    ? options.requiredCapabilities.map((capability) => normalizeCapability(capability)).filter(Boolean)
+    : [];
+  if (requiredCapabilities.length && !requiredCapabilities.every((capability) => capabilities[capability])) {
+    return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null, employee: null, isRestricted: false };
+  }
+
+  const requiredAnyCapabilities = Array.isArray(options.requiredAnyCapabilities)
+    ? options.requiredAnyCapabilities.map((capability) => normalizeCapability(capability)).filter(Boolean)
+    : [];
+  if (requiredAnyCapabilities.length && !requiredAnyCapabilities.some((capability) => capabilities[capability])) {
+    return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null, employee: null, isRestricted: false };
+  }
+
+  return { errorResponse: null, session, employee, isRestricted, roleKeys, canManage, capabilities, collegeProfile, traineeStatus };
 }
 
 function toMoney(value) {
@@ -107,7 +331,9 @@ export async function enrollEmployeeInRequiredCollegeCourses(env, employeeId) {
        (user_employee_id, course_id, required, status, enrolled_at)
        SELECT ?, c.id, 1, 'in_progress', CURRENT_TIMESTAMP
        FROM college_courses c
-       WHERE c.published = 1 AND c.is_required_for_applicants = 1`
+       WHERE c.published = 1
+         AND c.archived_at IS NULL
+         AND c.is_required_for_applicants = 1`
     )
     .bind(id)
     .run();
@@ -139,11 +365,17 @@ async function getEnrollmentStats(env, employeeId) {
            SELECT COUNT(*)
            FROM college_module_progress mp
            INNER JOIN college_course_modules m ON m.id = mp.module_id
-           WHERE mp.user_employee_id = e.user_employee_id AND m.course_id = e.course_id
+           WHERE mp.user_employee_id = e.user_employee_id
+             AND m.course_id = e.course_id
+             AND (
+               mp.completed_at IS NOT NULL
+               OR LOWER(COALESCE(mp.status, '')) = 'complete'
+             )
          ) AS completed_modules
        FROM college_enrollments e
        INNER JOIN college_courses c ON c.id = e.course_id
        WHERE e.user_employee_id = ?
+         AND LOWER(COALESCE(e.status, 'in_progress')) != 'removed'
        ORDER BY e.required DESC, c.code ASC, c.title ASC`
     )
     .bind(employeeId)
@@ -209,7 +441,15 @@ export async function evaluateAndApplyCollegePass(env, employee, performedByEmpl
     summary.requirements.termsAcknowledged;
 
   const currentStatus = normalizeUserStatus(employee.user_status);
-  const alreadyPassed = Boolean(employee.college_passed_at) || currentStatus !== USER_STATUSES.APPLICANT_ACCEPTED;
+  const collegeProfile = await getCollegeProfileForEmployee(env, employee);
+  const traineeStatus = normalizeTraineeStatus(collegeProfile?.traineeStatus);
+  const alreadyPassed =
+    Boolean(employee.college_passed_at) ||
+    traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_PASSED ||
+    traineeStatus === COLLEGE_TRAINEE_STATUSES.NOT_A_TRAINEE ||
+    traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_WITHDRAWN ||
+    traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_FAILED ||
+    currentStatus !== USER_STATUSES.APPLICANT_ACCEPTED;
   if (!passed || alreadyPassed) return { passed, changed: false, summary };
 
   await env.DB.batch([
@@ -222,6 +462,28 @@ export async function evaluateAndApplyCollegePass(env, employee, performedByEmpl
          WHERE id = ?`
       )
       .bind(employeeId),
+    env.DB
+      .prepare(
+        `INSERT INTO college_profiles
+         (user_employee_id, trainee_status, start_at, due_at, passed_at, failed_at, assigned_by_user_employee_id, last_activity_at, updated_at)
+         VALUES (?, 'TRAINEE_PASSED', COALESCE(?, CURRENT_TIMESTAMP), ?, CURRENT_TIMESTAMP, NULL, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT(user_employee_id)
+         DO UPDATE SET
+           trainee_status = 'TRAINEE_PASSED',
+           start_at = COALESCE(college_profiles.start_at, excluded.start_at),
+           due_at = COALESCE(college_profiles.due_at, excluded.due_at),
+           passed_at = COALESCE(college_profiles.passed_at, CURRENT_TIMESTAMP),
+           failed_at = NULL,
+           assigned_by_user_employee_id = COALESCE(excluded.assigned_by_user_employee_id, college_profiles.assigned_by_user_employee_id),
+           last_activity_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP`
+      )
+      .bind(
+        employeeId,
+        employee?.college_start_at || null,
+        employee?.college_due_at || null,
+        Number(performedByEmployeeId || employeeId) || null
+      ),
     env.DB
       .prepare(
         `DELETE FROM college_role_assignments
@@ -249,7 +511,9 @@ export async function getCollegeOverview(env, employee) {
   const refreshedEmployee = passResult.changed
     ? await env.DB.prepare(`SELECT * FROM employees WHERE id = ?`).bind(employeeId).first()
     : employee;
-  const isRestricted = isCollegeRestrictedEmployee(refreshedEmployee);
+  const collegeProfile = await getCollegeProfileForEmployee(env, refreshedEmployee);
+  const traineeStatus = normalizeTraineeStatus(collegeProfile?.traineeStatus);
+  const isRestricted = isCollegeRestrictedEmployee(refreshedEmployee, collegeProfile);
   const status = normalizeUserStatus(refreshedEmployee?.user_status);
 
   const enrollmentSummary = await getEnrollmentStats(env, employeeId);
@@ -262,16 +526,27 @@ export async function getCollegeOverview(env, employee) {
          m.title,
          m.order_index,
          m.content_type,
+         m.completion_rule,
+         m.self_completable,
+         m.required,
          m.content,
+         m.content_link,
          m.attachment_url,
          m.video_url,
-         CASE WHEN mp.id IS NULL THEN 0 ELSE 1 END AS completed
+         CASE WHEN mp.id IS NULL THEN 0
+              WHEN mp.completed_at IS NOT NULL OR LOWER(COALESCE(mp.status, '')) = 'complete' THEN 1
+              ELSE 0 END AS completed,
+         COALESCE(mp.status, 'available') AS progress_status
        FROM college_course_modules m
        LEFT JOIN college_module_progress mp
          ON mp.module_id = m.id AND mp.user_employee_id = ?
        WHERE m.course_id IN (
-         SELECT course_id FROM college_enrollments WHERE user_employee_id = ?
+         SELECT course_id
+         FROM college_enrollments
+         WHERE user_employee_id = ?
+           AND LOWER(COALESCE(status, 'in_progress')) != 'removed'
        )
+         AND m.archived_at IS NULL
        ORDER BY m.course_id ASC, m.order_index ASC, m.id ASC`
     )
     .bind(employeeId, employeeId)
@@ -286,10 +561,15 @@ export async function getCollegeOverview(env, employee) {
       title: String(row.title || '').trim(),
       orderIndex: Number(row.order_index || 0),
       contentType: String(row.content_type || 'markdown').trim().toLowerCase(),
+      completionRule: String(row.completion_rule || 'manual').trim().toLowerCase(),
+      selfCompletable: Number(row.self_completable || 0) === 1,
+      required: Number(row.required ?? 1) === 1,
       content: String(row.content || '').trim(),
+      contentLink: row.content_link || null,
       attachmentUrl: row.attachment_url || null,
       videoUrl: row.video_url || null,
-      completed: Number(row.completed || 0) === 1
+      completed: Number(row.completed || 0) === 1,
+      progressStatus: String(row.progress_status || 'available').trim().toLowerCase()
     });
   });
 
@@ -321,8 +601,12 @@ export async function getCollegeOverview(env, employee) {
          ) AS has_passed
        FROM college_exams ex
        WHERE ex.course_id IN (
-         SELECT course_id FROM college_enrollments WHERE user_employee_id = ?
+         SELECT course_id
+         FROM college_enrollments
+         WHERE user_employee_id = ?
+           AND LOWER(COALESCE(status, 'in_progress')) != 'removed'
        )
+         AND ex.archived_at IS NULL
          AND ex.published = 1
        ORDER BY ex.course_id ASC, ex.module_id ASC, ex.id ASC`
     )
@@ -366,18 +650,27 @@ export async function getCollegeOverview(env, employee) {
   });
 
   const currentEnrollment = enrollments.find((row) => row.required && row.progressPct < 100) || enrollments[0] || null;
-  const dueAt = refreshedEmployee?.college_due_at ? new Date(refreshedEmployee.college_due_at) : null;
+  const dueAtValue = collegeProfile?.dueAt || refreshedEmployee?.college_due_at || null;
+  const dueAt = dueAtValue ? new Date(dueAtValue) : null;
   const dueMs = dueAt && !Number.isNaN(dueAt.getTime()) ? dueAt.getTime() : null;
   const nowMs = Date.now();
   const dueInSeconds = dueMs != null ? Math.max(0, Math.floor((dueMs - nowMs) / 1000)) : null;
-  const overdue = Boolean(dueMs != null && dueMs < nowMs && !refreshedEmployee?.college_passed_at && isRestricted);
-  const statusPill = refreshedEmployee?.college_passed_at
-    ? 'Passed'
-    : overdue
-    ? 'Overdue'
-    : isRestricted
-    ? 'In progress'
-    : 'Active';
+  const overdue = Boolean(dueMs != null && dueMs < nowMs && traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_ACTIVE);
+  const dueSoon = Boolean(!overdue && traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_ACTIVE && dueInSeconds != null && dueInSeconds <= 3 * 24 * 60 * 60);
+  const statusPill =
+    traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_PASSED
+      ? 'Passed'
+      : traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_FAILED
+      ? 'Failed'
+      : traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_WITHDRAWN
+      ? 'Withdrawn'
+      : overdue
+      ? 'Overdue'
+      : dueSoon
+      ? 'Due Soon'
+      : traineeStatus === COLLEGE_TRAINEE_STATUSES.TRAINEE_ACTIVE
+      ? 'In progress'
+      : 'Staff';
 
   return {
     employee: {
@@ -385,15 +678,17 @@ export async function getCollegeOverview(env, employee) {
       robloxUsername: String(refreshedEmployee?.roblox_username || '').trim(),
       serialNumber: String(refreshedEmployee?.serial_number || '').trim(),
       userStatus: status,
+      traineeStatus,
       collegeRoles: await getCollegeRoleKeysForEmployee(env, employeeId),
-      collegeStartAt: refreshedEmployee?.college_start_at || null,
-      collegeDueAt: refreshedEmployee?.college_due_at || null,
-      collegePassedAt: refreshedEmployee?.college_passed_at || null
+      collegeStartAt: collegeProfile?.startAt || refreshedEmployee?.college_start_at || null,
+      collegeDueAt: dueAtValue,
+      collegePassedAt: collegeProfile?.passedAt || refreshedEmployee?.college_passed_at || null
     },
     isRestricted,
     statusPill,
     dueInSeconds,
     overdue,
+    dueSoon,
     progressPct: Math.max(0, Math.min(100, Number(enrollmentSummary.overallProgress || 0))),
     requirements: {
       completeInductionCourse: enrollmentSummary.requirements.inductionCompleted,

@@ -55,7 +55,13 @@ export async function onRequestGet(context) {
 
   if (!canManage) {
     const enrollment = await env.DB
-      .prepare(`SELECT id FROM college_enrollments WHERE user_employee_id = ? AND course_id = ? LIMIT 1`)
+      .prepare(
+        `SELECT id
+         FROM college_enrollments
+         WHERE user_employee_id = ? AND course_id = ?
+           AND LOWER(COALESCE(status, 'in_progress')) != 'removed'
+         LIMIT 1`
+      )
       .bind(employeeId, Number(exam.course_id || 0))
       .first();
     if (!enrollment) return json({ error: 'You are not enrolled for this exam.' }, 403);

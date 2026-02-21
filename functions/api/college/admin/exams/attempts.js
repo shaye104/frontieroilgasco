@@ -1,6 +1,5 @@
 import { cachedJson } from '../../../auth/_lib/auth.js';
 import { requireCollegeSession } from '../../../_lib/college.js';
-import { hasPermission } from '../../../_lib/permissions.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -11,21 +10,13 @@ function toInt(value, fallback = 0) {
   return Number.isFinite(n) ? Math.round(n) : fallback;
 }
 
-function canGradeExams(session, roleKeys) {
-  return (
-    Boolean(session?.isAdmin) ||
-    hasPermission(session, 'admin.override') ||
-    hasPermission(session, 'college.exams.grade') ||
-    hasPermission(session, 'college.exams.manage') ||
-    Array.isArray(roleKeys) && (roleKeys.includes('COLLEGE_ADMIN') || roleKeys.includes('EXAMINER'))
-  );
-}
-
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const { errorResponse, session, roleKeys } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse, capabilities } = await requireCollegeSession(context, {
+    requiredAnyCapabilities: ['college:admin', 'exam:view', 'exam:mark']
+  });
   if (errorResponse) return errorResponse;
-  if (!canGradeExams(session, roleKeys)) {
+  if (!(capabilities?.['college:admin'] || capabilities?.['exam:view'] || capabilities?.['exam:mark'])) {
     return new Response(JSON.stringify({ error: 'Forbidden. Missing required permission.' }), {
       status: 403,
       headers: { 'content-type': 'application/json; charset=utf-8' }

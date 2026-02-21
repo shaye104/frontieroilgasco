@@ -1346,6 +1346,12 @@
   color: #166534;
 }
 
+.college-status-pill.is-due-soon {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
 .college-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1686,6 +1692,56 @@
 .college-admin-subgrid {
   display: grid;
   gap: 0.75rem;
+}
+
+.college-admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.college-admin-tab {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 999px;
+  padding: 0.32rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.college-admin-tab.is-active,
+.college-admin-tab[aria-current='page'] {
+  border-color: #b6c8ef;
+  background: #eef3ff;
+  color: #253475;
+}
+
+.college-role-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.college-role-checkbox-grid label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid #dbe5f5;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.4rem 0.48rem;
+  min-width: 0;
+  font-size: 0.8rem;
+}
+
+.college-role-checkbox-grid input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
+  accent-color: #253475;
 }
 
 @media (max-width: 1023px) {

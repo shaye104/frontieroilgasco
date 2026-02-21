@@ -12,7 +12,7 @@ async function initHomePage() {
     if (session.loggedIn) {
       const collegeRestricted =
         !session.isAdmin &&
-        String(session.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' &&
+        String(session.collegeTraineeStatus || session.userStatus || '').trim().toUpperCase() === 'TRAINEE_ACTIVE' &&
         !session.collegePassedAt;
       const permissions = Array.isArray(session.permissions) ? session.permissions : [];
       const hasMyDetails = permissions.includes('my_details.view') || permissions.includes('admin.override') || Boolean(session.isAdmin);

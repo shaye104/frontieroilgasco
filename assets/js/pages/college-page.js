@@ -40,6 +40,26 @@ function formatDuration(seconds) {
   return `${mins}m`;
 }
 
+function toId(value) {
+  const n = Number(value || 0);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function userOptionLabel(user) {
+  const serial = String(user?.serialNumber || '').trim();
+  return `${text(user?.name)}${serial ? ` (${serial})` : ''}`;
+}
+
+function courseOptionLabel(course) {
+  const code = String(course?.code || '').trim();
+  const title = text(course?.title);
+  return code ? `${code} - ${title}` : title;
+}
+
+function examOptionLabel(exam) {
+  return `${text(exam?.title)} (#${Number(exam?.id || 0)})`;
+}
+
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, {
     credentials: 'include',
@@ -108,12 +128,12 @@ function updateAdminTabAvailability(state) {
   const manageAll = Boolean(state.canManage || caps['college:admin']);
   const visibleByTab = {
     dashboard: true,
-    trainees: Boolean(manageAll || caps['progress:view'] || caps['enrollment:manage']),
-    courses: Boolean(manageAll || caps['course:manage']),
-    exams: Boolean(manageAll || caps['exam:view'] || caps['exam:mark'] || caps['progress:override']),
-    library: Boolean(manageAll || caps['library:manage']),
+    trainees: Boolean(manageAll || caps['college:manage_users'] || caps['progress:view'] || caps['enrollment:manage']),
+    courses: Boolean(manageAll || caps['college:manage_courses'] || caps['course:manage']),
+    exams: Boolean(manageAll || caps['college:manage_exams'] || caps['college:mark_exams'] || caps['exam:view'] || caps['exam:mark'] || caps['progress:override']),
+    library: Boolean(manageAll || caps['college:manage_library'] || caps['library:manage']),
     permissions: Boolean(manageAll),
-    audit: Boolean(manageAll)
+    audit: Boolean(manageAll || caps['college:audit_read'])
   };
 
   const visibleTabs = [];
@@ -298,7 +318,9 @@ function renderCurrentModule(state) {
   const canOverrideProgress = Boolean(state.capabilities?.['progress:override'] || state.capabilities?.['exam:mark'] || state.capabilities?.['college:admin']);
   let buttonLabel = '';
   if (!module.completed && String(module.progressStatus || '').toLowerCase() !== 'awaiting_marking') {
-    if (!state.isRestricted && canOverrideProgress) {
+    if (state.isRestricted) {
+      buttonLabel = 'Submit for Review';
+    } else if (canOverrideProgress) {
       buttonLabel = 'Mark Complete (Override)';
     } else if (module.selfCompletable || module.completionRule === 'self_complete') {
       buttonLabel = 'Complete Module';
@@ -621,7 +643,19 @@ async function loadOverview(state) {
     ...(state.capabilities || {}),
     ...(payload?.permissions?.capabilities || {})
   };
-  state.canManage = Boolean(payload?.permissions?.canManage || state.canManage);
+  const canManageFromCaps = Boolean(
+    state.capabilities?.['college:admin'] ||
+      state.capabilities?.['college:manage_users'] ||
+      state.capabilities?.['college:manage_courses'] ||
+      state.capabilities?.['college:manage_library'] ||
+      state.capabilities?.['college:manage_exams'] ||
+      state.capabilities?.['college:mark_exams'] ||
+      state.capabilities?.['course:manage'] ||
+      state.capabilities?.['enrollment:manage'] ||
+      state.capabilities?.['exam:mark'] ||
+      state.capabilities?.['library:manage']
+  );
+  state.canManage = Boolean(payload?.permissions?.canManage || state.canManage || canManageFromCaps);
   if (state.canManage) {
     state.capabilities['college:admin'] = true;
   }
@@ -700,9 +734,10 @@ function renderAdminPeople(state) {
     .map((row) => {
       const roles = Array.isArray(row.collegeRoles) && row.collegeRoles.length ? row.collegeRoles.join(', ') : '—';
       const requiredSummary = `${Number(row.completedRequiredCourses || 0)}/${Number(row.requiredCourses || 0)}`;
+      const traineeStatus = text(row.traineeStatus || 'NOT_A_TRAINEE');
       return `<tr>
         <td>${text(row.robloxUsername) || `#${Number(row.id || 0)}`}<br><small>${text(row.serialNumber)} · ${text(row.discordUserId)}</small></td>
-        <td>${text(row.userStatus)}</td>
+        <td>${traineeStatus}</td>
         <td>${row.collegeStartAt ? formatDateTime(row.collegeStartAt) : '—'}</td>
         <td>${row.collegeDueAt ? formatDateTime(row.collegeDueAt) : '—'}</td>
         <td>${Math.max(0, Math.min(100, Number(row.progressPct || 0)))}%</td>
@@ -715,6 +750,8 @@ function renderAdminPeople(state) {
                 <button type="button" class="btn btn-secondary btn-compact" data-college-admin-profile="${Number(row.id || 0)}">View</button>
                 <button type="button" class="btn btn-secondary btn-compact" data-college-admin-extend="${Number(row.id || 0)}">Extend</button>
                 <button type="button" class="btn btn-secondary btn-compact" data-college-admin-pass="${Number(row.id || 0)}">Mark Passed</button>
+                <button type="button" class="btn btn-secondary btn-compact" data-college-admin-fail="${Number(row.id || 0)}">Mark Failed</button>
+                <button type="button" class="btn btn-danger btn-compact" data-college-admin-withdraw="${Number(row.id || 0)}">Withdraw</button>
               </div>`
             : '\u2014'
         }</td>
@@ -774,6 +811,45 @@ function bindAdminPeopleActions(state, reloadFn) {
       }
     });
   });
+
+  $$('[data-college-admin-fail]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const userId = Number(button.getAttribute('data-college-admin-fail') || 0);
+      if (!userId) return;
+      const reason = window.prompt('Reason for marking failed?', 'Failed onboarding requirements');
+      if (reason == null) return;
+      try {
+        await fetchJson(`/api/admin/college/users/${encodeURIComponent(String(userId))}/mark-failed`, {
+          method: 'POST',
+          body: JSON.stringify({ reason })
+        });
+        setFeedback('Trainee marked as failed.', 'success');
+        await reloadFn();
+      } catch (error) {
+        setFeedback(error.message || 'Unable to mark failed.', 'error');
+      }
+    });
+  });
+
+  $$('[data-college-admin-withdraw]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const userId = Number(button.getAttribute('data-college-admin-withdraw') || 0);
+      if (!userId) return;
+      const reason = window.prompt('Reason for withdrawal?', 'Withdrawn by staff');
+      if (reason == null) return;
+      if (!window.confirm('Withdraw this trainee from College?')) return;
+      try {
+        await fetchJson(`/api/admin/college/users/${encodeURIComponent(String(userId))}/withdraw`, {
+          method: 'POST',
+          body: JSON.stringify({ reason })
+        });
+        setFeedback('Trainee withdrawn.', 'success');
+        await reloadFn();
+      } catch (error) {
+        setFeedback(error.message || 'Unable to withdraw trainee.', 'error');
+      }
+    });
+  });
 }
 
 function renderAdminCourses(state) {
@@ -781,7 +857,7 @@ function renderAdminCourses(state) {
   if (!tbody) return;
   const rows = Array.isArray(state.adminCoursesRows) ? state.adminCoursesRows : [];
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="6">No courses found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7">No courses found.</td></tr>';
     return;
   }
   tbody.innerHTML = rows
@@ -793,6 +869,11 @@ function renderAdminCourses(state) {
         <td>${text(row.visibility)}</td>
         <td>${row.published ? 'Yes' : 'No'}</td>
         <td>${Number(row.moduleCount || 0)}</td>
+        <td>
+          <div class="college-actions">
+            <button type="button" class="btn btn-secondary btn-compact" data-college-course-archive="${Number(row.id || 0)}">Archive</button>
+          </div>
+        </td>
       </tr>`
     )
     .join('');
@@ -803,7 +884,7 @@ function renderAdminLibrary(state) {
   if (!tbody) return;
   const rows = Array.isArray(state.adminLibraryRows) ? state.adminLibraryRows : [];
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="5">No library documents found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6">No library documents found.</td></tr>';
     return;
   }
   tbody.innerHTML = rows
@@ -814,6 +895,11 @@ function renderAdminLibrary(state) {
         <td>${text(row.visibility)}</td>
         <td>${row.published ? 'Yes' : 'No'}</td>
         <td>${formatDateTime(row.updatedAt)}</td>
+        <td>
+          <div class="college-actions">
+            <button type="button" class="btn btn-secondary btn-compact" data-college-library-archive="${Number(row.id || 0)}">Archive</button>
+          </div>
+        </td>
       </tr>`
     )
     .join('');
@@ -844,7 +930,7 @@ function renderAdminExams(state) {
   if (!tbody) return;
   const rows = Array.isArray(state.adminExamRows) ? state.adminExamRows : [];
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="5">No exams found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6">No exams found.</td></tr>';
     return;
   }
 
@@ -855,6 +941,9 @@ function renderAdminExams(state) {
       <td>${text(row.courseCode || '')} ${text(row.courseTitle || '')}</td>
       <td>${Number(row.questionCount || 0)}</td>
       <td>${Number(row.pendingGradingCount || 0)}</td>
+      <td>
+        <button type="button" class="btn btn-secondary btn-compact" data-college-use-exam="${Number(row.id || 0)}">Use in Questions</button>
+      </td>
     </tr>`)
     .join('');
 }
@@ -902,6 +991,101 @@ function renderAdminAttempts(state) {
     .join('');
 }
 
+function fillSelectOptions(selector, options, selectedValue = '') {
+  const select = $(selector);
+  if (!select) return;
+  const current = String(selectedValue || select.value || '');
+  const firstOption = select.querySelector('option');
+  const placeholder = firstOption ? `<option value="">${text(firstOption.textContent || 'Select')}</option>` : '<option value="">Select</option>';
+  select.innerHTML = `${placeholder}${options
+    .map((option) => `<option value="${text(option.value)}">${text(option.label)}</option>`)
+    .join('')}`;
+  if (current) select.value = current;
+}
+
+function renderAdminLookups(state) {
+  const users = Array.isArray(state.adminLookupUsers) ? state.adminLookupUsers : [];
+  const courses = Array.isArray(state.adminLookupCourses) ? state.adminLookupCourses : [];
+  const modules = Array.isArray(state.adminLookupModules) ? state.adminLookupModules : [];
+  const exams = Array.isArray(state.adminLookupExams) ? state.adminLookupExams : [];
+  const attempts = Array.isArray(state.adminLookupAttempts) ? state.adminLookupAttempts : [];
+
+  const userOptions = users.map((user) => ({ value: String(Number(user.id || 0)), label: userOptionLabel(user) }));
+  const courseOptions = courses.map((course) => ({ value: String(Number(course.id || 0)), label: courseOptionLabel(course) }));
+  const moduleOptions = modules.map((module) => ({
+    value: String(Number(module.id || 0)),
+    label: `${text(module.title)} (#${Number(module.id || 0)})`
+  }));
+  const examOptions = exams.map((exam) => ({ value: String(Number(exam.id || 0)), label: examOptionLabel(exam) }));
+  const attemptOptions = attempts.map((attempt) => ({
+    value: String(Number(attempt.id || 0)),
+    label: `Attempt #${Number(attempt.id || 0)} · Exam #${Number(attempt.examId || 0)}`
+  }));
+
+  fillSelectOptions('#collegeAdminEnrollUser', userOptions);
+  fillSelectOptions('#collegeAdminEnrollCourse', courseOptions);
+  fillSelectOptions('#collegeAdminRoleUser', userOptions);
+  fillSelectOptions('#collegeAdminExamCourseId', courseOptions);
+  fillSelectOptions('#collegeAdminExamModuleId', moduleOptions);
+  fillSelectOptions('#collegeAdminLibraryLinkedCourseId', courseOptions);
+  fillSelectOptions('#collegeAdminLibraryLinkedModuleId', moduleOptions);
+  fillSelectOptions('#collegeAdminQuestionExamId', examOptions);
+  fillSelectOptions('#collegeAdminGradeAttemptId', attemptOptions);
+}
+
+function bindAdminResourceActions(state, reloadFn) {
+  $$('[data-college-course-archive]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const id = toId(button.getAttribute('data-college-course-archive'));
+      if (!id) return;
+      if (!window.confirm('Archive this course and its modules?')) return;
+      try {
+        await fetchJson('/api/college/admin/courses', {
+          method: 'DELETE',
+          body: JSON.stringify({ id })
+        });
+        setFeedback('Course archived.', 'success');
+        await reloadFn();
+      } catch (error) {
+        setFeedback(error.message || 'Unable to archive course.', 'error');
+      }
+    });
+  });
+
+  $$('[data-college-library-archive]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const id = toId(button.getAttribute('data-college-library-archive'));
+      if (!id) return;
+      if (!window.confirm('Archive this library document?')) return;
+      try {
+        await fetchJson('/api/college/admin/library', {
+          method: 'DELETE',
+          body: JSON.stringify({ id })
+        });
+        setFeedback('Library document archived.', 'success');
+        await reloadFn();
+      } catch (error) {
+        setFeedback(error.message || 'Unable to archive document.', 'error');
+      }
+    });
+  });
+
+  $$('[data-college-use-exam]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const examId = toId(button.getAttribute('data-college-use-exam'));
+      if (!examId) return;
+      const select = $('#collegeAdminQuestionExamId');
+      if (!select) return;
+      select.value = String(examId);
+      loadAdminExamQuestions(state, examId).catch((error) => {
+        setInlineFeedback('#collegeAdminQuestionFeedback', error.message || 'Unable to load exam questions.', 'error');
+      });
+      setActiveAdminTab(state, 'exams');
+      setActiveTab(state, 'admin');
+    });
+  });
+}
+
 async function loadAdminExamQuestions(state, examId) {
   const id = Number(examId || 0);
   if (!id) {
@@ -923,14 +1107,15 @@ async function loadAdminOverview(state) {
   if (search) peopleParams.set('search', search);
   if (status) peopleParams.set('status', status);
   const peopleSuffix = peopleParams.toString() ? `?${peopleParams.toString()}` : '';
-  const [overviewPayload, peoplePayload, coursesPayload, libraryPayload, auditPayload, examsPayload, attemptsPayload] = await Promise.all([
+  const [overviewPayload, peoplePayload, coursesPayload, libraryPayload, auditPayload, examsPayload, attemptsPayload, lookupsPayload] = await Promise.all([
     fetchJson('/api/college/admin/overview'),
     fetchJson(`/api/college/admin/people${peopleSuffix}`),
     fetchJson('/api/college/admin/courses'),
     fetchJson('/api/college/admin/library'),
     fetchJson('/api/college/admin/audit?page=1&pageSize=20'),
     fetchJson('/api/college/admin/exams'),
-    fetchJson('/api/college/admin/exams/attempts?page=1&pageSize=20')
+    fetchJson('/api/college/admin/exams/attempts?page=1&pageSize=20'),
+    fetchJson('/api/college/admin/lookups')
   ]);
 
   state.adminOverview = overviewPayload || {};
@@ -940,6 +1125,11 @@ async function loadAdminOverview(state) {
   state.adminAuditRows = auditPayload?.rows || [];
   state.adminExamRows = examsPayload?.rows || [];
   state.adminAttemptRows = attemptsPayload?.rows || [];
+  state.adminLookupUsers = lookupsPayload?.users || [];
+  state.adminLookupCourses = lookupsPayload?.courses || [];
+  state.adminLookupModules = lookupsPayload?.modules || [];
+  state.adminLookupExams = lookupsPayload?.exams || [];
+  state.adminLookupAttempts = lookupsPayload?.attempts || [];
 
   renderAdminDashboard(state);
   renderAdminPeople(state);
@@ -951,6 +1141,10 @@ async function loadAdminOverview(state) {
   renderAdminAudit(state);
   renderAdminExams(state);
   renderAdminAttempts(state);
+  renderAdminLookups(state);
+  bindAdminResourceActions(state, async () => {
+    await loadAdminOverview(state);
+  });
 
   const selectedExamId = Number($('#collegeAdminQuestionExamId')?.value || 0);
   if (selectedExamId > 0) {
@@ -1004,11 +1198,25 @@ async function init() {
     selectedModuleId: Number(query.get('moduleId') || 0) || null,
     isRestricted: false,
     capabilities: {
+      'college:read': Boolean(hasPermission(session, 'college.view') || hasPermission(session, 'college:read')),
       'college:admin': Boolean(
         hasPermission(session, 'college.manage') ||
+          hasPermission(session, 'college:admin') ||
           hasPermission(session, 'college.roles.manage') ||
+          hasPermission(session, 'admin.access') ||
           hasPermission(session, 'admin.override')
       ),
+      'college:manage_users': Boolean(
+        hasPermission(session, 'college:manage_users') ||
+          hasPermission(session, 'college.manage') ||
+          hasPermission(session, 'college.roles.manage') ||
+          hasPermission(session, 'college.enrollments.manage')
+      ),
+      'college:manage_courses': Boolean(hasPermission(session, 'college:manage_courses') || hasPermission(session, 'college.courses.manage')),
+      'college:manage_library': Boolean(hasPermission(session, 'college:manage_library') || hasPermission(session, 'college.library.manage')),
+      'college:manage_exams': Boolean(hasPermission(session, 'college:manage_exams') || hasPermission(session, 'college.exams.manage')),
+      'college:mark_exams': Boolean(hasPermission(session, 'college:mark_exams') || hasPermission(session, 'college.exams.grade')),
+      'college:audit_read': Boolean(hasPermission(session, 'college:audit_read') || hasPermission(session, 'college.manage')),
       'course:manage': Boolean(hasPermission(session, 'college.courses.manage')),
       'enrollment:manage': Boolean(hasPermission(session, 'college.enrollments.manage')),
       'progress:view': Boolean(hasPermission(session, 'college.manage')),
@@ -1020,6 +1228,13 @@ async function init() {
     },
     countdownTimer: null,
     canManage: Boolean(
+      hasPermission(session, 'college:admin') ||
+        hasPermission(session, 'admin.access') ||
+        hasPermission(session, 'college:manage_users') ||
+        hasPermission(session, 'college:manage_courses') ||
+        hasPermission(session, 'college:manage_library') ||
+        hasPermission(session, 'college:manage_exams') ||
+        hasPermission(session, 'college:mark_exams') ||
       hasPermission(session, 'college.manage') ||
         hasPermission(session, 'college.roles.manage') ||
         hasPermission(session, 'college.enrollments.manage') ||
@@ -1242,14 +1457,10 @@ async function init() {
     const category = ($('#collegeAdminLibraryCategory')?.value || '').trim();
     const visibility = ($('#collegeAdminLibraryVisibility')?.value || 'PUBLIC').trim();
     const documentUrl = ($('#collegeAdminLibraryUrl')?.value || '').trim();
-    const linkedCourseIds = ($('#collegeAdminLibraryLinkedCourses')?.value || '')
-      .split(',')
-      .map((value) => Number(String(value || '').trim()))
-      .filter((value) => Number.isInteger(value) && value > 0);
-    const linkedModuleIds = ($('#collegeAdminLibraryLinkedModules')?.value || '')
-      .split(',')
-      .map((value) => Number(String(value || '').trim()))
-      .filter((value) => Number.isInteger(value) && value > 0);
+    const linkedCourseId = Number($('#collegeAdminLibraryLinkedCourseId')?.value || 0);
+    const linkedModuleId = Number($('#collegeAdminLibraryLinkedModuleId')?.value || 0);
+    const linkedCourseIds = Number.isInteger(linkedCourseId) && linkedCourseId > 0 ? [linkedCourseId] : [];
+    const linkedModuleIds = Number.isInteger(linkedModuleId) && linkedModuleId > 0 ? [linkedModuleId] : [];
     if (!title) {
       setInlineFeedback('#collegeAdminLibraryFeedback', 'Document title is required.', 'error');
       return;

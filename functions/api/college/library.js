@@ -7,10 +7,11 @@ function text(value) {
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const { errorResponse, employee, isRestricted, canManage } = await requireCollegeSession(context);
+  const { errorResponse, employee, isRestricted, capabilities } = await requireCollegeSession(context);
   if (errorResponse) return errorResponse;
 
   const employeeId = Number(employee?.id || 0);
+  const canManageLibrary = Boolean(capabilities?.['library:manage'] || capabilities?.['college:admin']);
   const enrollmentRows = employeeId
     ? await env.DB
         .prepare(
@@ -22,35 +23,49 @@ export async function onRequestGet(context) {
         .all()
     : { results: [] };
   const enrolledCourseIds = [...new Set((enrollmentRows?.results || []).map((row) => Number(row.course_id || 0)).filter((id) => id > 0))];
-  const enrolledPlaceholders = enrolledCourseIds.map(() => '?').join(', ');
 
   const url = new URL(request.url);
   const search = text(url.searchParams.get('search')).toLowerCase();
   const category = text(url.searchParams.get('category'));
   const tag = text(url.searchParams.get('tag')).toLowerCase();
 
-  const clauses = ['published = 1'];
+  const clauses = ['published = 1', 'archived_at IS NULL'];
   const bindings = [];
-  if (!canManage) {
-    if (isRestricted) {
-      if (enrolledCourseIds.length) {
-        clauses.push(`(
-          LOWER(COALESCE(visibility, 'public')) IN ('public', 'trainee')
-          OR (LOWER(COALESCE(visibility, 'public')) = 'enrolled' AND course_id IN (${enrolledPlaceholders}))
-        )`);
-        bindings.push(...enrolledCourseIds);
-      } else {
-        clauses.push(`LOWER(COALESCE(visibility, 'public')) IN ('public', 'trainee')`);
-      }
-    } else if (enrolledCourseIds.length) {
-      clauses.push(`(
-        LOWER(COALESCE(visibility, 'public')) IN ('public', 'staff')
-        OR (LOWER(COALESCE(visibility, 'public')) = 'enrolled' AND course_id IN (${enrolledPlaceholders}))
-      )`);
-      bindings.push(...enrolledCourseIds);
-    } else {
-      clauses.push(`LOWER(COALESCE(visibility, 'public')) IN ('public', 'staff')`);
-    }
+  if (!canManageLibrary) {
+    clauses.push(`(
+      UPPER(COALESCE(visibility, 'PUBLIC')) = 'PUBLIC'
+      OR (
+        UPPER(COALESCE(visibility, 'PUBLIC')) = 'STAFF'
+        AND ? = 0
+      )
+      OR (
+        UPPER(COALESCE(visibility, 'PUBLIC')) = 'COURSE_LINKED'
+        AND EXISTS (
+          SELECT 1
+          FROM college_library_doc_links l
+          LEFT JOIN college_course_modules m ON m.id = l.module_id
+          WHERE l.doc_id = college_library_documents.id
+            AND (
+              (l.course_id IS NOT NULL AND EXISTS (
+                SELECT 1 FROM college_enrollments ce
+                WHERE ce.user_employee_id = ?
+                  AND ce.course_id = l.course_id
+              ))
+              OR (l.module_id IS NOT NULL AND EXISTS (
+                SELECT 1 FROM college_module_progress mp
+                WHERE mp.user_employee_id = ?
+                  AND mp.module_id = l.module_id
+              ))
+              OR (l.module_id IS NOT NULL AND EXISTS (
+                SELECT 1 FROM college_enrollments ce2
+                WHERE ce2.user_employee_id = ?
+                  AND ce2.course_id = m.course_id
+              ))
+            )
+        )
+      )
+    )`);
+    bindings.push(isRestricted ? 1 : 0, employeeId, employeeId, employeeId);
   }
 
   if (search) {
@@ -69,7 +84,7 @@ export async function onRequestGet(context) {
 
   const rowsResult = await env.DB
     .prepare(
-      `SELECT id, title, category, tags, summary, content_markdown, document_url, visibility, course_id, updated_at
+      `SELECT id, title, category, tags, summary, content_markdown, document_url, visibility, updated_at
        FROM college_library_documents
        WHERE ${clauses.join(' AND ')}
        ORDER BY updated_at DESC, id DESC`
@@ -77,6 +92,42 @@ export async function onRequestGet(context) {
     .bind(...bindings)
     .all();
   const rows = rowsResult?.results || [];
+  const docIds = rows.map((row) => Number(row.id || 0)).filter((id) => id > 0);
+  let linksByDoc = new Map();
+  if (docIds.length) {
+    const placeholders = docIds.map(() => '?').join(', ');
+    const linksResult = await env.DB
+      .prepare(
+        `SELECT
+           l.doc_id,
+           l.course_id,
+           l.module_id,
+           c.code AS course_code,
+           c.title AS course_title,
+           m.title AS module_title
+         FROM college_library_doc_links l
+         LEFT JOIN college_courses c ON c.id = l.course_id
+         LEFT JOIN college_course_modules m ON m.id = l.module_id
+         WHERE l.doc_id IN (${placeholders})
+         ORDER BY l.id ASC`
+      )
+      .bind(...docIds)
+      .all();
+    linksByDoc = new Map();
+    (linksResult?.results || []).forEach((row) => {
+      const docId = Number(row.doc_id || 0);
+      if (!docId) return;
+      if (!linksByDoc.has(docId)) linksByDoc.set(docId, []);
+      linksByDoc.get(docId).push({
+        courseId: Number(row.course_id || 0) || null,
+        moduleId: Number(row.module_id || 0) || null,
+        courseCode: text(row.course_code),
+        courseTitle: text(row.course_title),
+        moduleTitle: text(row.module_title)
+      });
+    });
+  }
+  const canSeeRelationMetadata = Boolean(canManageLibrary || capabilities?.['course:manage'] || capabilities?.['progress:view']);
 
   return cachedJson(
     request,
@@ -92,8 +143,8 @@ export async function onRequestGet(context) {
           .filter(Boolean),
         summary: text(row.summary),
         contentMarkdown: text(row.content_markdown),
-        visibility: text(row.visibility || 'public').toLowerCase(),
-        courseId: Number(row.course_id || 0) || null,
+        visibility: text(row.visibility || 'PUBLIC').toUpperCase(),
+        relatedTo: canSeeRelationMetadata ? linksByDoc.get(Number(row.id || 0)) || [] : undefined,
         documentUrl: text(row.document_url),
         updatedAt: row.updated_at || null
       }))

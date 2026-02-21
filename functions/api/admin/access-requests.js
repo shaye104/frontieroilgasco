@@ -44,7 +44,8 @@ export async function onRequestPost(context) {
   }
 
   const id = Number(payload?.id);
-  const action = String(payload?.action || '').trim().toLowerCase();
+  const rawAction = String(payload?.action || '').trim().toLowerCase();
+  const action = rawAction === 'accepted' || rawAction === 'accept' || rawAction === 'complete' ? 'approve_create' : rawAction;
 
   if (!Number.isInteger(id) || id <= 0) return json({ error: 'id is required.' }, 400);
   if (!['approve_create', 'deny'].includes(action)) return json({ error: 'action must be approve_create or deny.' }, 400);
@@ -141,6 +142,25 @@ export async function onRequestPost(context) {
          VALUES (?, 'TRAINEE', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
       )
       .bind(employeeId, Number(session.employee?.id || 0) || null)
+      .run();
+
+    await env.DB
+      .prepare(
+        `INSERT INTO college_profiles
+         (user_employee_id, trainee_status, start_at, due_at, passed_at, failed_at, assigned_by_user_employee_id, last_activity_at, created_at, updated_at)
+         VALUES (?, 'TRAINEE_ACTIVE', CURRENT_TIMESTAMP, datetime(CURRENT_TIMESTAMP, ?), NULL, NULL, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT(user_employee_id)
+         DO UPDATE SET
+           trainee_status = 'TRAINEE_ACTIVE',
+           start_at = COALESCE(college_profiles.start_at, CURRENT_TIMESTAMP),
+           due_at = datetime(CURRENT_TIMESTAMP, ?),
+           passed_at = NULL,
+           failed_at = NULL,
+           assigned_by_user_employee_id = COALESCE(excluded.assigned_by_user_employee_id, college_profiles.assigned_by_user_employee_id),
+           last_activity_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP`
+      )
+      .bind(employeeId, `+${dueDays} days`, Number(session.employee?.id || 0) || null, `+${dueDays} days`)
       .run();
 
     await enrollEmployeeInRequiredCollegeCourses(env, employeeId);

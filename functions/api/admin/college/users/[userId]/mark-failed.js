@@ -32,7 +32,6 @@ export async function onRequestPost(context) {
       .prepare(
         `UPDATE employees
          SET user_status = 'ACTIVE_STAFF',
-             college_passed_at = COALESCE(college_passed_at, CURRENT_TIMESTAMP),
              updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`
       )
@@ -41,12 +40,12 @@ export async function onRequestPost(context) {
       .prepare(
         `INSERT INTO college_profiles
          (user_employee_id, trainee_status, start_at, due_at, passed_at, failed_at, assigned_by_user_employee_id, last_activity_at, created_at, updated_at)
-         VALUES (?, 'TRAINEE_PASSED', CURRENT_TIMESTAMP, NULL, CURRENT_TIMESTAMP, NULL, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         VALUES (?, 'TRAINEE_FAILED', CURRENT_TIMESTAMP, NULL, NULL, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
          ON CONFLICT(user_employee_id)
          DO UPDATE SET
-           trainee_status = 'TRAINEE_PASSED',
-           passed_at = COALESCE(college_profiles.passed_at, CURRENT_TIMESTAMP),
-           failed_at = NULL,
+           trainee_status = 'TRAINEE_FAILED',
+           failed_at = COALESCE(college_profiles.failed_at, CURRENT_TIMESTAMP),
+           passed_at = NULL,
            last_activity_at = CURRENT_TIMESTAMP,
            updated_at = CURRENT_TIMESTAMP,
            assigned_by_user_employee_id = COALESCE(excluded.assigned_by_user_employee_id, college_profiles.assigned_by_user_employee_id)`
@@ -55,9 +54,7 @@ export async function onRequestPost(context) {
     env.DB
       .prepare(
         `UPDATE college_enrollments
-         SET status = CASE WHEN status = 'passed' THEN status ELSE 'completed' END,
-             completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP),
-             passed_at = COALESCE(passed_at, CURRENT_TIMESTAMP)
+         SET status = CASE WHEN LOWER(COALESCE(status, '')) IN ('passed','completed') THEN status ELSE 'failed' END
          WHERE user_employee_id = ?`
       )
       .bind(employeeId),
@@ -71,7 +68,7 @@ export async function onRequestPost(context) {
       .prepare(
         `INSERT INTO college_audit_events
          (user_employee_id, action, performed_by_employee_id, meta_json, created_at)
-         VALUES (?, 'passed_override', ?, ?, CURRENT_TIMESTAMP)`
+         VALUES (?, 'failed_override', ?, ?, CURRENT_TIMESTAMP)`
       )
       .bind(employeeId, Number(session.employee?.id || 0) || null, JSON.stringify({ reason }))
   ]);

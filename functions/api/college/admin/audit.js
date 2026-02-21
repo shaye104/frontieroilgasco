@@ -7,7 +7,7 @@ function text(value) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const { errorResponse } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse } = await requireCollegeSession(context, { requiredCapabilities: ['college:admin'] });
   if (errorResponse) return errorResponse;
 
   const url = new URL(request.url);
@@ -68,4 +68,3 @@ export async function onRequestGet(context) {
     { cacheControl: 'private, max-age=10, stale-while-revalidate=20' }
   );
 }
-

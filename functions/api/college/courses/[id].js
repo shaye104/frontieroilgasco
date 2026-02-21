@@ -26,7 +26,7 @@ export async function onRequestGet(context) {
              0 AS terms_acknowledged,
              c.id AS course_id, c.code, c.title, c.description, c.estimated_minutes
            FROM college_courses c
-           WHERE c.id = ? AND c.published = 1
+           WHERE c.id = ? AND c.published = 1 AND c.archived_at IS NULL
            LIMIT 1`
         )
         .bind(courseId)
@@ -38,6 +38,8 @@ export async function onRequestGet(context) {
            FROM college_enrollments e
            INNER JOIN college_courses c ON c.id = e.course_id
            WHERE e.user_employee_id = ? AND e.course_id = ? AND c.published = 1
+             AND c.archived_at IS NULL
+             AND LOWER(COALESCE(e.status, 'in_progress')) != 'removed'
            LIMIT 1`
         )
         .bind(employeeId, courseId)
@@ -51,14 +53,22 @@ export async function onRequestGet(context) {
          m.title,
          m.order_index,
          m.content_type,
+         m.completion_rule,
+         m.self_completable,
+         m.required,
          m.content,
+         m.content_link,
          m.attachment_url,
          m.video_url,
-         CASE WHEN mp.id IS NULL THEN 0 ELSE 1 END AS completed
+         CASE WHEN mp.id IS NULL THEN 0
+              WHEN mp.completed_at IS NOT NULL OR LOWER(COALESCE(mp.status, '')) = 'complete' THEN 1
+              ELSE 0 END AS completed,
+         COALESCE(mp.status, 'available') AS progress_status
        FROM college_course_modules m
        LEFT JOIN college_module_progress mp
          ON mp.module_id = m.id AND mp.user_employee_id = ?
        WHERE m.course_id = ?
+         AND m.archived_at IS NULL
          ${canManage ? '' : `AND m.published = 1`}
        ORDER BY m.order_index ASC, m.id ASC`
     )
@@ -69,10 +79,15 @@ export async function onRequestGet(context) {
     title: String(row.title || '').trim(),
     orderIndex: Number(row.order_index || 0),
     contentType: String(row.content_type || 'markdown').trim().toLowerCase(),
+    completionRule: String(row.completion_rule || 'manual').trim().toLowerCase(),
+    selfCompletable: Number(row.self_completable || 0) === 1,
+    required: Number(row.required ?? 1) === 1,
     content: String(row.content || '').trim(),
+    contentLink: row.content_link || null,
     attachmentUrl: row.attachment_url || null,
     videoUrl: row.video_url || null,
-    completed: Number(row.completed || 0) === 1
+    completed: Number(row.completed || 0) === 1,
+    progressStatus: String(row.progress_status || 'available').trim().toLowerCase()
   }));
 
   const totalModules = modules.length;
@@ -107,6 +122,7 @@ export async function onRequestGet(context) {
          ) AS has_passed
        FROM college_exams ex
        WHERE ex.course_id = ?
+         AND ex.archived_at IS NULL
          ${canManage ? '' : 'AND ex.published = 1'}
        ORDER BY ex.module_id ASC, ex.id ASC`
     )

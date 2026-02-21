@@ -1,6 +1,5 @@
 import { json } from '../../../../../auth/_lib/auth.js';
 import { evaluateAndApplyCollegePass, requireCollegeSession } from '../../../../../_lib/college.js';
-import { hasPermission } from '../../../../../_lib/permissions.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -17,21 +16,15 @@ function toScore(value) {
   return Math.max(0, Math.min(100, n));
 }
 
-function canGradeExams(session, roleKeys) {
-  return (
-    Boolean(session?.isAdmin) ||
-    hasPermission(session, 'admin.override') ||
-    hasPermission(session, 'college.exams.grade') ||
-    hasPermission(session, 'college.exams.manage') ||
-    Array.isArray(roleKeys) && (roleKeys.includes('COLLEGE_ADMIN') || roleKeys.includes('EXAMINER'))
-  );
-}
-
 export async function onRequestPost(context) {
   const { env, request, params } = context;
-  const { errorResponse, session, roleKeys, employee } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse, employee, capabilities } = await requireCollegeSession(context, {
+    requiredAnyCapabilities: ['college:admin', 'exam:mark', 'progress:override']
+  });
   if (errorResponse) return errorResponse;
-  if (!canGradeExams(session, roleKeys)) return json({ error: 'Forbidden. Missing required permission.' }, 403);
+  if (!(capabilities?.['college:admin'] || capabilities?.['exam:mark'] || capabilities?.['progress:override'])) {
+    return json({ error: 'Forbidden. Missing required permission.' }, 403);
+  }
 
   const attemptId = toId(params?.attemptId);
   if (!attemptId) return json({ error: 'Invalid attempt id.' }, 400);
@@ -55,8 +48,10 @@ export async function onRequestPost(context) {
          a.user_employee_id,
          a.submitted_at,
          a.score,
+         a.passed,
          ex.passing_score,
-         ex.course_id
+         ex.course_id,
+         ex.module_id
        FROM college_exam_attempts a
        INNER JOIN college_exams ex ON ex.id = a.exam_id
        WHERE a.id = ?`
@@ -93,24 +88,59 @@ export async function onRequestPost(context) {
         targetEmployeeId || actorId,
         actorId,
         JSON.stringify({
-          attemptId,
-          examId: Number(attempt.exam_id || 0),
-          score,
-          passed: Boolean(passed)
+          target: { type: 'exam_attempt', id: attemptId, examId: Number(attempt.exam_id || 0) },
+          before: {
+            score: attempt.score == null ? null : Number(attempt.score),
+            passed: Number(attempt.passed || 0) === 1
+          },
+          after: {
+            score,
+            passed: Boolean(passed),
+            markedByEmployeeId: actorId
+          }
         })
       )
   ]);
 
   if (passed && targetEmployeeId && courseId) {
-    await env.DB
-      .prepare(
-        `UPDATE college_enrollments
-         SET final_quiz_passed = 1,
-             status = CASE WHEN status = 'passed' THEN status ELSE 'in_progress' END
-         WHERE user_employee_id = ? AND course_id = ?`
-      )
-      .bind(targetEmployeeId, courseId)
-      .run();
+    const updates = [
+      env.DB
+        .prepare(
+          `UPDATE college_enrollments
+           SET final_quiz_passed = 1,
+               status = CASE WHEN status = 'passed' THEN status ELSE 'in_progress' END
+           WHERE user_employee_id = ? AND course_id = ?`
+        )
+        .bind(targetEmployeeId, courseId)
+    ];
+    const moduleId = Number(attempt.module_id || 0);
+    if (moduleId > 0) {
+      updates.push(
+        env.DB
+          .prepare(
+            `INSERT INTO college_module_progress
+             (user_employee_id, module_id, status, completed_at, completed_by_employee_id, completion_meta_json)
+             VALUES (?, ?, 'complete', CURRENT_TIMESTAMP, ?, ?)
+             ON CONFLICT(user_employee_id, module_id)
+             DO UPDATE SET
+               status = 'complete',
+               completed_at = CURRENT_TIMESTAMP,
+               completed_by_employee_id = excluded.completed_by_employee_id,
+               completion_meta_json = excluded.completion_meta_json`
+          )
+          .bind(
+            targetEmployeeId,
+            moduleId,
+            actorId,
+            JSON.stringify({
+              source: 'exam_marked_pass',
+              examId: Number(attempt.exam_id || 0),
+              attemptId
+            })
+          )
+      );
+    }
+    await env.DB.batch(updates);
 
     const candidate = await env.DB.prepare(`SELECT * FROM employees WHERE id = ?`).bind(targetEmployeeId).first();
     if (candidate) {

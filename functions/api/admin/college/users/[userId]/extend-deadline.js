@@ -1,5 +1,5 @@
 import { json } from '../../../../auth/_lib/auth.js';
-import { requirePermission } from '../../../_lib/admin-auth.js';
+import { requireCollegeSession } from '../../../../_lib/college.js';
 
 function toUserId(value) {
   const parsed = Number(value || 0);
@@ -14,7 +14,9 @@ function toFutureIso(value) {
 
 export async function onRequestPost(context) {
   const { env, params } = context;
-  const { errorResponse, session } = await requirePermission(context, ['college.manage']);
+  const { errorResponse, session } = await requireCollegeSession(context, {
+    requiredAnyCapabilities: ['college:manage_users', 'college:admin']
+  });
   if (errorResponse) return errorResponse;
 
   const employeeId = toUserId(params?.userId);
@@ -51,6 +53,23 @@ export async function onRequestPost(context) {
          WHERE id = ?`
       )
       .bind(dueAtIso, employeeId),
+    env.DB
+      .prepare(
+        `INSERT INTO college_profiles
+         (user_employee_id, trainee_status, start_at, due_at, assigned_by_user_employee_id, last_activity_at, created_at, updated_at)
+         VALUES (?, 'TRAINEE_ACTIVE', CURRENT_TIMESTAMP, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT(user_employee_id)
+         DO UPDATE SET
+           trainee_status = CASE
+             WHEN college_profiles.trainee_status IN ('TRAINEE_PASSED', 'TRAINEE_FAILED', 'TRAINEE_WITHDRAWN') THEN college_profiles.trainee_status
+             ELSE 'TRAINEE_ACTIVE'
+           END,
+           due_at = excluded.due_at,
+           assigned_by_user_employee_id = COALESCE(excluded.assigned_by_user_employee_id, college_profiles.assigned_by_user_employee_id),
+           last_activity_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP`
+      )
+      .bind(employeeId, dueAtIso, Number(session.employee?.id || 0) || null),
     env.DB
       .prepare(
         `INSERT INTO college_audit_events

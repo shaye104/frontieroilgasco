@@ -18,12 +18,12 @@ function toPositiveInteger(value, fallback = 0) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const { errorResponse } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse } = await requireCollegeSession(context, { requiredCapabilities: ['course:manage'] });
   if (errorResponse) return errorResponse;
 
   const rows = await env.DB
     .prepare(
-      `SELECT
+       `SELECT
          c.id,
          c.code,
          c.title,
@@ -31,12 +31,14 @@ export async function onRequestGet(context) {
          c.visibility,
          c.is_required_for_applicants,
          c.published,
+         c.archived_at,
          c.estimated_minutes,
          c.updated_at,
          (
            SELECT COUNT(*) FROM college_course_modules m WHERE m.course_id = c.id
          ) AS module_count
        FROM college_courses c
+       WHERE c.archived_at IS NULL
        ORDER BY c.updated_at DESC, c.id DESC`
     )
     .all();
@@ -53,6 +55,7 @@ export async function onRequestGet(context) {
         visibility: normalizeVisibility(row.visibility),
         requiredForApplicants: Number(row.is_required_for_applicants || 0) === 1,
         published: Number(row.published || 0) === 1,
+        archivedAt: row.archived_at || null,
         estimatedMinutes: toPositiveInteger(row.estimated_minutes, 0),
         moduleCount: Number(row.module_count || 0),
         updatedAt: row.updated_at || null
@@ -64,7 +67,7 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env, request } = context;
-  const { errorResponse, session } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse, session } = await requireCollegeSession(context, { requiredCapabilities: ['course:manage'] });
   if (errorResponse) return errorResponse;
 
   let payload;
@@ -87,6 +90,16 @@ export async function onRequestPost(context) {
 
   const courseId = Number(payload?.id || 0);
   if (courseId > 0) {
+    const before = await env.DB
+      .prepare(
+        `SELECT code, title, description, visibility, published, is_required_for_applicants, estimated_minutes
+         FROM college_courses
+         WHERE id = ?`
+      )
+      .bind(courseId)
+      .first();
+    if (!before) return json({ error: 'Course not found.' }, 404);
+
     await env.DB
       .prepare(
         `UPDATE college_courses
@@ -123,7 +136,19 @@ export async function onRequestPost(context) {
       .bind(
         Number(session.employee?.id || 0) || null,
         Number(session.employee?.id || 0) || null,
-        JSON.stringify({ courseId, code, title, visibility, published: Boolean(published) })
+        JSON.stringify({
+          target: { type: 'course', id: courseId },
+          before,
+          after: {
+            code,
+            title,
+            description: description || null,
+            visibility,
+            published: Boolean(published),
+            requiredForApplicants: Boolean(requiredForApplicants),
+            estimatedMinutes
+          }
+        })
       )
       .run();
 
@@ -159,10 +184,82 @@ export async function onRequestPost(context) {
     .bind(
       Number(session.employee?.id || 0) || null,
       Number(session.employee?.id || 0) || null,
-      JSON.stringify({ courseId: id, code, title, visibility, published: Boolean(published) })
+      JSON.stringify({
+        target: { type: 'course', id },
+        before: null,
+        after: {
+          code,
+          title,
+          description: description || null,
+          visibility,
+          published: Boolean(published),
+          requiredForApplicants: Boolean(requiredForApplicants),
+          estimatedMinutes
+        }
+      })
     )
     .run();
 
   return json({ ok: true, id });
 }
 
+export async function onRequestDelete(context) {
+  const { env, request } = context;
+  const { errorResponse, session } = await requireCollegeSession(context, { requiredCapabilities: ['course:manage'] });
+  if (errorResponse) return errorResponse;
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    payload = {};
+  }
+
+  const courseId = Number(payload?.id || 0);
+  if (!Number.isInteger(courseId) || courseId <= 0) return json({ error: 'Course id is required.' }, 400);
+
+  const before = await env.DB
+    .prepare(`SELECT id, code, title, archived_at FROM college_courses WHERE id = ?`)
+    .bind(courseId)
+    .first();
+  if (!before) return json({ error: 'Course not found.' }, 404);
+
+  await env.DB.batch([
+    env.DB
+      .prepare(
+        `UPDATE college_courses
+         SET archived_at = COALESCE(archived_at, CURRENT_TIMESTAMP),
+             published = 0,
+             updated_by_employee_id = ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`
+      )
+      .bind(Number(session.employee?.id || 0) || null, courseId),
+    env.DB
+      .prepare(
+        `UPDATE college_course_modules
+         SET archived_at = COALESCE(archived_at, CURRENT_TIMESTAMP),
+             published = 0,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE course_id = ?`
+      )
+      .bind(courseId),
+    env.DB
+      .prepare(
+        `INSERT INTO college_audit_events
+         (user_employee_id, action, performed_by_employee_id, meta_json, created_at)
+         VALUES (?, 'course_archive', ?, ?, CURRENT_TIMESTAMP)`
+      )
+      .bind(
+        Number(session.employee?.id || 0) || null,
+        Number(session.employee?.id || 0) || null,
+        JSON.stringify({
+          target: { type: 'course', id: courseId },
+          before,
+          after: { archivedAt: new Date().toISOString() }
+        })
+      )
+  ]);
+
+  return json({ ok: true });
+}

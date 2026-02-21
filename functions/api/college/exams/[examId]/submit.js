@@ -45,6 +45,7 @@ export async function onRequestPost(context) {
       `SELECT
          ex.id,
          ex.course_id,
+         ex.module_id,
          ex.passing_score,
          ex.attempt_limit,
          ex.published
@@ -59,7 +60,13 @@ export async function onRequestPost(context) {
   const courseId = Number(exam.course_id || 0);
   if (!canManage) {
     const enrollment = await env.DB
-      .prepare(`SELECT id FROM college_enrollments WHERE user_employee_id = ? AND course_id = ? LIMIT 1`)
+      .prepare(
+        `SELECT id
+         FROM college_enrollments
+         WHERE user_employee_id = ? AND course_id = ?
+           AND LOWER(COALESCE(status, 'in_progress')) != 'removed'
+         LIMIT 1`
+      )
       .bind(employeeId, courseId)
       .first();
     if (!enrollment) return json({ error: 'You are not enrolled for this exam.' }, 403);
@@ -181,15 +188,43 @@ export async function onRequestPost(context) {
     .run();
 
   if (passed && courseId) {
-    await env.DB
-      .prepare(
-        `UPDATE college_enrollments
-         SET final_quiz_passed = 1,
-             status = CASE WHEN status = 'passed' THEN status ELSE 'in_progress' END
-         WHERE user_employee_id = ? AND course_id = ?`
-      )
-      .bind(employeeId, courseId)
-      .run();
+    const updates = [
+      env.DB
+        .prepare(
+          `UPDATE college_enrollments
+           SET final_quiz_passed = 1,
+               status = CASE WHEN status = 'passed' THEN status ELSE 'in_progress' END
+           WHERE user_employee_id = ? AND course_id = ?`
+        )
+        .bind(employeeId, courseId)
+    ];
+    const moduleId = Number(exam.module_id || 0);
+    if (moduleId > 0) {
+      updates.push(
+        env.DB
+          .prepare(
+            `INSERT INTO college_module_progress
+             (user_employee_id, module_id, status, completed_at, completed_by_employee_id, completion_meta_json)
+             VALUES (?, ?, 'complete', CURRENT_TIMESTAMP, ?, ?)
+             ON CONFLICT(user_employee_id, module_id)
+             DO UPDATE SET
+               status = 'complete',
+               completed_at = CURRENT_TIMESTAMP,
+               completed_by_employee_id = excluded.completed_by_employee_id,
+               completion_meta_json = excluded.completion_meta_json`
+          )
+          .bind(
+            employeeId,
+            moduleId,
+            employeeId,
+            JSON.stringify({
+              source: 'exam_pass',
+              examId
+            })
+          )
+      );
+    }
+    await env.DB.batch(updates);
 
     const candidate = await env.DB.prepare(`SELECT * FROM employees WHERE id = ?`).bind(employeeId).first();
     if (candidate) {

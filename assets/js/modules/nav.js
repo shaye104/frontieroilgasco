@@ -72,7 +72,7 @@ export function renderIntranetNavbar(session) {
   nav.innerHTML = '';
   const restrictedCollegeOnly =
     !session?.isAdmin &&
-    String(session?.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' &&
+    String(session?.collegeTraineeStatus || session?.userStatus || '').trim().toUpperCase() === 'TRAINEE_ACTIVE' &&
     !session?.collegePassedAt;
 
   if (restrictedCollegeOnly) {

@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221college1" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260222a" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260222b" />
     <link rel="stylesheet" href="/assets/css/components.css?v=20260221college1" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260222b" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260222c" />
   </head>
   <body class="page page-intranet page-college">
     <header class="site-header">
@@ -138,13 +138,13 @@
 
           <section id="collegeTabAdmin" class="college-tab-panel hidden" data-college-panel="admin">
             <nav class="college-admin-tabs" aria-label="College admin sections">
-              <button class="college-admin-tab is-active" type="button" data-college-admin-tab="dashboard">Dashboard</button>
-              <button class="college-admin-tab" type="button" data-college-admin-tab="trainees">Trainees</button>
-              <button class="college-admin-tab" type="button" data-college-admin-tab="courses">Courses</button>
-              <button class="college-admin-tab" type="button" data-college-admin-tab="exams">Exams &amp; Marking</button>
-              <button class="college-admin-tab" type="button" data-college-admin-tab="library">Library</button>
-              <button class="college-admin-tab" type="button" data-college-admin-tab="permissions">Permissions</button>
-              <button class="college-admin-tab" type="button" data-college-admin-tab="audit">Audit</button>
+              <button class="btn btn-secondary college-admin-tab is-active" type="button" data-college-admin-tab="dashboard">Dashboard</button>
+              <button class="btn btn-secondary college-admin-tab" type="button" data-college-admin-tab="trainees">Trainees</button>
+              <button class="btn btn-secondary college-admin-tab" type="button" data-college-admin-tab="courses">Courses</button>
+              <button class="btn btn-secondary college-admin-tab" type="button" data-college-admin-tab="exams">Exams &amp; Marking</button>
+              <button class="btn btn-secondary college-admin-tab" type="button" data-college-admin-tab="library">Library</button>
+              <button class="btn btn-secondary college-admin-tab" type="button" data-college-admin-tab="permissions">Permissions</button>
+              <button class="btn btn-secondary college-admin-tab" type="button" data-college-admin-tab="audit">Audit</button>
             </nav>
 
             <article class="college-card" data-college-admin-panel="dashboard">
@@ -194,8 +194,11 @@
                   <label for="collegeAdminPeopleStatus">Status</label>
                   <select id="collegeAdminPeopleStatus">
                     <option value="">All</option>
-                    <option value="APPLICANT_ACCEPTED">Applicant Accepted</option>
-                    <option value="ACTIVE_STAFF">Active Staff</option>
+                    <option value="TRAINEE_ACTIVE">Trainee Active</option>
+                    <option value="TRAINEE_PASSED">Trainee Passed</option>
+                    <option value="TRAINEE_FAILED">Trainee Failed</option>
+                    <option value="TRAINEE_WITHDRAWN">Trainee Withdrawn</option>
+                    <option value="NOT_A_TRAINEE">Not a Trainee</option>
                   </select>
                 </div>
               </div>
@@ -254,12 +257,16 @@
                   <h4>Enrollment Manager</h4>
                   <form id="collegeAdminEnrollForm" class="filter-row">
                     <div>
-                      <label for="collegeAdminEnrollUser">Employee ID</label>
-                      <input id="collegeAdminEnrollUser" type="number" min="1" required />
+                      <label for="collegeAdminEnrollUser">Employee</label>
+                      <select id="collegeAdminEnrollUser" required>
+                        <option value="">Select employee</option>
+                      </select>
                     </div>
                     <div>
-                      <label for="collegeAdminEnrollCourse">Course ID</label>
-                      <input id="collegeAdminEnrollCourse" type="number" min="1" required />
+                      <label for="collegeAdminEnrollCourse">Course</label>
+                      <select id="collegeAdminEnrollCourse" required>
+                        <option value="">Select course</option>
+                      </select>
                     </div>
                     <div class="college-inline-control">
                       <label for="collegeAdminEnrollRequired">Required</label>
@@ -285,10 +292,11 @@
                       <th>Visibility</th>
                       <th>Published</th>
                       <th>Modules</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody id="collegeAdminCourseRows">
-                    <tr><td colspan="6">Loading...</td></tr>
+                    <tr><td colspan="7">Loading...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -314,12 +322,16 @@
                   </select>
                 </div>
                 <div>
-                  <label for="collegeAdminLibraryLinkedCourses">Linked Course IDs</label>
-                  <input id="collegeAdminLibraryLinkedCourses" type="text" placeholder="1, 2, 3" />
+                  <label for="collegeAdminLibraryLinkedCourseId">Linked Course</label>
+                  <select id="collegeAdminLibraryLinkedCourseId">
+                    <option value="">None</option>
+                  </select>
                 </div>
                 <div>
-                  <label for="collegeAdminLibraryLinkedModules">Linked Module IDs</label>
-                  <input id="collegeAdminLibraryLinkedModules" type="text" placeholder="10, 11" />
+                  <label for="collegeAdminLibraryLinkedModuleId">Linked Module</label>
+                  <select id="collegeAdminLibraryLinkedModuleId">
+                    <option value="">None</option>
+                  </select>
                 </div>
                 <div>
                   <label for="collegeAdminLibraryUrl">Document URL</label>
@@ -339,10 +351,11 @@
                       <th>Visibility</th>
                       <th>Published</th>
                       <th>Updated</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody id="collegeAdminLibraryRows">
-                    <tr><td colspan="5">Loading...</td></tr>
+                    <tr><td colspan="6">Loading...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -356,12 +369,16 @@
                   <input id="collegeAdminExamTitle" type="text" required />
                 </div>
                 <div>
-                  <label for="collegeAdminExamCourseId">Course ID</label>
-                  <input id="collegeAdminExamCourseId" type="number" min="1" required />
+                  <label for="collegeAdminExamCourseId">Course</label>
+                  <select id="collegeAdminExamCourseId" required>
+                    <option value="">Select course</option>
+                  </select>
                 </div>
                 <div>
-                  <label for="collegeAdminExamModuleId">Module ID</label>
-                  <input id="collegeAdminExamModuleId" type="number" min="1" />
+                  <label for="collegeAdminExamModuleId">Module</label>
+                  <select id="collegeAdminExamModuleId">
+                    <option value="">None</option>
+                  </select>
                 </div>
                 <div>
                   <label for="collegeAdminExamPassingScore">Passing Score</label>
@@ -392,10 +409,11 @@
                       <th>Course</th>
                       <th>Questions</th>
                       <th>Pending</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody id="collegeAdminExamRows">
-                    <tr><td colspan="5">Loading...</td></tr>
+                    <tr><td colspan="6">Loading...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -405,8 +423,10 @@
               <h3>Exam Questions</h3>
               <form id="collegeAdminExamQuestionForm" class="filter-row">
                 <div>
-                  <label for="collegeAdminQuestionExamId">Exam ID</label>
-                  <input id="collegeAdminQuestionExamId" type="number" min="1" required />
+                  <label for="collegeAdminQuestionExamId">Exam</label>
+                  <select id="collegeAdminQuestionExamId" required>
+                    <option value="">Select exam</option>
+                  </select>
                 </div>
                 <div>
                   <label for="collegeAdminQuestionType">Type</label>
@@ -461,8 +481,10 @@
               <h3>Grading Queue</h3>
               <form id="collegeAdminGradeForm" class="filter-row">
                 <div>
-                  <label for="collegeAdminGradeAttemptId">Attempt ID</label>
-                  <input id="collegeAdminGradeAttemptId" type="number" min="1" required />
+                  <label for="collegeAdminGradeAttemptId">Attempt</label>
+                  <select id="collegeAdminGradeAttemptId" required>
+                    <option value="">Select attempt</option>
+                  </select>
                 </div>
                 <div>
                   <label for="collegeAdminGradeScore">Score (0-100)</label>
@@ -500,8 +522,10 @@
               <h3>Permissions</h3>
               <form id="collegeAdminRolesForm" class="filter-row">
                 <div>
-                  <label for="collegeAdminRoleUser">Employee ID</label>
-                  <input id="collegeAdminRoleUser" type="number" min="1" required />
+                  <label for="collegeAdminRoleUser">Employee</label>
+                  <select id="collegeAdminRoleUser" required>
+                    <option value="">Select employee</option>
+                  </select>
                 </div>
                 <div class="college-grid-span-full">
                   <label>College Roles</label>
@@ -581,6 +605,6 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/college-page.js?v=20260222a"></script>
+    <script type="module" src="/assets/js/pages/college-page.js?v=20260222b"></script>
   </body>
 </html>

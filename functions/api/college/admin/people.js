@@ -7,7 +7,7 @@ function text(value) {
 
 export async function onRequestGet(context) {
   const { env, request } = context;
-  const { errorResponse } = await requireCollegeSession(context, { requireManage: true });
+  const { errorResponse } = await requireCollegeSession(context, { requiredAnyCapabilities: ['college:admin', 'progress:view'] });
   if (errorResponse) return errorResponse;
 
   const url = new URL(request.url);
@@ -29,7 +29,13 @@ export async function onRequestGet(context) {
     binds.push(term, term, term);
   }
   if (status) {
-    where.push(`UPPER(COALESCE(e.user_status, 'ACTIVE_STAFF')) = ?`);
+    where.push(`UPPER(COALESCE(cp.trainee_status,
+      CASE
+        WHEN e.college_passed_at IS NOT NULL THEN 'TRAINEE_PASSED'
+        WHEN UPPER(COALESCE(e.user_status, '')) = 'APPLICANT_ACCEPTED' THEN 'TRAINEE_ACTIVE'
+        ELSE 'NOT_A_TRAINEE'
+      END
+    )) = ?`);
     binds.push(status);
   }
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
@@ -38,6 +44,7 @@ export async function onRequestGet(context) {
     .prepare(
       `SELECT COUNT(*) AS total
        FROM employees e
+       LEFT JOIN college_profiles cp ON cp.user_employee_id = e.id
        ${whereSql}`
     )
     .bind(...binds)
@@ -52,10 +59,63 @@ export async function onRequestGet(context) {
          e.serial_number,
          e.rank,
          e.user_status,
+         cp.trainee_status,
+         cp.start_at,
+         cp.due_at,
+         cp.passed_at,
+         cp.failed_at,
+         e.college_start_at,
          e.college_due_at,
          e.college_passed_at,
+         (
+           SELECT COUNT(*)
+           FROM college_enrollments ce
+           WHERE ce.user_employee_id = e.id
+             AND ce.required = 1
+         ) AS required_courses,
+         (
+           SELECT COUNT(*)
+           FROM college_enrollments ce
+           WHERE ce.user_employee_id = e.id
+             AND ce.required = 1
+             AND ce.status IN ('completed', 'passed')
+         ) AS completed_required_courses,
+         (
+           SELECT COUNT(*)
+           FROM college_course_modules m
+           INNER JOIN college_enrollments ce ON ce.course_id = m.course_id
+           WHERE ce.user_employee_id = e.id
+             AND ce.required = 1
+         ) AS required_modules,
+         (
+           SELECT COUNT(*)
+           FROM college_module_progress mp
+           INNER JOIN college_course_modules m ON m.id = mp.module_id
+           INNER JOIN college_enrollments ce ON ce.course_id = m.course_id
+           WHERE ce.user_employee_id = e.id
+             AND ce.required = 1
+             AND mp.user_employee_id = e.id
+             AND (mp.completed_at IS NOT NULL OR LOWER(COALESCE(mp.status, '')) = 'complete')
+         ) AS completed_required_modules,
+         (
+           SELECT MAX(activity_at)
+           FROM (
+             SELECT COALESCE(ce.passed_at, ce.completed_at, ce.enrolled_at) AS activity_at
+             FROM college_enrollments ce
+             WHERE ce.user_employee_id = e.id
+             UNION ALL
+             SELECT mp.completed_at AS activity_at
+             FROM college_module_progress mp
+             WHERE mp.user_employee_id = e.id
+             UNION ALL
+             SELECT a.submitted_at AS activity_at
+             FROM college_exam_attempts a
+             WHERE a.user_employee_id = e.id
+           )
+         ) AS last_activity_at,
          GROUP_CONCAT(cra.role_key) AS college_roles
        FROM employees e
+       LEFT JOIN college_profiles cp ON cp.user_employee_id = e.id
        LEFT JOIN college_role_assignments cra ON cra.employee_id = e.id
        ${whereSql}
        GROUP BY e.id
@@ -76,8 +136,23 @@ export async function onRequestGet(context) {
         serialNumber: text(row.serial_number),
         rank: text(row.rank),
         userStatus: text(row.user_status || 'ACTIVE_STAFF').toUpperCase(),
-        collegeDueAt: row.college_due_at || null,
-        collegePassedAt: row.college_passed_at || null,
+        traineeStatus: text(
+          row.trainee_status ||
+            (row.college_passed_at ? 'TRAINEE_PASSED' : text(row.user_status).toUpperCase() === 'APPLICANT_ACCEPTED' ? 'TRAINEE_ACTIVE' : 'NOT_A_TRAINEE')
+        ).toUpperCase(),
+        collegeStartAt: row.start_at || row.college_start_at || null,
+        collegeDueAt: row.due_at || row.college_due_at || null,
+        collegePassedAt: row.passed_at || row.college_passed_at || null,
+        collegeFailedAt: row.failed_at || null,
+        requiredCourses: Number(row.required_courses || 0),
+        completedRequiredCourses: Number(row.completed_required_courses || 0),
+        progressPct: (() => {
+          const total = Math.max(0, Number(row.required_modules || 0));
+          const completed = Math.max(0, Number(row.completed_required_modules || 0));
+          if (!total) return 0;
+          return Math.max(0, Math.min(100, Math.round((completed / total) * 100)));
+        })(),
+        lastActivityAt: row.last_activity_at || null,
         collegeRoles: text(row.college_roles)
           .split(',')
           .map((entry) => text(entry).toUpperCase())
@@ -93,4 +168,3 @@ export async function onRequestGet(context) {
     { cacheControl: 'private, max-age=10, stale-while-revalidate=20' }
   );
 }
-

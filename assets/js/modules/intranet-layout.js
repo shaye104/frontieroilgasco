@@ -35,7 +35,7 @@ function ensureNavbarFallback(session) {
 
   const restrictedCollegeOnly =
     !session?.isAdmin &&
-    String(session?.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' &&
+    String(session?.collegeTraineeStatus || session?.userStatus || '').trim().toUpperCase() === 'TRAINEE_ACTIVE' &&
     !session?.collegePassedAt;
 
   const links = [...nav.querySelectorAll('a[href]')];
