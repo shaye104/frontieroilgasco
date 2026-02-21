@@ -151,6 +151,20 @@ function toSortedProfitRows(map) {
     .map((row, index) => ({ rank: index + 1, label: row.label, netProfit: toMoney(row.netProfit) }));
 }
 
+function normalizeCargoName(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
+function isCrudeOilCargo(name) {
+  const normalized = normalizeCargoName(name);
+  return normalized.includes('CRUDE');
+}
+
+function isGasolineCargo(name) {
+  const normalized = normalizeCargoName(name);
+  return normalized.includes('GASOLINE');
+}
+
 function calcSettledDays(endedAt, settledAt) {
   if (!endedAt || !settledAt) return null;
   const ended = new Date(endedAt);
@@ -224,6 +238,8 @@ export async function onRequestGet(context) {
   let crewShareTotal = 0;
   let freightLossesValueTotal = 0;
   let companyShareSettledTotal = 0;
+  let crudeSoldTotal = 0;
+  let gasolineSoldTotal = 0;
   const settledAgesDays = [];
 
   const routeProfit = new Map();
@@ -253,6 +269,22 @@ export async function onRequestGet(context) {
         }, 0)
       )
     );
+
+    settlementLines.forEach((line) => {
+      const soldQty = Math.max(
+        0,
+        Number.isFinite(Number(line.netQuantity))
+          ? Math.floor(Number(line.netQuantity))
+          : Math.max(0, Math.floor(Number(line.quantity || 0)) - Math.floor(Number(line.lostQuantity || 0)))
+      );
+      if (soldQty <= 0) return;
+
+      if (isCrudeOilCargo(line.cargoName)) {
+        crudeSoldTotal += soldQty;
+      } else if (isGasolineCargo(line.cargoName)) {
+        gasolineSoldTotal += soldQty;
+      }
+    });
 
     target.netProfit = toMoney(target.netProfit + netProfit);
     target.companyShare = toMoney(target.companyShare + companyShare);
@@ -286,6 +318,7 @@ export async function onRequestGet(context) {
   const avgDaysToSettle = settledAgesDays.length
     ? toMoney(settledAgesDays.reduce((sum, days) => sum + days, 0) / settledAgesDays.length)
     : null;
+  const emissionsKg = toMoney(Math.max(0, crudeSoldTotal) * 430 + Math.max(0, gasolineSoldTotal) * 373);
 
   const unsettledBindings = [];
   let unsettledWhere = `v.status = 'ENDED' AND COALESCE(v.company_share_status, 'UNSETTLED') = 'UNSETTLED'
@@ -444,7 +477,10 @@ export async function onRequestGet(context) {
         unsettledCompanyShareOutstanding: unsettledTotal,
         completedVoyages: Number(endedInRange.length || 0),
         settlementRatePct: Math.max(0, Math.min(100, toMoney(settlementRatePct))),
-        avgDaysToSettle
+        avgDaysToSettle,
+        emissionsKg,
+        crudeSold: Math.max(0, Math.floor(crudeSoldTotal)),
+        gasSold: Math.max(0, Math.floor(gasolineSoldTotal))
       },
       charts: {
         netProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.netProfit })),

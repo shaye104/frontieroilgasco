@@ -1,3 +1,9 @@
+function parseStartingBalance(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.round(parsed);
+}
+
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
   const permissionSeed = [
@@ -276,6 +282,42 @@ export async function ensureCoreSchema(env) {
       FOREIGN KEY(settled_by_employee_id) REFERENCES employees(id),
       FOREIGN KEY(oow_employee_id) REFERENCES employees(id)
     )`,
+    `CREATE TABLE IF NOT EXISTS finance_cash_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      starting_balance INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS finance_cash_ledger_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      created_by_employee_id INTEGER NOT NULL,
+      created_by_name TEXT,
+      created_by_discord_user_id TEXT,
+      type TEXT NOT NULL CHECK (type IN ('IN', 'OUT')),
+      amount INTEGER NOT NULL,
+      reason TEXT NOT NULL,
+      category TEXT,
+      voyage_id INTEGER,
+      balance_after INTEGER NOT NULL DEFAULT 0,
+      deleted_at TEXT,
+      deleted_by_employee_id INTEGER,
+      deleted_reason TEXT,
+      FOREIGN KEY(created_by_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(deleted_by_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(voyage_id) REFERENCES voyages(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS finance_cashflow_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entry_id INTEGER NOT NULL,
+      action TEXT NOT NULL,
+      amount INTEGER NOT NULL DEFAULT 0,
+      performed_by_employee_id INTEGER,
+      performed_by_discord_user_id TEXT,
+      details_json TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(entry_id) REFERENCES finance_cash_ledger_entries(id),
+      FOREIGN KEY(performed_by_employee_id) REFERENCES employees(id)
+    )`,
     // Indexes are created after legacy-column backfills to avoid migration failures on older databases.
     `CREATE TABLE IF NOT EXISTS form_categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -401,7 +443,11 @@ export async function ensureCoreSchema(env) {
   const optionalIndexStatements = [
     `CREATE INDEX IF NOT EXISTS idx_voyages_company_share_status ON voyages(company_share_status)`,
     `CREATE INDEX IF NOT EXISTS idx_voyages_ended_at ON voyages(ended_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_finance_settlement_audit_created_at ON finance_settlement_audit(created_at DESC)`
+    `CREATE INDEX IF NOT EXISTS idx_finance_settlement_audit_created_at ON finance_settlement_audit(created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_created_at ON finance_cash_ledger_entries(created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_type ON finance_cash_ledger_entries(type)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_deleted_at ON finance_cash_ledger_entries(deleted_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cashflow_audit_created_at ON finance_cashflow_audit(created_at DESC)`
   ];
   for (const sql of optionalIndexStatements) {
     try {
@@ -410,6 +456,15 @@ export async function ensureCoreSchema(env) {
       // Keep runtime healthy even if optional index creation fails in legacy states.
     }
   }
+
+  const startingBalanceSeed = parseStartingBalance(env.FINANCE_STARTING_BALANCE);
+  await env.DB
+    .prepare(
+      `INSERT OR IGNORE INTO finance_cash_settings (id, starting_balance, updated_at)
+       VALUES (1, ?, CURRENT_TIMESTAMP)`
+    )
+    .bind(startingBalanceSeed)
+    .run();
 
   try {
     await env.DB

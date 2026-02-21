@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221x" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260221x" />
-    <link rel="stylesheet" href="/assets/css/components.css?v=20260221x" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221x" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221y" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221y" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221y" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221y" />
   </head>
   <body class="page page-intranet page-finances">
     <header class="site-header">
@@ -45,6 +45,7 @@
             <button class="finance-tab" type="button" data-finance-tab="trends">Trends</button>
             <button class="finance-tab" type="button" data-finance-tab="debts">Debts</button>
             <button class="finance-tab" type="button" data-finance-tab="audit">Audit</button>
+            <button class="finance-tab" type="button" data-finance-tab="cashflow">Cashflow</button>
           </nav>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="financesFeedback" class="feedback" role="status" aria-live="polite"></div>
@@ -72,10 +73,10 @@
                 <p id="kpiDeltaOutstanding" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
-                <span class="finance-kpi-icon" aria-hidden="true" data-icon="check-circle"></span>
-                <p class="finance-kpi-label">Settlement Rate</p>
-                <p id="kpiSettlementRate" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
-                <p id="kpiDeltaSettlementRate" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="cloud"></span>
+                <p class="finance-kpi-label">CO2 Emissions</p>
+                <p id="kpiEmissions" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaEmissions" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
                 <span class="finance-kpi-icon" aria-hidden="true" data-icon="clock"></span>
@@ -285,6 +286,104 @@
               </div>
             </article>
           </section>
+
+          <section id="financeTabCashflow" class="finance-tab-panel hidden" data-finance-panel="cashflow">
+            <div class="finance-cashflow-kpi-grid">
+              <article class="finance-kpi finance-cashflow-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="wallet"></span>
+                <p class="finance-kpi-label">Current Cash Balance</p>
+                <p id="cashflowKpiCurrentBalance" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p class="finance-kpi-delta">All time</p>
+              </article>
+              <article class="finance-kpi finance-cashflow-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="arrow-up-right"></span>
+                <p class="finance-kpi-label">Cash In</p>
+                <p id="cashflowKpiIn" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p class="finance-kpi-delta">This period</p>
+              </article>
+              <article class="finance-kpi finance-cashflow-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="arrow-down-right"></span>
+                <p class="finance-kpi-label">Cash Out</p>
+                <p id="cashflowKpiOut" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p class="finance-kpi-delta">This period</p>
+              </article>
+              <article class="finance-kpi finance-cashflow-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="activity"></span>
+                <p class="finance-kpi-label">Net Cashflow</p>
+                <p id="cashflowKpiNet" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p class="finance-kpi-delta">This period</p>
+              </article>
+            </div>
+
+            <article class="finance-chart-card finance-cashflow-entry-card">
+              <h3>Add Entry</h3>
+              <form id="cashflowEntryForm" class="finance-cashflow-entry-form">
+                <div class="finance-cashflow-type-wrap">
+                  <label>Type</label>
+                  <div class="segmented-control finance-cashflow-type-control" role="group" aria-label="Cashflow entry type">
+                    <button type="button" class="segmented-btn is-active" data-cashflow-type="IN">IN</button>
+                    <button type="button" class="segmented-btn" data-cashflow-type="OUT">OUT</button>
+                  </div>
+                  <input id="cashflowType" type="hidden" value="IN" />
+                </div>
+                <div>
+                  <label for="cashflowAmount">Amount</label>
+                  <input id="cashflowAmount" type="number" min="1" step="1" required />
+                </div>
+                <div>
+                  <label for="cashflowCategory">Category</label>
+                  <select id="cashflowCategory">
+                    <option value="">Select category</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Fuel">Fuel</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="cashflowRelatedVoyage">Related Voyage</label>
+                  <input id="cashflowRelatedVoyage" type="text" list="cashflowVoyageOptions" placeholder="Optional" />
+                  <datalist id="cashflowVoyageOptions"></datalist>
+                </div>
+                <div class="finance-cashflow-entry-wide">
+                  <label for="cashflowReason">Reason</label>
+                  <textarea id="cashflowReason" rows="3" minlength="5" required></textarea>
+                </div>
+                <div class="finance-cashflow-entry-actions">
+                  <button id="cashflowSubmit" type="submit" class="btn btn-primary">Submit Entry</button>
+                </div>
+              </form>
+              <div id="cashflowEntryFeedback" class="feedback" role="status" aria-live="polite"></div>
+            </article>
+
+            <article class="finance-chart-card finance-table-card">
+              <div class="table-wrap">
+                <table class="data-table finance-data-table">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Type</th>
+                      <th class="align-right">Amount (ƒ)</th>
+                      <th>Reason</th>
+                      <th>Category</th>
+                      <th>Related Voyage</th>
+                      <th>Created By</th>
+                      <th class="align-right">Balance After</th>
+                    </tr>
+                  </thead>
+                  <tbody id="financeCashflowBody">
+                    <tr><td colspan="8"><div class="finance-chart-skeleton"></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagination-row">
+                <button id="financeCashflowPrev" class="btn btn-secondary" type="button">Previous</button>
+                <span id="financeCashflowPageInfo" class="pagination-info">Page 1 of 1</span>
+                <button id="financeCashflowNext" class="btn btn-secondary" type="button">Next</button>
+              </div>
+            </article>
+          </section>
         </section>
       </div>
     </main>
@@ -300,6 +399,6 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221x"></script>
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221y"></script>
   </body>
 </html>

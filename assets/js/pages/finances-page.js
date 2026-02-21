@@ -9,7 +9,7 @@ function $$(selector) {
 }
 
 const RANGE_KEYS = ['week', 'month', '3m', '6m', 'year'];
-const TAB_KEYS = ['overview', 'trends', 'debts', 'audit'];
+const TAB_KEYS = ['overview', 'trends', 'debts', 'audit', 'cashflow'];
 const BREAKDOWN_KEYS = ['route', 'vessel', 'ootw'];
 
 const FINANCE_ICONS = {
@@ -21,8 +21,18 @@ const FINANCE_ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12M6 22h12"/><path d="M8 2v5a4 4 0 0 0 2 3.5L12 12l-2 1.5A4 4 0 0 0 8 17v5M16 2v5a4 4 0 0 1-2 3.5L12 12l2 1.5A4 4 0 0 1 16 17v5"/></svg>',
   'check-circle':
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg>',
+  cloud:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19a4.5 4.5 0 1 0-1.2-8.84A6 6 0 1 0 6 18.5h11.5z"/></svg>',
   clock:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  wallet:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="6" width="19" height="14" rx="2"/><path d="M16 12h5.5"/><path d="M7 6V4.8a1.8 1.8 0 0 1 2.7-1.56L14 6"/></svg>',
+  'arrow-up-right':
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>',
+  'arrow-down-right':
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7 17 17"/><path d="M8 17h9V8"/></svg>',
+  activity:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l2-4 4 8 2-4h6"/></svg>',
   'package-x':
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16.5 9.4 7.5 4.2"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/><path d="m16 15 4 4"/><path d="m20 15-4 4"/></svg>',
   route:
@@ -69,6 +79,10 @@ function formatInteger(value) {
 function formatPercent(value) {
   const num = Number(value || 0);
   return Number.isFinite(num) ? `${Math.round(num)}%` : '0%';
+}
+
+function formatKilograms(value) {
+  return `${formatInteger(value)} kg`;
 }
 
 function formatWhen(value) {
@@ -749,12 +763,12 @@ function isAllZeroSeries(series) {
 }
 
 function renderOverviewSkeleton() {
-  ['#kpiNetProfit', '#kpiCompanyShare', '#kpiOutstanding', '#kpiSettlementRate', '#kpiAvgDaysToSettle', '#kpiLossValue'].forEach((selector) => {
+  ['#kpiNetProfit', '#kpiCompanyShare', '#kpiOutstanding', '#kpiEmissions', '#kpiAvgDaysToSettle', '#kpiLossValue'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-value-skeleton"></span>';
   });
 
-  ['#kpiDeltaNetProfit', '#kpiDeltaCompanyShare', '#kpiDeltaOutstanding', '#kpiDeltaSettlementRate', '#kpiDeltaLossValue', '#kpiAvgDaysHint'].forEach((selector) => {
+  ['#kpiDeltaNetProfit', '#kpiDeltaCompanyShare', '#kpiDeltaOutstanding', '#kpiDeltaEmissions', '#kpiDeltaLossValue', '#kpiAvgDaysHint'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
@@ -808,8 +822,13 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   writeMoney('#kpiOutstanding', kpis.unsettledCompanyShareOutstanding || 0);
   writeMoney('#kpiLossValue', kpis.freightLossesValue || 0);
 
-  const settlementRate = $('#kpiSettlementRate');
-  if (settlementRate) settlementRate.textContent = formatPercent(kpis.settlementRatePct || 0);
+  const emissions = $('#kpiEmissions');
+  if (emissions) {
+    emissions.textContent = formatKilograms(kpis.emissionsKg || 0);
+    const crudeSold = formatInteger(kpis.crudeSold || 0);
+    const gasSold = formatInteger(kpis.gasSold || 0);
+    emissions.title = `Crude: ${crudeSold} x 430 | Gasoline: ${gasSold} x 373`;
+  }
 
   const avgDays = $('#kpiAvgDaysToSettle');
   if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
@@ -820,8 +839,13 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   setDelta('#kpiDeltaNetProfit', toDelta(kpis.netProfit, previousKpis.netProfit, range));
   setDelta('#kpiDeltaCompanyShare', toDelta(kpis.companyShareEarnings, previousKpis.companyShareEarnings, range));
   setDelta('#kpiDeltaOutstanding', toDelta(kpis.unsettledCompanyShareOutstanding, previousKpis.unsettledCompanyShareOutstanding, range, true));
-  setDelta('#kpiDeltaSettlementRate', toDelta(kpis.settlementRatePct, previousKpis.settlementRatePct, range));
   setDelta('#kpiDeltaLossValue', toDelta(kpis.freightLossesValue, previousKpis.freightLossesValue, range, true));
+  const emissionsDelta = $('#kpiDeltaEmissions');
+  if (emissionsDelta) {
+    emissionsDelta.classList.remove('is-positive', 'is-negative');
+    emissionsDelta.classList.add('is-neutral');
+    emissionsDelta.textContent = 'This period';
+  }
 
   const hasVoyages = !isAllZeroSeries(charts.voyageCountTrend || []);
   renderProfitLossChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.freightLossValueTrend || []);
@@ -880,6 +904,247 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   setTop('#topVesselLabel', '#topVesselValue', topPerformers?.vessel);
   setTop('#topOotwLabel', '#topOotwValue', topPerformers?.ootw);
 
+}
+
+function setInlineFeedback(selector, message, type = 'error') {
+  const box = $(selector);
+  if (!box) return;
+  if (!message) {
+    box.className = 'feedback';
+    box.textContent = '';
+    return;
+  }
+  box.className = `feedback is-visible ${type === 'error' ? 'is-error' : 'is-success'}`;
+  box.textContent = message;
+}
+
+function normalizeCashflowEntryType(value) {
+  const type = String(value || '').trim().toUpperCase();
+  return type === 'OUT' ? 'OUT' : 'IN';
+}
+
+function setCashflowType(state, type) {
+  state.cashflowEntryType = normalizeCashflowEntryType(type);
+  const hidden = $('#cashflowType');
+  if (hidden) hidden.value = state.cashflowEntryType;
+  $$('[data-cashflow-type]').forEach((button) => {
+    button.classList.toggle('is-active', button.getAttribute('data-cashflow-type') === state.cashflowEntryType);
+  });
+}
+
+function setCashflowFormEnabled(canManage) {
+  const form = $('#cashflowEntryForm');
+  if (!form) return;
+  form.querySelectorAll('input, textarea, select, button').forEach((field) => {
+    field.disabled = !canManage;
+  });
+  if (!canManage) {
+    setInlineFeedback('#cashflowEntryFeedback', 'You do not have permission to add cashflow entries.', 'error');
+  } else {
+    setInlineFeedback('#cashflowEntryFeedback', '');
+  }
+}
+
+function renderCashflowSkeleton() {
+  ['#cashflowKpiCurrentBalance', '#cashflowKpiIn', '#cashflowKpiOut', '#cashflowKpiNet'].forEach((selector) => {
+    const el = $(selector);
+    if (el) el.innerHTML = '<span class="finance-value-skeleton"></span>';
+  });
+  const tbody = $('#financeCashflowBody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8"><div class="finance-chart-skeleton"></div></td></tr>';
+}
+
+function renderCashflowPagination(state) {
+  const pageInfo = $('#financeCashflowPageInfo');
+  const prev = $('#financeCashflowPrev');
+  const next = $('#financeCashflowNext');
+  const currentPage = Math.max(1, Number(state.cashflowPage || 1));
+  const totalPages = Math.max(1, Number(state.cashflowTotalPages || 1));
+
+  if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+  if (prev) prev.disabled = currentPage <= 1;
+  if (next) next.disabled = currentPage >= totalPages;
+}
+
+function renderCashflowVoyageOptions(state) {
+  const datalist = $('#cashflowVoyageOptions');
+  if (!datalist) return;
+  const options = Array.isArray(state.cashflowVoyageOptions) ? state.cashflowVoyageOptions : [];
+  state.cashflowVoyageLookup = new Map();
+  datalist.innerHTML = options
+    .map((row) => {
+      const id = Number(row.id || 0);
+      if (!id) return '';
+      const label = text(row.label);
+      const value = `${id} - ${label}`;
+      state.cashflowVoyageLookup.set(id, label);
+      return `<option value="${value}"></option>`;
+    })
+    .join('');
+}
+
+function parseRelatedVoyageId(value, state) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const match = raw.match(/^(\d+)/);
+  if (!match) return null;
+  const id = Number(match[1]);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  if (state.cashflowVoyageLookup?.size && !state.cashflowVoyageLookup.has(id)) return null;
+  return id;
+}
+
+function renderCashflowRows(state) {
+  const tbody = $('#financeCashflowBody');
+  if (!tbody) return;
+  const rows = Array.isArray(state.cashflowRows) ? state.cashflowRows : [];
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8">No cashflow entries yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows
+    .map((row) => {
+      const isIn = String(row.type || '').toUpperCase() === 'IN';
+      const relatedVoyage = row.relatedVoyage
+        ? `${text(row.relatedVoyage.vesselName)} | ${text(row.relatedVoyage.vesselCallsign)}`
+        : '\u2014';
+      return `<tr>
+        <td>${formatWhen(row.createdAt)}</td>
+        <td><span class="finance-type-pill ${isIn ? 'is-in' : 'is-out'}">${isIn ? 'IN' : 'OUT'}</span></td>
+        <td class="align-right"><span class="finance-cashflow-amount ${isIn ? 'is-in' : 'is-out'}">${formatGuilders(row.amount)}</span></td>
+        <td>${text(row.reason)}</td>
+        <td>${text(row.category || '\u2014')}</td>
+        <td>${relatedVoyage}</td>
+        <td>${text(row.createdBy || 'Unknown')}</td>
+        <td class="align-right">${formatGuilders(row.balanceAfter)}</td>
+      </tr>`;
+    })
+    .join('');
+}
+
+function renderCashflowPanel(state) {
+  const kpis = state.cashflowKpis || {};
+  const balance = $('#cashflowKpiCurrentBalance');
+  if (balance) balance.textContent = formatGuilders(kpis.currentCashBalance || 0);
+
+  const cashIn = $('#cashflowKpiIn');
+  if (cashIn) cashIn.textContent = formatGuilders(kpis.cashIn || 0);
+
+  const cashOut = $('#cashflowKpiOut');
+  if (cashOut) cashOut.textContent = formatGuilders(kpis.cashOut || 0);
+
+  const net = $('#cashflowKpiNet');
+  if (net) {
+    net.textContent = formatGuilders(kpis.netCashflow || 0);
+    net.style.color = Number(kpis.netCashflow || 0) >= 0 ? '#166534' : '#b45309';
+  }
+
+  renderCashflowRows(state);
+  renderCashflowPagination(state);
+  renderCashflowVoyageOptions(state);
+}
+
+async function loadCashflow(state) {
+  state.cashflowLoading = true;
+  renderCashflowSkeleton();
+
+  try {
+    const params = new URLSearchParams();
+    params.set('range', state.range);
+    params.set('page', String(state.cashflowPage));
+    params.set('pageSize', String(state.cashflowPageSize));
+
+    const payload = await fetchJson(`/api/finances/cashflow?${params.toString()}`);
+    console.log('finances cashflow response', payload);
+
+    state.cashflowKpis = payload?.kpis || {};
+    state.cashflowRows = Array.isArray(payload?.rows) ? payload.rows : [];
+    state.cashflowVoyageOptions = Array.isArray(payload?.voyageOptions) ? payload.voyageOptions : [];
+    state.cashflowPage = Math.max(1, Number(payload?.pagination?.page || 1));
+    state.cashflowTotalPages = Math.max(1, Number(payload?.pagination?.totalPages || 1));
+    state.cashflowCanManage = Boolean(payload?.permissions?.canManage);
+    state.cashflowLoaded = true;
+
+    renderCashflowPanel(state);
+    setCashflowFormEnabled(state.cashflowCanManage);
+    clearFeedback();
+  } catch (error) {
+    console.error('finances cashflow fetch error', error);
+    const tbody = $('#financeCashflowBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8">Unable to load cashflow data.</td></tr>';
+    setInlineFeedback('#cashflowEntryFeedback', error.message || 'Unable to load cashflow.', 'error');
+    renderCashflowPagination({ cashflowPage: 1, cashflowTotalPages: 1 });
+    setFeedback(`Failed to load cashflow data: ${error.message || 'Unknown error'}`, 'error', async () => loadCashflow(state));
+  } finally {
+    state.cashflowLoading = false;
+  }
+}
+
+async function submitCashflowEntry(state) {
+  if (!state.cashflowCanManage) {
+    setInlineFeedback('#cashflowEntryFeedback', 'You do not have permission to add cashflow entries.', 'error');
+    return;
+  }
+
+  const type = normalizeCashflowEntryType($('#cashflowType')?.value || state.cashflowEntryType || 'IN');
+  const amountRaw = $('#cashflowAmount')?.value || '';
+  const reason = ($('#cashflowReason')?.value || '').trim();
+  const category = ($('#cashflowCategory')?.value || '').trim();
+  const relatedVoyageRaw = $('#cashflowRelatedVoyage')?.value || '';
+
+  const amount = Math.round(Number(amountRaw));
+  if (!Number.isInteger(amount) || amount <= 0) {
+    setInlineFeedback('#cashflowEntryFeedback', 'Amount must be a positive whole number.', 'error');
+    return;
+  }
+  if (reason.length < 5) {
+    setInlineFeedback('#cashflowEntryFeedback', 'Reason must be at least 5 characters.', 'error');
+    return;
+  }
+
+  const voyageId = parseRelatedVoyageId(relatedVoyageRaw, state);
+  if (relatedVoyageRaw.trim() && !voyageId) {
+    setInlineFeedback('#cashflowEntryFeedback', 'Related voyage must be selected from the list.', 'error');
+    return;
+  }
+
+  const submit = $('#cashflowSubmit');
+  if (submit) {
+    submit.disabled = true;
+    submit.textContent = 'Saving...';
+  }
+
+  try {
+    await fetchJson('/api/finances/cashflow', {
+      method: 'POST',
+      body: JSON.stringify({
+        type,
+        amount,
+        reason,
+        category: category || null,
+        voyageId
+      })
+    });
+
+    const form = $('#cashflowEntryForm');
+    if (form) form.reset();
+    setCashflowType(state, 'IN');
+    setInlineFeedback('#cashflowEntryFeedback', 'Cashflow entry saved.', 'success');
+
+    state.cashflowPage = 1;
+    await loadCashflow(state);
+    await loadOverview(state);
+  } catch (error) {
+    console.error('finances cashflow create error', error);
+    setInlineFeedback('#cashflowEntryFeedback', error.message || 'Failed to create cashflow entry.', 'error');
+  } finally {
+    if (submit) {
+      submit.disabled = false;
+      submit.textContent = 'Submit Entry';
+    }
+  }
 }
 
 function setBreakdownMode(state, mode) {
@@ -1219,6 +1484,11 @@ async function handleTabChange(state, tab) {
 
   if (next === 'audit' && !state.auditLoaded && !state.auditLoading) {
     await loadAudit(state);
+    return;
+  }
+
+  if (next === 'cashflow' && !state.cashflowLoaded && !state.cashflowLoading) {
+    await loadCashflow(state);
   }
 }
 
@@ -1247,6 +1517,17 @@ async function init() {
     auditPage: 1,
     auditPageSize: 12,
     auditTotalPages: 1,
+    cashflowLoaded: false,
+    cashflowLoading: false,
+    cashflowCanManage: false,
+    cashflowEntryType: 'IN',
+    cashflowKpis: {},
+    cashflowRows: [],
+    cashflowVoyageOptions: [],
+    cashflowVoyageLookup: new Map(),
+    cashflowPage: 1,
+    cashflowPageSize: 15,
+    cashflowTotalPages: 1,
     pendingSettle: null
   };
 
@@ -1291,6 +1572,10 @@ async function init() {
       setActiveRange(range);
       updateUrlState(state);
       await loadOverview(state);
+      if (state.activeTab === 'cashflow' || state.cashflowLoaded) {
+        state.cashflowPage = 1;
+        await loadCashflow(state);
+      }
     });
   });
 
@@ -1314,6 +1599,7 @@ async function init() {
   });
 
   setBreakdownMode(state, state.breakdownMode);
+  setCashflowType(state, state.cashflowEntryType);
 
   const settleModal = $('#financeSettleModal');
   const settleCancel = $('#financeSettleCancel');
@@ -1364,6 +1650,37 @@ async function init() {
   if (debtScope) debtScope.addEventListener('change', scheduleDebtReload);
   if (debtOnlyUnsettled) debtOnlyUnsettled.addEventListener('change', scheduleDebtReload);
 
+  $$('[data-cashflow-type]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setCashflowType(state, button.getAttribute('data-cashflow-type') || 'IN');
+    });
+  });
+
+  const cashflowForm = $('#cashflowEntryForm');
+  if (cashflowForm) {
+    cashflowForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await submitCashflowEntry(state);
+    });
+  }
+
+  const cashflowPrev = $('#financeCashflowPrev');
+  const cashflowNext = $('#financeCashflowNext');
+  if (cashflowPrev) {
+    cashflowPrev.addEventListener('click', async () => {
+      if (state.cashflowPage <= 1 || state.cashflowLoading) return;
+      state.cashflowPage -= 1;
+      await loadCashflow(state);
+    });
+  }
+  if (cashflowNext) {
+    cashflowNext.addEventListener('click', async () => {
+      if (state.cashflowPage >= state.cashflowTotalPages || state.cashflowLoading) return;
+      state.cashflowPage += 1;
+      await loadCashflow(state);
+    });
+  }
+
   const auditPrev = $('#financeAuditPrev');
   const auditNext = $('#financeAuditNext');
   if (auditPrev) {
@@ -1403,6 +1720,8 @@ async function init() {
     await loadDebts(state);
   } else if (state.activeTab === 'audit') {
     await loadAudit(state);
+  } else if (state.activeTab === 'cashflow') {
+    await loadCashflow(state);
   }
 }
 

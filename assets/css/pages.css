@@ -812,6 +812,85 @@
   font-weight: 700;
 }
 
+.finance-cashflow-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.finance-cashflow-kpi .finance-kpi-value {
+  font-size: clamp(1.4rem, 1.5vw, 1.95rem);
+}
+
+.finance-cashflow-entry-form {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.finance-cashflow-entry-form > * {
+  min-width: 0;
+}
+
+.finance-cashflow-type-wrap {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.finance-cashflow-type-control {
+  width: fit-content;
+}
+
+.finance-cashflow-entry-wide {
+  grid-column: 1 / -1;
+}
+
+.finance-cashflow-entry-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.finance-cashflow-entry-card .feedback {
+  margin-top: 0.55rem;
+}
+
+.finance-type-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  border-radius: 999px;
+  border: 1px solid #d7e2f0;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.finance-type-pill.is-in {
+  color: #166534;
+  border-color: #ccead9;
+  background: #eefaf3;
+}
+
+.finance-type-pill.is-out {
+  color: #b45309;
+  border-color: #f8d6a8;
+  background: #fff7eb;
+}
+
+.finance-cashflow-amount.is-in {
+  color: #166534;
+  font-weight: 700;
+}
+
+.finance-cashflow-amount.is-out {
+  color: #b45309;
+  font-weight: 700;
+}
+
 .finance-data-table th,
 .finance-data-table td {
   font-family: var(--font-body);
@@ -924,6 +1003,14 @@
   .finance-summary-strip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .finance-cashflow-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .finance-cashflow-entry-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 768px) {
@@ -939,6 +1026,10 @@
 
   .finance-summary-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .finance-cashflow-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   body.page-intranet.intranet-no-scroll .finance-dashboard-shell {
@@ -1042,7 +1133,9 @@
   .finance-performance-grid,
   .finance-overview-breakdown,
   .finance-trends-grid,
-  .finance-summary-strip {
+  .finance-summary-strip,
+  .finance-cashflow-kpi-grid,
+  .finance-cashflow-entry-form {
     grid-template-columns: 1fr;
   }
 }

@@ -33,6 +33,8 @@
 /finances/analytics/ /finances?tab=trends 302
 /finances/trends /finances?tab=trends 302
 /finances/trends/ /finances?tab=trends 302
+/finances/cashflow /finances?tab=cashflow 302
+/finances/cashflow/ /finances?tab=cashflow 302
 /finances/audit /finances?tab=audit 302
 /finances/audit/ /finances?tab=audit 302
 
