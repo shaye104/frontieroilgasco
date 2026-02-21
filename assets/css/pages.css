@@ -436,11 +436,13 @@
 }
 
 .finance-chart-host {
-  min-height: 270px;
+  height: 292px;
+  min-height: 292px;
 }
 
 .finance-trends-grid .finance-chart-host {
-  min-height: 260px;
+  height: 276px;
+  min-height: 276px;
 }
 
 .finance-overview-main {
@@ -453,6 +455,11 @@
 
 .finance-overview-primary {
   min-height: 310px;
+}
+
+.finance-overview-primary .finance-chart-host {
+  height: 324px;
+  min-height: 324px;
 }
 
 .finance-overview-side {
@@ -568,6 +575,7 @@
 .finance-settlement-health-card {
   grid-template-rows: auto auto minmax(74px, auto);
   gap: 0.62rem;
+  clear: both;
 }
 
 .finance-settlement-health-grid {
@@ -921,7 +929,7 @@
 @media (min-width: 1024px) {
   body.page-intranet.intranet-no-scroll .finance-dashboard-shell {
     height: 100%;
-    overflow: hidden;
+    overflow: visible;
   }
 
   body.page-intranet.intranet-no-scroll .finance-tab-panel.is-active {
@@ -931,7 +939,9 @@
   body.page-intranet.intranet-no-scroll #financeTabOverview.is-active,
   body.page-intranet.intranet-no-scroll #financeTabTrends.is-active {
     height: 100%;
-    overflow: hidden;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    padding-bottom: 1rem;
   }
 
   body.page-intranet.intranet-no-scroll #financeTabDebts.is-active,
@@ -939,12 +949,14 @@
     align-content: start;
   }
 
-  body.page-intranet.intranet-no-scroll .finance-overview-primary .finance-cartesian-svg {
-    min-height: 300px;
+  body.page-intranet.intranet-no-scroll .finance-overview-primary .finance-chart-host {
+    height: 324px;
+    min-height: 324px;
   }
 
-  body.page-intranet.intranet-no-scroll .finance-trends-grid .finance-cartesian-svg {
-    min-height: 260px;
+  body.page-intranet.intranet-no-scroll .finance-trends-grid .finance-chart-host {
+    height: 276px;
+    min-height: 276px;
   }
 
   body.page-intranet.intranet-no-scroll .finance-debts-group-card,
@@ -989,6 +1001,13 @@
 
   .finance-inline-segmented {
     justify-content: flex-start;
+  }
+
+  .finance-chart-host,
+  .finance-overview-primary .finance-chart-host,
+  .finance-trends-grid .finance-chart-host {
+    height: 248px;
+    min-height: 248px;
   }
 }
 
