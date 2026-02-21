@@ -1,5 +1,3 @@
-import { prefetchRouteData } from './admin-api.js';
-
 const PERMISSION_ALIASES = {
   'roles.read': 'user_groups.read',
   'roles.manage': 'user_groups.manage',
@@ -49,18 +47,6 @@ function canRenderNavItem(session, item) {
   return anyPermissions.some((permissionKey) => hasPermission(session, permissionKey));
 }
 
-function wireLinkPrefetch(link, session) {
-  if (!link) return;
-  let primed = false;
-  const run = () => {
-    if (primed) return;
-    primed = true;
-    prefetchRouteData(link.getAttribute('href') || '', session);
-  };
-  link.addEventListener('pointerenter', run, { once: true });
-  link.addEventListener('focus', run, { once: true });
-}
-
 export function renderPublicNavbar() {
   const nav = document.querySelector('.site-nav');
   if (!nav) return;
@@ -85,7 +71,6 @@ export function renderIntranetNavbar(session) {
     if (!canRenderNavItem(session, item)) return;
     const link = buildNavLink(item.href, item.label);
     nav.append(link);
-    wireLinkPrefetch(link, session);
   });
 
   const spacer = document.createElement('span');
