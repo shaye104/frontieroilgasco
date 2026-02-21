@@ -1110,6 +1110,7 @@ textarea:focus {
   position: relative;
   width: 100%;
   height: 100%;
+  min-width: 0;
 }
 
 .finance-cartesian-svg {
@@ -1212,17 +1213,26 @@ textarea:focus {
 
 .finance-chart-legend {
   margin-top: 0.4rem;
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
-  gap: 0.55rem;
+  gap: 0.45rem 0.7rem;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  align-items: center;
 }
 
 .finance-legend-item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.35rem;
   font-size: 0.75rem;
   color: #334155;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .finance-chart-empty {

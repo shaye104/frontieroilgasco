@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221p" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260221p" />
-    <link rel="stylesheet" href="/assets/css/components.css?v=20260221p" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221p" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221q" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221q" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221q" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221q" />
   </head>
   <body class="page page-intranet">
     <header class="site-header">
@@ -160,20 +160,27 @@
           <section id="financeTabTrends" class="finance-tab-panel hidden" data-finance-panel="trends">
             <div class="finance-main-chart-grid finance-trends-grid">
               <article class="finance-chart-card">
-                <h3>Settlement Rate Trend</h3>
-                <div id="trendsChartSettlementRate" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+                <h3>Outstanding Company Share Trend</h3>
+                <div id="trendsChartOutstanding" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
                 <h3>Voyage Count Trend</h3>
                 <div id="trendsChartVoyageCount" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
-                <h3>Average Net Profit / Voyage</h3>
-                <div id="trendsChartAvgProfit" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
-              </article>
-              <article class="finance-chart-card">
                 <h3>Freight Loss Value Trend</h3>
                 <div id="trendsChartLossTrend" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+              </article>
+              <article class="finance-chart-card">
+                <div class="finance-chart-head-row">
+                  <h3>Profit Drivers</h3>
+                  <div class="finance-inline-segmented" role="group" aria-label="Profit driver breakdown">
+                    <button type="button" class="segmented-btn is-active" data-breakdown-mode="route">Route</button>
+                    <button type="button" class="segmented-btn" data-breakdown-mode="vessel">Vessel</button>
+                    <button type="button" class="segmented-btn" data-breakdown-mode="ootw">OOTW</button>
+                  </div>
+                </div>
+                <div id="trendsChartProfitDrivers" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
             </div>
           </section>
@@ -293,6 +300,6 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221p"></script>
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221q"></script>
   </body>
 </html>

@@ -10,6 +10,7 @@ function $$(selector) {
 
 const RANGE_KEYS = ['week', 'month', '3m', '6m', 'year'];
 const TAB_KEYS = ['overview', 'trends', 'debts', 'audit'];
+const BREAKDOWN_KEYS = ['route', 'vessel', 'ootw'];
 
 const FINANCE_ICONS = {
   'trending-up':
@@ -91,6 +92,19 @@ function normalizeFinanceTab(input) {
   return TAB_KEYS.includes(value) ? value : 'overview';
 }
 
+function normalizeBreakdownMode(input) {
+  const value = String(input || '').trim().toLowerCase();
+  return BREAKDOWN_KEYS.includes(value) ? value : 'route';
+}
+
+function truncateLabel(value, maxLength = 18) {
+  const raw = String(value || '').trim();
+  if (!raw) return 'N/A';
+  const limit = Math.max(8, Number(maxLength || 18));
+  if (raw.length <= limit) return raw;
+  return `${raw.slice(0, limit - 1)}\u2026`;
+}
+
 function parseKeyTime(value) {
   const raw = String(value || '').trim();
   if (!raw) return Number.NaN;
@@ -126,9 +140,13 @@ function normalizeSeriesPoints(series) {
     .map((point, index) => {
       const key = String(point?.key || '').trim() || `idx-${index}`;
       const parsedTime = parseKeyTime(key);
+      const fallbackLabel = point?.label || key;
+      const label = formatDateLabel(key, fallbackLabel);
+      const tooltipLabel = text(point?.tooltipLabel || fallbackLabel || key);
       return {
         key,
-        label: formatDateLabel(key, point?.label || key),
+        label,
+        tooltipLabel,
         value: toMoney(point?.value || 0),
         parsedTime,
         originalIndex: index
@@ -245,6 +263,7 @@ function updateUrlState(state) {
   const nextUrl = new URL(window.location.href);
   nextUrl.searchParams.set('tab', state.activeTab);
   nextUrl.searchParams.set('range', state.range);
+  nextUrl.searchParams.set('breakdown', state.breakdownMode || 'route');
   window.history.replaceState({}, '', nextUrl.toString());
 }
 
@@ -562,7 +581,7 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
     bar.addEventListener('mouseenter', (event) => {
       const idx = Math.max(0, Math.min(points.length - 1, Number(bar.getAttribute('data-index') || 0)));
       const point = points[idx];
-      tooltip.innerHTML = `<div class="finance-tooltip-title">${text(point.label)}</div><div class="finance-tooltip-row"><span class="finance-tooltip-key"><i style="background:${color}"></i>${text(
+      tooltip.innerHTML = `<div class="finance-tooltip-title">${text(point.tooltipLabel || point.label)}</div><div class="finance-tooltip-row"><span class="finance-tooltip-key"><i style="background:${color}"></i>${text(
         label
       )}</span><strong>${text(valueFormatter(point.value))}</strong></div>`;
       tooltip.classList.remove('hidden');
@@ -618,6 +637,29 @@ function renderPercentLineChart(target, series, lineLabel, color) {
 function renderNoData(target, message) {
   if (!target) return;
   target.innerHTML = `<div class="finance-chart-empty">${text(message || 'No data for selected range')}</div>`;
+}
+
+function renderProfitDriversChart(target, breakdowns, mode) {
+  const safeMode = normalizeBreakdownMode(mode);
+  const source = safeMode === 'vessel' ? breakdowns?.byVessel : safeMode === 'ootw' ? breakdowns?.byOotw : breakdowns?.byRoute;
+  const rows = Array.isArray(source) ? source : [];
+  if (!rows.length) {
+    renderNoData(target, 'No profit drivers in this period');
+    return;
+  }
+
+  const points = rows.slice(0, 5).map((row, index) => {
+    const fullLabel = text(row?.label || 'Unknown');
+    return {
+      key: `rank-${index + 1}`,
+      label: truncateLabel(fullLabel, 18),
+      tooltipLabel: fullLabel,
+      value: toMoney(row?.netProfit || 0)
+    };
+  });
+
+  const legendLabel = safeMode === 'vessel' ? 'Profit by Vessel' : safeMode === 'ootw' ? 'Profit by OOTW' : 'Profit by Route';
+  renderCurrencyBarChart(target, points, legendLabel, '#2b4aa2');
 }
 
 function alignSeries(netSeries, companySeries) {
@@ -699,7 +741,7 @@ function renderOverviewSkeleton() {
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
 
-  ['#chartNetProfit', '#trendsChartSettlementRate', '#trendsChartVoyageCount', '#trendsChartAvgProfit', '#trendsChartLossTrend'].forEach((selector) => {
+  ['#chartNetProfit', '#trendsChartOutstanding', '#trendsChartVoyageCount', '#trendsChartLossTrend', '#trendsChartProfitDrivers'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<div class="finance-chart-skeleton"></div>';
   });
@@ -729,10 +771,11 @@ function renderOverviewSkeleton() {
   });
 }
 
-function renderOverview(data, previousData, range) {
+function renderOverview(data, previousData, range, breakdownMode = 'route') {
   const kpis = data?.kpis || {};
   const charts = data?.charts || {};
   const unsettled = data?.unsettled || {};
+  const breakdowns = data?.breakdowns || {};
   const topPerformers = data?.topPerformers || {};
   const previousKpis = previousData?.kpis || {};
 
@@ -766,20 +809,20 @@ function renderOverview(data, previousData, range) {
   renderProfitShareChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.companyShareTrend || []);
 
   if (!hasVoyages) {
-    renderNoData($('#trendsChartSettlementRate'), 'No voyages in this period');
+    renderNoData($('#trendsChartOutstanding'), 'No voyages in this period');
     renderNoData($('#trendsChartVoyageCount'), 'No voyages in this period');
-    renderNoData($('#trendsChartAvgProfit'), 'No voyages in this period');
+    renderNoData($('#trendsChartLossTrend'), 'No voyages in this period');
+    renderNoData($('#trendsChartProfitDrivers'), 'No voyages in this period');
   } else {
-    renderPercentLineChart($('#trendsChartSettlementRate'), charts.settlementRateTrend || [], 'Settlement Rate', '#253475');
+    renderLineChart($('#trendsChartOutstanding'), charts.outstandingTrend || [], 'Outstanding Company Share', '#253475');
     renderCountBarChart($('#trendsChartVoyageCount'), charts.voyageCountTrend || [], 'Voyage Count', '#253475');
-    renderLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'Avg Net Profit / Voyage', '#2b4aa2');
-  }
-
-  if (isAllZeroSeries(charts.freightLossValueTrend || [])) {
-    const lossTarget = $('#trendsChartLossTrend');
-    if (lossTarget) lossTarget.innerHTML = '<div class="finance-chart-empty">No freight losses in this period</div>';
-  } else {
-    renderCurrencyBarChart($('#trendsChartLossTrend'), charts.freightLossValueTrend || [], 'Freight Loss Value', '#5776b7');
+    if (isAllZeroSeries(charts.freightLossValueTrend || [])) {
+      const lossTarget = $('#trendsChartLossTrend');
+      if (lossTarget) lossTarget.innerHTML = '<div class="finance-chart-empty">No freight losses in this period</div>';
+    } else {
+      renderCurrencyBarChart($('#trendsChartLossTrend'), charts.freightLossValueTrend || [], 'Freight Loss Value', '#5776b7');
+    }
+    renderProfitDriversChart($('#trendsChartProfitDrivers'), breakdowns, breakdownMode);
   }
 
   const unsettledTotal = $('#unsettledOutstandingTotal');
@@ -823,6 +866,17 @@ function renderOverview(data, previousData, range) {
   setTop('#topRouteLabel', '#topRouteValue', topPerformers?.route);
   setTop('#topVesselLabel', '#topVesselValue', topPerformers?.vessel);
   setTop('#topOotwLabel', '#topOotwValue', topPerformers?.ootw);
+}
+
+function setBreakdownMode(state, mode) {
+  state.breakdownMode = normalizeBreakdownMode(mode);
+  $$('[data-breakdown-mode]').forEach((button) => {
+    button.classList.toggle('is-active', button.getAttribute('data-breakdown-mode') === state.breakdownMode);
+  });
+  updateUrlState(state);
+
+  if (!state.overview || state.overviewLoading) return;
+  renderProfitDriversChart($('#trendsChartProfitDrivers'), state.overview?.breakdowns || {}, state.breakdownMode);
 }
 
 function renderDebtsSkeleton() {
@@ -1075,7 +1129,7 @@ async function loadOverview(state) {
 
     state.overview = current || {};
     state.overviewPrevious = previous || {};
-    renderOverview(state.overview, state.overviewPrevious, state.range);
+    renderOverview(state.overview, state.overviewPrevious, state.range, state.breakdownMode);
     clearFeedback();
 
     if (state.debtsLoaded && ($('#debtScope')?.value || 'all') === 'range') {
@@ -1164,6 +1218,7 @@ async function init() {
     session: null,
     range: normalizeFinanceRange(query.get('range')),
     activeTab: normalizeFinanceTab(query.get('tab')),
+    breakdownMode: normalizeBreakdownMode(query.get('breakdown')),
     overview: null,
     overviewPrevious: null,
     overviewLoading: false,
@@ -1239,6 +1294,14 @@ async function init() {
       await handleTabChange(state, link.getAttribute('data-finance-open-tab') || 'debts');
     });
   });
+
+  $$('[data-breakdown-mode]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setBreakdownMode(state, button.getAttribute('data-breakdown-mode') || 'route');
+    });
+  });
+
+  setBreakdownMode(state, state.breakdownMode);
 
   const settleModal = $('#financeSettleModal');
   const settleCancel = $('#financeSettleCancel');

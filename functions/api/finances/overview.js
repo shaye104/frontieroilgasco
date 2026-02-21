@@ -144,6 +144,18 @@ function pickTop(map) {
   return entries[0];
 }
 
+function pickTopRows(map, limit = 5) {
+  return [...map.entries()]
+    .map(([label, netProfit]) => ({ label: String(label || '').trim() || 'Unknown', netProfit: toMoney(netProfit || 0) }))
+    .sort((a, b) => b.netProfit - a.netProfit || a.label.localeCompare(b.label))
+    .slice(0, Math.max(1, Number(limit || 5)))
+    .map((row, index) => ({
+      rank: index + 1,
+      label: row.label,
+      netProfit: toMoney(row.netProfit)
+    }));
+}
+
 function calcSettledDays(endedAt, settledAt) {
   if (!endedAt || !settledAt) return null;
   const ended = new Date(endedAt);
@@ -337,6 +349,58 @@ export async function onRequestGet(context) {
     .slice(0, 5)
     .map((row) => ({ ...row, outstanding: toMoney(row.outstanding) }));
 
+  const outstandingBaseRowsResult = await env.DB
+    .prepare(
+      `SELECT
+         v.ended_at,
+         v.company_share_settled_at,
+         ROUND(COALESCE(v.company_share_amount, v.company_share, 0)) AS company_share_amount
+       FROM voyages v
+       WHERE v.status = 'ENDED'
+         AND v.ended_at IS NOT NULL
+         AND v.ended_at <= ?
+         AND ROUND(COALESCE(v.company_share_amount, v.company_share, 0)) > 0
+       ORDER BY v.ended_at ASC`
+    )
+    .bind(endIso)
+    .all();
+  const outstandingBaseRows = outstandingBaseRowsResult?.results || [];
+
+  const outstandingCreatedByBucket = new Map();
+  const outstandingSettledByBucket = new Map();
+  let openingOutstanding = 0;
+
+  outstandingBaseRows.forEach((row) => {
+    const amount = Math.max(0, toMoney(row.company_share_amount || 0));
+    if (amount <= 0) return;
+
+    const endedAt = row?.ended_at ? new Date(row.ended_at) : null;
+    if (!endedAt || Number.isNaN(endedAt.getTime())) return;
+
+    const settledAt = row?.company_share_settled_at ? new Date(row.company_share_settled_at) : null;
+    const settledTime = settledAt && !Number.isNaN(settledAt.getTime()) ? settledAt.getTime() : null;
+
+    if (endedAt < start) {
+      if (settledTime == null || settledAt > start) {
+        openingOutstanding = toMoney(openingOutstanding + amount);
+      }
+    } else if (endedAt <= end) {
+      const endedBucketKey = bucketForDate(range, endedAt, start).key;
+      if (buckets.has(endedBucketKey)) {
+        const current = toMoney(outstandingCreatedByBucket.get(endedBucketKey) || 0);
+        outstandingCreatedByBucket.set(endedBucketKey, toMoney(current + amount));
+      }
+    }
+
+    if (settledTime != null && settledAt >= start && settledAt <= end) {
+      const settledBucketKey = bucketForDate(range, settledAt, start).key;
+      if (buckets.has(settledBucketKey)) {
+        const current = toMoney(outstandingSettledByBucket.get(settledBucketKey) || 0);
+        outstandingSettledByBucket.set(settledBucketKey, toMoney(current + amount));
+      }
+    }
+  });
+
   const chartBuckets = bucketList.map((bucket) => {
     const value = buckets.get(bucket.key) || {
       label: bucket.label,
@@ -363,6 +427,14 @@ export async function onRequestGet(context) {
     };
   });
 
+  let runningOutstanding = Math.max(0, toMoney(openingOutstanding));
+  const outstandingTrend = bucketList.map((bucket) => {
+    const created = Math.max(0, toMoney(outstandingCreatedByBucket.get(bucket.key) || 0));
+    const settled = Math.max(0, toMoney(outstandingSettledByBucket.get(bucket.key) || 0));
+    runningOutstanding = Math.max(0, toMoney(runningOutstanding + created - settled));
+    return { key: bucket.key, label: bucket.label, value: runningOutstanding };
+  });
+
   return cachedJson(
     request,
     {
@@ -385,13 +457,19 @@ export async function onRequestGet(context) {
         freightLossValueTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.freightLossValue })),
         voyageCountTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.voyageCount })),
         avgNetProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.avgNetProfit })),
-        settlementRateTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.settlementRate }))
+        settlementRateTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.settlementRate })),
+        outstandingTrend
       },
       unsettled: {
         totalOutstanding: unsettledTotal,
         totalVoyages: unsettledRows.length,
         overdueVoyages,
         topDebtors
+      },
+      breakdowns: {
+        byRoute: pickTopRows(routeProfit, 5),
+        byVessel: pickTopRows(vesselProfit, 5),
+        byOotw: pickTopRows(ootwProfit, 5)
       },
       topPerformers: {
         route: pickTop(routeProfit),
