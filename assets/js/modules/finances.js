@@ -126,6 +126,23 @@ function renderUnsettledTotal(target, amount) {
   target.textContent = `Total outstanding: ${formatGuilders(amount)}`;
 }
 
+function showRetryMessage(feedback, message, onRetry) {
+  if (!feedback) return;
+  feedback.className = 'feedback is-visible is-error';
+  feedback.innerHTML = '';
+  const copy = document.createElement('span');
+  copy.textContent = message;
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'btn btn-secondary';
+  retry.textContent = 'Retry';
+  retry.style.marginLeft = '0.6rem';
+  retry.addEventListener('click', async () => {
+    await onRetry();
+  });
+  feedback.append(copy, retry);
+}
+
 function renderOverviewSkeleton(config) {
   [
     config.netProfitSelector,
@@ -648,12 +665,14 @@ export async function initFinancesConsole(config) {
     renderOverviewSkeleton(config);
     try {
       const payload = await getFinancesOverview(activeRange, unsettledScope.value || 'all');
+      console.log('[finances] range', activeRange);
+      console.log('[finances] financeData', payload);
       renderOverviewFromPayload(payload);
       overviewLoaded = true;
       clearMessage(feedback);
     } catch (error) {
       console.error('[finances] Failed to load overview', error);
-      showMessage(feedback, error.message || 'Unable to load finance overview.', 'error');
+      showRetryMessage(feedback, error.message || 'Unable to load finance overview.', loadOverview);
     }
   };
 
@@ -667,12 +686,14 @@ export async function initFinancesConsole(config) {
 
     try {
       const payload = await getFinancesOverview(activeRange, 'range');
+      console.log('[finances] range', activeRange);
+      console.log('[finances] financeData', payload);
       renderAnalyticsFromPayload(payload);
       analyticsLoaded = true;
       clearMessage(feedback);
     } catch (error) {
       console.error('[finances] Failed to load analytics', error);
-      showMessage(feedback, error.message || 'Unable to load finance analytics.', 'error');
+      showRetryMessage(feedback, error.message || 'Unable to load finance analytics.', loadAnalytics);
     }
   };
 
@@ -703,6 +724,7 @@ export async function initFinancesConsole(config) {
         search: debtSearch?.value || '',
         minOutstanding: debtMinOutstanding?.value || ''
       });
+      console.log('[finances] financeData', payload);
       debtGroups = Array.isArray(payload?.groups) ? payload.groups : [];
       canSettleDebts = Boolean(payload?.permissions?.canSettle);
       debtTotals.textContent = `Outstanding: ${formatGuilders(payload?.totals?.unsettledOutstanding || 0)} | Voyages: ${
@@ -713,7 +735,7 @@ export async function initFinancesConsole(config) {
       clearMessage(feedback);
     } catch (error) {
       console.error('[finances] Failed to load debts', error);
-      showMessage(feedback, error.message || 'Unable to load finance debts.', 'error');
+      showRetryMessage(feedback, error.message || 'Unable to load finance debts.', loadDebts);
       debtGroupsRoot.innerHTML = '<article class="finance-debt-group"><p class="muted">Unable to load data</p></article>';
       if (debtPageInfo) debtPageInfo.textContent = 'Page 1 of 1';
       if (debtPrev) debtPrev.disabled = true;
@@ -726,6 +748,7 @@ export async function initFinancesConsole(config) {
     auditBody.innerHTML = '<tr><td colspan="7"><div class="finance-chart-skeleton"></div></td></tr>';
     try {
       const payload = await listFinanceAudit({ page: auditPage, pageSize: auditPageSize });
+      console.log('[finances] financeData', payload);
       const rows = Array.isArray(payload?.rows) ? payload.rows : [];
       const pagination = payload?.pagination || {};
       auditTotalPages = Math.max(1, Number(pagination.totalPages || 1));
@@ -755,7 +778,7 @@ export async function initFinancesConsole(config) {
       clearMessage(feedback);
     } catch (error) {
       console.error('[finances] Failed to load audit', error);
-      showMessage(feedback, error.message || 'Unable to load finance audit.', 'error');
+      showRetryMessage(feedback, error.message || 'Unable to load finance audit.', loadAudit);
       auditBody.innerHTML = '<tr><td colspan="7">Unable to load data</td></tr>';
     }
   };
