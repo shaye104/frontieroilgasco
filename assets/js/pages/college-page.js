@@ -105,14 +105,15 @@ function setActiveAdminTab(state, tab) {
 
 function updateAdminTabAvailability(state) {
   const caps = state.capabilities || {};
+  const manageAll = Boolean(state.canManage || caps['college:admin']);
   const visibleByTab = {
     dashboard: true,
-    trainees: Boolean(caps['college:admin'] || caps['progress:view']),
-    courses: Boolean(caps['college:admin'] || caps['course:manage']),
-    exams: Boolean(caps['college:admin'] || caps['exam:view'] || caps['exam:mark']),
-    library: Boolean(caps['college:admin'] || caps['library:manage']),
-    permissions: Boolean(caps['college:admin']),
-    audit: Boolean(caps['college:admin'])
+    trainees: Boolean(manageAll || caps['progress:view'] || caps['enrollment:manage']),
+    courses: Boolean(manageAll || caps['course:manage']),
+    exams: Boolean(manageAll || caps['exam:view'] || caps['exam:mark'] || caps['progress:override']),
+    library: Boolean(manageAll || caps['library:manage']),
+    permissions: Boolean(manageAll),
+    audit: Boolean(manageAll)
   };
 
   const visibleTabs = [];
@@ -616,8 +617,14 @@ function renderOverview(state) {
 async function loadOverview(state) {
   const payload = await fetchJson('/api/college/me');
   state.overview = payload || {};
-  state.capabilities = payload?.permissions?.capabilities || {};
+  state.capabilities = {
+    ...(state.capabilities || {}),
+    ...(payload?.permissions?.capabilities || {})
+  };
   state.canManage = Boolean(payload?.permissions?.canManage || state.canManage);
+  if (state.canManage) {
+    state.capabilities['college:admin'] = true;
+  }
   const adminTab = $('#collegeAdminTabBtn');
   if (adminTab) adminTab.classList.toggle('hidden', !state.canManage);
   updateAdminTabAvailability(state);
