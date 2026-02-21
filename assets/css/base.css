@@ -153,6 +153,10 @@ p {
   background: #ffffff;
 }
 
+body.page-intranet .site-footer {
+  display: none;
+}
+
 .footer-row {
   padding: var(--space-4) 0;
 }

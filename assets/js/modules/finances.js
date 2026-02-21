@@ -107,6 +107,11 @@ function renderTopDebtors(target, rows) {
     .join('');
 }
 
+function renderUnsettledTotal(target, amount) {
+  if (!target) return;
+  target.textContent = `Total outstanding: ${formatGuilders(amount)}`;
+}
+
 function renderOverviewSkeleton(config) {
   const kpiIds = [
     config.netProfitSelector,
@@ -126,6 +131,10 @@ function renderOverviewSkeleton(config) {
       el.innerHTML = '<div class="skeleton-line skeleton-w-90"></div><div class="skeleton-line skeleton-w-80"></div><div class="skeleton-line skeleton-w-70"></div>';
     }
   });
+  const unsettledTotal = document.querySelector(config.unsettledTotalSelector);
+  if (unsettledTotal) {
+    unsettledTotal.innerHTML = '<span class="skeleton-line skeleton-w-45"></span>';
+  }
 }
 
 export async function initFinancesOverview(config) {
@@ -133,7 +142,10 @@ export async function initFinancesOverview(config) {
   const rangeButtons = [...document.querySelectorAll(config.rangeButtonsSelector)];
   const unsettledScope = document.querySelector(config.unsettledScopeSelector);
   const topDebtors = document.querySelector(config.topDebtorsSelector);
-  if (!feedback || !rangeButtons.length || !unsettledScope || !topDebtors) return;
+  if (!feedback || !rangeButtons.length || !unsettledScope || !topDebtors) {
+    console.error('[finances] Missing required page elements for finance overview render.');
+    return;
+  }
 
   const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
   let activeRange = 'month';
@@ -157,6 +169,7 @@ export async function initFinancesOverview(config) {
       renderSimpleLineChart(document.querySelector(config.lossesChartSelector), charts.freightLossValueTrend || [], 'line-accent');
       renderSimpleLineChart(document.querySelector(config.avgChartSelector), charts.avgNetProfitTrend || [], 'line-muted');
 
+      renderUnsettledTotal(document.querySelector(config.unsettledTotalSelector), payload?.unsettled?.totalOutstanding || 0);
       renderTopDebtors(topDebtors, payload?.unsettled?.topDebtors || []);
       clearMessage(feedback);
       if (startedAt) {
@@ -164,13 +177,20 @@ export async function initFinancesOverview(config) {
         console.info('[perf] finances first data render', { ms: elapsed });
       }
     } catch (error) {
+      console.error('[finances] Failed to load overview', error);
+      renderSimpleLineChart(document.querySelector(config.netProfitChartSelector), []);
+      renderStackedShareChart(document.querySelector(config.shareChartSelector), []);
+      renderSimpleLineChart(document.querySelector(config.lossesChartSelector), []);
+      renderSimpleLineChart(document.querySelector(config.avgChartSelector), []);
+      renderUnsettledTotal(document.querySelector(config.unsettledTotalSelector), 0);
+      topDebtors.innerHTML = '<li class="role-item"><span class="role-id">No outstanding company share</span></li>';
       showMessage(feedback, error.message || 'Unable to load finance overview.', 'error');
     }
   };
 
   rangeButtons.forEach((button) => {
     button.addEventListener('click', async () => {
-      activeRange = String(button.getAttribute('data-range') || 'month');
+      activeRange = String(button.getAttribute('data-finance-range') || 'month');
       rangeButtons.forEach((btn) => btn.classList.toggle('is-active', btn === button));
       await refresh();
     });

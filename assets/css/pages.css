@@ -248,12 +248,22 @@
   border-radius: 12px;
   padding: 0.7rem 0.8rem;
   background: #ffffff;
+  position: relative;
+}
+
+.finance-kpi-icon {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.6rem;
+  font-size: 0.82rem;
+  opacity: 0.65;
 }
 
 .finance-kpi-label {
   margin: 0 0 0.2rem;
   font-size: 0.78rem;
   color: var(--color-muted);
+  padding-right: 1.2rem;
 }
 
 .finance-kpi-value {

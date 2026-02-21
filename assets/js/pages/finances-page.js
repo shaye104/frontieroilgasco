@@ -1,14 +1,11 @@
 import { initFinancesOverview } from '../modules/finances.js';
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260221d';
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260221e';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
-  protectedContentSelector: '#protectedContent',
-  requiredAnyPermissions: ['finances.view', 'admin.override']
+  protectedContentSelector: '#protectedContent'
 }).then((session) => {
-  if (!session) return;
-
   initFinancesOverview({
     feedbackSelector: '#financesFeedback',
     rangeButtonsSelector: '[data-finance-range]',
@@ -23,7 +20,8 @@ initIntranetPageGuard({
     shareChartSelector: '#chartCompanyCrew',
     lossesChartSelector: '#chartLossTrend',
     avgChartSelector: '#chartAvgProfit',
-    topDebtorsSelector: '#unsettledTopList'
+    topDebtorsSelector: '#unsettledTopList',
+    unsettledTotalSelector: '#unsettledOutstandingTotal'
   });
 });
 
