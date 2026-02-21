@@ -1,4 +1,4 @@
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js';
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260221d';
 import { initVoyageDetails } from '../modules/voyage-details.js';
 import { initializeYear } from '../modules/year.js';
 

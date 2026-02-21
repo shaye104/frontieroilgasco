@@ -1,4 +1,4 @@
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js';
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260221d';
 import { initActivityTracker } from '../modules/activity-tracker.js';
 import { initializeYear } from '../modules/year.js';
 

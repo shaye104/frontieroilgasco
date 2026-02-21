@@ -1,5 +1,5 @@
 import { showMessage } from './notice.js';
-import { hasPermission, renderIntranetNavbar } from './nav.js?v=20260221c';
+import { hasPermission, renderIntranetNavbar } from './nav.js?v=20260221d';
 
 async function fetchSession() {
   const response = await fetch('/api/auth/session', {
@@ -16,6 +16,62 @@ function toAccessDeniedUrl(reason) {
   if (reason) url.searchParams.set('reason', reason);
   url.searchParams.set('from', window.location.pathname);
   return url.toString();
+}
+
+function normalizePathname(path) {
+  return String(path || '').replace(/\/+$/, '') || '/';
+}
+
+function buildLink(href, label) {
+  const link = document.createElement('a');
+  link.href = href;
+  link.textContent = label;
+  return link;
+}
+
+function ensureNavbarFallback(session) {
+  const nav = document.querySelector('.site-nav');
+  if (!nav) return;
+
+  const links = [...nav.querySelectorAll('a[href]')];
+  const hasAnyLink = links.length > 0;
+  const hasFinances = links.some(
+    (link) => normalizePathname(new URL(link.getAttribute('href') || '', window.location.origin).pathname) === '/finances'
+  );
+
+  if (hasAnyLink && hasFinances) return;
+
+  nav.innerHTML = '';
+  nav.append(buildLink('/my-details', 'My Details'));
+  nav.append(buildLink('/voyages/my', 'Voyages'));
+  nav.append(buildLink('/my-fleet', 'My Fleet'));
+  nav.append(buildLink('/forms', 'Forms'));
+  nav.append(buildLink('/finances', 'Finances'));
+  if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
+
+  const spacer = document.createElement('span');
+  spacer.className = 'nav-spacer';
+  nav.append(spacer);
+
+  if (session?.displayName) {
+    const user = document.createElement('span');
+    user.className = 'nav-user';
+    user.textContent = session.displayName;
+    nav.append(user);
+  }
+
+  const logoutButton = document.createElement('button');
+  logoutButton.type = 'button';
+  logoutButton.className = 'btn btn-secondary';
+  logoutButton.textContent = 'Logout';
+  logoutButton.addEventListener('click', async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } finally {
+      window.location.href = '/';
+    }
+  });
+  nav.append(logoutButton);
 }
 
 export async function initIntranetLayout(config) {
@@ -42,6 +98,7 @@ export async function initIntranetLayout(config) {
 
     // Shared intranet layout: single navbar rendered once per page.
     renderIntranetNavbar(session);
+    ensureNavbarFallback(session);
 
     if (requireAdmin && !hasPermission(session, 'admin.access')) {
       window.location.href = toAccessDeniedUrl('admin_required');
