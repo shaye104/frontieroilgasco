@@ -206,7 +206,8 @@ export async function onRequestGet(context) {
         companyShare: 0,
         crewShare: 0,
         freightLossValue: 0,
-        voyageCount: 0
+        voyageCount: 0,
+        settledVoyageCount: 0
       }
     ])
   );
@@ -262,6 +263,7 @@ export async function onRequestGet(context) {
       companyShareSettledTotal = toMoney(companyShareSettledTotal + companyShare);
       const settledDays = calcSettledDays(voyage.ended_at, voyage.company_share_settled_at);
       if (Number.isFinite(settledDays)) settledAgesDays.push(settledDays);
+      target.settledVoyageCount += 1;
     }
 
     const routeLabel = `${String(voyage.departure_port || '').trim() || 'Unknown'} \u2192 ${String(voyage.destination_port || '').trim() || 'Unknown'}`;
@@ -342,10 +344,12 @@ export async function onRequestGet(context) {
       companyShare: 0,
       crewShare: 0,
       freightLossValue: 0,
-      voyageCount: 0
+      voyageCount: 0,
+      settledVoyageCount: 0
     };
 
     const avgNetProfit = value.voyageCount > 0 ? toMoney(value.netProfit / value.voyageCount) : 0;
+    const settlementRate = value.voyageCount > 0 ? toMoney((value.settledVoyageCount / value.voyageCount) * 100) : 0;
     return {
       key: bucket.key,
       label: value.label,
@@ -354,7 +358,8 @@ export async function onRequestGet(context) {
       crewShare: toMoney(value.crewShare),
       freightLossValue: Math.max(0, toMoney(value.freightLossValue)),
       avgNetProfit,
-      voyageCount: Number(value.voyageCount || 0)
+      voyageCount: Number(value.voyageCount || 0),
+      settlementRate: Math.max(0, Math.min(100, settlementRate))
     };
   });
 
@@ -379,7 +384,8 @@ export async function onRequestGet(context) {
         companyShareTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.companyShare })),
         freightLossValueTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.freightLossValue })),
         voyageCountTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.voyageCount })),
-        avgNetProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.avgNetProfit }))
+        avgNetProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.avgNetProfit })),
+        settlementRateTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.settlementRate }))
       },
       unsettled: {
         totalOutstanding: unsettledTotal,

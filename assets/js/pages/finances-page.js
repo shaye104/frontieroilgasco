@@ -607,6 +607,14 @@ function renderCountBarChart(target, series, label, color) {
   });
 }
 
+function renderPercentLineChart(target, series, lineLabel, color) {
+  const points = normalizeSeriesPoints(series);
+  renderCartesianLineChart(target, [{ label: lineLabel, color, points }], {
+    valueFormatter: (value) => formatPercent(value),
+    tickFormatter: (value) => formatPercent(value)
+  });
+}
+
 function renderNoData(target, message) {
   if (!target) return;
   target.innerHTML = `<div class="finance-chart-empty">${text(message || 'No data for selected range')}</div>`;
@@ -691,7 +699,7 @@ function renderOverviewSkeleton() {
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
 
-  ['#chartNetProfit', '#trendsChartNetProfitShare', '#trendsChartVoyageCount', '#trendsChartAvgProfit', '#trendsChartLossTrend'].forEach((selector) => {
+  ['#chartNetProfit', '#trendsChartSettlementRate', '#trendsChartVoyageCount', '#trendsChartAvgProfit', '#trendsChartLossTrend'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<div class="finance-chart-skeleton"></div>';
   });
@@ -756,12 +764,13 @@ function renderOverview(data, previousData, range) {
 
   const hasVoyages = !isAllZeroSeries(charts.voyageCountTrend || []);
   renderProfitShareChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.companyShareTrend || []);
-  renderProfitShareChart($('#trendsChartNetProfitShare'), charts.netProfitTrend || [], charts.companyShareTrend || []);
 
   if (!hasVoyages) {
+    renderNoData($('#trendsChartSettlementRate'), 'No voyages in this period');
     renderNoData($('#trendsChartVoyageCount'), 'No voyages in this period');
     renderNoData($('#trendsChartAvgProfit'), 'No voyages in this period');
   } else {
+    renderPercentLineChart($('#trendsChartSettlementRate'), charts.settlementRateTrend || [], 'Settlement Rate', '#253475');
     renderCountBarChart($('#trendsChartVoyageCount'), charts.voyageCountTrend || [], 'Voyage Count', '#253475');
     renderLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'Avg Net Profit / Voyage', '#2b4aa2');
   }
