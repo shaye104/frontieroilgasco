@@ -709,42 +709,6 @@ function alignSeries(netSeries, companySeries) {
   });
 }
 
-function alignFinanceMixSeries(netSeries, companySeries, lossSeries) {
-  const netPoints = normalizeSeriesPoints(netSeries);
-  const companyPoints = normalizeSeriesPoints(companySeries);
-  const lossPoints = normalizeSeriesPoints(lossSeries);
-  const byKey = new Map();
-
-  const upsert = (point, valueKey) => {
-    const existing = byKey.get(point.key);
-    if (existing) {
-      existing[valueKey] = point.value;
-      if (!existing.label) existing.label = point.label;
-      return;
-    }
-    byKey.set(point.key, {
-      key: point.key,
-      label: point.label,
-      parsedTime: point.parsedTime,
-      net: 0,
-      company: 0,
-      loss: 0,
-      [valueKey]: point.value
-    });
-  };
-
-  netPoints.forEach((point) => upsert(point, 'net'));
-  companyPoints.forEach((point) => upsert(point, 'company'));
-  lossPoints.forEach((point) => upsert(point, 'loss'));
-
-  return [...byKey.values()].sort((a, b) => {
-    const aTime = Number.isFinite(a.parsedTime) ? a.parsedTime : Number.POSITIVE_INFINITY;
-    const bTime = Number.isFinite(b.parsedTime) ? b.parsedTime : Number.POSITIVE_INFINITY;
-    if (aTime !== bTime) return aTime - bTime;
-    return a.key.localeCompare(b.key);
-  });
-}
-
 function renderProfitShareChart(target, netSeries, companySeries) {
   const rows = alignSeries(netSeries, companySeries);
   if (!rows.length) {
@@ -768,75 +732,6 @@ function renderProfitShareChart(target, netSeries, companySeries) {
   );
 }
 
-function renderFinanceMixChart(target, hintTarget, netSeries, companySeries, lossSeries) {
-  const rows = alignFinanceMixSeries(netSeries, companySeries, lossSeries);
-  if (!rows.length) {
-    if (hintTarget) hintTarget.textContent = '';
-    renderNoData(target, 'No data for selected range');
-    return;
-  }
-
-  const net = rows.map((row) => ({ key: row.key, label: row.label, value: row.net }));
-  const company = rows.map((row) => ({ key: row.key, label: row.label, value: row.company }));
-  const losses = rows.map((row) => ({ key: row.key, label: row.label, value: row.loss }));
-  const hasLosses = losses.some((point) => toMoney(point.value) > 0);
-
-  if (hintTarget) {
-    hintTarget.textContent = hasLosses ? 'Freight loss overlay included for this period' : 'No freight losses in this period';
-  }
-
-  const lines = [
-    { label: 'Net Profit', color: '#253475', points: net },
-    { label: 'Company Share Earned', color: '#5776b7', points: company }
-  ];
-  if (hasLosses) {
-    lines.push({ label: 'Freight Loss Value', color: '#b45309', points: losses });
-  }
-
-  renderCartesianLineChart(target, lines, {
-    valueFormatter: formatGuilders,
-    tickFormatter: formatGuildersCompact
-  });
-}
-
-function renderSettlementSparkline(target, series) {
-  if (!target) return;
-  const points = normalizeSeriesPoints(series);
-  if (!points.length) {
-    target.innerHTML = '<div class="finance-health-sparkline-empty">No outstanding trend data</div>';
-    return;
-  }
-
-  const width = 760;
-  const height = 74;
-  const padX = 8;
-  const padY = 8;
-  const plotWidth = width - padX * 2;
-  const plotHeight = height - padY * 2;
-  const steps = Math.max(points.length - 1, 1);
-  const values = points.map((point) => toMoney(point.value || 0));
-  let min = Math.min(...values);
-  let max = Math.max(...values);
-  if (min === max) {
-    min = Math.min(0, min - 1);
-    max += 1;
-  }
-  if (min > 0) min = 0;
-
-  const xAt = (idx) => padX + (idx / steps) * plotWidth;
-  const yAt = (value) => padY + ((max - value) / (max - min)) * plotHeight;
-  const linePath = points.map((point, idx) => `${idx === 0 ? 'M' : 'L'} ${xAt(idx)} ${yAt(point.value)}`).join(' ');
-  const areaPath =
-    `${linePath} L ${xAt(points.length - 1)} ${padY + plotHeight} L ${xAt(0)} ${padY + plotHeight} Z`;
-  const last = points[points.length - 1];
-
-  target.innerHTML = `<svg class="finance-health-sparkline-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Outstanding trend sparkline">
-    <path d="${areaPath}" fill="rgba(37, 52, 117, 0.10)"></path>
-    <path d="${linePath}" fill="none" stroke="#253475" stroke-width="2.25" stroke-linecap="round"></path>
-    <circle cx="${xAt(points.length - 1)}" cy="${yAt(last.value)}" r="3.4" fill="#5776b7" stroke="#ffffff" stroke-width="1.2"></circle>
-  </svg>`;
-}
-
 function isAllZeroSeries(series) {
   const safe = Array.isArray(series) ? series : [];
   if (!safe.length) return true;
@@ -854,7 +749,7 @@ function renderOverviewSkeleton() {
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
 
-  ['#chartNetProfit', '#trendsChartFinanceMix', '#trendsChartVoyageCount', '#trendsChartAvgProfit', '#trendsChartProfitDrivers', '#healthOutstandingSparkline'].forEach((selector) => {
+  ['#chartNetProfit', '#trendsChartOutstanding', '#trendsChartVoyageCount', '#trendsChartAvgProfit', '#trendsChartProfitDrivers'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<div class="finance-chart-skeleton"></div>';
   });
@@ -870,11 +765,6 @@ function renderOverviewSkeleton() {
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
 
-  ['#healthOutstanding', '#healthSettlementRate', '#healthAvgDays', '#healthOverdue'].forEach((selector) => {
-    const el = $(selector);
-    if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
-  });
-
   const topDebtors = $('#unsettledTopList');
   if (topDebtors) {
     topDebtors.innerHTML =
@@ -883,8 +773,10 @@ function renderOverviewSkeleton() {
       '<li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>';
   }
 
-  const financeMixHint = $('#trendsFinanceMixHint');
-  if (financeMixHint) financeMixHint.textContent = '';
+  ['#topRouteLabel', '#topVesselLabel', '#topOotwLabel', '#topRouteValue', '#topVesselValue', '#topOotwValue'].forEach((selector) => {
+    const el = $(selector);
+    if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
+  });
 }
 
 function renderOverview(data, previousData, range, breakdownMode = 'route') {
@@ -892,6 +784,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   const charts = data?.charts || {};
   const unsettled = data?.unsettled || {};
   const breakdowns = data?.breakdowns || {};
+  const topPerformers = data?.topPerformers || {};
   const previousKpis = previousData?.kpis || {};
 
   const writeMoney = (selector, value) => {
@@ -922,23 +815,14 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
 
   const hasVoyages = !isAllZeroSeries(charts.voyageCountTrend || []);
   renderProfitShareChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.companyShareTrend || []);
-  renderSettlementSparkline($('#healthOutstandingSparkline'), charts.outstandingTrend || []);
 
   if (!hasVoyages) {
-    renderNoData($('#trendsChartFinanceMix'), 'No voyages in this period');
+    renderNoData($('#trendsChartOutstanding'), 'No voyages in this period');
     renderNoData($('#trendsChartVoyageCount'), 'No voyages in this period');
     renderNoData($('#trendsChartAvgProfit'), 'No voyages in this period');
     renderNoData($('#trendsChartProfitDrivers'), 'No voyages in this period');
-    const financeMixHint = $('#trendsFinanceMixHint');
-    if (financeMixHint) financeMixHint.textContent = '';
   } else {
-    renderFinanceMixChart(
-      $('#trendsChartFinanceMix'),
-      $('#trendsFinanceMixHint'),
-      charts.netProfitTrend || [],
-      charts.companyShareTrend || [],
-      charts.freightLossValueTrend || []
-    );
+    renderLineChart($('#trendsChartOutstanding'), charts.outstandingTrend || [], 'Outstanding Company Share', '#253475');
     renderCountBarChart($('#trendsChartVoyageCount'), charts.voyageCountTrend || [], 'Voyage Count', '#253475');
     renderLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'Avg Net Profit / Voyage', '#2b4aa2');
     renderProfitDriversChart($('#trendsChartProfitDrivers'), breakdowns, breakdownMode);
@@ -957,15 +841,6 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   const overviewOverdue = $('#overviewOverdueUnsettled');
   if (overviewOverdue) overviewOverdue.textContent = formatInteger(unsettled.overdueVoyages || 0);
 
-  const healthOutstanding = $('#healthOutstanding');
-  if (healthOutstanding) healthOutstanding.textContent = formatGuilders(unsettled.totalOutstanding || 0);
-  const healthRate = $('#healthSettlementRate');
-  if (healthRate) healthRate.textContent = formatPercent(kpis.settlementRatePct || 0);
-  const healthAvgDays = $('#healthAvgDays');
-  if (healthAvgDays) healthAvgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
-  const healthOverdue = $('#healthOverdue');
-  if (healthOverdue) healthOverdue.textContent = formatInteger(unsettled.overdueVoyages || 0);
-
   const topList = $('#unsettledTopList');
   const topDebtors = Array.isArray(unsettled.topDebtors) ? unsettled.topDebtors : [];
   if (topList) {
@@ -983,6 +858,17 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
         .join('');
     }
   }
+
+  const setTop = (labelSelector, valueSelector, payload) => {
+    const labelEl = $(labelSelector);
+    const valueEl = $(valueSelector);
+    if (labelEl) labelEl.textContent = text(payload?.label || 'No data');
+    if (valueEl) valueEl.textContent = formatGuilders(payload?.netProfit || 0);
+  };
+
+  setTop('#topRouteLabel', '#topRouteValue', topPerformers?.route);
+  setTop('#topVesselLabel', '#topVesselValue', topPerformers?.vessel);
+  setTop('#topOotwLabel', '#topOotwValue', topPerformers?.ootw);
 
 }
 
