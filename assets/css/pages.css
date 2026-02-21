@@ -218,21 +218,27 @@
 }
 
 .finance-page-header {
-  padding-top: 0.1rem;
-  padding-bottom: 0.1rem;
+  padding-bottom: 0.2rem;
 }
 
 .finance-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.85rem;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.95rem;
+}
+
+.finance-head h1 {
+  margin-bottom: 0.25rem;
+  color: var(--color-primary);
 }
 
 .finance-subtitle {
-  margin: 0.3rem 0 0;
+  margin: 0;
   color: var(--color-muted);
-  font-size: 0.95rem;
+  font-size: 0.94rem;
 }
 
 .finance-range-control {
@@ -243,7 +249,7 @@
 }
 
 .finance-tabs {
-  margin-top: 0.6rem;
+  margin-top: 0.7rem;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -781,6 +787,8 @@
 
 .finance-data-table th,
 .finance-data-table td {
+  font-family: var(--font-body);
+  font-stretch: normal;
   padding: 0.48rem 0.54rem;
   font-size: 0.79rem;
   line-height: 1.28;
