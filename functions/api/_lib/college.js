@@ -9,6 +9,41 @@ export const USER_STATUSES = {
   COLLEGE_ADMIN: 'COLLEGE_ADMIN'
 };
 
+export const COLLEGE_ROLE_KEYS = ['COLLEGE_ADMIN', 'INSTRUCTOR', 'EXAMINER', 'TRAINEE'];
+
+export function normalizeCollegeRoleKey(value) {
+  const role = String(value || '').trim().toUpperCase();
+  return COLLEGE_ROLE_KEYS.includes(role) ? role : null;
+}
+
+export async function getCollegeRoleKeysForEmployee(env, employeeId) {
+  const id = Number(employeeId || 0);
+  if (!Number.isInteger(id) || id <= 0) return [];
+  const rows = await env.DB
+    .prepare(
+      `SELECT role_key
+       FROM college_role_assignments
+       WHERE employee_id = ?
+       ORDER BY role_key ASC`
+    )
+    .bind(id)
+    .all();
+
+  return [...new Set((rows?.results || []).map((row) => normalizeCollegeRoleKey(row.role_key)).filter(Boolean))];
+}
+
+function hasCollegeManagePermission(session) {
+  return (
+    hasPermission(session, 'college.manage') ||
+    hasPermission(session, 'college.roles.manage') ||
+    hasPermission(session, 'college.enrollments.manage') ||
+    hasPermission(session, 'college.courses.manage') ||
+    hasPermission(session, 'college.library.manage') ||
+    hasPermission(session, 'college.exams.manage') ||
+    hasPermission(session, 'admin.override')
+  );
+}
+
 export function normalizeUserStatus(value) {
   const status = String(value || '').trim().toUpperCase();
   if (!status) return USER_STATUSES.ACTIVE_STAFF;
@@ -42,12 +77,20 @@ export async function requireCollegeSession(context, options = {}) {
     return { errorResponse: json({ error: 'Employee profile required.' }, 403), session: null, employee: null, isRestricted: false };
   }
 
-  if (options.requireManage && !hasPermission(session, 'college.manage')) {
+  const roleKeys = employee?.id ? await getCollegeRoleKeysForEmployee(env, employee.id) : [];
+  const isRestricted = isCollegeRestrictedEmployee(employee);
+  const canManage = hasCollegeManagePermission(session) || roleKeys.includes('COLLEGE_ADMIN');
+  const canView = canManage || hasPermission(session, 'college.view') || session.isAdmin || isRestricted;
+
+  if (!canView) {
     return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null, employee: null, isRestricted: false };
   }
 
-  const isRestricted = isCollegeRestrictedEmployee(employee);
-  return { errorResponse: null, session, employee, isRestricted };
+  if (options.requireManage && !canManage) {
+    return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null, employee: null, isRestricted: false };
+  }
+
+  return { errorResponse: null, session, employee, isRestricted, roleKeys, canManage };
 }
 
 function toMoney(value) {
@@ -181,6 +224,12 @@ export async function evaluateAndApplyCollegePass(env, employee, performedByEmpl
       .bind(employeeId),
     env.DB
       .prepare(
+        `DELETE FROM college_role_assignments
+         WHERE employee_id = ? AND role_key = 'TRAINEE'`
+      )
+      .bind(employeeId),
+    env.DB
+      .prepare(
         `INSERT INTO college_audit_events
          (user_employee_id, action, performed_by_employee_id, meta_json, created_at)
          VALUES (?, 'passed', ?, ?, CURRENT_TIMESTAMP)`
@@ -244,12 +293,73 @@ export async function getCollegeOverview(env, employee) {
     });
   });
 
+  const examsResult = await env.DB
+    .prepare(
+      `SELECT
+         ex.id,
+         ex.course_id,
+         ex.module_id,
+         ex.title,
+         ex.passing_score,
+         ex.attempt_limit,
+         ex.time_limit_minutes,
+         ex.published,
+         (
+           SELECT COUNT(*)
+           FROM college_exam_attempts a
+           WHERE a.exam_id = ex.id AND a.user_employee_id = ?
+         ) AS attempts_used,
+         (
+           SELECT MAX(a.score)
+           FROM college_exam_attempts a
+           WHERE a.exam_id = ex.id AND a.user_employee_id = ?
+         ) AS best_score,
+         (
+           SELECT MAX(a.passed)
+           FROM college_exam_attempts a
+           WHERE a.exam_id = ex.id AND a.user_employee_id = ?
+         ) AS has_passed
+       FROM college_exams ex
+       WHERE ex.course_id IN (
+         SELECT course_id FROM college_enrollments WHERE user_employee_id = ?
+       )
+         AND ex.published = 1
+       ORDER BY ex.course_id ASC, ex.module_id ASC, ex.id ASC`
+    )
+    .bind(employeeId, employeeId, employeeId, employeeId)
+    .all();
+  const examsByCourse = new Map();
+  (examsResult?.results || []).forEach((row) => {
+    const courseId = Number(row.course_id || 0);
+    if (!courseId) return;
+    if (!examsByCourse.has(courseId)) examsByCourse.set(courseId, []);
+    const attemptLimit = Math.max(1, Number(row.attempt_limit || 3));
+    const attemptsUsed = Number(row.attempts_used || 0);
+    examsByCourse.get(courseId).push({
+      id: Number(row.id || 0),
+      courseId,
+      moduleId: Number(row.module_id || 0) || null,
+      title: String(row.title || '').trim(),
+      passingScore: Math.max(1, Math.min(100, Number(row.passing_score || 70))),
+      attemptLimit,
+      attemptsUsed,
+      remainingAttempts: Math.max(0, attemptLimit - attemptsUsed),
+      bestScore: row.best_score == null ? null : Number(row.best_score),
+      hasPassed: Number(row.has_passed || 0) === 1,
+      timeLimitMinutes: Number(row.time_limit_minutes || 0) || null,
+      published: Number(row.published || 0) === 1,
+      canAttempt: attemptsUsed < attemptLimit
+    });
+  });
+
   const enrollments = enrollmentSummary.enrollments.map((enrollment) => {
     const modules = modulesByCourse.get(enrollment.courseId) || [];
+    const exams = examsByCourse.get(enrollment.courseId) || [];
     const nextModule = modules.find((module) => !module.completed) || modules[modules.length - 1] || null;
     return {
       ...enrollment,
       modules,
+      exams,
       nextModuleId: nextModule?.id || null,
       nextModuleTitle: nextModule?.title || null
     };
@@ -275,6 +385,7 @@ export async function getCollegeOverview(env, employee) {
       robloxUsername: String(refreshedEmployee?.roblox_username || '').trim(),
       serialNumber: String(refreshedEmployee?.serial_number || '').trim(),
       userStatus: status,
+      collegeRoles: await getCollegeRoleKeysForEmployee(env, employeeId),
       collegeStartAt: refreshedEmployee?.college_start_at || null,
       collegeDueAt: refreshedEmployee?.college_due_at || null,
       collegePassedAt: refreshedEmployee?.college_passed_at || null

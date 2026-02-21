@@ -367,7 +367,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
 
   const marginTop = Number(options.marginTop || 12);
   const marginRight = Number(options.marginRight || 20);
-  const marginBottom = Number(options.marginBottom || 98);
+  const marginBottom = Number(options.marginBottom || 92);
   const marginLeft = Number(options.marginLeft || 74);
 
   const plotLeft = marginLeft;
@@ -416,7 +416,7 @@ function renderCartesianLineChart(target, lines, options = {}) {
       const show = idx % xLabelStep === 0 || idx === points.length - 1;
       if (!show) return '';
       const x = xAt(idx);
-      return `<text class="finance-axis-x-label" x="${x}" y="${height - 34}" text-anchor="middle">${text(point.label)}</text>`;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 26}" text-anchor="middle">${text(point.label)}</text>`;
     })
     .join('');
 
@@ -529,7 +529,7 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
 
   const marginTop = Number(options.marginTop || 12);
   const marginRight = Number(options.marginRight || 20);
-  const marginBottom = Number(options.marginBottom || 98);
+  const marginBottom = Number(options.marginBottom || 92);
   const marginLeft = Number(options.marginLeft || 74);
 
   const plotLeft = marginLeft;
@@ -568,7 +568,7 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
       const show = idx % xLabelStep === 0 || idx === points.length - 1;
       if (!show) return '';
       const x = plotLeft + (idx + 0.5) * band;
-      return `<text class="finance-axis-x-label" x="${x}" y="${height - 34}" text-anchor="middle">${text(point.label)}</text>`;
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 26}" text-anchor="middle">${text(point.label)}</text>`;
     })
     .join('');
 
@@ -902,7 +902,7 @@ function renderOverviewSkeleton() {
   const unsettledCount = $('#unsettledVoyageCount');
   if (unsettledCount) unsettledCount.innerHTML = '<span class="finance-line-skeleton"></span>';
 
-  ['#overviewSettlementRate', '#overviewAvgDaysToSettle', '#overviewOverdueUnsettled'].forEach((selector) => {
+  ['#overviewCompletedVoyages', '#overviewAvgDaysToSettle', '#overviewOverdueUnsettled'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
@@ -988,8 +988,8 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   const unsettledCount = $('#unsettledVoyageCount');
   if (unsettledCount) unsettledCount.textContent = `Unsettled Voyages: ${Number(unsettled.totalVoyages || 0)}`;
 
-  const overviewSettlementRate = $('#overviewSettlementRate');
-  if (overviewSettlementRate) overviewSettlementRate.textContent = formatPercent(kpis.settlementRatePct || 0);
+  const overviewCompletedVoyages = $('#overviewCompletedVoyages');
+  if (overviewCompletedVoyages) overviewCompletedVoyages.textContent = formatInteger(kpis.completedVoyages || 0);
   const overviewAvgDays = $('#overviewAvgDaysToSettle');
   if (overviewAvgDays) overviewAvgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
   const overviewOverdue = $('#overviewOverdueUnsettled');

@@ -46,7 +46,13 @@ export async function ensureCoreSchema(env) {
     ['finances.debts.settle', 'finances', 'Settle Finance Debts', 'Settle outstanding company share debts.'],
     ['finances.audit.view', 'finances', 'View Finance Audit', 'View finance settlement audit logs.'],
     ['college.view', 'college', 'View College', 'Access the college training centre.'],
-    ['college.manage', 'college', 'Manage College', 'Manage college deadlines and pass overrides.']
+    ['college.manage', 'college', 'Manage College', 'Manage college deadlines and pass overrides.'],
+    ['college.roles.manage', 'college', 'Manage College Roles', 'Assign college scoped roles for users.'],
+    ['college.enrollments.manage', 'college', 'Manage College Enrollments', 'Enroll or remove users from courses.'],
+    ['college.courses.manage', 'college', 'Manage College Courses', 'Create and update college courses and modules.'],
+    ['college.library.manage', 'college', 'Manage College Library', 'Create and publish college library documents.'],
+    ['college.exams.manage', 'college', 'Manage College Exams', 'Create and update college exams and question banks.'],
+    ['college.exams.grade', 'college', 'Grade College Exams', 'Grade college assessment attempts and overrides.']
   ];
 
   const statements = [
@@ -395,9 +401,12 @@ export async function ensureCoreSchema(env) {
       code TEXT NOT NULL UNIQUE,
       title TEXT NOT NULL,
       description TEXT,
+      visibility TEXT NOT NULL DEFAULT 'all',
       is_required_for_applicants INTEGER NOT NULL DEFAULT 0,
       published INTEGER NOT NULL DEFAULT 1,
       estimated_minutes INTEGER NOT NULL DEFAULT 60,
+      created_by_employee_id INTEGER,
+      updated_by_employee_id INTEGER,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -407,9 +416,12 @@ export async function ensureCoreSchema(env) {
       title TEXT NOT NULL,
       order_index INTEGER NOT NULL DEFAULT 0,
       content_type TEXT NOT NULL DEFAULT 'markdown',
+      completion_rule TEXT NOT NULL DEFAULT 'manual',
       content TEXT,
+      content_link TEXT,
       attachment_url TEXT,
       video_url TEXT,
+      published INTEGER NOT NULL DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(course_id, order_index),
@@ -446,10 +458,27 @@ export async function ensureCoreSchema(env) {
       category TEXT NOT NULL DEFAULT 'General',
       tags TEXT,
       summary TEXT,
+      content_markdown TEXT,
       document_url TEXT,
+      visibility TEXT NOT NULL DEFAULT 'public',
+      course_id INTEGER,
       published INTEGER NOT NULL DEFAULT 1,
+      updated_by_employee_id INTEGER,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(course_id) REFERENCES college_courses(id),
+      FOREIGN KEY(updated_by_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_role_assignments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      employee_id INTEGER NOT NULL,
+      role_key TEXT NOT NULL,
+      assigned_by_employee_id INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(employee_id, role_key),
+      FOREIGN KEY(employee_id) REFERENCES employees(id),
+      FOREIGN KEY(assigned_by_employee_id) REFERENCES employees(id)
     )`,
     `CREATE TABLE IF NOT EXISTS college_audit_events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -460,6 +489,53 @@ export async function ensureCoreSchema(env) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(user_employee_id) REFERENCES employees(id),
       FOREIGN KEY(performed_by_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_exams (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_id INTEGER,
+      module_id INTEGER,
+      title TEXT NOT NULL,
+      passing_score INTEGER NOT NULL DEFAULT 70,
+      attempt_limit INTEGER NOT NULL DEFAULT 3,
+      time_limit_minutes INTEGER,
+      published INTEGER NOT NULL DEFAULT 0,
+      created_by_employee_id INTEGER,
+      updated_by_employee_id INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(course_id) REFERENCES college_courses(id),
+      FOREIGN KEY(module_id) REFERENCES college_course_modules(id),
+      FOREIGN KEY(created_by_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(updated_by_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_exam_questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      exam_id INTEGER NOT NULL,
+      question_type TEXT NOT NULL DEFAULT 'mcq',
+      prompt TEXT NOT NULL,
+      choices_json TEXT,
+      correct_answer_json TEXT,
+      points INTEGER NOT NULL DEFAULT 1,
+      order_index INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(exam_id) REFERENCES college_exams(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS college_exam_attempts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      exam_id INTEGER NOT NULL,
+      user_employee_id INTEGER NOT NULL,
+      started_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      submitted_at TEXT,
+      score INTEGER,
+      passed INTEGER NOT NULL DEFAULT 0,
+      graded_by_employee_id INTEGER,
+      grading_notes TEXT,
+      answers_json TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(exam_id) REFERENCES college_exams(id),
+      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(graded_by_employee_id) REFERENCES employees(id)
     )`
   ];
 
@@ -518,8 +594,46 @@ export async function ensureCoreSchema(env) {
   if (!employeeColumnNames.has('college_passed_at')) {
     await env.DB.prepare(`ALTER TABLE employees ADD COLUMN college_passed_at TEXT`).run();
   }
+  const courseColumns = await env.DB.prepare(`PRAGMA table_info(college_courses)`).all();
+  const courseColumnNames = new Set((courseColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!courseColumnNames.has('visibility')) {
+    await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN visibility TEXT NOT NULL DEFAULT 'all'`).run();
+  }
+  if (!courseColumnNames.has('created_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN created_by_employee_id INTEGER`).run();
+  }
+  if (!courseColumnNames.has('updated_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN updated_by_employee_id INTEGER`).run();
+  }
+  const moduleColumns = await env.DB.prepare(`PRAGMA table_info(college_course_modules)`).all();
+  const moduleColumnNames = new Set((moduleColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!moduleColumnNames.has('completion_rule')) {
+    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN completion_rule TEXT NOT NULL DEFAULT 'manual'`).run();
+  }
+  if (!moduleColumnNames.has('content_link')) {
+    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN content_link TEXT`).run();
+  }
+  if (!moduleColumnNames.has('published')) {
+    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN published INTEGER NOT NULL DEFAULT 1`).run();
+  }
+  const libraryColumns = await env.DB.prepare(`PRAGMA table_info(college_library_documents)`).all();
+  const libraryColumnNames = new Set((libraryColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!libraryColumnNames.has('content_markdown')) {
+    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN content_markdown TEXT`).run();
+  }
+  if (!libraryColumnNames.has('visibility')) {
+    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public'`).run();
+  }
+  if (!libraryColumnNames.has('course_id')) {
+    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN course_id INTEGER`).run();
+  }
+  if (!libraryColumnNames.has('updated_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN updated_by_employee_id INTEGER`).run();
+  }
   await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
   await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();
+  await env.DB.prepare(`UPDATE college_courses SET visibility = COALESCE(NULLIF(TRIM(visibility), ''), 'all')`).run();
+  await env.DB.prepare(`UPDATE college_library_documents SET visibility = COALESCE(NULLIF(TRIM(visibility), ''), 'public')`).run();
   await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
   await env.DB
     .prepare(
@@ -545,7 +659,13 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_college_modules_course ON college_course_modules(course_id, order_index)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS ux_college_modules_course_order ON college_course_modules(course_id, order_index)`,
     `CREATE INDEX IF NOT EXISTS idx_college_module_progress_user_module ON college_module_progress(user_employee_id, module_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_library_documents_category ON college_library_documents(category)`
+    `CREATE INDEX IF NOT EXISTS idx_college_library_documents_category ON college_library_documents(category)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_library_documents_visibility ON college_library_documents(visibility)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_library_documents_course ON college_library_documents(course_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_roles_employee ON college_role_assignments(employee_id, role_key)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_courses_visibility ON college_courses(visibility)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_exams_course ON college_exams(course_id, published)`,
+    `CREATE INDEX IF NOT EXISTS idx_college_exam_attempts_exam_user ON college_exam_attempts(exam_id, user_employee_id)`
   ];
   for (const sql of optionalIndexStatements) {
     try {
@@ -666,23 +786,23 @@ export async function ensureCoreSchema(env) {
     env.DB
       .prepare(
         `INSERT OR IGNORE INTO college_courses
-         (code, title, description, is_required_for_applicants, published, estimated_minutes, updated_at)
+         (code, title, description, visibility, is_required_for_applicants, published, estimated_minutes, updated_at)
          VALUES
-         ('COL-IND-001', 'Core Induction', 'Mandatory induction for accepted applicants.', 1, 1, 90, CURRENT_TIMESTAMP)`
+         ('COL-IND-001', 'Core Induction', 'Mandatory induction for accepted applicants.', 'trainee', 1, 1, 90, CURRENT_TIMESTAMP)`
       ),
     env.DB
       .prepare(
         `INSERT OR IGNORE INTO college_library_documents
-         (title, category, tags, summary, document_url, published, updated_at)
+         (title, category, tags, summary, document_url, visibility, published, updated_at)
          VALUES
-         ('Fleet Safety SOP', 'Safety', 'safety,sop,operations', 'Core safety operating procedures for voyages.', '/forms', 1, CURRENT_TIMESTAMP)`
+         ('Fleet Safety SOP', 'Safety', 'safety,sop,operations', 'Core safety operating procedures for voyages.', '/forms', 'public', 1, CURRENT_TIMESTAMP)`
       ),
     env.DB
       .prepare(
         `INSERT OR IGNORE INTO college_library_documents
-         (title, category, tags, summary, document_url, published, updated_at)
+         (title, category, tags, summary, document_url, visibility, published, updated_at)
          VALUES
-         ('Navigation Standards', 'Navigation', 'navigation,route,bridge', 'Navigation and route-planning standards.', '/voyages/my', 1, CURRENT_TIMESTAMP)`
+         ('Navigation Standards', 'Navigation', 'navigation,route,bridge', 'Navigation and route-planning standards.', '/voyages/my', 'staff', 1, CURRENT_TIMESTAMP)`
       )
   ]);
 

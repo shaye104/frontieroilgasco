@@ -37,12 +37,14 @@ const INTRANET_NAV_ITEMS = [
   { href: '/voyages/my', label: 'Voyages' },
   { href: '/my-fleet', label: 'My Fleet' },
   { href: '/forms', label: 'Forms' },
-  { href: '/college', label: 'College' },
-  { href: '/finances', label: 'Finances' },
+  { href: '/college', label: 'College', sessionFlag: 'canAccessCollege' },
+  { href: '/finances', label: 'Finances', anyPermissions: ['finances.view'] },
   { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
 ];
 
 function canRenderNavItem(session, item) {
+  const sessionFlag = String(item?.sessionFlag || '').trim();
+  if (sessionFlag && !session?.[sessionFlag]) return false;
   const anyPermissions = Array.isArray(item?.anyPermissions) ? item.anyPermissions : [];
   if (!anyPermissions.length) return true;
   return anyPermissions.some((permissionKey) => hasPermission(session, permissionKey));

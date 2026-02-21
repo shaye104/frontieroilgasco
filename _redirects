@@ -47,6 +47,8 @@
 /college/courses/:courseId/modules/:moduleId/ /college?tab=courses&courseId=:courseId&moduleId=:moduleId 302
 /college/library /college?tab=library 302
 /college/library/ /college?tab=library 302
+/college/admin /college?tab=admin 302
+/college/admin/ /college?tab=admin 302
 
 /admin /admin-panel 200
 /admin/ /admin-panel 200

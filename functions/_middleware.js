@@ -116,6 +116,23 @@ export async function onRequest(context) {
     const session = await readSessionFromRequest(context.env, context.request);
     const isLoggedIn = Boolean(session);
     const isApiPath = pathname.startsWith('/api/');
+    const sessionPermissions = Array.isArray(session?.permissions) ? session.permissions : [];
+    const hasEntryPermission =
+      Boolean(session?.isAdmin) ||
+      sessionPermissions.includes('my_details.view') ||
+      sessionPermissions.includes('admin.override') ||
+      sessionPermissions.includes('super.admin');
+    const hasCollegePermission =
+      sessionPermissions.includes('college.view') ||
+      sessionPermissions.includes('college.manage') ||
+      sessionPermissions.includes('college.roles.manage') ||
+      sessionPermissions.includes('college.enrollments.manage') ||
+      sessionPermissions.includes('college.courses.manage') ||
+      sessionPermissions.includes('college.library.manage') ||
+      sessionPermissions.includes('college.exams.manage') ||
+      sessionPermissions.includes('college.exams.grade') ||
+      sessionPermissions.includes('admin.override') ||
+      sessionPermissions.includes('super.admin');
     let collegeRestricted = false;
 
     if (isLoggedIn && !session.isAdmin && session.userId) {
@@ -127,6 +144,7 @@ export async function onRequest(context) {
         collegeRestricted = String(session.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' && !session.collegePassedAt;
       }
     }
+    const shouldLandOnCollege = collegeRestricted || (isLoggedIn && !hasEntryPermission && hasCollegePermission);
 
     if (isApiPath) {
       if (isLoggedIn && collegeRestricted && !isAllowedRestrictedApiPath(pathname)) {
@@ -139,7 +157,7 @@ export async function onRequest(context) {
     }
 
     if (pathname === '/dashboard') {
-      return Response.redirect(new URL(collegeRestricted ? '/college' : '/my-details', url.origin).toString(), 302);
+      return Response.redirect(new URL(shouldLandOnCollege ? '/college' : '/my-details', url.origin).toString(), 302);
     }
 
     if (pathname === '/intranet' || pathname === '/intranet.html') {
@@ -151,13 +169,13 @@ export async function onRequest(context) {
         return context.next();
       }
       if (isLoggedIn) {
-        return Response.redirect(new URL(collegeRestricted ? '/college' : '/my-details', url.origin).toString(), 302);
+        return Response.redirect(new URL(shouldLandOnCollege ? '/college' : '/my-details', url.origin).toString(), 302);
       }
       return context.next();
     }
 
     if (isLoggedIn && (pathname === '/' || pathname === '/index.html')) {
-      return Response.redirect(new URL(collegeRestricted ? '/college' : '/my-details', url.origin).toString(), 302);
+      return Response.redirect(new URL(shouldLandOnCollege ? '/college' : '/my-details', url.origin).toString(), 302);
     }
 
     if (!isLoggedIn && isProtectedPath(pathname)) {

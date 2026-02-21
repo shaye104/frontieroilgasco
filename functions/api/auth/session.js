@@ -57,9 +57,25 @@ export async function onRequest(context) {
       !(employee?.college_passed_at || payload.collegePassedAt),
     canAccessCollege:
       hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.view') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.roles.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.enrollments.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.courses.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.library.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.exams.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.exams.grade') ||
       (String(employee?.user_status || payload.userStatus || '')
         .trim()
         .toUpperCase() === 'APPLICANT_ACCEPTED'),
+    canManageCollege:
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.roles.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.enrollments.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.courses.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.library.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.exams.manage') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.exams.grade') ||
+      hasPermission({ permissions: permissionContext?.permissions || [] }, 'admin.override'),
     canAccessAdminPanel: hasPermission({ permissions: permissionContext?.permissions || [] }, 'admin.access'),
     canManageRoles: hasPermission({ permissions: permissionContext?.permissions || [] }, 'user_groups.manage'),
     canManageConfig: hasPermission({ permissions: permissionContext?.permissions || [] }, 'config.manage'),

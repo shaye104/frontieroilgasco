@@ -37,6 +37,7 @@
             <button class="college-tab is-active" type="button" data-college-tab="overview" aria-current="page">Overview</button>
             <button class="college-tab" type="button" data-college-tab="courses">Courses</button>
             <button class="college-tab" type="button" data-college-tab="library">Library</button>
+            <button id="collegeAdminTabBtn" class="college-tab hidden" type="button" data-college-tab="admin">Admin</button>
           </nav>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="collegeFeedback" class="feedback" role="status" aria-live="polite"></div>
@@ -105,6 +106,13 @@
                 <h3 id="collegeModuleTitle">Select a module</h3>
                 <p id="collegeModuleMeta" class="college-kpi-meta"></p>
                 <div id="collegeModuleBody" class="college-module-body"></div>
+                <section class="college-module-exams">
+                  <div class="college-module-exams-head">
+                    <h4>Module Assessments</h4>
+                    <p class="college-kpi-meta">Exams and quizzes linked to this course/module.</p>
+                  </div>
+                  <div id="collegeCourseExams" class="college-course-exam-list"></div>
+                </section>
                 <div class="college-actions">
                   <button id="collegeMarkCompleteBtn" type="button" class="btn btn-primary hidden">Mark as Complete</button>
                 </div>
@@ -127,6 +135,388 @@
               <div id="collegeLibraryRows" class="college-library-list"></div>
             </article>
           </section>
+
+          <section id="collegeTabAdmin" class="college-tab-panel hidden" data-college-panel="admin">
+            <article class="college-card">
+              <h3>College Admin Dashboard</h3>
+              <div class="college-admin-kpis">
+                <article class="college-kpi">
+                  <p class="college-kpi-label">Active Trainees</p>
+                  <p id="collegeAdminActiveTrainees" class="college-kpi-value">0</p>
+                </article>
+                <article class="college-kpi">
+                  <p class="college-kpi-label">Due Soon (3d)</p>
+                  <p id="collegeAdminDueSoon" class="college-kpi-value">0</p>
+                </article>
+                <article class="college-kpi">
+                  <p class="college-kpi-label">Overdue</p>
+                  <p id="collegeAdminOverdue" class="college-kpi-value">0</p>
+                </article>
+                <article class="college-kpi">
+                  <p class="college-kpi-label">Pass Rate (30d)</p>
+                  <p id="collegeAdminPassRate" class="college-kpi-value">0%</p>
+                </article>
+              </div>
+              <div class="college-admin-action-grid">
+                <article class="college-card college-admin-subcard">
+                  <h4>Action Needed</h4>
+                  <ul id="collegeAdminActionNeeded" class="college-checklist"></ul>
+                </article>
+                <article class="college-card college-admin-subcard">
+                  <h4>Overdue Trainees</h4>
+                  <ul id="collegeAdminOverdueList" class="college-checklist"></ul>
+                </article>
+              </div>
+            </article>
+
+            <article class="college-card">
+              <h3>People &amp; Access</h3>
+              <div class="filter-row">
+                <div>
+                  <label for="collegeAdminPeopleSearch">Search</label>
+                  <input id="collegeAdminPeopleSearch" type="text" placeholder="Username / serial / Discord ID" />
+                </div>
+                <div>
+                  <label for="collegeAdminPeopleStatus">Status</label>
+                  <select id="collegeAdminPeopleStatus">
+                    <option value="">All</option>
+                    <option value="APPLICANT_ACCEPTED">Applicant Accepted</option>
+                    <option value="ACTIVE_STAFF">Active Staff</option>
+                  </select>
+                </div>
+              </div>
+              <form id="collegeAdminRolesForm" class="filter-row">
+                <div>
+                  <label for="collegeAdminRoleUser">Employee ID</label>
+                  <input id="collegeAdminRoleUser" type="number" min="1" required />
+                </div>
+                <div>
+                  <label for="collegeAdminRoleValues">Roles (comma-separated)</label>
+                  <input id="collegeAdminRoleValues" type="text" placeholder="COLLEGE_ADMIN,INSTRUCTOR,EXAMINER,TRAINEE" />
+                </div>
+                <div>
+                  <button type="submit" class="btn btn-secondary">Update Roles</button>
+                </div>
+              </form>
+              <div id="collegeAdminRolesFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Status</th>
+                      <th>Due</th>
+                      <th>College Roles</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collegeAdminPeopleRows">
+                    <tr><td colspan="4">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="college-card">
+              <h3>Enrollments</h3>
+              <form id="collegeAdminEnrollForm" class="filter-row">
+                <div>
+                  <label for="collegeAdminEnrollUser">Employee ID</label>
+                  <input id="collegeAdminEnrollUser" type="number" min="1" required />
+                </div>
+                <div>
+                  <label for="collegeAdminEnrollCourse">Course ID</label>
+                  <input id="collegeAdminEnrollCourse" type="number" min="1" required />
+                </div>
+                <div class="college-inline-control">
+                  <label for="collegeAdminEnrollRequired">Required</label>
+                  <input id="collegeAdminEnrollRequired" type="checkbox" />
+                </div>
+                <div>
+                  <button type="submit" class="btn btn-primary">Save Enrollment</button>
+                </div>
+              </form>
+              <div id="collegeAdminEnrollFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Course</th>
+                      <th>Required</th>
+                      <th>Status</th>
+                      <th>Enrolled</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collegeAdminEnrollRows">
+                    <tr><td colspan="5">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="college-card">
+              <h3>Courses</h3>
+              <form id="collegeAdminCourseForm" class="filter-row">
+                <div>
+                  <label for="collegeAdminCourseCode">Code</label>
+                  <input id="collegeAdminCourseCode" type="text" placeholder="COL-XXX-001" required />
+                </div>
+                <div>
+                  <label for="collegeAdminCourseTitle">Title</label>
+                  <input id="collegeAdminCourseTitle" type="text" required />
+                </div>
+                <div>
+                  <label for="collegeAdminCourseVisibility">Visibility</label>
+                  <select id="collegeAdminCourseVisibility">
+                    <option value="all">All</option>
+                    <option value="trainee">Trainee</option>
+                    <option value="staff">Staff</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+                <div class="college-inline-control">
+                  <label for="collegeAdminCoursePublished">Published</label>
+                  <input id="collegeAdminCoursePublished" type="checkbox" checked />
+                </div>
+                <div>
+                  <button type="submit" class="btn btn-primary">Create Course</button>
+                </div>
+              </form>
+              <div id="collegeAdminCourseFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Code</th>
+                      <th>Title</th>
+                      <th>Visibility</th>
+                      <th>Published</th>
+                      <th>Modules</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collegeAdminCourseRows">
+                    <tr><td colspan="6">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="college-card">
+              <h3>Library</h3>
+              <form id="collegeAdminLibraryForm" class="filter-row">
+                <div>
+                  <label for="collegeAdminLibraryTitle">Title</label>
+                  <input id="collegeAdminLibraryTitle" type="text" required />
+                </div>
+                <div>
+                  <label for="collegeAdminLibraryCategory">Category</label>
+                  <input id="collegeAdminLibraryCategory" type="text" value="General" />
+                </div>
+                <div>
+                  <label for="collegeAdminLibraryVisibility">Visibility</label>
+                  <select id="collegeAdminLibraryVisibility">
+                    <option value="public">Public</option>
+                    <option value="staff">Staff</option>
+                    <option value="trainee">Trainee</option>
+                    <option value="enrolled">Course Enrolled</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="collegeAdminLibraryUrl">Document URL</label>
+                  <input id="collegeAdminLibraryUrl" type="text" placeholder="https://..." />
+                </div>
+                <div>
+                  <button type="submit" class="btn btn-primary">Create Document</button>
+                </div>
+              </form>
+              <div id="collegeAdminLibraryFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Category</th>
+                      <th>Visibility</th>
+                      <th>Published</th>
+                      <th>Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collegeAdminLibraryRows">
+                    <tr><td colspan="5">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="college-card">
+              <h3>Admin Audit</h3>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>When</th>
+                      <th>Action</th>
+                      <th>Target</th>
+                      <th>By</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collegeAdminAuditRows">
+                    <tr><td colspan="4">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="college-card">
+              <h3>Exams &amp; Quizzes</h3>
+              <form id="collegeAdminExamForm" class="filter-row">
+                <div>
+                  <label for="collegeAdminExamTitle">Title</label>
+                  <input id="collegeAdminExamTitle" type="text" required />
+                </div>
+                <div>
+                  <label for="collegeAdminExamCourseId">Course ID</label>
+                  <input id="collegeAdminExamCourseId" type="number" min="1" required />
+                </div>
+                <div>
+                  <label for="collegeAdminExamModuleId">Module ID</label>
+                  <input id="collegeAdminExamModuleId" type="number" min="1" />
+                </div>
+                <div>
+                  <label for="collegeAdminExamPassingScore">Passing Score</label>
+                  <input id="collegeAdminExamPassingScore" type="number" min="1" max="100" value="70" />
+                </div>
+                <div>
+                  <label for="collegeAdminExamAttemptLimit">Attempt Limit</label>
+                  <input id="collegeAdminExamAttemptLimit" type="number" min="1" max="20" value="3" />
+                </div>
+                <div>
+                  <label for="collegeAdminExamPublished">Published</label>
+                  <select id="collegeAdminExamPublished">
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                  </select>
+                </div>
+                <div>
+                  <button type="submit" class="btn btn-primary">Save Exam</button>
+                </div>
+              </form>
+              <div id="collegeAdminExamFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Exam</th>
+                      <th>Course</th>
+                      <th>Questions</th>
+                      <th>Pending</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collegeAdminExamRows">
+                    <tr><td colspan="5">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="college-card">
+              <h3>Exam Questions</h3>
+              <form id="collegeAdminExamQuestionForm" class="filter-row">
+                <div>
+                  <label for="collegeAdminQuestionExamId">Exam ID</label>
+                  <input id="collegeAdminQuestionExamId" type="number" min="1" required />
+                </div>
+                <div>
+                  <label for="collegeAdminQuestionType">Type</label>
+                  <select id="collegeAdminQuestionType">
+                    <option value="mcq">MCQ</option>
+                    <option value="short">Short Answer</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="collegeAdminQuestionPoints">Points</label>
+                  <input id="collegeAdminQuestionPoints" type="number" min="1" max="20" value="1" />
+                </div>
+                <div>
+                  <label for="collegeAdminQuestionOrder">Order</label>
+                  <input id="collegeAdminQuestionOrder" type="number" min="1" value="1" />
+                </div>
+                <div class="college-grid-span-full">
+                  <label for="collegeAdminQuestionPrompt">Prompt</label>
+                  <textarea id="collegeAdminQuestionPrompt" rows="2" required></textarea>
+                </div>
+                <div class="college-grid-span-full">
+                  <label for="collegeAdminQuestionChoices">Choices (comma-separated for MCQ)</label>
+                  <input id="collegeAdminQuestionChoices" type="text" placeholder="A, B, C, D" />
+                </div>
+                <div>
+                  <label for="collegeAdminQuestionCorrect">Correct answer</label>
+                  <input id="collegeAdminQuestionCorrect" type="text" />
+                </div>
+                <div>
+                  <button type="submit" class="btn btn-secondary">Save Question</button>
+                </div>
+              </form>
+              <div id="collegeAdminQuestionFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Type</th>
+                      <th>Prompt</th>
+                      <th>Points</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collegeAdminQuestionRows">
+                    <tr><td colspan="4">Select an exam to load questions.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="college-card">
+              <h3>Grading Queue</h3>
+              <form id="collegeAdminGradeForm" class="filter-row">
+                <div>
+                  <label for="collegeAdminGradeAttemptId">Attempt ID</label>
+                  <input id="collegeAdminGradeAttemptId" type="number" min="1" required />
+                </div>
+                <div>
+                  <label for="collegeAdminGradeScore">Score (0-100)</label>
+                  <input id="collegeAdminGradeScore" type="number" min="0" max="100" required />
+                </div>
+                <div class="college-grid-span-full">
+                  <label for="collegeAdminGradeNotes">Notes</label>
+                  <textarea id="collegeAdminGradeNotes" rows="2"></textarea>
+                </div>
+                <div>
+                  <button type="submit" class="btn btn-secondary">Grade Attempt</button>
+                </div>
+              </form>
+              <div id="collegeAdminGradeFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Attempt</th>
+                      <th>Exam</th>
+                      <th>Candidate</th>
+                      <th>Submitted</th>
+                      <th>Score</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="collegeAdminAttemptRows">
+                    <tr><td colspan="6">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
         </section>
       </div>
     </main>
@@ -138,6 +528,24 @@
         <div class="college-actions">
           <button id="collegeRequirementsClose" type="button" class="btn btn-secondary">Close</button>
         </div>
+      </div>
+    </div>
+
+    <div id="collegeExamModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="collegeExamTitle">
+      <div class="modal-card college-exam-modal">
+        <div class="college-exam-modal-head">
+          <h3 id="collegeExamTitle">Exam</h3>
+          <button id="collegeExamClose" type="button" class="btn btn-secondary">Close</button>
+        </div>
+        <p id="collegeExamMeta" class="college-kpi-meta"></p>
+        <form id="collegeExamForm" class="college-exam-form">
+          <div id="collegeExamQuestions" class="college-exam-questions"></div>
+          <div class="college-actions">
+            <button id="collegeExamCancel" type="button" class="btn btn-secondary">Cancel</button>
+            <button id="collegeExamSubmit" type="submit" class="btn btn-primary">Submit Exam</button>
+          </div>
+        </form>
+        <div id="collegeExamFeedback" class="feedback" role="status" aria-live="polite"></div>
       </div>
     </div>
 

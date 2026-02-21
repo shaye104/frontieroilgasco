@@ -34,8 +34,10 @@ export async function onRequestPost(context) {
   await env.DB.batch([
     env.DB
       .prepare(
-        `INSERT OR REPLACE INTO college_module_progress (user_employee_id, module_id, completed_at)
-         VALUES (?, ?, CURRENT_TIMESTAMP)`
+        `INSERT INTO college_module_progress (user_employee_id, module_id, completed_at)
+         VALUES (?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(user_employee_id, module_id)
+         DO UPDATE SET completed_at = excluded.completed_at`
       )
       .bind(employeeId, moduleId),
     contentType === 'quiz'

@@ -3,7 +3,7 @@ import { getCollegeOverview, requireCollegeSession } from '../_lib/college.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const { errorResponse, employee } = await requireCollegeSession(context);
+  const { errorResponse, employee, canManage, roleKeys } = await requireCollegeSession(context);
   if (errorResponse) return errorResponse;
 
   const overview = await getCollegeOverview(env, employee);
@@ -13,6 +13,10 @@ export async function onRequestGet(context) {
     request,
     {
       ok: true,
+      permissions: {
+        canManage: Boolean(canManage),
+        roleKeys: Array.isArray(roleKeys) ? roleKeys : []
+      },
       ...overview
     },
     { cacheControl: 'private, max-age=20, stale-while-revalidate=40' }

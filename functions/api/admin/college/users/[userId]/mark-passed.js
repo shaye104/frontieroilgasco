@@ -46,6 +46,12 @@ export async function onRequestPost(context) {
       .bind(employeeId),
     env.DB
       .prepare(
+        `DELETE FROM college_role_assignments
+         WHERE employee_id = ? AND role_key = 'TRAINEE'`
+      )
+      .bind(employeeId),
+    env.DB
+      .prepare(
         `INSERT INTO college_audit_events
          (user_employee_id, action, performed_by_employee_id, meta_json, created_at)
          VALUES (?, 'passed_override', ?, ?, CURRENT_TIMESTAMP)`

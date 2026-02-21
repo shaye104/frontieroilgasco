@@ -543,6 +543,13 @@ export function prefetchRouteData(pathname, session) {
   if (route === '/college') {
     return Promise.all([prefetchJson('/api/college/me'), prefetchJson('/api/college/library')]).then(() => null);
   }
+  if (route === '/college/admin') {
+    return Promise.all([
+      prefetchJson('/api/college/admin/overview'),
+      prefetchJson('/api/college/admin/people?page=1&pageSize=20'),
+      prefetchJson('/api/college/admin/enrollments?page=1&pageSize=20')
+    ]).then(() => null);
+  }
   if (route === '/finances') {
     return prefetchJson('/api/finances/overview?range=month&unsettledScope=all');
   }

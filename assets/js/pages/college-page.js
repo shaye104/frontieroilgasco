@@ -1,4 +1,5 @@
 import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260221d';
+import { hasPermission } from '../modules/nav.js?v=20260221h';
 
 function $(selector) {
   return document.querySelector(selector);
@@ -66,13 +67,26 @@ function setFeedback(message, type = 'error') {
   box.textContent = message;
 }
 
+function setInlineFeedback(selector, message, type = 'error') {
+  const box = $(selector);
+  if (!box) return;
+  if (!message) {
+    box.className = 'feedback';
+    box.textContent = '';
+    return;
+  }
+  box.className = `feedback is-visible ${type === 'error' ? 'is-error' : 'is-success'}`;
+  box.textContent = message;
+}
+
 function normalizeTab(value) {
   const key = String(value || '').trim().toLowerCase();
-  return ['overview', 'courses', 'library'].includes(key) ? key : 'overview';
+  return ['overview', 'courses', 'library', 'admin'].includes(key) ? key : 'overview';
 }
 
 function setActiveTab(state, tab) {
-  state.activeTab = normalizeTab(tab);
+  const requested = normalizeTab(tab);
+  state.activeTab = requested === 'admin' && !state.canManage ? 'overview' : requested;
   $$('[data-college-tab]').forEach((button) => {
     const isActive = button.getAttribute('data-college-tab') === state.activeTab;
     button.classList.toggle('is-active', isActive);
@@ -206,6 +220,34 @@ function renderCurrentModule(state) {
   const showComplete = state.isRestricted && !module.completed;
   markCompleteBtn.classList.toggle('hidden', !showComplete);
   markCompleteBtn.setAttribute('data-module-id', String(Number(module.id)));
+
+  const examsWrap = $('#collegeCourseExams');
+  if (!examsWrap) return;
+  const exams = Array.isArray(course.exams) ? course.exams : [];
+  const moduleExams = exams.filter((exam) => !exam.moduleId || Number(exam.moduleId) === Number(module.id));
+  if (!moduleExams.length) {
+    examsWrap.innerHTML = '<div class="college-empty">No exams linked to this module.</div>';
+    return;
+  }
+
+  examsWrap.innerHTML = moduleExams
+    .map((exam) => {
+      const remaining = Math.max(0, Number(exam.remainingAttempts || 0));
+      const bestScore = exam.bestScore == null ? '\u2014' : `${Number(exam.bestScore)}%`;
+      return `<article class="college-course-exam-item">
+        <div class="college-course-exam-item-head">
+          <span>${text(exam.title)}</span>
+          <span>${exam.hasPassed ? 'Passed' : remaining > 0 ? `${remaining} attempts left` : 'No attempts left'}</span>
+        </div>
+        <p class="college-course-exam-meta">Passing score: ${Number(exam.passingScore || 70)}% · Best score: ${bestScore}</p>
+        <div class="college-actions">
+          <button type="button" class="btn btn-secondary btn-compact" data-college-open-exam="${Number(exam.id || 0)}" ${
+            exam.canAttempt ? '' : 'disabled'
+          }>Take Exam</button>
+        </div>
+      </article>`;
+    })
+    .join('');
 }
 
 function renderLibrary(targetSelector, docs = []) {
@@ -229,6 +271,120 @@ function renderLibrary(targetSelector, docs = []) {
     </article>`
     )
     .join('');
+}
+
+function closeExamModal() {
+  $('#collegeExamModal')?.classList.add('hidden');
+  const form = $('#collegeExamForm');
+  if (form) form.reset();
+  setInlineFeedback('#collegeExamFeedback', '');
+}
+
+function renderExamModalQuestions(questions = []) {
+  const target = $('#collegeExamQuestions');
+  if (!target) return;
+  if (!questions.length) {
+    target.innerHTML = '<div class="college-empty">No questions available for this exam.</div>';
+    return;
+  }
+
+  target.innerHTML = questions
+    .map((question, index) => {
+      const questionId = Number(question.id || 0);
+      const prompt = text(question.prompt || `Question ${index + 1}`);
+      const type = String(question.questionType || 'mcq').toLowerCase();
+      const inputName = `exam-question-${questionId}`;
+      if (type === 'short') {
+        return `<article class="college-exam-question">
+          <h4>${index + 1}. ${prompt}</h4>
+          <textarea name="${inputName}" rows="3" placeholder="Type your answer" required></textarea>
+        </article>`;
+      }
+
+      const choices = Array.isArray(question.choices) ? question.choices : [];
+      return `<article class="college-exam-question">
+        <h4>${index + 1}. ${prompt}</h4>
+        <div class="college-exam-choice-list">
+          ${choices
+            .map(
+              (choice, choiceIndex) => `<label class="college-exam-choice">
+                <input type="radio" name="${inputName}" value="${String(choice).replace(/"/g, '&quot;')}" ${choiceIndex === 0 ? 'required' : ''} />
+                <span>${text(choice)}</span>
+              </label>`
+            )
+            .join('')}
+        </div>
+      </article>`;
+    })
+    .join('');
+}
+
+async function openExamModal(state, examId) {
+  try {
+    const payload = await fetchJson(`/api/college/exams/${encodeURIComponent(String(examId))}`);
+    const exam = payload?.exam || null;
+    const questions = Array.isArray(payload?.questions) ? payload.questions : [];
+    if (!exam) throw new Error('Exam unavailable.');
+    if (!exam.canAttempt) throw new Error('No attempts remaining for this exam.');
+
+    state.activeExam = { examId: Number(exam.id || examId), exam, questions };
+
+    const title = $('#collegeExamTitle');
+    const meta = $('#collegeExamMeta');
+    if (title) title.textContent = text(exam.title || 'Exam');
+    if (meta) {
+      meta.textContent = `Passing score: ${Number(exam.passingScore || 70)}% · Remaining attempts: ${Math.max(0, Number(exam.remainingAttempts || 0))}`;
+    }
+    renderExamModalQuestions(questions);
+    $('#collegeExamModal')?.classList.remove('hidden');
+  } catch (error) {
+    setFeedback(error.message || 'Unable to open exam.', 'error');
+  }
+}
+
+async function submitExamModal(state) {
+  const activeExam = state.activeExam;
+  if (!activeExam?.examId) return;
+  const form = $('#collegeExamForm');
+  if (!form) return;
+
+  const formData = new FormData(form);
+  const answers = {};
+  (activeExam.questions || []).forEach((question) => {
+    const questionId = Number(question.id || 0);
+    if (!questionId) return;
+    const key = `exam-question-${questionId}`;
+    answers[questionId] = String(formData.get(key) || '').trim();
+  });
+
+  try {
+    const submit = $('#collegeExamSubmit');
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = 'Submitting...';
+    }
+    const payload = await fetchJson(`/api/college/exams/${encodeURIComponent(String(activeExam.examId))}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ answers })
+    });
+    if (payload?.status === 'pending_manual_grade') {
+      setInlineFeedback('#collegeExamFeedback', 'Exam submitted. Awaiting manual grading.', 'success');
+    } else if (payload?.passed) {
+      setInlineFeedback('#collegeExamFeedback', `Passed with ${Number(payload.score || 0)}%.`, 'success');
+    } else {
+      setInlineFeedback('#collegeExamFeedback', `Submitted. Score: ${Number(payload.score || 0)}%.`, 'error');
+    }
+    await loadOverview(state);
+    setTimeout(() => closeExamModal(), 900);
+  } catch (error) {
+    setInlineFeedback('#collegeExamFeedback', error.message || 'Unable to submit exam.', 'error');
+  } finally {
+    const submit = $('#collegeExamSubmit');
+    if (submit) {
+      submit.disabled = false;
+      submit.textContent = 'Submit Exam';
+    }
+  }
 }
 
 function bindCourseActions(state) {
@@ -256,6 +412,14 @@ function bindCourseActions(state) {
       renderCourseSidebar(state);
       renderCurrentModule(state);
       bindCourseActions(state);
+    });
+  });
+
+  $$('[data-college-open-exam]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const examId = Number(button.getAttribute('data-college-open-exam') || 0);
+      if (!examId) return;
+      await openExamModal(state, examId);
     });
   });
 }
@@ -310,6 +474,12 @@ function renderOverview(state) {
 async function loadOverview(state) {
   const payload = await fetchJson('/api/college/me');
   state.overview = payload || {};
+  state.canManage = Boolean(state.canManage || payload?.permissions?.canManage);
+  const adminTab = $('#collegeAdminTabBtn');
+  if (adminTab) adminTab.classList.toggle('hidden', !state.canManage);
+  if (!state.canManage && state.activeTab === 'admin') {
+    setActiveTab(state, 'overview');
+  }
   renderOverview(state);
 }
 
@@ -324,6 +494,269 @@ async function loadLibrary(state) {
   state.library = payload?.documents || [];
   renderLibrary('#collegeLibraryRows', state.library);
   renderLibrary('#collegeStaffLibraryPreview', state.library.slice(0, 5));
+}
+
+function renderAdminDashboard(state) {
+  const data = state.adminOverview || {};
+  const kpis = data.kpis || {};
+  const action = data.actionNeeded || {};
+
+  const write = (selector, value) => {
+    const el = $(selector);
+    if (el) el.textContent = String(value ?? 0);
+  };
+  write('#collegeAdminActiveTrainees', Number(kpis.activeTrainees || 0));
+  write('#collegeAdminDueSoon', Number(kpis.dueSoon || 0));
+  write('#collegeAdminOverdue', Number(kpis.overdue || 0));
+  write('#collegeAdminPassRate', `${Number(kpis.passRate30 || 0)}%`);
+
+  const actionList = $('#collegeAdminActionNeeded');
+  if (actionList) {
+    actionList.innerHTML = `
+      <li class="college-checklist-item"><span class="college-check-status">Overdue</span><span>${Number(kpis.overdue || 0)} trainees overdue</span></li>
+      <li class="college-checklist-item"><span class="college-check-status">Queue</span><span>${Number(action.examsAwaitingMarking || 0)} exams awaiting marking</span></li>
+      <li class="college-checklist-item"><span class="college-check-status">Drafts</span><span>${Number(action.draftsPendingPublish || 0)} draft items pending publish</span></li>
+    `;
+  }
+
+  const overdueList = $('#collegeAdminOverdueList');
+  const overdueRows = Array.isArray(action.overdueTrainees) ? action.overdueTrainees : [];
+  if (overdueList) {
+    overdueList.innerHTML = overdueRows.length
+      ? overdueRows
+          .map(
+            (row) => `<li class="college-checklist-item">
+              <span class="college-check-status">Overdue</span>
+              <span>${text(row.username)}${row.serialNumber ? ` (${text(row.serialNumber)})` : ''} · Due ${formatDateTime(row.dueAt)}</span>
+            </li>`
+          )
+          .join('')
+      : '<li class="college-checklist-item"><span class="college-check-status">OK</span><span>No overdue trainees.</span></li>';
+  }
+}
+
+function renderAdminPeople(state) {
+  const tbody = $('#collegeAdminPeopleRows');
+  if (!tbody) return;
+  const rows = Array.isArray(state.adminPeopleRows) ? state.adminPeopleRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4">No users found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows
+    .map((row) => {
+      const roles = Array.isArray(row.collegeRoles) && row.collegeRoles.length ? row.collegeRoles.join(', ') : '—';
+      return `<tr>
+        <td>${text(row.robloxUsername) || `#${Number(row.id || 0)}`}<br><small>${text(row.serialNumber)} · ${text(row.discordUserId)}</small></td>
+        <td>${text(row.userStatus)}</td>
+        <td>${row.collegeDueAt ? formatDateTime(row.collegeDueAt) : '—'}</td>
+        <td>${roles}</td>
+      </tr>`;
+    })
+    .join('');
+}
+
+function renderAdminEnrollments(state) {
+  const tbody = $('#collegeAdminEnrollRows');
+  if (!tbody) return;
+  const rows = Array.isArray(state.adminEnrollmentsRows) ? state.adminEnrollmentsRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5">No enrollments found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows
+    .map(
+      (row) => `<tr>
+        <td>${text(row.employeeName)}${row.serialNumber ? ` (${text(row.serialNumber)})` : ''}</td>
+        <td>${text(row.courseCode)} · ${text(row.courseTitle)}</td>
+        <td>${row.required ? 'Yes' : 'No'}</td>
+        <td>${text(row.status)}</td>
+        <td>${formatDateTime(row.enrolledAt)}</td>
+      </tr>`
+    )
+    .join('');
+}
+
+function renderAdminCourses(state) {
+  const tbody = $('#collegeAdminCourseRows');
+  if (!tbody) return;
+  const rows = Array.isArray(state.adminCoursesRows) ? state.adminCoursesRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6">No courses found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows
+    .map(
+      (row) => `<tr>
+        <td>${Number(row.id || 0)}</td>
+        <td>${text(row.code)}</td>
+        <td>${text(row.title)}</td>
+        <td>${text(row.visibility)}</td>
+        <td>${row.published ? 'Yes' : 'No'}</td>
+        <td>${Number(row.moduleCount || 0)}</td>
+      </tr>`
+    )
+    .join('');
+}
+
+function renderAdminLibrary(state) {
+  const tbody = $('#collegeAdminLibraryRows');
+  if (!tbody) return;
+  const rows = Array.isArray(state.adminLibraryRows) ? state.adminLibraryRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5">No library documents found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows
+    .map(
+      (row) => `<tr>
+        <td>${text(row.title)}</td>
+        <td>${text(row.category)}</td>
+        <td>${text(row.visibility)}</td>
+        <td>${row.published ? 'Yes' : 'No'}</td>
+        <td>${formatDateTime(row.updatedAt)}</td>
+      </tr>`
+    )
+    .join('');
+}
+
+function renderAdminAudit(state) {
+  const tbody = $('#collegeAdminAuditRows');
+  if (!tbody) return;
+  const rows = Array.isArray(state.adminAuditRows) ? state.adminAuditRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4">No admin audit events found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows
+    .map(
+      (row) => `<tr>
+        <td>${formatDateTime(row.createdAt)}</td>
+        <td>${text(row.action)}</td>
+        <td>${text(row.targetName || row.targetEmployeeId || '\u2014')}</td>
+        <td>${text(row.performedByName || row.performedByEmployeeId || '\u2014')}</td>
+      </tr>`
+    )
+    .join('');
+}
+
+function renderAdminExams(state) {
+  const tbody = $('#collegeAdminExamRows');
+  if (!tbody) return;
+  const rows = Array.isArray(state.adminExamRows) ? state.adminExamRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5">No exams found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows
+    .map((row) => `<tr>
+      <td>${Number(row.id || 0)}</td>
+      <td>${text(row.title)}</td>
+      <td>${text(row.courseCode || '')} ${text(row.courseTitle || '')}</td>
+      <td>${Number(row.questionCount || 0)}</td>
+      <td>${Number(row.pendingGradingCount || 0)}</td>
+    </tr>`)
+    .join('');
+}
+
+function renderAdminQuestions(state) {
+  const tbody = $('#collegeAdminQuestionRows');
+  if (!tbody) return;
+  const rows = Array.isArray(state.adminQuestionRows) ? state.adminQuestionRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4">No questions found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows
+    .map((row) => `<tr>
+      <td>${Number(row.id || 0)}</td>
+      <td>${text(row.questionType)}</td>
+      <td>${text(row.prompt)}</td>
+      <td>${Number(row.points || 1)}</td>
+    </tr>`)
+    .join('');
+}
+
+function renderAdminAttempts(state) {
+  const tbody = $('#collegeAdminAttemptRows');
+  if (!tbody) return;
+  const rows = Array.isArray(state.adminAttemptRows) ? state.adminAttemptRows : [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6">No attempts found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows
+    .map((row) => {
+      const status = row.score == null ? 'Pending grading' : row.passed ? 'Passed' : 'Failed';
+      return `<tr>
+        <td>${Number(row.id || 0)}</td>
+        <td>${text(row.examTitle)}</td>
+        <td>${text(row.employeeName)}${row.employeeSerial ? ` (${text(row.employeeSerial)})` : ''}</td>
+        <td>${formatDateTime(row.submittedAt || row.startedAt)}</td>
+        <td>${row.score == null ? '\u2014' : `${Number(row.score)}%`}</td>
+        <td>${status}</td>
+      </tr>`;
+    })
+    .join('');
+}
+
+async function loadAdminExamQuestions(state, examId) {
+  const id = Number(examId || 0);
+  if (!id) {
+    state.adminQuestionRows = [];
+    renderAdminQuestions(state);
+    return;
+  }
+  const payload = await fetchJson(`/api/college/admin/exams/${encodeURIComponent(String(id))}/questions`);
+  state.adminQuestionRows = Array.isArray(payload?.rows) ? payload.rows : [];
+  renderAdminQuestions(state);
+}
+
+async function loadAdminOverview(state) {
+  if (!state.canManage) return;
+
+  const search = ($('#collegeAdminPeopleSearch')?.value || '').trim();
+  const status = ($('#collegeAdminPeopleStatus')?.value || '').trim();
+  const peopleParams = new URLSearchParams();
+  if (search) peopleParams.set('search', search);
+  if (status) peopleParams.set('status', status);
+  const peopleSuffix = peopleParams.toString() ? `?${peopleParams.toString()}` : '';
+  const [overviewPayload, peoplePayload, enrollmentsPayload, coursesPayload, libraryPayload, auditPayload, examsPayload, attemptsPayload] = await Promise.all([
+    fetchJson('/api/college/admin/overview'),
+    fetchJson(`/api/college/admin/people${peopleSuffix}`),
+    fetchJson('/api/college/admin/enrollments?page=1&pageSize=20'),
+    fetchJson('/api/college/admin/courses'),
+    fetchJson('/api/college/admin/library'),
+    fetchJson('/api/college/admin/audit?page=1&pageSize=20'),
+    fetchJson('/api/college/admin/exams'),
+    fetchJson('/api/college/admin/exams/attempts?page=1&pageSize=20')
+  ]);
+
+  state.adminOverview = overviewPayload || {};
+  state.adminPeopleRows = peoplePayload?.rows || [];
+  state.adminEnrollmentsRows = enrollmentsPayload?.rows || [];
+  state.adminCoursesRows = coursesPayload?.rows || [];
+  state.adminLibraryRows = libraryPayload?.rows || [];
+  state.adminAuditRows = auditPayload?.rows || [];
+  state.adminExamRows = examsPayload?.rows || [];
+  state.adminAttemptRows = attemptsPayload?.rows || [];
+
+  renderAdminDashboard(state);
+  renderAdminPeople(state);
+  renderAdminEnrollments(state);
+  renderAdminCourses(state);
+  renderAdminLibrary(state);
+  renderAdminAudit(state);
+  renderAdminExams(state);
+  renderAdminAttempts(state);
+
+  const selectedExamId = Number($('#collegeAdminQuestionExamId')?.value || 0);
+  if (selectedExamId > 0) {
+    await loadAdminExamQuestions(state, selectedExamId);
+  }
 }
 
 function startCountdown(state) {
@@ -360,18 +793,52 @@ async function init() {
 
   const state = {
     activeTab: normalizeTab(query.get('tab')),
+    requestedTab: normalizeTab(query.get('tab')),
     overview: null,
     library: [],
     selectedCourseId: Number(query.get('courseId') || 0) || null,
     selectedModuleId: Number(query.get('moduleId') || 0) || null,
     isRestricted: false,
-    countdownTimer: null
+    countdownTimer: null,
+    canManage: Boolean(
+      hasPermission(session, 'college.manage') ||
+        hasPermission(session, 'college.roles.manage') ||
+        hasPermission(session, 'college.enrollments.manage') ||
+        hasPermission(session, 'college.courses.manage') ||
+        hasPermission(session, 'college.library.manage') ||
+        hasPermission(session, 'college.exams.manage') ||
+        hasPermission(session, 'college.exams.grade') ||
+        hasPermission(session, 'admin.override')
+    ),
+    adminOverview: null,
+    adminPeopleRows: [],
+    adminEnrollmentsRows: [],
+    adminCoursesRows: [],
+    adminLibraryRows: [],
+    adminAuditRows: [],
+    adminExamRows: [],
+    adminQuestionRows: [],
+    adminAttemptRows: [],
+    activeExam: null
   };
+
+  const adminTab = $('#collegeAdminTabBtn');
+  if (adminTab) adminTab.classList.toggle('hidden', !state.canManage);
 
   setActiveTab(state, state.activeTab);
 
   $$('[data-college-tab]').forEach((button) => {
-    button.addEventListener('click', () => setActiveTab(state, button.getAttribute('data-college-tab')));
+    button.addEventListener('click', async () => {
+      const tab = button.getAttribute('data-college-tab');
+      setActiveTab(state, tab);
+      if (state.activeTab === 'admin' && state.canManage) {
+        try {
+          await loadAdminOverview(state);
+        } catch (error) {
+          setFeedback(error.message || 'Unable to load college admin data.', 'error');
+        }
+      }
+    });
   });
 
   const requirementsModal = $('#collegeRequirementsModal');
@@ -420,8 +887,220 @@ async function init() {
   $('#collegeLibrarySearch')?.addEventListener('input', scheduleLibraryLoad);
   $('#collegeLibraryCategory')?.addEventListener('input', scheduleLibraryLoad);
 
+  const scheduleAdminReload = async () => {
+    if (!state.canManage) return;
+    try {
+      await loadAdminOverview(state);
+    } catch (error) {
+      setFeedback(error.message || 'Unable to load college admin data.', 'error');
+    }
+  };
+
+  $('#collegeAdminPeopleSearch')?.addEventListener('input', () => {
+    window.setTimeout(scheduleAdminReload, 250);
+  });
+  $('#collegeAdminPeopleStatus')?.addEventListener('change', () => {
+    window.setTimeout(scheduleAdminReload, 0);
+  });
+
+  $('#collegeAdminRolesForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const employeeId = Number($('#collegeAdminRoleUser')?.value || 0);
+    const roleValues = ($('#collegeAdminRoleValues')?.value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    if (!employeeId) {
+      setInlineFeedback('#collegeAdminRolesFeedback', 'Employee ID is required.', 'error');
+      return;
+    }
+    try {
+      await fetchJson(`/api/college/admin/users/${encodeURIComponent(String(employeeId))}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({ roles: roleValues })
+      });
+      setInlineFeedback('#collegeAdminRolesFeedback', 'Roles updated.', 'success');
+      await scheduleAdminReload();
+    } catch (error) {
+      setInlineFeedback('#collegeAdminRolesFeedback', error.message || 'Unable to update roles.', 'error');
+    }
+  });
+
+  $('#collegeAdminEnrollForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const employeeId = Number($('#collegeAdminEnrollUser')?.value || 0);
+    const courseId = Number($('#collegeAdminEnrollCourse')?.value || 0);
+    const required = Boolean($('#collegeAdminEnrollRequired')?.checked);
+    if (!employeeId || !courseId) {
+      setFeedback('Enrollment requires employee and course IDs.', 'error');
+      return;
+    }
+    try {
+      await fetchJson('/api/college/admin/enrollments', {
+        method: 'POST',
+        body: JSON.stringify({ employeeId, courseId, required })
+      });
+      setInlineFeedback('#collegeAdminEnrollFeedback', 'Enrollment saved.', 'success');
+      await scheduleAdminReload();
+    } catch (error) {
+      setInlineFeedback('#collegeAdminEnrollFeedback', error.message || 'Unable to save enrollment.', 'error');
+    }
+  });
+
+  $('#collegeAdminCourseForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const code = ($('#collegeAdminCourseCode')?.value || '').trim();
+    const title = ($('#collegeAdminCourseTitle')?.value || '').trim();
+    const visibility = ($('#collegeAdminCourseVisibility')?.value || 'all').trim();
+    const published = Boolean($('#collegeAdminCoursePublished')?.checked);
+    if (!code || !title) {
+      setInlineFeedback('#collegeAdminCourseFeedback', 'Course code and title are required.', 'error');
+      return;
+    }
+    try {
+      await fetchJson('/api/college/admin/courses', {
+        method: 'POST',
+        body: JSON.stringify({ code, title, visibility, published })
+      });
+      const form = $('#collegeAdminCourseForm');
+      if (form) form.reset();
+      setInlineFeedback('#collegeAdminCourseFeedback', 'Course saved.', 'success');
+      await scheduleAdminReload();
+    } catch (error) {
+      setInlineFeedback('#collegeAdminCourseFeedback', error.message || 'Unable to save course.', 'error');
+    }
+  });
+
+  $('#collegeAdminLibraryForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const title = ($('#collegeAdminLibraryTitle')?.value || '').trim();
+    const category = ($('#collegeAdminLibraryCategory')?.value || '').trim();
+    const visibility = ($('#collegeAdminLibraryVisibility')?.value || 'public').trim();
+    const documentUrl = ($('#collegeAdminLibraryUrl')?.value || '').trim();
+    if (!title) {
+      setInlineFeedback('#collegeAdminLibraryFeedback', 'Document title is required.', 'error');
+      return;
+    }
+    try {
+      await fetchJson('/api/college/admin/library', {
+        method: 'POST',
+        body: JSON.stringify({ title, category, visibility, documentUrl, published: true })
+      });
+      const form = $('#collegeAdminLibraryForm');
+      if (form) form.reset();
+      setInlineFeedback('#collegeAdminLibraryFeedback', 'Document saved.', 'success');
+      await scheduleAdminReload();
+    } catch (error) {
+      setInlineFeedback('#collegeAdminLibraryFeedback', error.message || 'Unable to save document.', 'error');
+    }
+  });
+
+  $('#collegeAdminExamForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const title = ($('#collegeAdminExamTitle')?.value || '').trim();
+    const courseId = Number($('#collegeAdminExamCourseId')?.value || 0);
+    const moduleId = Number($('#collegeAdminExamModuleId')?.value || 0) || null;
+    const passingScore = Number($('#collegeAdminExamPassingScore')?.value || 70);
+    const attemptLimit = Number($('#collegeAdminExamAttemptLimit')?.value || 3);
+    const published = String($('#collegeAdminExamPublished')?.value || '1') === '1';
+    if (!title || !courseId) {
+      setInlineFeedback('#collegeAdminExamFeedback', 'Exam title and course ID are required.', 'error');
+      return;
+    }
+    try {
+      await fetchJson('/api/college/admin/exams', {
+        method: 'POST',
+        body: JSON.stringify({ title, courseId, moduleId, passingScore, attemptLimit, published })
+      });
+      const form = $('#collegeAdminExamForm');
+      if (form) form.reset();
+      setInlineFeedback('#collegeAdminExamFeedback', 'Exam saved.', 'success');
+      await scheduleAdminReload();
+    } catch (error) {
+      setInlineFeedback('#collegeAdminExamFeedback', error.message || 'Unable to save exam.', 'error');
+    }
+  });
+
+  $('#collegeAdminQuestionExamId')?.addEventListener('change', async () => {
+    const examId = Number($('#collegeAdminQuestionExamId')?.value || 0);
+    try {
+      await loadAdminExamQuestions(state, examId);
+    } catch (error) {
+      setInlineFeedback('#collegeAdminQuestionFeedback', error.message || 'Unable to load exam questions.', 'error');
+    }
+  });
+
+  $('#collegeAdminExamQuestionForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const examId = Number($('#collegeAdminQuestionExamId')?.value || 0);
+    const questionType = ($('#collegeAdminQuestionType')?.value || 'mcq').trim();
+    const prompt = ($('#collegeAdminQuestionPrompt')?.value || '').trim();
+    const points = Number($('#collegeAdminQuestionPoints')?.value || 1);
+    const orderIndex = Number($('#collegeAdminQuestionOrder')?.value || 1);
+    const choices = ($('#collegeAdminQuestionChoices')?.value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    const correctAnswer = ($('#collegeAdminQuestionCorrect')?.value || '').trim();
+    if (!examId || !prompt) {
+      setInlineFeedback('#collegeAdminQuestionFeedback', 'Exam ID and prompt are required.', 'error');
+      return;
+    }
+    try {
+      await fetchJson(`/api/college/admin/exams/${encodeURIComponent(String(examId))}/questions`, {
+        method: 'POST',
+        body: JSON.stringify({ questionType, prompt, points, orderIndex, choices, correctAnswer })
+      });
+      setInlineFeedback('#collegeAdminQuestionFeedback', 'Question saved.', 'success');
+      await loadAdminExamQuestions(state, examId);
+      await scheduleAdminReload();
+    } catch (error) {
+      setInlineFeedback('#collegeAdminQuestionFeedback', error.message || 'Unable to save question.', 'error');
+    }
+  });
+
+  $('#collegeAdminGradeForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const attemptId = Number($('#collegeAdminGradeAttemptId')?.value || 0);
+    const score = Number($('#collegeAdminGradeScore')?.value || 0);
+    const gradingNotes = ($('#collegeAdminGradeNotes')?.value || '').trim();
+    if (!attemptId) {
+      setInlineFeedback('#collegeAdminGradeFeedback', 'Attempt ID is required.', 'error');
+      return;
+    }
+    try {
+      await fetchJson(`/api/college/admin/exams/attempts/${encodeURIComponent(String(attemptId))}/grade`, {
+        method: 'POST',
+        body: JSON.stringify({ score, gradingNotes })
+      });
+      setInlineFeedback('#collegeAdminGradeFeedback', 'Attempt graded.', 'success');
+      await scheduleAdminReload();
+    } catch (error) {
+      setInlineFeedback('#collegeAdminGradeFeedback', error.message || 'Unable to grade attempt.', 'error');
+    }
+  });
+
+  $('#collegeExamClose')?.addEventListener('click', () => closeExamModal());
+  $('#collegeExamCancel')?.addEventListener('click', () => closeExamModal());
+  $('#collegeExamModal')?.addEventListener('click', (event) => {
+    if (event.target?.id === 'collegeExamModal') closeExamModal();
+  });
+  $('#collegeExamForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    await submitExamModal(state);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeExamModal();
+  });
+
   try {
     await Promise.all([loadOverview(state), loadLibrary(state)]);
+    if (state.canManage && state.requestedTab === 'admin' && state.activeTab !== 'admin') {
+      setActiveTab(state, 'admin');
+    }
+    if (state.canManage) {
+      await loadAdminOverview(state);
+    }
     startCountdown(state);
     setFeedback('');
   } catch (error) {

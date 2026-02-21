@@ -8,7 +8,7 @@ function toId(value) {
 
 export async function onRequestGet(context) {
   const { env, request, params } = context;
-  const { errorResponse, employee } = await requireCollegeSession(context);
+  const { errorResponse, employee, canManage } = await requireCollegeSession(context);
   if (errorResponse) return errorResponse;
 
   const courseId = toId(params?.courseId);
@@ -16,29 +16,52 @@ export async function onRequestGet(context) {
   if (!courseId || !moduleId) return json({ error: 'Invalid course or module id.' }, 400);
 
   const employeeId = Number(employee?.id || 0);
-  const moduleRow = await env.DB
-    .prepare(
-      `SELECT
-         m.id,
-         m.course_id,
-         m.title,
-         m.order_index,
-         m.content_type,
-         m.content,
-         m.attachment_url,
-         m.video_url,
-         c.code,
-         c.title AS course_title,
-         CASE WHEN mp.id IS NULL THEN 0 ELSE 1 END AS completed
-       FROM college_course_modules m
-       INNER JOIN college_enrollments e ON e.course_id = m.course_id AND e.user_employee_id = ?
-       INNER JOIN college_courses c ON c.id = m.course_id
-       LEFT JOIN college_module_progress mp ON mp.module_id = m.id AND mp.user_employee_id = ?
-       WHERE m.course_id = ? AND m.id = ?
-       LIMIT 1`
-    )
-    .bind(employeeId, employeeId, courseId, moduleId)
-    .first();
+  const moduleRow = canManage
+    ? await env.DB
+        .prepare(
+          `SELECT
+             m.id,
+             m.course_id,
+             m.title,
+             m.order_index,
+             m.content_type,
+             m.content,
+             m.attachment_url,
+             m.video_url,
+             c.code,
+             c.title AS course_title,
+             CASE WHEN mp.id IS NULL THEN 0 ELSE 1 END AS completed
+           FROM college_course_modules m
+           INNER JOIN college_courses c ON c.id = m.course_id
+           LEFT JOIN college_module_progress mp ON mp.module_id = m.id AND mp.user_employee_id = ?
+           WHERE m.course_id = ? AND m.id = ? AND c.published = 1
+           LIMIT 1`
+        )
+        .bind(employeeId, courseId, moduleId)
+        .first()
+    : await env.DB
+        .prepare(
+          `SELECT
+             m.id,
+             m.course_id,
+             m.title,
+             m.order_index,
+             m.content_type,
+             m.content,
+             m.attachment_url,
+             m.video_url,
+             c.code,
+             c.title AS course_title,
+             CASE WHEN mp.id IS NULL THEN 0 ELSE 1 END AS completed
+           FROM college_course_modules m
+           INNER JOIN college_enrollments e ON e.course_id = m.course_id AND e.user_employee_id = ?
+           INNER JOIN college_courses c ON c.id = m.course_id
+           LEFT JOIN college_module_progress mp ON mp.module_id = m.id AND mp.user_employee_id = ?
+           WHERE m.course_id = ? AND m.id = ? AND c.published = 1 AND m.published = 1
+           LIMIT 1`
+        )
+        .bind(employeeId, employeeId, courseId, moduleId)
+        .first();
   if (!moduleRow) return json({ error: 'Module not found for this user.' }, 404);
 
   return cachedJson(

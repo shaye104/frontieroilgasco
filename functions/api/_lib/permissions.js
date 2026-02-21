@@ -120,7 +120,13 @@ export const PERMISSION_GROUPS = [
     label: 'College',
     permissions: [
       { key: 'college.view', label: 'View College', description: 'Access the college training centre.' },
-      { key: 'college.manage', label: 'Manage College', description: 'Manage college deadlines and pass overrides.' }
+      { key: 'college.manage', label: 'Manage College', description: 'Manage college deadlines and pass overrides.' },
+      { key: 'college.roles.manage', label: 'Manage College Roles', description: 'Assign college-scoped roles.' },
+      { key: 'college.enrollments.manage', label: 'Manage College Enrollments', description: 'Enroll or remove users from courses.' },
+      { key: 'college.courses.manage', label: 'Manage College Courses', description: 'Create and update college courses/modules.' },
+      { key: 'college.library.manage', label: 'Manage College Library', description: 'Create and publish college library documents.' },
+      { key: 'college.exams.manage', label: 'Manage College Exams', description: 'Create/update college exams and question banks.' },
+      { key: 'college.exams.grade', label: 'Grade College Exams', description: 'Grade and override exam attempts.' }
     ]
   }
 ];

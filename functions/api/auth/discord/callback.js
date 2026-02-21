@@ -129,7 +129,15 @@ export async function onRequest(context) {
   const userStatus = String(employee?.user_status || '').trim().toUpperCase() || 'ACTIVE_STAFF';
   const isCollegeRestricted = userStatus === 'APPLICANT_ACCEPTED' && !employee?.college_passed_at;
   const hasEntryPermission = hasPermission({ permissions: permissionContext.permissions }, 'my_details.view');
-  const hasCollegePermission = hasPermission({ permissions: permissionContext.permissions }, 'college.view');
+  const hasCollegePermission =
+    hasPermission({ permissions: permissionContext.permissions }, 'college.view') ||
+    hasPermission({ permissions: permissionContext.permissions }, 'college.manage') ||
+    hasPermission({ permissions: permissionContext.permissions }, 'college.roles.manage') ||
+    hasPermission({ permissions: permissionContext.permissions }, 'college.enrollments.manage') ||
+    hasPermission({ permissions: permissionContext.permissions }, 'college.courses.manage') ||
+    hasPermission({ permissions: permissionContext.permissions }, 'college.library.manage') ||
+    hasPermission({ permissions: permissionContext.permissions }, 'college.exams.manage') ||
+    hasPermission({ permissions: permissionContext.permissions }, 'college.exams.grade');
   if (!isAdminUser && !hasEntryPermission && !(isCollegeRestricted || hasCollegePermission)) {
     const clearStateCookie = serializeCookie('fog_oauth_state', '', {
       path: '/',
@@ -193,5 +201,6 @@ export async function onRequest(context) {
     maxAge: 8 * 60 * 60
   });
 
-  return redirect(isCollegeRestricted ? toCollegeUrl(request.url) : toMyDetailsUrl(request.url), [clearStateCookie, sessionCookie]);
+  const shouldLandOnCollege = isCollegeRestricted || (!hasEntryPermission && hasCollegePermission);
+  return redirect(shouldLandOnCollege ? toCollegeUrl(request.url) : toMyDetailsUrl(request.url), [clearStateCookie, sessionCookie]);
 }

@@ -290,7 +290,7 @@
   display: grid;
   gap: 0.7rem;
   min-height: 0;
-  padding-bottom: clamp(5rem, 12vh, 7.5rem);
+  padding-bottom: clamp(5rem, 10vh, 6.5rem);
   min-width: 0;
   overflow: visible;
 }
@@ -415,7 +415,6 @@
   overflow: hidden;
   min-width: 0;
   isolation: isolate;
-  contain: layout paint;
 }
 
 .finance-chart-card h3 {
@@ -494,18 +493,18 @@
 .finance-chart-host {
   width: 100%;
   min-width: 0;
-  height: clamp(280px, 36vh, 360px);
-  min-height: 280px;
-  max-height: 360px;
+  height: clamp(300px, 40vh, 400px);
+  min-height: 300px;
+  max-height: 400px;
   overflow: hidden;
   position: relative;
-  padding-bottom: 0.15rem;
+  padding-bottom: 0.55rem;
 }
 
 .finance-trends-grid .finance-chart-host {
-  height: clamp(280px, 34vh, 350px);
-  min-height: 280px;
-  max-height: 340px;
+  height: clamp(300px, 38vh, 380px);
+  min-height: 300px;
+  max-height: 380px;
 }
 
 .finance-overview-main {
@@ -521,9 +520,9 @@
 }
 
 .finance-overview-primary .finance-chart-host {
-  height: clamp(300px, 38vh, 390px);
-  min-height: 300px;
-  max-height: 380px;
+  height: clamp(320px, 42vh, 420px);
+  min-height: 320px;
+  max-height: 420px;
 }
 
 .finance-overview-side {
@@ -964,7 +963,6 @@
 .finance-data-table th,
 .finance-data-table td {
   font-family: var(--font-body);
-  font-stretch: normal;
   padding: 0.48rem 0.54rem;
   font-size: 0.79rem;
   line-height: 1.28;
@@ -1082,18 +1080,19 @@
   }
 
   body.page-intranet.intranet-no-scroll .finance-dashboard-shell {
-    height: 100%;
+    height: auto;
     overflow: visible;
   }
 
   body.page-intranet.intranet-no-scroll .finance-tab-panel.is-active {
     min-height: 0;
+    overflow: visible;
   }
 
   body.page-intranet.intranet-no-scroll #financeTabOverview.is-active,
   body.page-intranet.intranet-no-scroll #financeTabTrends.is-active {
-    height: 100%;
-    overflow-y: auto;
+    height: auto;
+    overflow-y: visible;
     padding-right: 0.25rem;
     padding-bottom: 1rem;
   }
@@ -1120,14 +1119,14 @@
   }
 
   body.page-intranet.intranet-no-scroll .finance-debt-groups {
-    max-height: 42vh;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: visible;
     padding-right: 0.3rem;
   }
 
   body.page-intranet.intranet-no-scroll .finance-table-card .table-wrap {
-    max-height: 44vh;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: visible;
   }
 }
 
@@ -1165,9 +1164,9 @@
   .finance-chart-host,
   .finance-overview-primary .finance-chart-host,
   .finance-trends-grid .finance-chart-host {
-    height: clamp(240px, 38vh, 320px);
-    min-height: 240px;
-    max-height: 320px;
+    height: clamp(260px, 42vh, 340px);
+    min-height: 260px;
+    max-height: 340px;
   }
 }
 
@@ -1251,6 +1250,10 @@
 .college-tab-panel {
   display: grid;
   gap: 0.8rem;
+  min-width: 0;
+}
+
+.college-tab-panel > * {
   min-width: 0;
 }
 
@@ -1533,13 +1536,176 @@
   width: min(560px, 100%);
 }
 
+.college-admin-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.65rem;
+}
+
+.college-admin-action-grid {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.7rem;
+}
+
+.college-admin-subcard {
+  padding: 0.62rem 0.7rem;
+}
+
+.college-inline-control {
+  display: grid;
+  align-content: end;
+  gap: 0.25rem;
+}
+
+.college-inline-control input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #253475;
+}
+
+.college-grid-span-full {
+  grid-column: 1 / -1;
+}
+
+.college-module-exams {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.62rem 0.68rem;
+  margin-bottom: 0.6rem;
+}
+
+.college-module-exams-head h4 {
+  margin: 0 0 0.2rem;
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.college-module-exams-head .college-kpi-meta {
+  margin: 0;
+}
+
+.college-course-exam-list {
+  margin-top: 0.55rem;
+  display: grid;
+  gap: 0.46rem;
+}
+
+.college-course-exam-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.5rem 0.6rem;
+  display: grid;
+  gap: 0.26rem;
+}
+
+.college-course-exam-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.84rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.college-course-exam-meta {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.college-exam-modal {
+  width: min(860px, 100%);
+}
+
+.college-exam-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.4rem;
+}
+
+.college-exam-modal-head h3 {
+  margin: 0;
+}
+
+.college-exam-form {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+}
+
+.college-exam-questions {
+  display: grid;
+  gap: 0.55rem;
+  max-height: min(62vh, 720px);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.college-exam-question {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.6rem 0.65rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.college-exam-question h4 {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #0f172a;
+}
+
+.college-exam-choice-list {
+  display: grid;
+  gap: 0.32rem;
+}
+
+.college-exam-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.44rem;
+  font-size: 0.8rem;
+  color: #1e293b;
+}
+
+.college-exam-choice input[type='radio'] {
+  width: 14px;
+  height: 14px;
+  margin: 0.2rem 0 0;
+  accent-color: #253475;
+}
+
+.college-admin-subgrid {
+  display: grid;
+  gap: 0.75rem;
+}
+
 @media (max-width: 1023px) {
+  .college-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .college-course-layout {
     grid-template-columns: 1fr;
   }
 
   .college-course-sidebar {
     max-height: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .college-exam-questions {
+    max-height: min(56vh, 620px);
   }
 }
 

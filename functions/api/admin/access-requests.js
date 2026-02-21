@@ -134,6 +134,15 @@ export async function onRequestPost(context) {
         .run();
     }
 
+    await env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO college_role_assignments
+         (employee_id, role_key, assigned_by_employee_id, created_at, updated_at)
+         VALUES (?, 'TRAINEE', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+      )
+      .bind(employeeId, Number(session.employee?.id || 0) || null)
+      .run();
+
     await enrollEmployeeInRequiredCollegeCourses(env, employeeId);
     await env.DB
       .prepare(

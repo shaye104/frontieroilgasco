@@ -58,8 +58,8 @@ function ensureNavbarFallback(session) {
     nav.append(buildLink('/voyages/my', 'Voyages'));
     nav.append(buildLink('/my-fleet', 'My Fleet'));
     nav.append(buildLink('/forms', 'Forms'));
-    nav.append(buildLink('/college', 'College'));
-    nav.append(buildLink('/finances', 'Finances'));
+    if (session?.canAccessCollege) nav.append(buildLink('/college', 'College'));
+    if (hasPermission(session, 'finances.view')) nav.append(buildLink('/finances', 'Finances'));
     if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
   }
 

@@ -7,8 +7,22 @@ function text(value) {
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const { errorResponse } = await requireCollegeSession(context);
+  const { errorResponse, employee, isRestricted, canManage } = await requireCollegeSession(context);
   if (errorResponse) return errorResponse;
+
+  const employeeId = Number(employee?.id || 0);
+  const enrollmentRows = employeeId
+    ? await env.DB
+        .prepare(
+          `SELECT course_id
+           FROM college_enrollments
+           WHERE user_employee_id = ?`
+        )
+        .bind(employeeId)
+        .all()
+    : { results: [] };
+  const enrolledCourseIds = [...new Set((enrollmentRows?.results || []).map((row) => Number(row.course_id || 0)).filter((id) => id > 0))];
+  const enrolledPlaceholders = enrolledCourseIds.map(() => '?').join(', ');
 
   const url = new URL(request.url);
   const search = text(url.searchParams.get('search')).toLowerCase();
@@ -17,6 +31,28 @@ export async function onRequestGet(context) {
 
   const clauses = ['published = 1'];
   const bindings = [];
+  if (!canManage) {
+    if (isRestricted) {
+      if (enrolledCourseIds.length) {
+        clauses.push(`(
+          LOWER(COALESCE(visibility, 'public')) IN ('public', 'trainee')
+          OR (LOWER(COALESCE(visibility, 'public')) = 'enrolled' AND course_id IN (${enrolledPlaceholders}))
+        )`);
+        bindings.push(...enrolledCourseIds);
+      } else {
+        clauses.push(`LOWER(COALESCE(visibility, 'public')) IN ('public', 'trainee')`);
+      }
+    } else if (enrolledCourseIds.length) {
+      clauses.push(`(
+        LOWER(COALESCE(visibility, 'public')) IN ('public', 'staff')
+        OR (LOWER(COALESCE(visibility, 'public')) = 'enrolled' AND course_id IN (${enrolledPlaceholders}))
+      )`);
+      bindings.push(...enrolledCourseIds);
+    } else {
+      clauses.push(`LOWER(COALESCE(visibility, 'public')) IN ('public', 'staff')`);
+    }
+  }
+
   if (search) {
     const term = `%${search}%`;
     clauses.push(`(LOWER(COALESCE(title, '')) LIKE ? OR LOWER(COALESCE(summary, '')) LIKE ? OR LOWER(COALESCE(tags, '')) LIKE ?)`);
@@ -33,7 +69,7 @@ export async function onRequestGet(context) {
 
   const rowsResult = await env.DB
     .prepare(
-      `SELECT id, title, category, tags, summary, document_url, updated_at
+      `SELECT id, title, category, tags, summary, content_markdown, document_url, visibility, course_id, updated_at
        FROM college_library_documents
        WHERE ${clauses.join(' AND ')}
        ORDER BY updated_at DESC, id DESC`
@@ -55,6 +91,9 @@ export async function onRequestGet(context) {
           .map((value) => value.trim())
           .filter(Boolean),
         summary: text(row.summary),
+        contentMarkdown: text(row.content_markdown),
+        visibility: text(row.visibility || 'public').toLowerCase(),
+        courseId: Number(row.course_id || 0) || null,
         documentUrl: text(row.document_url),
         updatedAt: row.updated_at || null
       }))

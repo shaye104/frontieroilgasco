@@ -14,7 +14,10 @@ async function initHomePage() {
         !session.isAdmin &&
         String(session.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' &&
         !session.collegePassedAt;
-      window.location.href = collegeRestricted ? '/college' : '/my-details';
+      const permissions = Array.isArray(session.permissions) ? session.permissions : [];
+      const hasMyDetails = permissions.includes('my_details.view') || permissions.includes('admin.override') || Boolean(session.isAdmin);
+      const shouldLandOnCollege = collegeRestricted || (!hasMyDetails && Boolean(session.canAccessCollege));
+      window.location.href = shouldLandOnCollege ? '/college' : '/my-details';
       return;
     }
   } catch {
