@@ -1,4 +1,4 @@
-import { cachedJson, json } from '../auth/_lib/auth.js';
+import { cachedJson } from '../auth/_lib/auth.js';
 import { getFinanceRangeWindow, normalizeFinanceRange, parseSettlementLines, requireFinancePermission, toMoney } from '../_lib/finances.js';
 
 function isoDay(date) {
@@ -27,25 +27,70 @@ function addMonths(date, months) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1, 0, 0, 0, 0));
 }
 
-function bucketForDate(range, date) {
+function shiftRangeWindow(range, start, end, offset) {
+  const safeOffset = Math.max(0, Number(offset || 0));
+  if (!safeOffset) return { start, end };
   if (range === 'week') {
-    return { key: isoDay(date), label: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }) };
-  }
-  if (range === 'month' || range === '3m') {
-    const weekStart = startOfUtcWeek(date);
     return {
-      key: isoDay(weekStart),
-      label: weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
+      start: addDays(start, safeOffset * -7),
+      end: addDays(end, safeOffset * -7)
     };
   }
-  const key = monthKey(date);
-  const label = date.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' });
-  return { key, label };
+  if (range === 'month') {
+    return {
+      start: addMonths(start, safeOffset * -1),
+      end: addMonths(end, safeOffset * -1)
+    };
+  }
+  if (range === '3m') {
+    return {
+      start: addMonths(start, safeOffset * -3),
+      end: addMonths(end, safeOffset * -3)
+    };
+  }
+  if (range === '6m') {
+    return {
+      start: addMonths(start, safeOffset * -6),
+      end: addMonths(end, safeOffset * -6)
+    };
+  }
+  return {
+    start: addMonths(start, safeOffset * -12),
+    end: addMonths(end, safeOffset * -12)
+  };
+}
+
+function bucketForDate(range, date, rangeStart) {
+  if (range === 'week' || range === 'month') {
+    return {
+      key: isoDay(date),
+      label: date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
+    };
+  }
+
+  if (range === '3m' || range === '6m') {
+    const stepDays = range === '3m' ? 7 : 14;
+    const base = startOfUtcWeek(rangeStart);
+    const weekStart = startOfUtcWeek(date);
+    const diffDays = Math.max(0, Math.floor((weekStart.getTime() - base.getTime()) / 86400000));
+    const steppedDays = Math.floor(diffDays / stepDays) * stepDays;
+    const bucketStart = addDays(base, steppedDays);
+    return {
+      key: isoDay(bucketStart),
+      label: bucketStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
+    };
+  }
+
+  const startOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1, 0, 0, 0, 0));
+  return {
+    key: monthKey(startOfMonth),
+    label: startOfMonth.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' })
+  };
 }
 
 function buildBuckets(range, start, end) {
   const buckets = [];
-  if (range === 'week') {
+  if (range === 'week' || range === 'month') {
     let cursor = new Date(start.getTime());
     while (cursor <= end) {
       buckets.push({ key: isoDay(cursor), label: cursor.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }) });
@@ -54,11 +99,12 @@ function buildBuckets(range, start, end) {
     return buckets;
   }
 
-  if (range === 'month' || range === '3m') {
+  if (range === '3m' || range === '6m') {
+    const stepDays = range === '3m' ? 7 : 14;
     let cursor = startOfUtcWeek(start);
     while (cursor <= end) {
       buckets.push({ key: isoDay(cursor), label: cursor.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }) });
-      cursor = addDays(cursor, 7);
+      cursor = addDays(cursor, stepDays);
     }
     return buckets;
   }
@@ -81,8 +127,10 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const range = normalizeFinanceRange(url.searchParams.get('range'));
+  const offset = Math.max(0, Math.min(12, Math.floor(Number(url.searchParams.get('offset')) || 0)));
   const unsettledScope = String(url.searchParams.get('unsettledScope') || 'all').toLowerCase() === 'range' ? 'range' : 'all';
-  const { start, end } = getFinanceRangeWindow(range);
+  const rangeWindow = getFinanceRangeWindow(range);
+  const { start, end } = shiftRangeWindow(range, rangeWindow.start, rangeWindow.end, offset);
   const startIso = start.toISOString();
   const endIso = end.toISOString();
 
@@ -121,7 +169,7 @@ export async function onRequestGet(context) {
   endedInRange.forEach((voyage) => {
     const endedAt = voyage.ended_at ? new Date(voyage.ended_at) : null;
     if (!endedAt || Number.isNaN(endedAt.getTime())) return;
-    const bucket = bucketForDate(range, endedAt);
+    const bucket = bucketForDate(range, endedAt, start);
     const target = buckets.get(bucket.key);
     if (!target) return;
 
@@ -129,8 +177,9 @@ export async function onRequestGet(context) {
     const companyShare = toMoney(voyage.company_share_amount ?? voyage.company_share ?? 0);
     const crewShare = netProfit > 0 ? toMoney(netProfit - companyShare) : 0;
     const settlementLines = parseSettlementLines(voyage.settlement_lines_json);
-    const freightLossValue = toMoney(
-      settlementLines.reduce((sum, line) => sum + toMoney(line.trueSellUnitPrice * line.lostQuantity), 0)
+    const freightLossValue = Math.max(
+      0,
+      toMoney(settlementLines.reduce((sum, line) => sum + toMoney(line.trueSellUnitPrice * line.lostQuantity), 0))
     );
 
     target.netProfit += netProfit;
@@ -171,7 +220,7 @@ export async function onRequestGet(context) {
     .all();
   const unsettledRows = unsettledRowsResult?.results || [];
 
-  const unsettledTotal = toMoney(unsettledRows.reduce((sum, row) => sum + Number(row.company_share_amount || 0), 0));
+  const unsettledTotal = Math.max(0, toMoney(unsettledRows.reduce((sum, row) => sum + Number(row.company_share_amount || 0), 0)));
   const grouped = new Map();
   unsettledRows.forEach((row) => {
     const key = Number(row.officer_of_watch_employee_id || 0) || `unknown-${row.officer_name || ''}`;
@@ -219,23 +268,19 @@ export async function onRequestGet(context) {
     request,
     {
       range,
+      offset,
       unsettledScope,
       kpis: {
         netProfit: toMoney(netProfitTotal),
         companyShareEarnings: toMoney(companyShareTotal),
         crewShare: toMoney(crewShareTotal),
-        freightLossesValue: toMoney(freightLossesValueTotal),
+        freightLossesValue: Math.max(0, toMoney(freightLossesValueTotal)),
         unsettledCompanyShareOutstanding: unsettledTotal,
         completedVoyages: Number(endedInRange.length || 0)
       },
       charts: {
         netProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.netProfit })),
-        companyVsCrew: chartBuckets.map((row) => ({
-          key: row.key,
-          label: row.label,
-          companyShare: row.companyShare,
-          crewShare: row.crewShare
-        })),
+        companyShareTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.companyShare })),
         freightLossValueTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.freightLossValue })),
         avgNetProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.avgNetProfit }))
       },

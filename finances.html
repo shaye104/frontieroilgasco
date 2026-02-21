@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221l" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260221l" />
-    <link rel="stylesheet" href="/assets/css/components.css?v=20260221l" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221l" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221m" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221m" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221m" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221m" />
   </head>
   <body class="page page-intranet">
     <header class="site-header">
@@ -57,21 +57,25 @@
                 <span class="finance-kpi-icon" aria-hidden="true">↗</span>
                 <p class="finance-kpi-label">Net Profit</p>
                 <p id="kpiNetProfit" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaNetProfit" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
                 <span class="finance-kpi-icon" aria-hidden="true">🏢</span>
                 <p class="finance-kpi-label">Company Share (10%)</p>
                 <p id="kpiCompanyShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaCompanyShare" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
                 <span class="finance-kpi-icon" aria-hidden="true">👥</span>
                 <p class="finance-kpi-label">Crew Share (90%)</p>
                 <p id="kpiCrewShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaCrewShare" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
                 <span class="finance-kpi-icon" aria-hidden="true">📦</span>
                 <p class="finance-kpi-label">Freight Loss Value</p>
                 <p id="kpiLossValue" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaLossValue" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
               </article>
               <article class="finance-kpi">
                 <span class="finance-kpi-icon" aria-hidden="true">✓</span>
@@ -107,17 +111,6 @@
                 <a class="btn btn-secondary finance-unsettled-link" href="/finances?tab=debts" data-finance-open-tab="debts">View Debts &rarr;</a>
               </article>
             </div>
-
-            <div class="finance-overview-breakdown">
-              <article class="finance-mini-tile">
-                <p class="finance-mini-label">Company Share (10%)</p>
-                <p id="overviewCompanyMini" class="finance-mini-number">ƒ 0</p>
-              </article>
-              <article class="finance-mini-tile">
-                <p class="finance-mini-label">Crew Share (90%)</p>
-                <p id="overviewCrewMini" class="finance-mini-number">ƒ 0</p>
-              </article>
-            </div>
           </section>
 
           <section id="financeTabTrends" class="finance-tab-panel hidden" data-finance-panel="trends">
@@ -127,8 +120,8 @@
                 <div id="trendsChartNetProfit" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
-                <h3>Net Profit vs Freight Loss</h3>
-                <div id="trendsChartNetProfitLoss" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+                <h3>Company Share Trend</h3>
+                <div id="trendsChartCompanyShare" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
                 <h3>Freight Loss Value Trend</h3>
@@ -213,10 +206,6 @@
                   </tbody>
                 </table>
               </div>
-              <div id="financeAuditEmpty" class="finance-empty-state hidden">
-                <span class="finance-empty-icon" aria-hidden="true">⏱</span>
-                <p>No settlement actions recorded yet.</p>
-              </div>
               <div class="pagination-row">
                 <button id="financeAuditPrev" class="btn btn-secondary" type="button">Previous</button>
                 <span id="financeAuditPageInfo" class="pagination-info">Page 1 of 1</span>
@@ -228,6 +217,17 @@
       </div>
     </main>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221l"></script>
+    <div id="financeSettleModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="financeSettleTitle">
+      <div class="modal-card finance-confirm-modal">
+        <h3 id="financeSettleTitle">Confirm Settlement</h3>
+        <p id="financeSettleMessage" class="muted">Mark this company share as settled?</p>
+        <div class="finance-confirm-actions">
+          <button id="financeSettleCancel" type="button" class="btn btn-secondary">Cancel</button>
+          <button id="financeSettleConfirm" type="button" class="btn btn-primary">Confirm Settlement</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221m"></script>
   </body>
 </html>

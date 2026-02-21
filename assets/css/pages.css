@@ -343,6 +343,26 @@
   letter-spacing: -0.02em;
 }
 
+.finance-kpi-delta {
+  margin: 0.08rem 0 0;
+  min-height: 1rem;
+  font-size: 0.74rem;
+  line-height: 1.2;
+  color: #64748b;
+}
+
+.finance-kpi-delta.is-positive {
+  color: #0f766e;
+}
+
+.finance-kpi-delta.is-negative {
+  color: #b45309;
+}
+
+.finance-kpi-delta.is-neutral {
+  color: #64748b;
+}
+
 .finance-main-chart-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -638,6 +658,21 @@
   min-height: 30px;
   padding: 0.26rem 0.56rem;
   font-size: 0.77rem;
+}
+
+.finance-confirm-modal {
+  width: min(500px, 100%);
+}
+
+.finance-confirm-modal h3 {
+  margin: 0 0 0.35rem;
+}
+
+.finance-confirm-actions {
+  margin-top: 0.85rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
 }
 
 @media (min-width: 1024px) {
