@@ -12,7 +12,7 @@ async function fetchSession() {
 }
 
 function toAccessDeniedUrl(reason) {
-  const url = new URL('/access-denied.html', window.location.origin);
+  const url = new URL('/access-denied', window.location.origin);
   if (reason) url.searchParams.set('reason', reason);
   url.searchParams.set('from', window.location.pathname);
   return url.toString();

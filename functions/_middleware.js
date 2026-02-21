@@ -63,6 +63,7 @@ export async function onRequest(context) {
       pathname.startsWith('/assets/') ||
       pathname === '/favicon.ico' ||
       pathname === '/_redirects' ||
+      pathname === '/_headers' ||
       pathname === '/access-denied' ||
       pathname === '/access-denied.html'
     ) {
@@ -76,7 +77,11 @@ export async function onRequest(context) {
       return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
     }
 
-    if (pathname === '/login') {
+    if (pathname === '/intranet' || pathname === '/intranet.html') {
+      return Response.redirect(new URL('/login', url.origin).toString(), 302);
+    }
+
+    if (pathname === '/login' || pathname === '/login.html') {
       if (url.searchParams.has('auth') || url.searchParams.has('reason')) {
         return context.next();
       }

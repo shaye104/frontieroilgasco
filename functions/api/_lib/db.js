@@ -276,12 +276,7 @@ export async function ensureCoreSchema(env) {
       FOREIGN KEY(settled_by_employee_id) REFERENCES employees(id),
       FOREIGN KEY(oow_employee_id) REFERENCES employees(id)
     )`,
-    `CREATE INDEX IF NOT EXISTS idx_voyages_company_share_status ON voyages(company_share_status)`,
-    `CREATE INDEX IF NOT EXISTS idx_voyages_ended_at ON voyages(ended_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_finance_settlement_audit_created_at ON finance_settlement_audit(created_at DESC)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS ux_voyages_active_vessel_callsign
-     ON voyages (LOWER(vessel_name), LOWER(vessel_callsign))
-     WHERE status = 'ONGOING'`,
+    // Indexes are created after legacy-column backfills to avoid migration failures on older databases.
     `CREATE TABLE IF NOT EXISTS form_categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
@@ -401,6 +396,32 @@ export async function ensureCoreSchema(env) {
        END`
     )
     .run();
+
+  // Non-critical indexes should never block auth/session bootstrap on older databases.
+  const optionalIndexStatements = [
+    `CREATE INDEX IF NOT EXISTS idx_voyages_company_share_status ON voyages(company_share_status)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyages_ended_at ON voyages(ended_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_settlement_audit_created_at ON finance_settlement_audit(created_at DESC)`
+  ];
+  for (const sql of optionalIndexStatements) {
+    try {
+      await env.DB.prepare(sql).run();
+    } catch {
+      // Keep runtime healthy even if optional index creation fails in legacy states.
+    }
+  }
+
+  try {
+    await env.DB
+      .prepare(
+        `CREATE UNIQUE INDEX IF NOT EXISTS ux_voyages_active_vessel_callsign
+         ON voyages (LOWER(vessel_name), LOWER(vessel_callsign))
+         WHERE status = 'ONGOING'`
+      )
+      .run();
+  } catch {
+    // Keep schema bootstrap non-fatal; API-level duplicate checks still enforce this invariant.
+  }
 
   await env.DB.batch(
     permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>

@@ -1,26 +1,64 @@
 /dashboard /my-details 302
 /dashboard/ /my-details 302
+/intranet /login 302
+/intranet/ /login 302
+
+/login /login.html 200
+/login/ /login.html 200
 /access-denied /access-denied.html 200
 /access-denied/ /access-denied.html 200
+
+/my-details /my-details.html 200
+/my-details/ /my-details.html 200
+/my-fleet /my-fleet.html 200
+/my-fleet/ /my-fleet.html 200
+
+/forms /forms.html 200
+/forms/ /forms.html 200
+/forms/config /forms-config.html 200
+/forms/config/ /forms-config.html 200
+/forms/config/categories /forms-categories.html 200
+/forms/config/categories/ /forms-categories.html 200
+/forms/config/forms /forms-manage.html 200
+/forms/config/forms/ /forms-manage.html 200
+/forms/config/forms/new /forms-builder.html?mode=new 200
+/forms/config/forms/new/ /forms-builder.html?mode=new 200
+/forms/config/forms/:id /forms-builder.html?formId=:id 200
+/forms/config/forms/:id/ /forms-builder.html?formId=:id 200
+/forms/fill/:id /form-fill.html?formId=:id 200
+/forms/fill/:id/ /form-fill.html?formId=:id 200
+/forms/responses /forms-responses.html 200
+/forms/responses/ /forms-responses.html 200
+
 /voyages/my /voyage-tracker.html 200
 /voyages/my/ /voyage-tracker.html 200
 /voyages /voyage-tracker.html 200
 /voyages/ /voyage-tracker.html 200
 /voyages/archive /voyage-archive.html 200
 /voyages/archive/ /voyage-archive.html 200
-/voyages/:id /voyage-details.html 200
-/voyages/:id/ /voyage-details.html 200
+/voyages/:id /voyage-details.html?voyageId=:id 200
+/voyages/:id/ /voyage-details.html?voyageId=:id 200
+
 /finances /finances.html 200
 /finances/ /finances.html 200
 /finances/debts /finances-debts.html 200
 /finances/debts/ /finances-debts.html 200
 /finances/audit /finances-audit.html 200
 /finances/audit/ /finances-audit.html 200
+
 /admin /admin-panel.html 200
 /admin/ /admin-panel.html 200
+/admin/config /admin-config.html 200
+/admin/config/ /admin-config.html 200
+/admin/cargo /cargo-admin.html 200
+/admin/cargo/ /cargo-admin.html 200
 /admin/user-groups /roles.html 200
 /admin/user-groups/ /roles.html 200
 /admin/user-ranks /user-ranks.html 200
 /admin/user-ranks/ /user-ranks.html 200
 /admin/activity-tracker /activity-tracker.html 200
 /admin/activity-tracker/ /activity-tracker.html 200
+/admin/employees /manage-employees.html 200
+/admin/employees/ /manage-employees.html 200
+/admin/employees/:id /employee-profile.html?employeeId=:id 200
+/admin/employees/:id/ /employee-profile.html?employeeId=:id 200

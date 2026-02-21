@@ -11,7 +11,7 @@ import { buildPermissionContext, hasPermission } from '../../_lib/permissions.js
 
 function toAccessDeniedUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
-  const target = new URL('/access-denied.html', `${source.protocol}//${source.host}`);
+  const target = new URL('/access-denied', `${source.protocol}//${source.host}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v) target.searchParams.set(k, v);
   });
