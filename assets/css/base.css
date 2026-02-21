@@ -240,3 +240,20 @@ p {
     display: none;
   }
 }
+
+/* College pages must allow normal document scrolling on all breakpoints. */
+body.page-intranet.page-college,
+body.page-intranet.page-college.intranet-no-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body.page-intranet.page-college main.section,
+body.page-intranet.page-college .intranet-layout,
+body.page-intranet.page-college #protectedContent,
+body.page-intranet.page-college .college-shell,
+body.page-intranet.page-college .college-tab-panel {
+  min-height: 0;
+  height: auto;
+  overflow: visible;
+}

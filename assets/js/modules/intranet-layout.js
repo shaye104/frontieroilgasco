@@ -89,8 +89,14 @@ function ensureNavbarFallback(session) {
 }
 
 export async function initIntranetLayout(config) {
-  document.documentElement.classList.add('intranet-no-scroll');
-  document.body.classList.add('intranet-no-scroll');
+  const isCollegePage = document.body.classList.contains('page-college');
+  if (isCollegePage) {
+    document.documentElement.classList.remove('intranet-no-scroll');
+    document.body.classList.remove('intranet-no-scroll');
+  } else {
+    document.documentElement.classList.add('intranet-no-scroll');
+    document.body.classList.add('intranet-no-scroll');
+  }
 
   const feedback = document.querySelector(config.feedbackSelector);
   const protectedContent = document.querySelector(config.protectedContentSelector);
