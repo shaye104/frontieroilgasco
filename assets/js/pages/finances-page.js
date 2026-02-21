@@ -670,25 +670,25 @@ function renderProfitDriversChart(target, breakdowns, mode) {
   renderCurrencyBarChart(target, points, legendLabel, '#2b4aa2');
 }
 
-function alignSeries(netSeries, companySeries) {
-  const netPoints = normalizeSeriesPoints(netSeries);
-  const companyPoints = normalizeSeriesPoints(companySeries);
+function alignProfitLossSeries(profitSeries, lossSeries) {
+  const profitPoints = normalizeSeriesPoints(profitSeries);
+  const lossPoints = normalizeSeriesPoints(lossSeries);
   const byKey = new Map();
 
-  netPoints.forEach((point) => {
+  profitPoints.forEach((point) => {
     byKey.set(point.key, {
       key: point.key,
       label: point.label,
       parsedTime: point.parsedTime,
-      net: point.value,
-      company: 0
+      profit: point.value,
+      loss: 0
     });
   });
 
-  companyPoints.forEach((point) => {
+  lossPoints.forEach((point) => {
     const existing = byKey.get(point.key);
     if (existing) {
-      existing.company = point.value;
+      existing.loss = point.value;
       if (!existing.label) existing.label = point.label;
       return;
     }
@@ -696,8 +696,8 @@ function alignSeries(netSeries, companySeries) {
       key: point.key,
       label: point.label,
       parsedTime: point.parsedTime,
-      net: 0,
-      company: point.value
+      profit: 0,
+      loss: point.value
     });
   });
 
@@ -709,21 +709,21 @@ function alignSeries(netSeries, companySeries) {
   });
 }
 
-function renderProfitShareChart(target, netSeries, companySeries) {
-  const rows = alignSeries(netSeries, companySeries);
+function renderProfitLossChart(target, profitSeries, lossSeries) {
+  const rows = alignProfitLossSeries(profitSeries, lossSeries);
   if (!rows.length) {
     renderNoData(target, 'No data for selected range');
     return;
   }
 
-  const net = rows.map((row) => ({ key: row.key, label: row.label, value: row.net }));
-  const company = rows.map((row) => ({ key: row.key, label: row.label, value: row.company }));
+  const profit = rows.map((row) => ({ key: row.key, label: row.label, value: row.profit }));
+  const loss = rows.map((row) => ({ key: row.key, label: row.label, value: row.loss }));
 
   renderCartesianLineChart(
     target,
     [
-      { label: 'Net Profit', color: '#253475', points: net },
-      { label: 'Company Share Earned', color: '#5776b7', points: company }
+      { label: 'Net Profit', color: '#15803d', points: profit },
+      { label: 'Freight Loss Value', color: '#b91c1c', points: loss }
     ],
     {
       valueFormatter: formatGuilders,
@@ -814,7 +814,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   setDelta('#kpiDeltaLossValue', toDelta(kpis.freightLossesValue, previousKpis.freightLossesValue, range, true));
 
   const hasVoyages = !isAllZeroSeries(charts.voyageCountTrend || []);
-  renderProfitShareChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.companyShareTrend || []);
+  renderProfitLossChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.freightLossValueTrend || []);
 
   if (!hasVoyages) {
     renderNoData($('#trendsChartOutstanding'), 'No voyages in this period');
