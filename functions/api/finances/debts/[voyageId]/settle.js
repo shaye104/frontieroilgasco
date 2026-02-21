@@ -1,5 +1,5 @@
-import { json } from '../../../../auth/_lib/auth.js';
-import { requireFinancePermission, toMoney } from '../../../../_lib/finances.js';
+import { json } from '../../../auth/_lib/auth.js';
+import { requireFinancePermission, toMoney } from '../../../_lib/finances.js';
 
 function toInt(value) {
   const n = Number(value);
