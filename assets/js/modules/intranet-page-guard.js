@@ -1,5 +1,4 @@
-import { hasPermission } from './nav.js';
-import { initIntranetLayout } from './intranet-layout.js';
+import { initIntranetLayout } from './intranet-layout.js?v=20260221a';
 
 export async function initIntranetPageGuard(config) {
   return initIntranetLayout(config);

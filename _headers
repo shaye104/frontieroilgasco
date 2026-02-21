@@ -6,3 +6,9 @@
 
 /assets/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/assets/js/*
+  Cache-Control: public, max-age=300, stale-while-revalidate=600
+
+/assets/css/*
+  Cache-Control: public, max-age=300, stale-while-revalidate=600
