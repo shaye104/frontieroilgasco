@@ -22,6 +22,33 @@ function formatGuilders(value) {
   return `\u0192 ${toMoney(value).toLocaleString()}`;
 }
 
+function formatDateLabel(value, fallbackLabel = '') {
+  const raw = String(value || '').trim();
+  if (!raw) return text(fallbackLabel);
+  let date = null;
+  let monthly = false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    date = new Date(`${raw}T00:00:00Z`);
+  } else if (/^\d{4}-\d{2}$/.test(raw)) {
+    monthly = true;
+    date = new Date(`${raw}-01T00:00:00Z`);
+  }
+  if (!date || Number.isNaN(date.getTime())) return text(fallbackLabel || raw);
+  if (monthly) {
+    return date.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' });
+  }
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+function parseKeyTime(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return Number.NaN;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(`${raw}T00:00:00Z`).getTime();
+  if (/^\d{4}-\d{2}$/.test(raw)) return new Date(`${raw}-01T00:00:00Z`).getTime();
+  const parsed = new Date(raw).getTime();
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
 function formatWhen(value) {
   if (!value) return 'N/A';
   const date = new Date(value);
@@ -137,76 +164,246 @@ function normalizeFinanceTab(input) {
   return 'overview';
 }
 
-function renderSimpleLineChart(target, series, colorClass = 'line-primary', options = {}) {
-  if (!target) return;
-  const safeSeries = Array.isArray(series) ? series : [];
-  if (!safeSeries.length) {
-    target.innerHTML = '<p class="muted">No data for selected range</p>';
-    return;
-  }
-
-  const width = Number(options.width || 560);
-  const height = Number(options.height || 170);
-  const paddingX = Number(options.paddingX || 22);
-  const paddingY = Number(options.paddingY || 18);
-  const max = Math.max(1, ...safeSeries.map((point) => Math.max(0, toMoney(point.value))));
-  const stepX = safeSeries.length > 1 ? (width - paddingX * 2) / (safeSeries.length - 1) : 0;
-  const points = safeSeries
+function normalizeSeriesPoints(series) {
+  const rows = Array.isArray(series) ? series : [];
+  return rows
     .map((point, index) => {
-      const x = paddingX + stepX * index;
-      const y = height - paddingY - (Math.max(0, toMoney(point.value)) / max) * (height - paddingY * 2);
-      return `${x},${y}`;
+      const key = String(point?.key || '').trim() || `idx-${index}`;
+      const parsedTime = parseKeyTime(key);
+      return {
+        key,
+        label: formatDateLabel(key, point?.label || key),
+        value: toMoney(point?.value || 0),
+        parsedTime,
+        originalIndex: index
+      };
     })
-    .join(' ');
-
-  const labelStep = safeSeries.length > 10 ? Math.ceil(safeSeries.length / 7) : 1;
-  target.innerHTML = `
-    <svg class="finance-line-svg ${colorClass}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
-      <polyline points="${points}" />
-    </svg>
-    <div class="finance-chart-label-row">
-      ${safeSeries
-        .map((point, index) => `<span>${index % labelStep === 0 || index === safeSeries.length - 1 ? text(point.label) : ''}</span>`)
-        .join('')}
-    </div>
-  `;
+    .sort((a, b) => {
+      const aTime = Number.isFinite(a.parsedTime) ? a.parsedTime : Number.POSITIVE_INFINITY;
+      const bTime = Number.isFinite(b.parsedTime) ? b.parsedTime : Number.POSITIVE_INFINITY;
+      if (aTime !== bTime) return aTime - bTime;
+      return a.originalIndex - b.originalIndex;
+    });
 }
 
-function renderStackedShareChart(target, series) {
+function mergeSeriesByKey(baseSeries, extraSeries) {
+  const base = normalizeSeriesPoints(baseSeries);
+  const extras = normalizeSeriesPoints(extraSeries);
+  const byKey = new Map();
+  base.forEach((point) => {
+    byKey.set(point.key, {
+      key: point.key,
+      parsedTime: point.parsedTime,
+      originalIndex: point.originalIndex,
+      label: point.label,
+      base: point.value,
+      extra: 0
+    });
+  });
+  extras.forEach((point) => {
+    if (!byKey.has(point.key)) {
+      byKey.set(point.key, {
+        key: point.key,
+        parsedTime: point.parsedTime,
+        originalIndex: point.originalIndex + 10000,
+        label: point.label,
+        base: 0,
+        extra: point.value
+      });
+      return;
+    }
+    byKey.get(point.key).extra = point.value;
+  });
+  return [...byKey.values()].sort((a, b) => {
+    const aTime = Number.isFinite(a.parsedTime) ? a.parsedTime : Number.POSITIVE_INFINITY;
+    const bTime = Number.isFinite(b.parsedTime) ? b.parsedTime : Number.POSITIVE_INFINITY;
+    if (aTime !== bTime) return aTime - bTime;
+    return a.originalIndex - b.originalIndex;
+  });
+}
+
+function formatTick(value) {
+  return formatGuilders(value);
+}
+
+function renderCartesianLineChart(target, lines, options = {}) {
   if (!target) return;
-  const safeSeries = Array.isArray(series) ? series : [];
-  if (!safeSeries.length) {
-    target.innerHTML = '<p class="muted">No data for selected range</p>';
+  const safeLines = Array.isArray(lines) ? lines.filter((line) => Array.isArray(line?.points)) : [];
+  const maxPoints = safeLines.reduce((max, line) => Math.max(max, line.points.length), 0);
+  if (!safeLines.length || maxPoints <= 0) {
+    target.innerHTML = '<div class="finance-chart-empty">No data for selected range</div>';
     return;
   }
 
-  const maxTotal = Math.max(
-    1,
-    ...safeSeries.map((point) => Math.max(0, toMoney(point.companyShare)) + Math.max(0, toMoney(point.crewShare)))
-  );
-  const labelStep = safeSeries.length > 10 ? Math.ceil(safeSeries.length / 7) : 1;
+  const firstLine = safeLines[0];
+  const points = firstLine.points;
+  if (!points.length) {
+    target.innerHTML = '<div class="finance-chart-empty">No data for selected range</div>';
+    return;
+  }
+
+  const width = Number(options.width || 760);
+  const height = Number(options.height || 286);
+  const plotLeft = 74;
+  const plotRight = width - 18;
+  const plotTop = 16;
+  const plotBottom = height - 38;
+  const plotWidth = Math.max(1, plotRight - plotLeft);
+  const plotHeight = Math.max(1, plotBottom - plotTop);
+  const steps = Math.max(points.length - 1, 1);
+
+  const allValues = safeLines.flatMap((line) => line.points.map((point) => toMoney(point.value)));
+  let minValue = Math.min(...allValues);
+  let maxValue = Math.max(...allValues);
+  if (minValue === maxValue) {
+    if (minValue === 0) {
+      maxValue = 1;
+    } else {
+      minValue = Math.min(0, minValue - Math.abs(minValue * 0.2));
+      maxValue = maxValue + Math.abs(maxValue * 0.2);
+    }
+  }
+  if (minValue > 0) minValue = 0;
+
+  const yTicks = 5;
+  const tickValues = Array.from({ length: yTicks }, (_, idx) => {
+    const ratio = idx / (yTicks - 1);
+    return Math.round(maxValue - ratio * (maxValue - minValue));
+  });
+
+  const xAt = (idx) => plotLeft + (idx / steps) * plotWidth;
+  const yAt = (value) => plotTop + ((maxValue - value) / (maxValue - minValue)) * plotHeight;
+
+  const xLabelStep = points.length > 9 ? Math.ceil(points.length / 6) : 1;
+  const yGrid = tickValues
+    .map((tick) => {
+      const y = yAt(tick);
+      return `<g>
+        <line class="finance-grid-line" x1="${plotLeft}" y1="${y}" x2="${plotRight}" y2="${y}"></line>
+        <text class="finance-axis-y-label" x="${plotLeft - 8}" y="${y + 4}" text-anchor="end">${formatTick(tick)}</text>
+      </g>`;
+    })
+    .join('');
+
+  const xLabels = points
+    .map((point, idx) => {
+      const show = idx % xLabelStep === 0 || idx === points.length - 1;
+      if (!show) return '';
+      const x = xAt(idx);
+      return `<text class="finance-axis-x-label" x="${x}" y="${height - 10}" text-anchor="middle">${text(point.label)}</text>`;
+    })
+    .join('');
+
+  const linePaths = safeLines
+    .map((line) => {
+      const path = line.points
+        .map((point, idx) => `${idx === 0 ? 'M' : 'L'} ${xAt(idx)} ${yAt(point.value)}`)
+        .join(' ');
+      return `<path class="finance-line-path" d="${path}" stroke="${line.color}" fill="none"></path>`;
+    })
+    .join('');
+
+  const pointMarkers = safeLines
+    .map((line, lineIndex) =>
+      line.points
+        .map((point, idx) => `<circle class="finance-line-point" data-line="${lineIndex}" data-index="${idx}" cx="${xAt(idx)}" cy="${yAt(point.value)}" r="3.2" fill="${line.color}"></circle>`)
+        .join('')
+    )
+    .join('');
+
+  const legend = safeLines.length > 1
+    ? `<div class="finance-chart-legend">${safeLines
+        .map((line) => `<span class="finance-legend-item"><i style="background:${line.color}"></i>${text(line.label)}</span>`)
+        .join('')}</div>`
+    : '';
 
   target.innerHTML = `
-    <div class="finance-stacked-bars">
-      ${safeSeries
-        .map((point, index) => {
-          const company = Math.max(0, toMoney(point.companyShare));
-          const crew = Math.max(0, toMoney(point.crewShare));
-          const total = company + crew;
-          const heightPct = Math.max(8, (total / maxTotal) * 100);
-          const companyPct = total > 0 ? (company / total) * 100 : 0;
-          const label = index % labelStep === 0 || index === safeSeries.length - 1 ? text(point.label) : '';
-          return `<div class="finance-stacked-col">
-            <div class="finance-stacked-track" style="height:${heightPct}%">
-              <span class="finance-stacked-segment finance-stacked-company" style="height:${companyPct}%"></span>
-              <span class="finance-stacked-segment finance-stacked-crew" style="height:${Math.max(0, 100 - companyPct)}%"></span>
-            </div>
-            <small>${label}</small>
-          </div>`;
-        })
-        .join('')}
+    <div class="finance-chart-shell">
+      <svg class="finance-cartesian-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+        <rect x="${plotLeft}" y="${plotTop}" width="${plotWidth}" height="${plotHeight}" fill="#ffffff"></rect>
+        ${yGrid}
+        <line class="finance-axis-line" x1="${plotLeft}" y1="${plotBottom}" x2="${plotRight}" y2="${plotBottom}"></line>
+        <line class="finance-axis-line" x1="${plotLeft}" y1="${plotTop}" x2="${plotLeft}" y2="${plotBottom}"></line>
+        ${linePaths}
+        ${pointMarkers}
+        ${xLabels}
+        <line class="finance-hover-line hidden" x1="${plotLeft}" y1="${plotTop}" x2="${plotLeft}" y2="${plotBottom}"></line>
+      </svg>
+      ${legend}
+      <div class="finance-chart-tooltip hidden"></div>
     </div>
   `;
+
+  const shell = target.querySelector('.finance-chart-shell');
+  const svg = target.querySelector('.finance-cartesian-svg');
+  const hoverLine = target.querySelector('.finance-hover-line');
+  const tooltip = target.querySelector('.finance-chart-tooltip');
+  if (!shell || !svg || !hoverLine || !tooltip) return;
+
+  const showTooltipAtIndex = (index, clientX, clientY) => {
+    const idx = Math.max(0, Math.min(index, points.length - 1));
+    const linesHtml = safeLines
+      .map((line) => {
+        const point = line.points[idx];
+        return `<div class="finance-tooltip-row"><span class="finance-tooltip-key"><i style="background:${line.color}"></i>${text(line.label)}</span><strong>${formatGuilders(
+          point?.value || 0
+        )}</strong></div>`;
+      })
+      .join('');
+
+    tooltip.innerHTML = `<div class="finance-tooltip-title">${text(points[idx].label)}</div>${linesHtml}`;
+    tooltip.classList.remove('hidden');
+    hoverLine.classList.remove('hidden');
+
+    const rect = svg.getBoundingClientRect();
+    const scaleX = rect.width / width;
+    const xSvg = xAt(idx);
+    const xPx = (xSvg * scaleX) + (shell.scrollLeft || 0);
+    hoverLine.setAttribute('x1', String(xSvg));
+    hoverLine.setAttribute('x2', String(xSvg));
+
+    const shellRect = shell.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    let left = clientX - shellRect.left + 14;
+    let top = clientY - shellRect.top + 14;
+    if (left + tooltipRect.width > shellRect.width - 8) left = xPx - tooltipRect.width - 12;
+    if (top + tooltipRect.height > shellRect.height - 8) top = shellRect.height - tooltipRect.height - 8;
+    if (top < 8) top = 8;
+    if (left < 8) left = 8;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  };
+
+  shell.addEventListener('mousemove', (event) => {
+    const rect = svg.getBoundingClientRect();
+    const scaleX = width / rect.width;
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const ratio = (mouseX - plotLeft) / plotWidth;
+    const index = Math.round(Math.max(0, Math.min(1, ratio)) * steps);
+    showTooltipAtIndex(index, event.clientX, event.clientY);
+  });
+  shell.addEventListener('mouseleave', () => {
+    tooltip.classList.add('hidden');
+    hoverLine.classList.add('hidden');
+  });
+}
+
+function renderLineChart(target, series, lineLabel, color) {
+  const points = normalizeSeriesPoints(series);
+  renderCartesianLineChart(target, [{ label: lineLabel, color, points }]);
+}
+
+function renderDualLineChart(target, baseSeries, baseLabel, baseColor, compareSeries, compareLabel, compareColor) {
+  const merged = mergeSeriesByKey(baseSeries, compareSeries).map((point) => ({
+    key: point.key,
+    label: point.label,
+    base: toMoney(point.base),
+    extra: toMoney(point.extra)
+  }));
+  renderCartesianLineChart(target, [
+    { label: baseLabel, color: baseColor, points: merged.map((point) => ({ key: point.key, label: point.label, value: point.base })) },
+    { label: compareLabel, color: compareColor, points: merged.map((point) => ({ key: point.key, label: point.label, value: point.extra })) }
+  ]);
 }
 
 function renderOverviewSkeleton() {
@@ -215,7 +412,7 @@ function renderOverviewSkeleton() {
     if (el) el.innerHTML = '<span class="finance-value-skeleton"></span>';
   });
 
-  ['#chartNetProfit', '#trendsChartNetProfit', '#trendsChartCompanyCrew', '#trendsChartLossTrend', '#trendsChartAvgProfit'].forEach((selector) => {
+  ['#chartNetProfit', '#trendsChartNetProfit', '#trendsChartNetProfitLoss', '#trendsChartLossTrend', '#trendsChartAvgProfit'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<div class="finance-chart-skeleton"></div>';
   });
@@ -260,11 +457,19 @@ function renderOverview(data) {
   writeMoney('#overviewCompanyMini', kpis.companyShareEarnings);
   writeMoney('#overviewCrewMini', kpis.crewShare);
 
-  renderSimpleLineChart($('#chartNetProfit'), charts.netProfitTrend || [], 'line-primary');
-  renderSimpleLineChart($('#trendsChartNetProfit'), charts.netProfitTrend || [], 'line-primary');
-  renderStackedShareChart($('#trendsChartCompanyCrew'), charts.companyVsCrew || []);
-  renderSimpleLineChart($('#trendsChartLossTrend'), charts.freightLossValueTrend || [], 'line-accent');
-  renderSimpleLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'line-muted');
+  renderLineChart($('#chartNetProfit'), charts.netProfitTrend || [], 'Net Profit', '#253475');
+  renderLineChart($('#trendsChartNetProfit'), charts.netProfitTrend || [], 'Net Profit', '#253475');
+  renderDualLineChart(
+    $('#trendsChartNetProfitLoss'),
+    charts.netProfitTrend || [],
+    'Net Profit',
+    '#253475',
+    charts.freightLossValueTrend || [],
+    'Freight Loss Value',
+    '#b45309'
+  );
+  renderLineChart($('#trendsChartLossTrend'), charts.freightLossValueTrend || [], 'Freight Loss Value', '#5776b7');
+  renderLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'Average Profit per Voyage', '#64748b');
 
   const unsettledTotal = $('#unsettledOutstandingTotal');
   if (unsettledTotal) unsettledTotal.textContent = formatGuilders(unsettled.totalOutstanding || 0);

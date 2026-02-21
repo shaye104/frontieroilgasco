@@ -1106,6 +1106,135 @@ textarea:focus {
   background: #5776b7;
 }
 
+.finance-chart-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.finance-cartesian-svg {
+  width: 100%;
+  height: 100%;
+  min-height: 270px;
+  display: block;
+}
+
+.finance-axis-line {
+  stroke: #94a3b8;
+  stroke-width: 1;
+}
+
+.finance-grid-line {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.finance-axis-y-label,
+.finance-axis-x-label {
+  fill: #475569;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.finance-line-path {
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.finance-line-point {
+  stroke: #ffffff;
+  stroke-width: 1.2;
+}
+
+.finance-hover-line {
+  stroke: #64748b;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.finance-hover-line.hidden {
+  display: none;
+}
+
+.finance-chart-tooltip {
+  position: absolute;
+  z-index: 8;
+  min-width: 170px;
+  max-width: 280px;
+  border: 1px solid #d7e2f0;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  padding: 0.55rem 0.65rem;
+  pointer-events: none;
+}
+
+.finance-chart-tooltip.hidden {
+  display: none;
+}
+
+.finance-tooltip-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.3rem;
+}
+
+.finance-tooltip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.finance-tooltip-row strong {
+  color: #0f172a;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.finance-tooltip-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+}
+
+.finance-tooltip-key i,
+.finance-legend-item i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.finance-chart-legend {
+  margin-top: 0.4rem;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.finance-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.finance-chart-empty {
+  min-height: 270px;
+  border: 1px dashed #d7e2f0;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
 .ship-status-toggle-wrap {
   display: inline-flex;
   align-items: center;
