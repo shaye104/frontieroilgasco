@@ -224,6 +224,8 @@ export async function onRequestGet(context) {
       {
         label: bucket.label,
         netProfit: 0,
+        grossRevenue: 0,
+        freightCost: 0,
         companyShare: 0,
         crewShare: 0,
         freightLossValue: 0,
@@ -257,8 +259,9 @@ export async function onRequestGet(context) {
     const netProfit = toMoney(voyage.profit || 0);
     const companyShare = Math.max(0, toMoney(voyage.company_share_amount ?? voyage.company_share ?? 0));
     const crewShare = netProfit > 0 ? toMoney(netProfit - companyShare) : 0;
-
     const settlementLines = parseSettlementLines(voyage.settlement_lines_json);
+    const grossRevenue = toMoney(settlementLines.reduce((sum, line) => sum + toMoney(line.lineRevenue || 0), 0));
+    const freightCost = toMoney(settlementLines.reduce((sum, line) => sum + toMoney(line.lineCost || 0), 0));
     const freightLossValue = Math.max(
       0,
       toMoney(
@@ -287,6 +290,8 @@ export async function onRequestGet(context) {
     });
 
     target.netProfit = toMoney(target.netProfit + netProfit);
+    target.grossRevenue = toMoney(target.grossRevenue + grossRevenue);
+    target.freightCost = toMoney(target.freightCost + freightCost);
     target.companyShare = toMoney(target.companyShare + companyShare);
     target.crewShare = toMoney(target.crewShare + crewShare);
     target.freightLossValue = toMoney(target.freightLossValue + freightLossValue);
@@ -446,6 +451,8 @@ export async function onRequestGet(context) {
       key: bucket.key,
       label: value.label,
       netProfit: toMoney(value.netProfit),
+      grossRevenue: toMoney(value.grossRevenue),
+      freightCost: toMoney(value.freightCost),
       companyShare: toMoney(value.companyShare),
       crewShare: toMoney(value.crewShare),
       freightLossValue: Math.max(0, toMoney(value.freightLossValue)),
@@ -484,6 +491,8 @@ export async function onRequestGet(context) {
       },
       charts: {
         netProfitTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.netProfit })),
+        grossRevenueTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.grossRevenue })),
+        freightCostTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.freightCost })),
         companyShareTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.companyShare })),
         freightLossValueTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.freightLossValue })),
         voyageCountTrend: chartBuckets.map((row) => ({ key: row.key, label: row.label, value: row.voyageCount })),

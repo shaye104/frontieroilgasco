@@ -756,6 +756,83 @@ function renderProfitLossChart(target, profitSeries, lossSeries) {
   );
 }
 
+function alignNamedSeries(seriesList) {
+  const bucketMap = new Map();
+
+  (Array.isArray(seriesList) ? seriesList : []).forEach((series) => {
+    const keyName = String(series?.key || '').trim();
+    if (!keyName) return;
+    const points = normalizeSeriesPoints(series?.points || []);
+    points.forEach((point) => {
+      if (!bucketMap.has(point.key)) {
+        bucketMap.set(point.key, {
+          key: point.key,
+          label: point.label,
+          tooltipLabel: point.tooltipLabel || point.label,
+          parsedTime: point.parsedTime,
+          values: {}
+        });
+      }
+      const bucket = bucketMap.get(point.key);
+      bucket.values[keyName] = toMoney(point.value || 0);
+      if (!bucket.label) bucket.label = point.label;
+      if (!bucket.tooltipLabel) bucket.tooltipLabel = point.tooltipLabel || point.label;
+    });
+  });
+
+  return [...bucketMap.values()].sort((a, b) => {
+    const aTime = Number.isFinite(a.parsedTime) ? a.parsedTime : Number.POSITIVE_INFINITY;
+    const bTime = Number.isFinite(b.parsedTime) ? b.parsedTime : Number.POSITIVE_INFINITY;
+    if (aTime !== bTime) return aTime - bTime;
+    return a.key.localeCompare(b.key);
+  });
+}
+
+function renderRevenueProfitLossChart(target, revenueSeries, profitSeries, lossSeries) {
+  const rows = alignNamedSeries([
+    { key: 'revenue', points: revenueSeries || [] },
+    { key: 'profit', points: profitSeries || [] },
+    { key: 'loss', points: lossSeries || [] }
+  ]);
+  if (!rows.length) {
+    renderNoData(target, 'No data for selected range');
+    return;
+  }
+
+  const revenuePoints = rows.map((row) => ({
+    key: row.key,
+    label: row.label,
+    tooltipLabel: row.tooltipLabel,
+    value: toMoney(row.values.revenue || 0)
+  }));
+  const profitPoints = rows.map((row) => ({
+    key: row.key,
+    label: row.label,
+    tooltipLabel: row.tooltipLabel,
+    value: toMoney(row.values.profit || 0)
+  }));
+  const lossPoints = rows.map((row) => ({
+    key: row.key,
+    label: row.label,
+    tooltipLabel: row.tooltipLabel,
+    value: toMoney(row.values.loss || 0)
+  }));
+  const hasLoss = !isAllZeroSeries(lossPoints);
+
+  const lines = [
+    { label: 'Gross Revenue', color: '#1d4ed8', points: revenuePoints },
+    { label: 'Net Profit', color: '#15803d', points: profitPoints }
+  ];
+  if (hasLoss) {
+    lines.push({ label: 'Freight Loss Value', color: '#b91c1c', points: lossPoints });
+  }
+
+  renderCartesianLineChart(target, lines, {
+    valueFormatter: formatGuilders,
+    tickFormatter: formatGuildersCompact
+  });
+}
+
 function isAllZeroSeries(series) {
   const safe = Array.isArray(series) ? series : [];
   if (!safe.length) return true;
@@ -856,7 +933,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
     renderNoData($('#trendsChartAvgProfit'), 'No voyages in this period');
     renderNoData($('#trendsChartProfitDrivers'), 'No voyages in this period');
   } else {
-    renderLineChart($('#trendsChartOutstanding'), charts.outstandingTrend || [], 'Outstanding Company Share', '#253475');
+    renderRevenueProfitLossChart($('#trendsChartOutstanding'), charts.grossRevenueTrend || [], charts.netProfitTrend || [], charts.freightLossValueTrend || []);
     renderCountBarChart($('#trendsChartVoyageCount'), charts.voyageCountTrend || [], 'Voyage Count', '#253475');
     renderLineChart($('#trendsChartAvgProfit'), charts.avgNetProfitTrend || [], 'Avg Net Profit / Voyage', '#2b4aa2');
     renderProfitDriversChart($('#trendsChartProfitDrivers'), breakdowns, breakdownMode);
@@ -1013,12 +1090,12 @@ function renderCashflowRows(state) {
       return `<tr>
         <td>${formatWhen(row.createdAt)}</td>
         <td><span class="finance-type-pill ${isIn ? 'is-in' : 'is-out'}">${isIn ? 'IN' : 'OUT'}</span></td>
-        <td class="align-right"><span class="finance-cashflow-amount ${isIn ? 'is-in' : 'is-out'}">${formatGuilders(row.amount)}</span></td>
+        <td class="align-right"><span class="finance-cashflow-amount ${isIn ? 'is-in' : 'is-out'}">${isIn ? '+' : '\u2212'}${formatGuilders(row.amount)}</span></td>
         <td>${text(row.reason)}</td>
         <td>${text(row.category || '\u2014')}</td>
         <td>${relatedVoyage}</td>
         <td>${text(row.createdBy || 'Unknown')}</td>
-        <td class="align-right">${formatGuilders(row.balanceAfter)}</td>
+        <td class="align-right"><strong>${formatGuilders(row.balanceAfter)}</strong></td>
       </tr>`;
     })
     .join('');
@@ -1055,6 +1132,17 @@ async function loadCashflow(state) {
     params.set('range', state.range);
     params.set('page', String(state.cashflowPage));
     params.set('pageSize', String(state.cashflowPageSize));
+    const search = ($('#cashflowSearch')?.value || '').trim();
+    const dateFrom = ($('#cashflowDateFrom')?.value || '').trim();
+    const dateTo = ($('#cashflowDateTo')?.value || '').trim();
+    const category = ($('#cashflowFilterCategory')?.value || '').trim();
+    const createdBy = ($('#cashflowCreatedBy')?.value || '').trim();
+
+    if (search) params.set('search', search);
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    if (category) params.set('category', category);
+    if (createdBy) params.set('createdBy', createdBy);
 
     const payload = await fetchJson(`/api/finances/cashflow?${params.toString()}`);
     console.log('finances cashflow response', payload);
@@ -1458,6 +1546,10 @@ async function confirmSettlePendingVoyage(state) {
     if (state.activeTab === 'debts' || state.debtsLoaded) {
       await loadDebts(state);
     }
+    if (state.activeTab === 'cashflow' || state.cashflowLoaded) {
+      state.cashflowPage = 1;
+      await loadCashflow(state);
+    }
     await loadOverview(state);
   } catch (error) {
     console.error('finances settle error', error);
@@ -1649,6 +1741,26 @@ async function init() {
   if (debtMin) debtMin.addEventListener('input', scheduleDebtReload);
   if (debtScope) debtScope.addEventListener('change', scheduleDebtReload);
   if (debtOnlyUnsettled) debtOnlyUnsettled.addEventListener('change', scheduleDebtReload);
+
+  let cashflowDebounce;
+  const scheduleCashflowReload = () => {
+    state.cashflowPage = 1;
+    if (cashflowDebounce) window.clearTimeout(cashflowDebounce);
+    cashflowDebounce = window.setTimeout(async () => {
+      await loadCashflow(state);
+    }, 320);
+  };
+
+  const cashflowSearch = $('#cashflowSearch');
+  const cashflowDateFrom = $('#cashflowDateFrom');
+  const cashflowDateTo = $('#cashflowDateTo');
+  const cashflowFilterCategory = $('#cashflowFilterCategory');
+  const cashflowCreatedBy = $('#cashflowCreatedBy');
+  if (cashflowSearch) cashflowSearch.addEventListener('input', scheduleCashflowReload);
+  if (cashflowDateFrom) cashflowDateFrom.addEventListener('change', scheduleCashflowReload);
+  if (cashflowDateTo) cashflowDateTo.addEventListener('change', scheduleCashflowReload);
+  if (cashflowFilterCategory) cashflowFilterCategory.addEventListener('change', scheduleCashflowReload);
+  if (cashflowCreatedBy) cashflowCreatedBy.addEventListener('input', scheduleCashflowReload);
 
   $$('[data-cashflow-type]').forEach((button) => {
     button.addEventListener('click', () => {

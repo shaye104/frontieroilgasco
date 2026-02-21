@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221y" />
-    <link rel="stylesheet" href="/assets/css/base.css?v=20260221y" />
-    <link rel="stylesheet" href="/assets/css/components.css?v=20260221y" />
-    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221y" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260221z" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260221z" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260221z" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260221z" />
   </head>
   <body class="page page-intranet page-finances">
     <header class="site-header">
@@ -161,7 +161,7 @@
           <section id="financeTabTrends" class="finance-tab-panel hidden" data-finance-panel="trends">
             <div class="finance-main-chart-grid finance-trends-grid">
               <article class="finance-chart-card">
-                <h3>Outstanding Company Share Trend</h3>
+                <h3>Revenue vs Profit vs Freight Loss</h3>
                 <div id="trendsChartOutstanding" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
               </article>
               <article class="finance-chart-card">
@@ -217,6 +217,36 @@
             </article>
 
             <article class="finance-chart-card finance-table-card">
+              <div class="filter-row">
+                <div>
+                  <label for="cashflowSearch">Search</label>
+                  <input id="cashflowSearch" type="text" placeholder="Reason, category, user, voyage" />
+                </div>
+                <div>
+                  <label for="cashflowDateFrom">From</label>
+                  <input id="cashflowDateFrom" type="date" />
+                </div>
+                <div>
+                  <label for="cashflowDateTo">To</label>
+                  <input id="cashflowDateTo" type="date" />
+                </div>
+                <div>
+                  <label for="cashflowFilterCategory">Category</label>
+                  <select id="cashflowFilterCategory">
+                    <option value="">All categories</option>
+                    <option value="Repairs">Repairs</option>
+                    <option value="Fuel">Fuel</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Operational Revenue">Operational Revenue</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="cashflowCreatedBy">Created By</label>
+                  <input id="cashflowCreatedBy" type="text" placeholder="Username / ID" />
+                </div>
+              </div>
               <div class="table-wrap">
                 <table class="data-table finance-data-table">
                   <thead>
@@ -327,7 +357,7 @@
                   <input id="cashflowType" type="hidden" value="IN" />
                 </div>
                 <div>
-                  <label for="cashflowAmount">Amount</label>
+                  <label for="cashflowAmount">Amount (ƒ)</label>
                   <input id="cashflowAmount" type="number" min="1" step="1" required />
                 </div>
                 <div>
@@ -399,6 +429,6 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221y"></script>
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260221z"></script>
   </body>
 </html>

@@ -3,6 +3,15 @@ import { getCashflowPeriodSnapshot, getCurrentCashBalance, normalizeCashflowCate
 import { getFinanceRangeWindow, requireFinancePermission, toMoney } from '../_lib/finances.js';
 import { hasPermission } from '../_lib/permissions.js';
 
+function toUtcBoundary(input, isEnd = false) {
+  const value = String(input || '').trim();
+  if (!value) return null;
+  const suffix = isEnd ? 'T23:59:59.999Z' : 'T00:00:00.000Z';
+  const date = new Date(`${value}${suffix}`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
 function buildVoyageLabel(row) {
   const vessel = String(row?.vessel_name || '').trim();
   const callsign = String(row?.vessel_callsign || '').trim();
@@ -23,12 +32,64 @@ export async function onRequestGet(context) {
   const offset = (page - 1) * pageSize;
   const startIso = rangeWindow.start.toISOString();
   const endIso = rangeWindow.end.toISOString();
+  const search = String(url.searchParams.get('search') || '').trim().toLowerCase();
+  const categoryFilter = normalizeCashflowCategory(url.searchParams.get('category') || '');
+  const createdByFilter = String(url.searchParams.get('createdBy') || '').trim().toLowerCase();
+  const dateFrom = toUtcBoundary(url.searchParams.get('dateFrom'), false);
+  const dateTo = toUtcBoundary(url.searchParams.get('dateTo'), true);
+
+  const whereClauses = ['e.deleted_at IS NULL'];
+  const bindings = [];
+  if (search) {
+    const term = `%${search}%`;
+    whereClauses.push(`(
+      LOWER(COALESCE(e.reason, '')) LIKE ?
+      OR LOWER(COALESCE(e.category, '')) LIKE ?
+      OR LOWER(COALESCE(e.created_by_name, '')) LIKE ?
+      OR LOWER(COALESCE(e.created_by_discord_user_id, '')) LIKE ?
+      OR LOWER(COALESCE(emp.roblox_username, '')) LIKE ?
+      OR LOWER(COALESCE(v.vessel_name, '')) LIKE ?
+      OR LOWER(COALESCE(v.vessel_callsign, '')) LIKE ?
+      OR LOWER(COALESCE(v.departure_port, '')) LIKE ?
+      OR LOWER(COALESCE(v.destination_port, '')) LIKE ?
+    )`);
+    bindings.push(term, term, term, term, term, term, term, term, term);
+  }
+  if (categoryFilter) {
+    whereClauses.push('LOWER(COALESCE(e.category, \'\')) = ?');
+    bindings.push(String(categoryFilter).toLowerCase());
+  }
+  if (createdByFilter) {
+    const term = `%${createdByFilter}%`;
+    whereClauses.push(`(
+      LOWER(COALESCE(e.created_by_name, '')) LIKE ?
+      OR LOWER(COALESCE(e.created_by_discord_user_id, '')) LIKE ?
+      OR LOWER(COALESCE(emp.roblox_username, '')) LIKE ?
+    )`);
+    bindings.push(term, term, term);
+  }
+  if (dateFrom) {
+    whereClauses.push('e.created_at >= ?');
+    bindings.push(dateFrom);
+  }
+  if (dateTo) {
+    whereClauses.push('e.created_at <= ?');
+    bindings.push(dateTo);
+  }
+  const whereSql = `WHERE ${whereClauses.join(' AND ')}`;
 
   const [balanceSnapshot, periodSnapshot, totalRow, rowsResult, voyageOptionsResult] = await Promise.all([
     getCurrentCashBalance(env),
     getCashflowPeriodSnapshot(env, startIso, endIso),
     env.DB
-      .prepare(`SELECT COUNT(*) AS total FROM finance_cash_ledger_entries WHERE deleted_at IS NULL`)
+      .prepare(
+        `SELECT COUNT(*) AS total
+         FROM finance_cash_ledger_entries e
+         LEFT JOIN employees emp ON emp.id = e.created_by_employee_id
+         LEFT JOIN voyages v ON v.id = e.voyage_id
+         ${whereSql}`
+      )
+      .bind(...bindings)
       .first(),
     env.DB
       .prepare(
@@ -51,11 +112,11 @@ export async function onRequestGet(context) {
          FROM finance_cash_ledger_entries e
          LEFT JOIN employees emp ON emp.id = e.created_by_employee_id
          LEFT JOIN voyages v ON v.id = e.voyage_id
-         WHERE e.deleted_at IS NULL
+         ${whereSql}
          ORDER BY e.created_at DESC, e.id DESC
          LIMIT ? OFFSET ?`
       )
-      .bind(pageSize, offset)
+      .bind(...bindings, pageSize, offset)
       .all(),
     env.DB
       .prepare(
@@ -128,6 +189,13 @@ export async function onRequestGet(context) {
       },
       permissions: {
         canManage: hasPermission(session, 'finances.debts.settle')
+      },
+      filters: {
+        search,
+        dateFrom: dateFrom ? dateFrom.slice(0, 10) : '',
+        dateTo: dateTo ? dateTo.slice(0, 10) : '',
+        category: categoryFilter || '',
+        createdBy: createdByFilter
       }
     },
     { cacheControl: 'private, max-age=15, stale-while-revalidate=30' }

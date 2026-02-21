@@ -313,7 +313,7 @@
 
 .finance-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 0.7rem;
 }
 
@@ -391,7 +391,7 @@
 
 .finance-main-chart-grid {
   display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 0.85rem;
   min-height: 0;
   min-width: 0;
@@ -713,7 +713,7 @@
 
 .finance-trends-grid {
   display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 0.85rem;
 }
 
@@ -814,7 +814,7 @@
 
 .finance-cashflow-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.7rem;
 }
 
@@ -987,24 +987,11 @@
 }
 
 @media (min-width: 640px) {
-  .finance-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .finance-main-chart-grid,
-  .finance-trends-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .finance-performance-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .finance-summary-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .finance-cashflow-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1020,16 +1007,8 @@
 }
 
 @media (min-width: 1024px) {
-  .finance-kpi-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .finance-summary-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .finance-cashflow-kpi-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   body.page-intranet.intranet-no-scroll .finance-dashboard-shell {
@@ -1092,10 +1071,6 @@
 }
 
 @media (min-width: 1440px) {
-  .finance-kpi-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
   .finance-performer-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

@@ -102,37 +102,30 @@ export async function getCashLedgerTotals(env, options = {}) {
 }
 
 export async function getCurrentCashBalance(env) {
-  const [startingBalance, ledgerTotals, settledCompanyShareTotal] = await Promise.all([
+  const [startingBalance, ledgerTotals] = await Promise.all([
     getCashStartingBalance(env),
-    getCashLedgerTotals(env),
-    getSettledCompanyShareTotal(env)
+    getCashLedgerTotals(env)
   ]);
 
-  const currentBalance = toMoney(startingBalance + ledgerTotals.cashIn - ledgerTotals.cashOut + settledCompanyShareTotal);
+  const currentBalance = toMoney(startingBalance + ledgerTotals.cashIn - ledgerTotals.cashOut);
 
   return {
     startingBalance,
     cashInTotal: ledgerTotals.cashIn,
     cashOutTotal: ledgerTotals.cashOut,
-    settledCompanyShareTotal,
     currentBalance
   };
 }
 
 export async function getCashflowPeriodSnapshot(env, fromIso, toIso) {
-  const [ledgerTotals, settledCompanyShare] = await Promise.all([
-    getCashLedgerTotals(env, { fromIso, toIso }),
-    getSettledCompanyShareTotal(env, { fromIso, toIso })
-  ]);
-
-  const cashIn = toMoney(ledgerTotals.cashIn + settledCompanyShare);
+  const ledgerTotals = await getCashLedgerTotals(env, { fromIso, toIso });
+  const cashIn = toMoney(ledgerTotals.cashIn);
   const cashOut = toMoney(ledgerTotals.cashOut);
   const netCashflow = toMoney(cashIn - cashOut);
 
   return {
     cashIn,
     cashOut,
-    netCashflow,
-    settledCompanyShareIn: settledCompanyShare
+    netCashflow
   };
 }

@@ -1,4 +1,5 @@
 import { json } from '../../../auth/_lib/auth.js';
+import { getCurrentCashBalance, toOptionalInteger } from '../../../_lib/cashflow.js';
 import { requireFinancePermission, toMoney } from '../../../_lib/finances.js';
 
 function toInt(value) {
@@ -38,6 +39,14 @@ export async function onRequestPost(context) {
   }
 
   const amount = toMoney(row.company_share_amount ?? row.company_share ?? 0);
+  const createdByName =
+    String(session?.employee?.robloxUsername || '').trim() ||
+    String(session?.displayName || '').trim() ||
+    String(session?.userId || '').trim() ||
+    'Unknown';
+  const currentBalance = await getCurrentCashBalance(env);
+  const balanceAfter = toMoney(currentBalance.currentBalance + amount);
+
   await env.DB.batch([
     env.DB
       .prepare(
@@ -62,10 +71,45 @@ export async function onRequestPost(context) {
         amount,
         session.employee.id,
         String(session.userId || ''),
-        toInt(row.officer_of_watch_employee_id),
+        toOptionalInteger(row.officer_of_watch_employee_id),
         JSON.stringify({
           previousStatus: currentStatus,
           nextStatus: 'SETTLED'
+        })
+      ),
+    env.DB
+      .prepare(
+        `INSERT INTO finance_cash_ledger_entries
+         (created_by_employee_id, created_by_name, created_by_discord_user_id, type, amount, reason, category, voyage_id, balance_after)
+         VALUES (?, ?, ?, 'IN', ?, ?, 'Operational Revenue', ?, ?)`
+      )
+      .bind(
+        Number(session.employee.id),
+        createdByName,
+        String(session.userId || ''),
+        amount,
+        `Company share settlement - Voyage ${voyageId}`,
+        voyageId,
+        balanceAfter
+      ),
+    env.DB
+      .prepare(
+        `INSERT INTO finance_cashflow_audit
+         (entry_id, action, amount, performed_by_employee_id, performed_by_discord_user_id, details_json)
+         VALUES (last_insert_rowid(), 'CASHFLOW_CREATE', ?, ?, ?, ?)`
+      )
+      .bind(
+        amount,
+        Number(session.employee.id),
+        String(session.userId || ''),
+        JSON.stringify({
+          type: 'IN',
+          amount,
+          category: 'Operational Revenue',
+          reason: `Company share settlement - Voyage ${voyageId}`,
+          voyageId,
+          balanceAfter,
+          source: 'company_share_settlement'
         })
       )
   ]);
