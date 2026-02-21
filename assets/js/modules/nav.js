@@ -39,7 +39,7 @@ const INTRANET_NAV_ITEMS = [
   { href: '/voyages/my', label: 'Voyages' },
   { href: '/my-fleet', label: 'My Fleet' },
   { href: '/forms', label: 'Forms' },
-  { href: '/finances', label: 'Finances', anyPermissions: ['finances.view', 'admin.override'] },
+  { href: '/finances', label: 'Finances' },
   { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
 ];
 
