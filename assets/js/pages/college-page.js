@@ -1585,7 +1585,13 @@ async function init() {
   });
 
   try {
-    await Promise.all([loadOverview(state), loadLibrary(state)]);
+    await loadOverview(state);
+    try {
+      await loadLibrary(state);
+    } catch (libraryError) {
+      console.error('college library load error', libraryError);
+      setInlineFeedback('#collegeFeedback', 'Library is temporarily unavailable. You can still use courses and admin tools.', 'error');
+    }
     if (state.canManage && state.requestedTab === 'admin' && state.activeTab !== 'admin') {
       setActiveTab(state, 'admin');
     }

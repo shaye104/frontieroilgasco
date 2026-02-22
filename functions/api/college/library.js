@@ -5,6 +5,11 @@ function text(value) {
   return String(value || '').trim();
 }
 
+function hasTable(result, tableName) {
+  const wanted = String(tableName || '').trim().toLowerCase();
+  return (result?.results || []).some((row) => String(row?.name || '').trim().toLowerCase() === wanted);
+}
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const { errorResponse, employee, isRestricted, capabilities } = await requireCollegeSession(context);
@@ -29,43 +34,76 @@ export async function onRequestGet(context) {
   const category = text(url.searchParams.get('category'));
   const tag = text(url.searchParams.get('tag')).toLowerCase();
 
-  const clauses = ['published = 1', 'archived_at IS NULL'];
+  const libraryColumnResult = await env.DB.prepare(`PRAGMA table_info(college_library_documents)`).all();
+  const libraryColumns = new Set((libraryColumnResult?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  const hasVisibility = libraryColumns.has('visibility');
+  const hasArchivedAt = libraryColumns.has('archived_at');
+  const hasContentMarkdown = libraryColumns.has('content_markdown');
+  const hasDocumentUrl = libraryColumns.has('document_url');
+  const hasUpdatedAt = libraryColumns.has('updated_at');
+  const hasCourseIdLegacy = libraryColumns.has('course_id');
+
+  const tableResult = await env.DB
+    .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('college_library_doc_links', 'college_course_modules')`)
+    .all();
+  const hasDocLinksTable = hasTable(tableResult, 'college_library_doc_links');
+  const hasModulesTable = hasTable(tableResult, 'college_course_modules');
+
+  const clauses = ['published = 1'];
+  if (hasArchivedAt) clauses.push('archived_at IS NULL');
   const bindings = [];
-  if (!canManageLibrary) {
+  if (!canManageLibrary && hasVisibility) {
+    const linkedVisibilityClause =
+      hasDocLinksTable && hasModulesTable
+        ? `(
+            UPPER(COALESCE(visibility, 'PUBLIC')) = 'COURSE_LINKED'
+            AND EXISTS (
+              SELECT 1
+              FROM college_library_doc_links l
+              LEFT JOIN college_course_modules m ON m.id = l.module_id
+              WHERE l.doc_id = college_library_documents.id
+                AND (
+                  (l.course_id IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM college_enrollments ce
+                    WHERE ce.user_employee_id = ?
+                      AND ce.course_id = l.course_id
+                  ))
+                  OR (l.module_id IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM college_module_progress mp
+                    WHERE mp.user_employee_id = ?
+                      AND mp.module_id = l.module_id
+                  ))
+                  OR (l.module_id IS NOT NULL AND EXISTS (
+                    SELECT 1 FROM college_enrollments ce2
+                    WHERE ce2.user_employee_id = ?
+                      AND ce2.course_id = m.course_id
+                  ))
+                )
+            )
+          )`
+        : `(
+            UPPER(COALESCE(visibility, 'PUBLIC')) = 'COURSE_LINKED'
+            AND ${hasCourseIdLegacy ? `EXISTS (
+              SELECT 1 FROM college_enrollments ce
+              WHERE ce.user_employee_id = ?
+                AND ce.course_id = college_library_documents.course_id
+            )` : '0 = 1'}
+          )`;
+
     clauses.push(`(
       UPPER(COALESCE(visibility, 'PUBLIC')) = 'PUBLIC'
       OR (
         UPPER(COALESCE(visibility, 'PUBLIC')) = 'STAFF'
         AND ? = 0
       )
-      OR (
-        UPPER(COALESCE(visibility, 'PUBLIC')) = 'COURSE_LINKED'
-        AND EXISTS (
-          SELECT 1
-          FROM college_library_doc_links l
-          LEFT JOIN college_course_modules m ON m.id = l.module_id
-          WHERE l.doc_id = college_library_documents.id
-            AND (
-              (l.course_id IS NOT NULL AND EXISTS (
-                SELECT 1 FROM college_enrollments ce
-                WHERE ce.user_employee_id = ?
-                  AND ce.course_id = l.course_id
-              ))
-              OR (l.module_id IS NOT NULL AND EXISTS (
-                SELECT 1 FROM college_module_progress mp
-                WHERE mp.user_employee_id = ?
-                  AND mp.module_id = l.module_id
-              ))
-              OR (l.module_id IS NOT NULL AND EXISTS (
-                SELECT 1 FROM college_enrollments ce2
-                WHERE ce2.user_employee_id = ?
-                  AND ce2.course_id = m.course_id
-              ))
-            )
-        )
-      )
+      OR ${linkedVisibilityClause}
     )`);
-    bindings.push(isRestricted ? 1 : 0, employeeId, employeeId, employeeId);
+    bindings.push(isRestricted ? 1 : 0);
+    if (hasDocLinksTable && hasModulesTable) {
+      bindings.push(employeeId, employeeId, employeeId);
+    } else if (hasCourseIdLegacy) {
+      bindings.push(employeeId);
+    }
   }
 
   if (search) {
@@ -84,7 +122,16 @@ export async function onRequestGet(context) {
 
   const rowsResult = await env.DB
     .prepare(
-      `SELECT id, title, category, tags, summary, content_markdown, document_url, visibility, updated_at
+      `SELECT
+         id,
+         title,
+         category,
+         tags,
+         summary,
+         ${hasContentMarkdown ? 'content_markdown' : "'' AS content_markdown"},
+         ${hasDocumentUrl ? 'document_url' : "'' AS document_url"},
+         ${hasVisibility ? 'visibility' : "'PUBLIC' AS visibility"},
+         ${hasUpdatedAt ? 'updated_at' : 'NULL AS updated_at'}
        FROM college_library_documents
        WHERE ${clauses.join(' AND ')}
        ORDER BY updated_at DESC, id DESC`
@@ -94,7 +141,7 @@ export async function onRequestGet(context) {
   const rows = rowsResult?.results || [];
   const docIds = rows.map((row) => Number(row.id || 0)).filter((id) => id > 0);
   let linksByDoc = new Map();
-  if (docIds.length) {
+  if (docIds.length && hasDocLinksTable && hasModulesTable) {
     const placeholders = docIds.map(() => '?').join(', ');
     const linksResult = await env.DB
       .prepare(
