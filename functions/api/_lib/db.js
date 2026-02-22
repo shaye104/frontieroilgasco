@@ -770,10 +770,12 @@ export async function ensureCoreSchema(env) {
       await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN notes TEXT`).run();
     }
     if (!collegeProfileColumnNames.has('created_at')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN created_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+      // D1/SQLite ALTER TABLE does not safely support non-constant defaults here.
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN created_at TEXT`).run();
     }
     if (!collegeProfileColumnNames.has('updated_at')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+      // D1/SQLite ALTER TABLE does not safely support non-constant defaults here.
+      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN updated_at TEXT`).run();
     }
   }
   await env.DB
@@ -844,6 +846,7 @@ export async function ensureCoreSchema(env) {
          passed_at = COALESCE(passed_at, (
            SELECT college_passed_at FROM employees e WHERE e.id = college_profiles.user_employee_id
          )),
+         created_at = COALESCE(created_at, CURRENT_TIMESTAMP),
          updated_at = CURRENT_TIMESTAMP`
     )
     .run();
