@@ -1,5 +1,6 @@
 import { readSessionFromRequest } from './api/auth/_lib/auth.js';
 import { getEmployeeByDiscordUserId } from './api/_lib/db.js';
+import { isCoreAllowedApiPath, isCoreAllowedPagePath, isCoreOnly } from './api/_lib/app-mode.js';
 
 function normalizePath(pathname) {
   if (!pathname || pathname === '/') return '/';
@@ -82,6 +83,8 @@ function isProtectedPath(pathname) {
     '/user-ranks.html',
     '/manage-employees',
     '/manage-employees.html',
+    '/personnel',
+    '/personnel.html',
     '/employee-profile',
     '/activity-tracker',
     '/activity-tracker.html',
@@ -91,6 +94,7 @@ function isProtectedPath(pathname) {
   if (protectedPaths.has(pathname)) return true;
   if (pathname.startsWith('/voyages/')) return true;
   if (pathname.startsWith('/admin/')) return true;
+  if (pathname.startsWith('/personnel/')) return true;
   if (pathname.startsWith('/forms/')) return true;
   if (pathname.startsWith('/finances/')) return true;
   if (pathname.startsWith('/college/')) return true;
@@ -101,6 +105,7 @@ export async function onRequest(context) {
   try {
     const url = new URL(context.request.url);
     const pathname = normalizePath(url.pathname);
+    const coreOnlyMode = isCoreOnly(context.env);
 
     if (
       pathname.startsWith('/assets/') ||
@@ -147,6 +152,12 @@ export async function onRequest(context) {
     const shouldLandOnCollege = collegeRestricted || (isLoggedIn && !hasEntryPermission && hasCollegePermission);
 
     if (isApiPath) {
+      if (coreOnlyMode && !isCoreAllowedApiPath(pathname)) {
+        return new Response(JSON.stringify({ error: 'Not found.' }), {
+          status: 404,
+          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+        });
+      }
       if (isLoggedIn && collegeRestricted && !isAllowedRestrictedApiPath(pathname)) {
         return new Response(JSON.stringify({ error: 'College restricted access. Complete onboarding to unlock the full intranet.' }), {
           status: 403,
@@ -162,6 +173,18 @@ export async function onRequest(context) {
 
     if (pathname === '/intranet' || pathname === '/intranet.html') {
       return Response.redirect(new URL('/login', url.origin).toString(), 302);
+    }
+
+    const corePublicAllowedPaths = new Set(['/', '/index.html', '/login', '/login.html', '/dashboard', '/intranet', '/intranet.html']);
+    const isCoreBlockedRoute = coreOnlyMode && !corePublicAllowedPaths.has(pathname) && !isCoreAllowedPagePath(pathname);
+    if (isCoreBlockedRoute) {
+      if (isLoggedIn) {
+        return Response.redirect(new URL('/voyages/my', url.origin).toString(), 302);
+      }
+      return new Response('Not found.', {
+        status: 404,
+        headers: { 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8' }
+      });
     }
 
     if (pathname === '/login' || pathname === '/login.html') {

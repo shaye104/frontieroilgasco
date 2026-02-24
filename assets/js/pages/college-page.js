@@ -1,5 +1,5 @@
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260222a';
-import { hasPermission } from '../modules/nav.js?v=20260221h';
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260222b';
+import { hasPermission } from '../modules/nav.js?v=20260222a';
 
 function $(selector) {
   return document.querySelector(selector);

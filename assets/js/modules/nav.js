@@ -1,3 +1,5 @@
+import { isCoreOnlyMode } from './app-mode.js?v=20260222a';
+
 const PERMISSION_ALIASES = {
   'roles.read': 'user_groups.read',
   'roles.manage': 'user_groups.manage',
@@ -42,6 +44,14 @@ const INTRANET_NAV_ITEMS = [
   { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
 ];
 
+const CORE_NAV_ITEMS = [
+  { href: '/my-details', label: 'My Details' },
+  { href: '/voyages/my', label: 'Voyages' },
+  { href: '/finances', label: 'Finances', anyPermissions: ['finances.view'] },
+  { href: '/personnel', label: 'Personnel', anyPermissions: ['employees.read', 'admin.access'] },
+  { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
+];
+
 function canRenderNavItem(session, item) {
   const sessionFlag = String(item?.sessionFlag || '').trim();
   if (sessionFlag && !session?.[sessionFlag]) return false;
@@ -78,7 +88,8 @@ export function renderIntranetNavbar(session) {
   if (restrictedCollegeOnly) {
     nav.append(buildNavLink('/college', 'College'));
   } else {
-    INTRANET_NAV_ITEMS.forEach((item) => {
+    const navItems = isCoreOnlyMode(session) ? CORE_NAV_ITEMS : INTRANET_NAV_ITEMS;
+    navItems.forEach((item) => {
       if (!canRenderNavItem(session, item)) return;
       const link = buildNavLink(item.href, item.label);
       nav.append(link);

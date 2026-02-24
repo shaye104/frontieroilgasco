@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-22T01:43:10.024Z
+Generated: 2026-02-24T19:52:05.358Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -43,6 +43,7 @@ JAVASCRIPT MODULES
 - assets/js/modules/activity-tracker.js | exports: No public exports
 - assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, cancelVoyage, createAdminRole, createCargoType, createConfigValue, createEmployee, createFormAdmin, createFormCategory, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteCargoType, deleteConfigValue, deleteFormAdmin, deleteFormCategory, deleteUserRank, deleteVoyageConfigValue, endVoyage, getAccessibleFormResponse, getAdminRoles, getAvailableForm, getConfig, getEmployee, getFinancesOverview, getFormAdmin, getFormResponse, getMyDetails, getRankPermissions, getSession, getVoyage, getVoyageManifest, getVoyageOverview, listAccessRequests, listAccessibleFormResponses, listActivityTracker, listAvailableForms, listCargoTypes, listCargoTypesAdmin, listEmployees, listFinanceAudit, listFinanceDebts, listFormCategories, listFormResponses, listFormsAdmin, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, processAccessRequest, reorderAdminRole, saveRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitFormResponse, updateAdminRole, updateCargoType, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus
 - assets/js/modules/admin-config-menu.js | exports: No public exports
+- assets/js/modules/app-mode.js | exports: isCoreAllowedPagePath, isCoreOnlyMode, normalizeAppMode
 - assets/js/modules/application-form.js | exports: initApplicationForm
 - assets/js/modules/cargo-admin.js | exports: No public exports
 - assets/js/modules/company-data.js | exports: companyProfile

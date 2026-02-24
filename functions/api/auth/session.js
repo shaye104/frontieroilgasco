@@ -1,6 +1,7 @@
 import { json, readSessionFromRequest } from './_lib/auth.js';
 import { createOrRefreshAccessRequest, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { buildPermissionContext, hasPermission } from '../_lib/permissions.js';
+import { normalizeAppMode } from '../_lib/app-mode.js';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -55,6 +56,8 @@ export async function onRequest(context) {
   const collegeDueAt = collegeProfile?.due_at || employee?.college_due_at || payload.collegeDueAt || null;
   const collegePassedAt = collegeProfile?.passed_at || employee?.college_passed_at || payload.collegePassedAt || null;
   const collegeRestricted = !payload.isAdmin && collegeTraineeStatus === 'TRAINEE_ACTIVE' && !collegePassedAt;
+  const appMode = normalizeAppMode(env.APP_MODE);
+  const isCoreMode = appMode === 'core';
 
   return json({
     loggedIn: true,
@@ -65,6 +68,8 @@ export async function onRequest(context) {
     appRoles: permissionContext?.appRoles || [],
     permissions: permissionContext?.permissions || [],
     isAdmin: Boolean(payload.isAdmin),
+    appMode,
+    isCoreMode,
     hasFormsAdmin: hasPermission({ permissions: permissionContext?.permissions || [] }, 'forms.manage'),
     hasEmployee: payload.isAdmin ? true : Boolean(employee),
     accessPending: payload.isAdmin ? false : !employee,
@@ -75,22 +80,24 @@ export async function onRequest(context) {
     collegePassedAt,
     collegeRestricted,
     canAccessCollege:
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.view') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:read') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.manage') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:manage_users') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:manage_courses') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:manage_library') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:manage_exams') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:mark_exams') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:audit_read') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.roles.manage') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.enrollments.manage') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.courses.manage') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.library.manage') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.exams.manage') ||
-      hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.exams.grade') ||
-      collegeTraineeStatus === 'TRAINEE_ACTIVE',
+      (!isCoreMode &&
+        (hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.view') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:read') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.manage') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:manage_users') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:manage_courses') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:manage_library') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:manage_exams') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:mark_exams') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:audit_read') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.roles.manage') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.enrollments.manage') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.courses.manage') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.library.manage') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.exams.manage') ||
+          hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.exams.grade') ||
+          collegeTraineeStatus === 'TRAINEE_ACTIVE')) ||
+      false,
     canManageCollege:
       hasPermission({ permissions: permissionContext?.permissions || [] }, 'college.manage') ||
       hasPermission({ permissions: permissionContext?.permissions || [] }, 'college:admin') ||

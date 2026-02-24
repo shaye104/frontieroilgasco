@@ -68,7 +68,7 @@ function renderEmployeeTable(target, employees, actorRankLevel, canOverride) {
           <td>${
             !canOverride && Number(emp.rank_level || 0) > Number(actorRankLevel || 0)
               ? '<span class="role-id">Restricted</span>'
-              : `<a class="btn btn-secondary" href="/employee-profile.html?employeeId=${emp.id}">Open</a>`
+              : `<a class="btn btn-secondary" href="/personnel/${emp.id}">Open</a>`
           }</td>
         </tr>
       `

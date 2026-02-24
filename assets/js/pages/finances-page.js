@@ -1,4 +1,4 @@
-import { hasPermission, performLogout, renderIntranetNavbar } from '../modules/nav.js?v=20260221h';
+import { hasPermission, performLogout, renderIntranetNavbar } from '../modules/nav.js?v=20260222a';
 
 function $(selector) {
   return document.querySelector(selector);

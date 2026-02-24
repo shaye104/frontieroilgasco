@@ -1,5 +1,6 @@
 import { showMessage } from './notice.js';
-import { hasPermission, renderIntranetNavbar } from './nav.js?v=20260221h';
+import { hasPermission, renderIntranetNavbar } from './nav.js?v=20260222a';
+import { isCoreAllowedPagePath, isCoreOnlyMode } from './app-mode.js?v=20260222a';
 
 async function fetchSession() {
   const response = await fetch('/api/auth/session', {
@@ -53,6 +54,12 @@ function ensureNavbarFallback(session) {
   nav.innerHTML = '';
   if (restrictedCollegeOnly) {
     nav.append(buildLink('/college', 'College'));
+  } else if (isCoreOnlyMode(session)) {
+    nav.append(buildLink('/my-details', 'My Details'));
+    nav.append(buildLink('/voyages/my', 'Voyages'));
+    if (hasPermission(session, 'finances.view')) nav.append(buildLink('/finances', 'Finances'));
+    if (hasPermission(session, 'employees.read') || hasPermission(session, 'admin.access')) nav.append(buildLink('/personnel', 'Personnel'));
+    if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
   } else {
     nav.append(buildLink('/my-details', 'My Details'));
     nav.append(buildLink('/voyages/my', 'Voyages'));
@@ -113,6 +120,11 @@ export async function initIntranetLayout(config) {
 
     if (!session.loggedIn) {
       window.location.href = '/login?auth=denied&reason=login_required';
+      return null;
+    }
+
+    if (isCoreOnlyMode(session) && !isCoreAllowedPagePath(window.location.pathname)) {
+      window.location.href = '/voyages/my';
       return null;
     }
 
