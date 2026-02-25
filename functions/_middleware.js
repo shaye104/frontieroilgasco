@@ -83,8 +83,6 @@ function isProtectedPath(pathname) {
     '/user-ranks.html',
     '/manage-employees',
     '/manage-employees.html',
-    '/personnel',
-    '/personnel.html',
     '/employee-profile',
     '/activity-tracker',
     '/activity-tracker.html',
@@ -94,11 +92,34 @@ function isProtectedPath(pathname) {
   if (protectedPaths.has(pathname)) return true;
   if (pathname.startsWith('/voyages/')) return true;
   if (pathname.startsWith('/admin/')) return true;
-  if (pathname.startsWith('/personnel/')) return true;
   if (pathname.startsWith('/forms/')) return true;
   if (pathname.startsWith('/finances/')) return true;
   if (pathname.startsWith('/college/')) return true;
   return false;
+}
+
+function isAdminLikePath(pathname) {
+  if (pathname.startsWith('/admin/')) return true;
+  const legacyAdminPaths = new Set([
+    '/admin',
+    '/admin-panel',
+    '/admin-panel.html',
+    '/admin-config',
+    '/admin-config.html',
+    '/cargo-admin',
+    '/cargo-admin.html',
+    '/roles',
+    '/roles.html',
+    '/user-ranks',
+    '/user-ranks.html',
+    '/activity-tracker',
+    '/activity-tracker.html',
+    '/manage-employees',
+    '/manage-employees.html',
+    '/employee-profile',
+    '/employee-profile.html'
+  ]);
+  return legacyAdminPaths.has(pathname);
 }
 
 export async function onRequest(context) {
@@ -179,7 +200,8 @@ export async function onRequest(context) {
     const isCoreBlockedRoute = coreOnlyMode && !corePublicAllowedPaths.has(pathname) && !isCoreAllowedPagePath(pathname);
     if (isCoreBlockedRoute) {
       if (isLoggedIn) {
-        return Response.redirect(new URL('/voyages/my', url.origin).toString(), 302);
+        const redirectPath = isAdminLikePath(pathname) ? '/admin/employees' : '/voyages/my';
+        return Response.redirect(new URL(redirectPath, url.origin).toString(), 302);
       }
       return new Response('Not found.', {
         status: 404,

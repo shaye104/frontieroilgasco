@@ -30,7 +30,6 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/finances-audit.html',
   '/finances-analytics',
   '/finances-analytics.html',
-  '/personnel',
   '/admin',
   '/admin-panel',
   '/admin-panel.html',
@@ -43,7 +42,6 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
 const CORE_ALLOWED_PAGE_PREFIXES = [
   '/voyages/',
   '/finances/',
-  '/personnel/',
   '/admin/employees/',
   '/admin/user-groups/',
   '/admin/user-ranks/',

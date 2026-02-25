@@ -48,7 +48,6 @@ const CORE_NAV_ITEMS = [
   { href: '/my-details', label: 'My Details' },
   { href: '/voyages/my', label: 'Voyages' },
   { href: '/finances', label: 'Finances', anyPermissions: ['finances.view'] },
-  { href: '/personnel', label: 'Personnel', anyPermissions: ['employees.read', 'admin.access'] },
   { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
 ];
 

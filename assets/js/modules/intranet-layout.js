@@ -58,7 +58,6 @@ function ensureNavbarFallback(session) {
     nav.append(buildLink('/my-details', 'My Details'));
     nav.append(buildLink('/voyages/my', 'Voyages'));
     if (hasPermission(session, 'finances.view')) nav.append(buildLink('/finances', 'Finances'));
-    if (hasPermission(session, 'employees.read') || hasPermission(session, 'admin.access')) nav.append(buildLink('/personnel', 'Personnel'));
     if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
   } else {
     nav.append(buildLink('/my-details', 'My Details'));
@@ -95,6 +94,23 @@ function ensureNavbarFallback(session) {
   nav.append(logoutButton);
 }
 
+function isAdminLikePath(pathname) {
+  const path = normalizePathname(pathname);
+  if (path.startsWith('/admin/')) return true;
+  const legacyAdminPages = new Set([
+    '/admin',
+    '/admin-panel',
+    '/admin-config',
+    '/cargo-admin',
+    '/roles',
+    '/user-ranks',
+    '/activity-tracker',
+    '/manage-employees',
+    '/employee-profile'
+  ]);
+  return legacyAdminPages.has(path);
+}
+
 export async function initIntranetLayout(config) {
   const isCollegePage = document.body.classList.contains('page-college');
   if (isCollegePage) {
@@ -124,7 +140,7 @@ export async function initIntranetLayout(config) {
     }
 
     if (isCoreOnlyMode(session) && !isCoreAllowedPagePath(window.location.pathname)) {
-      window.location.href = '/voyages/my';
+      window.location.href = isAdminLikePath(window.location.pathname) ? '/admin/employees' : '/voyages/my';
       return null;
     }
 
