@@ -25,30 +25,46 @@
     </header>
 
     <main class="section">
-      <div class="container intranet-layout">
-        <section class="panel">
-          <h1>Activity Tracker</h1>
+      <div class="container intranet-layout intranet-page-shell">
+        <section class="panel my-details-page-header">
+          <div>
+            <h1>Activity Tracker</h1>
+            <p class="my-details-subtitle">Global admin actions and employee event history.</p>
+          </div>
+          <div class="button-row">
+            <a class="btn btn-secondary" href="/admin/employees">Back to Employees</a>
+            <button id="activityExportCsvBtn" class="btn btn-primary" type="button">Export CSV</button>
+          </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="activityTrackerFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="hidden">
+        <section id="protectedContent" class="hidden admin-employees-stack">
           <article class="panel">
-            <div class="filter-row">
+            <div class="admin-employees-filter-main">
               <div>
-                <label for="activitySearch">Search Username/Serial</label>
-                <input id="activitySearch" type="text" />
+                <label for="activitySearch">Search</label>
+                <input id="activitySearch" type="text" placeholder="Summary, actor, target employee" />
               </div>
               <div>
-                <label for="activityLessThan">Less than X voyages</label>
-                <input id="activityLessThan" type="number" min="0" step="1" />
+                <label for="activityActionType">Action Type</label>
+                <input id="activityActionType" type="text" placeholder="EMPLOYEE_UPDATED" />
               </div>
               <div>
-                <label for="activityScope">Filter Scope</label>
-                <select id="activityScope">
-                  <option value="monthly">This Month</option>
-                  <option value="all_time">All Time</option>
-                </select>
+                <label for="activityActor">Actor</label>
+                <input id="activityActor" type="text" placeholder="Name or Discord ID" />
+              </div>
+              <div>
+                <label for="activityTargetEmployeeId">Target Employee ID</label>
+                <input id="activityTargetEmployeeId" type="number" min="1" step="1" />
+              </div>
+              <div>
+                <label for="activityDateFrom">Date From</label>
+                <input id="activityDateFrom" type="date" />
+              </div>
+              <div>
+                <label for="activityDateTo">Date To</label>
+                <input id="activityDateTo" type="date" />
               </div>
             </div>
           </article>
@@ -58,20 +74,28 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Employee</th>
-                    <th>Serial Number</th>
-                    <th>Rank</th>
-                    <th>Total Voyages</th>
-                    <th>Voyages This Month</th>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Actor</th>
+                    <th>Target Employee</th>
+                    <th>Summary</th>
                   </tr>
                 </thead>
                 <tbody id="activityTrackerBody"></tbody>
               </table>
             </div>
+            <div class="pagination-row">
+              <div class="button-row">
+                <button id="activityPrevPageBtn" class="btn btn-secondary" type="button">Previous</button>
+                <button id="activityNextPageBtn" class="btn btn-secondary" type="button">Next</button>
+              </div>
+              <span id="activityPaginationInfo" class="pagination-info">Page 1 of 1</span>
+            </div>
           </article>
         </section>
       </div>
     </main>
-    <script type="module" src="/assets/js/pages/activity-tracker-page.js?v=20260221d"></script>
+    <script type="module" src="/assets/js/pages/activity-tracker-page.js?v=20260225a"></script>
   </body>
 </html>

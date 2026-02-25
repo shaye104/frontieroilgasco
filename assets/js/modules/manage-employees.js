@@ -1,5 +1,4 @@
-import { createEmployee, getConfig, listEmployees } from './admin-api.js';
-import { hasPermission } from './nav.js';
+import { createEmployee, getConfig, getEmployeeDrawer, listEmployees } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
@@ -7,10 +6,36 @@ function text(value) {
   return s || 'N/A';
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function formatDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return 'N/A';
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleDateString();
+}
+
+function statusClass(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (normalized === 'active' || normalized === 'on duty') return 'is-active';
+  if (normalized === 'suspended' || normalized === 'inactive' || normalized === 'terminated' || normalized === 'on leave') return 'is-inactive';
+  return '';
+}
+
 function fillOptions(select, items, placeholder = 'All') {
   if (!select) return;
   const current = select.value;
-  select.innerHTML = `<option value="">${placeholder}</option>` + items.map((item) => `<option value="${item.value}">${item.value}</option>`).join('');
+  select.innerHTML =
+    `<option value="">${placeholder}</option>` +
+    items.map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.value)}</option>`).join('');
   if (current) select.value = current;
 }
 
@@ -28,111 +53,317 @@ function closeModal(id) {
   modal.setAttribute('aria-hidden', 'true');
 }
 
-function applyEmployeeFilters(employees, filters) {
-  const serialFilter = String(filters.serial || '').trim().toLowerCase();
-  const usernameFilter = String(filters.username || '').trim().toLowerCase();
+const DEFAULT_VISIBLE_COLUMNS = ['roblox_username', 'roblox_user_id', 'rank', 'grade', 'serial_number', 'employee_status', 'hire_date'];
+const COLUMN_LABELS = {
+  roblox_username: 'Roblox Username',
+  roblox_user_id: 'Roblox User ID',
+  rank: 'Rank',
+  grade: 'Grade',
+  serial_number: 'Serial',
+  employee_status: 'Status',
+  hire_date: 'Hire Date'
+};
 
-  return employees.filter((emp) => {
-    if (filters.rank && String(emp.rank || '') !== filters.rank) return false;
-    if (filters.grade && String(emp.grade || '') !== filters.grade) return false;
+function employeeRowSkeleton() {
+  return `<tr>
+    <td><span class="skeleton-line skeleton-w-55"></span></td>
+    <td><span class="skeleton-line skeleton-w-80"></span></td>
+    <td><span class="skeleton-line skeleton-w-70"></span></td>
+    <td><span class="skeleton-line skeleton-w-55"></span></td>
+    <td><span class="skeleton-line skeleton-w-45"></span></td>
+    <td><span class="skeleton-line skeleton-w-60"></span></td>
+    <td><span class="skeleton-line skeleton-w-55"></span></td>
+    <td><span class="skeleton-line skeleton-w-60"></span></td>
+  </tr>`;
+}
 
-    const serial = String(emp.serial_number || '').toLowerCase();
-    const username = String(emp.roblox_username || '').toLowerCase();
+function renderStatCards(stats) {
+  const totalNode = document.querySelector('#employeeStatTotal');
+  const activeNode = document.querySelector('#employeeStatActive');
+  const inactiveNode = document.querySelector('#employeeStatInactive');
+  const newHiresNode = document.querySelector('#employeeStatNewHires');
+  if (totalNode) totalNode.textContent = String(Number(stats?.totalEmployees || 0));
+  if (activeNode) activeNode.textContent = String(Number(stats?.activeEmployees || 0));
+  if (inactiveNode) inactiveNode.textContent = String(Number(stats?.inactiveEmployees || 0));
+  if (newHiresNode) newHiresNode.textContent = String(Number(stats?.newHires30d || 0));
+}
 
-    if (serialFilter && !serial.includes(serialFilter)) return false;
-    if (usernameFilter && !username.includes(usernameFilter)) return false;
-
-    return true;
+function renderSortHeaders(sortBy, sortDir) {
+  document.querySelectorAll('.table-sort-btn').forEach((btn) => {
+    const key = String(btn.getAttribute('data-sort') || '');
+    if (!key) return;
+    const active = key === sortBy;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-sort', active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none');
+    btn.textContent = `${btn.textContent.replace(/[↑↓]/g, '').trim()}${active ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}`;
   });
 }
 
-function renderEmployeeTable(target, employees, actorRankLevel, canOverride) {
+function renderTable(target, employees, visibleColumns) {
   if (!target) return;
   if (!employees.length) {
-    target.innerHTML = '<tr><td colspan="9">No employees found.</td></tr>';
+    target.innerHTML = '<tr><td colspan="8">No employees found for the selected filters.</td></tr>';
     return;
   }
 
   target.innerHTML = employees
     .map(
       (emp) => `
-        <tr>
-          <td>${emp.id}</td>
-          <td>${text(emp.roblox_username)}</td>
-          <td>${text(emp.roblox_user_id)}</td>
-          <td>${text(emp.rank)}</td>
-          <td>${text(emp.grade)}</td>
-          <td>${text(emp.serial_number)}</td>
-          <td>${text(emp.employee_status)}</td>
-          <td>${text(emp.hire_date)}</td>
-          <td>${
-            !canOverride && Number(emp.rank_level || 0) > Number(actorRankLevel || 0)
-              ? '<span class="role-id">Restricted</span>'
-              : `<a class="btn btn-secondary" href="/admin/employees/${emp.id}">Open</a>`
-          }</td>
-        </tr>
-      `
+      <tr class="admin-employee-row" data-employee-id="${Number(emp.id)}">
+        <td>${Number(emp.id)}</td>
+        <td data-col="roblox_username">${escapeHtml(text(emp.roblox_username))}</td>
+        <td data-col="roblox_user_id">${escapeHtml(text(emp.roblox_user_id))}</td>
+        <td data-col="rank">${escapeHtml(text(emp.rank))}</td>
+        <td data-col="grade">${escapeHtml(text(emp.grade))}</td>
+        <td data-col="serial_number">${escapeHtml(text(emp.serial_number))}</td>
+        <td data-col="employee_status"><span class="badge badge-status ${statusClass(emp.employee_status)}">${escapeHtml(
+          text(emp.employee_status)
+        )}</span></td>
+        <td data-col="hire_date">${escapeHtml(formatDate(emp.hire_date))}</td>
+      </tr>`
     )
     .join('');
 
-  target.querySelectorAll('a[href*="employeeId="]').forEach((link) => {
-    link.addEventListener('click', () => {
-      const href = link.getAttribute('href') || '';
-      const match = href.match(/employeeId=(\d+)/);
-      if (match?.[1]) window.sessionStorage.setItem('fog_last_employee_id', match[1]);
-    });
+  target.querySelectorAll('[data-col]').forEach((cell) => {
+    const col = String(cell.getAttribute('data-col') || '');
+    if (col && !visibleColumns.has(col)) cell.classList.add('hidden');
   });
 }
 
-export async function initManageEmployees(config, session) {
+function renderDrawerOverview(target, payload) {
+  if (!target) return;
+  const employee = payload?.employee || {};
+  target.innerHTML = `
+    <div class="profile-kv-grid">
+      <dt>Roblox Username</dt><dd>${escapeHtml(text(employee.roblox_username))}</dd>
+      <dt>Roblox User ID</dt><dd>${escapeHtml(text(employee.roblox_user_id))}</dd>
+      <dt>Rank</dt><dd>${escapeHtml(text(employee.rank))}</dd>
+      <dt>Grade</dt><dd>${escapeHtml(text(employee.grade))}</dd>
+      <dt>Serial</dt><dd>${escapeHtml(text(employee.serial_number))}</dd>
+      <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(
+    text(employee.employee_status)
+  )}</span></dd>
+      <dt>Hire Date</dt><dd>${escapeHtml(formatDate(employee.hire_date))}</dd>
+      <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at))}</dd>
+    </div>
+  `;
+}
+
+function renderDrawerVoyages(target, payload) {
+  if (!target) return;
+  const voyages = Array.isArray(payload?.recentVoyages) ? payload.recentVoyages : [];
+  if (!voyages.length) {
+    target.innerHTML = '<p class="finance-inline-caption">No recent voyages found.</p>';
+    return;
+  }
+  target.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Vessel</th><th>Route</th><th>Status</th><th>Ended</th><th class="align-right">Net Profit</th></tr>
+        </thead>
+        <tbody>
+          ${voyages
+            .map(
+              (voyage) => `<tr>
+              <td>${escapeHtml(text(voyage.vessel_name))} (${escapeHtml(text(voyage.vessel_callsign))})</td>
+              <td>${escapeHtml(text(voyage.departure_port))} → ${escapeHtml(text(voyage.destination_port))}</td>
+              <td>${escapeHtml(text(voyage.status))}</td>
+              <td>${escapeHtml(formatDate(voyage.ended_at || voyage.started_at))}</td>
+              <td class="align-right">ƒ ${Number(voyage.net_profit || 0).toLocaleString()}</td>
+            </tr>`
+            )
+            .join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderDrawerActivity(target, payload) {
+  if (!target) return;
+  const activity = Array.isArray(payload?.activity) ? payload.activity : [];
+  if (!activity.length) {
+    target.innerHTML = '<p class="finance-inline-caption">No activity records found for this employee.</p>';
+    return;
+  }
+  target.innerHTML = `
+    <ul class="role-list">
+      ${activity
+        .map(
+          (entry) => `
+        <li class="role-item">
+          <div>
+            <strong>${escapeHtml(text(entry.actionType))}</strong>
+            <p class="finance-inline-caption">${escapeHtml(text(entry.summary))}</p>
+            <p class="finance-inline-caption">${escapeHtml(formatDate(entry.createdAt))}</p>
+          </div>
+          <span class="role-id">${escapeHtml(text(entry.actorName || entry.actorDiscordId || 'System'))}</span>
+        </li>
+      `
+        )
+        .join('')}
+    </ul>`;
+}
+
+export async function initManageEmployees(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const tableBody = document.querySelector(config.employeeTableBodySelector);
 
+  const filterQuery = document.querySelector(config.filterQuerySelector);
   const filterRank = document.querySelector(config.filterRankSelector);
   const filterGrade = document.querySelector(config.filterGradeSelector);
-  const filterSerial = document.querySelector(config.filterSerialSelector);
-  const filterUsername = document.querySelector(config.filterUsernameSelector);
+  const filterStatus = document.querySelector(config.filterStatusSelector);
+  const filterHireDateFrom = document.querySelector(config.filterHireDateFromSelector);
+  const filterHireDateTo = document.querySelector(config.filterHireDateToSelector);
+  const clearFiltersBtn = document.querySelector(config.clearFiltersBtnSelector);
+  const toggleMoreFiltersBtn = document.querySelector(config.toggleMoreFiltersBtnSelector);
+  const moreFiltersPanel = document.querySelector(config.moreFiltersPanelSelector);
+
+  const paginationInfo = document.querySelector(config.paginationInfoSelector);
+  const prevPageBtn = document.querySelector(config.prevPageBtnSelector);
+  const nextPageBtn = document.querySelector(config.nextPageBtnSelector);
+
+  const columnVisibilityBtn = document.querySelector(config.columnVisibilityBtnSelector);
+  const columnVisibilityMenu = document.querySelector(config.columnVisibilityMenuSelector);
 
   const openCreateEmployeeBtn = document.querySelector(config.openCreateEmployeeBtnSelector);
   const createForm = document.querySelector(config.createFormSelector);
 
+  const drawer = document.querySelector(config.drawerSelector);
+  const drawerName = document.querySelector(config.drawerNameSelector);
+  const drawerMeta = document.querySelector(config.drawerMetaSelector);
+  const drawerOverview = document.querySelector(config.drawerOverviewSelector);
+  const drawerVoyages = document.querySelector(config.drawerVoyagesSelector);
+  const drawerActivity = document.querySelector(config.drawerActivitySelector);
+
   if (!feedback || !tableBody || !createForm) return;
 
-  let employees = [];
-  let actorRankLevel = 0;
-  const canOverride = hasPermission(session, 'admin.override');
+  const state = {
+    page: 1,
+    pageSize: 20,
+    totalPages: 1,
+    sortBy: 'id',
+    sortDir: 'desc',
+    visibleColumns: new Set(DEFAULT_VISIBLE_COLUMNS),
+    drawerTab: 'overview',
+    selectedEmployeeId: null
+  };
+  const drawerCache = new Map();
+  let debounceTimer = null;
 
-  const refreshTable = () => {
-    const filtered = applyEmployeeFilters(employees, {
+  function applyColumnVisibility() {
+    document.querySelectorAll('[data-col]').forEach((node) => {
+      const col = String(node.getAttribute('data-col') || '');
+      if (!col) return;
+      node.classList.toggle('hidden', !state.visibleColumns.has(col));
+    });
+  }
+
+  function renderColumnMenu() {
+    if (!columnVisibilityMenu) return;
+    columnVisibilityMenu.innerHTML = Object.entries(COLUMN_LABELS)
+      .map(
+        ([key, label]) => `
+        <label class="admin-column-option">
+          <input type="checkbox" data-column-key="${key}" ${state.visibleColumns.has(key) ? 'checked' : ''} />
+          <span>${escapeHtml(label)}</span>
+        </label>`
+      )
+      .join('');
+    columnVisibilityMenu.querySelectorAll('input[data-column-key]').forEach((checkbox) => {
+      checkbox.addEventListener('change', () => {
+        const key = String(checkbox.getAttribute('data-column-key') || '');
+        if (!key) return;
+        if (checkbox.checked) state.visibleColumns.add(key);
+        else state.visibleColumns.delete(key);
+        applyColumnVisibility();
+      });
+    });
+  }
+
+  function collectFilters() {
+    return {
+      q: filterQuery?.value || '',
       rank: filterRank?.value || '',
       grade: filterGrade?.value || '',
-      serial: filterSerial?.value || '',
-      username: filterUsername?.value || ''
-    });
+      status: filterStatus?.value || '',
+      hireDateFrom: filterHireDateFrom?.value || '',
+      hireDateTo: filterHireDateTo?.value || '',
+      page: state.page,
+      pageSize: state.pageSize,
+      sortBy: state.sortBy,
+      sortDir: state.sortDir
+    };
+  }
 
-    renderEmployeeTable(tableBody, filtered, actorRankLevel, canOverride);
-  };
+  async function loadEmployees() {
+    tableBody.innerHTML = Array.from({ length: 8 }, () => employeeRowSkeleton()).join('');
+    try {
+      const payload = await listEmployees(collectFilters());
+      renderStatCards(payload.overview || {});
+      renderTable(tableBody, payload.employees || [], state.visibleColumns);
+      const pagination = payload.pagination || {};
+      state.totalPages = Math.max(1, Number(pagination.totalPages || 1));
+      state.page = Math.min(state.totalPages, Math.max(1, Number(pagination.page || 1)));
+      if (paginationInfo) paginationInfo.textContent = `Page ${state.page} of ${state.totalPages} • ${Number(pagination.total || 0)} total`;
+      if (prevPageBtn) prevPageBtn.disabled = state.page <= 1;
+      if (nextPageBtn) nextPageBtn.disabled = state.page >= state.totalPages;
+      renderSortHeaders(state.sortBy, state.sortDir);
+      applyColumnVisibility();
+      clearMessage(feedback);
+    } catch (error) {
+      showMessage(feedback, error.message || 'Unable to load employees.', 'error');
+      tableBody.innerHTML = '<tr><td colspan="8">Unable to load employees.</td></tr>';
+    }
+  }
 
   async function refreshConfig() {
     const [statuses, ranks, grades] = await Promise.all([getConfig('statuses'), getConfig('ranks'), getConfig('grades')]);
-
     fillOptions(filterRank, ranks.items || [], 'All Ranks');
     fillOptions(filterGrade, grades.items || [], 'All Grades');
-
+    fillOptions(filterStatus, statuses.items || [], 'All Statuses');
     fillOptions(createForm.querySelector('[name="employeeStatus"]'), statuses.items || [], 'Select');
     fillOptions(createForm.querySelector('[name="rank"]'), ranks.items || [], 'Select');
     fillOptions(createForm.querySelector('[name="grade"]'), grades.items || [], 'Select');
   }
 
-  async function refreshEmployees() {
-    const payload = await listEmployees();
-    employees = payload.employees || [];
-    actorRankLevel = Number(payload.actorRankLevel || 0);
-    refreshTable();
+  function setDrawerTab(tab) {
+    state.drawerTab = tab;
+    drawer?.querySelectorAll('[data-drawer-tab]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.getAttribute('data-drawer-tab') === tab);
+    });
+    drawerOverview?.classList.toggle('hidden', tab !== 'overview');
+    drawerVoyages?.classList.toggle('hidden', tab !== 'voyages');
+    drawerActivity?.classList.toggle('hidden', tab !== 'activity');
+  }
+
+  async function openDrawer(employeeId) {
+    if (!drawer) return;
+    state.selectedEmployeeId = employeeId;
+    drawer.classList.remove('hidden');
+    drawer.setAttribute('aria-hidden', 'false');
+    setDrawerTab('overview');
+    if (drawerOverview) drawerOverview.innerHTML = '<span class="skeleton-line skeleton-w-70"></span><span class="skeleton-line skeleton-w-90"></span>';
+    if (drawerVoyages) drawerVoyages.innerHTML = '<div class="finance-chart-skeleton"></div>';
+    if (drawerActivity) drawerActivity.innerHTML = '<div class="finance-chart-skeleton"></div>';
+
+    try {
+      let payload = drawerCache.get(employeeId);
+      if (!payload) {
+        payload = await getEmployeeDrawer(employeeId, { activityPageSize: 20 });
+        drawerCache.set(employeeId, payload);
+      }
+      if (drawerName) drawerName.textContent = payload.employee?.roblox_username || `Employee #${employeeId}`;
+      if (drawerMeta) drawerMeta.textContent = `${payload.employee?.serial_number || 'No serial'} • ${payload.employee?.rank || 'Unset rank'}`;
+      renderDrawerOverview(drawerOverview, payload);
+      renderDrawerVoyages(drawerVoyages, payload);
+      renderDrawerActivity(drawerActivity, payload);
+    } catch (error) {
+      if (drawerOverview) drawerOverview.innerHTML = `<p class="finance-inline-caption">${escapeHtml(error.message || 'Unable to load employee details.')}</p>`;
+    }
   }
 
   openCreateEmployeeBtn?.addEventListener('click', () => openModal('createEmployeeModal'));
-
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
       const target = button.getAttribute('data-close-modal');
@@ -140,17 +371,91 @@ export async function initManageEmployees(config, session) {
     });
   });
 
-  [filterRank, filterGrade, filterSerial, filterUsername].forEach((input) => {
-    input?.addEventListener('input', refreshTable);
-    input?.addEventListener('change', refreshTable);
+  document.querySelectorAll('[data-close-drawer]').forEach((button) => {
+    button.addEventListener('click', () => {
+      drawer?.classList.add('hidden');
+      drawer?.setAttribute('aria-hidden', 'true');
+      state.selectedEmployeeId = null;
+    });
+  });
+
+  drawer?.querySelectorAll('[data-drawer-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => setDrawerTab(String(btn.getAttribute('data-drawer-tab') || 'overview')));
+  });
+
+  tableBody.addEventListener('click', (event) => {
+    const row = event.target instanceof HTMLElement ? event.target.closest('tr.admin-employee-row') : null;
+    if (!row) return;
+    const employeeId = Number(row.getAttribute('data-employee-id'));
+    if (Number.isInteger(employeeId) && employeeId > 0) openDrawer(employeeId);
+  });
+
+  const scheduleReload = () => {
+    if (debounceTimer) window.clearTimeout(debounceTimer);
+    debounceTimer = window.setTimeout(() => {
+      state.page = 1;
+      loadEmployees();
+    }, 220);
+  };
+
+  [filterQuery, filterRank, filterGrade, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {
+    input?.addEventListener('input', scheduleReload);
+    input?.addEventListener('change', scheduleReload);
+  });
+
+  clearFiltersBtn?.addEventListener('click', () => {
+    [filterQuery, filterRank, filterGrade, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {
+      if (!input) return;
+      input.value = '';
+    });
+    state.page = 1;
+    loadEmployees();
+  });
+
+  toggleMoreFiltersBtn?.addEventListener('click', () => {
+    moreFiltersPanel?.classList.toggle('hidden');
+  });
+
+  prevPageBtn?.addEventListener('click', () => {
+    if (state.page <= 1) return;
+    state.page -= 1;
+    loadEmployees();
+  });
+  nextPageBtn?.addEventListener('click', () => {
+    if (state.page >= state.totalPages) return;
+    state.page += 1;
+    loadEmployees();
+  });
+
+  document.querySelectorAll('.table-sort-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const sortKey = String(btn.getAttribute('data-sort') || '');
+      if (!sortKey) return;
+      if (state.sortBy === sortKey) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+      else {
+        state.sortBy = sortKey;
+        state.sortDir = sortKey === 'id' ? 'desc' : 'asc';
+      }
+      state.page = 1;
+      loadEmployees();
+    });
+  });
+
+  columnVisibilityBtn?.addEventListener('click', () => {
+    columnVisibilityMenu?.classList.toggle('hidden');
+  });
+  document.addEventListener('click', (event) => {
+    if (!columnVisibilityMenu || !columnVisibilityBtn) return;
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (columnVisibilityMenu.contains(target) || columnVisibilityBtn.contains(target)) return;
+    columnVisibilityMenu.classList.add('hidden');
   });
 
   createForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearMessage(feedback);
-
     const data = new FormData(createForm);
-
     try {
       await createEmployee({
         discordUserId: String(data.get('discordUserId') || '').trim(),
@@ -162,10 +467,10 @@ export async function initManageEmployees(config, session) {
         employeeStatus: String(data.get('employeeStatus') || '').trim(),
         hireDate: String(data.get('hireDate') || '').trim()
       });
-
       createForm.reset();
       closeModal('createEmployeeModal');
-      await refreshEmployees();
+      state.page = 1;
+      await loadEmployees();
       showMessage(feedback, 'Employee created.', 'success');
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to create employee.', 'error');
@@ -173,9 +478,9 @@ export async function initManageEmployees(config, session) {
   });
 
   try {
+    renderColumnMenu();
     await refreshConfig();
-    await refreshEmployees();
-    clearMessage(feedback);
+    await loadEmployees();
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to initialize Manage Employees.', 'error');
   }

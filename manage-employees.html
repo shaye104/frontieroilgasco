@@ -25,63 +25,136 @@
     </header>
 
     <main class="section">
-      <div class="container intranet-layout">
-        <section class="panel">
-          <div class="modal-header">
+      <div class="container intranet-layout intranet-page-shell">
+        <section class="panel my-details-page-header">
+          <div>
             <h1>Manage Employees</h1>
-            <button id="openCreateEmployeeBtn" class="btn btn-primary" type="button" aria-label="Add employee">+</button>
+            <p class="my-details-subtitle">Employee directory, status tracking, and operational activity.</p>
+          </div>
+          <div class="button-row">
+            <a class="btn btn-secondary" href="/admin/activity">Activity Tracker</a>
+            <button id="openCreateEmployeeBtn" class="btn btn-primary" type="button">New Employee</button>
           </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
           <div id="manageEmployeesFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="protectedContent" class="hidden">
+        <section id="protectedContent" class="hidden admin-employees-stack">
+          <article class="panel admin-employee-stats-grid" id="employeeStatsStrip">
+            <div class="admin-employee-stat-card skeleton-shell">
+              <p class="admin-employee-stat-label">Total Employees</p>
+              <p id="employeeStatTotal" class="admin-employee-stat-value"><span class="skeleton-line skeleton-w-55"></span></p>
+            </div>
+            <div class="admin-employee-stat-card skeleton-shell">
+              <p class="admin-employee-stat-label">Active</p>
+              <p id="employeeStatActive" class="admin-employee-stat-value"><span class="skeleton-line skeleton-w-45"></span></p>
+            </div>
+            <div class="admin-employee-stat-card skeleton-shell">
+              <p class="admin-employee-stat-label">Inactive / Suspended</p>
+              <p id="employeeStatInactive" class="admin-employee-stat-value"><span class="skeleton-line skeleton-w-45"></span></p>
+            </div>
+            <div class="admin-employee-stat-card skeleton-shell">
+              <p class="admin-employee-stat-label">New Hires (30d)</p>
+              <p id="employeeStatNewHires" class="admin-employee-stat-value"><span class="skeleton-line skeleton-w-45"></span></p>
+            </div>
+          </article>
+
           <article class="panel">
-            <h2>Filters</h2>
-            <div class="filter-row">
+            <div class="admin-employees-filter-bar">
+              <div class="admin-employees-filter-main">
+                <div>
+                  <label for="filterEmployeeQuery">Search</label>
+                  <input id="filterEmployeeQuery" type="text" placeholder="Username, Roblox ID, serial" />
+                </div>
+                <div>
+                  <label for="filterRank">Rank</label>
+                  <select id="filterRank"></select>
+                </div>
+                <div>
+                  <label for="filterGrade">Grade</label>
+                  <select id="filterGrade"></select>
+                </div>
+                <div>
+                  <label for="filterStatus">Status</label>
+                  <select id="filterStatus"></select>
+                </div>
+              </div>
+              <div class="admin-employees-filter-actions">
+                <button id="toggleMoreFiltersBtn" type="button" class="btn btn-secondary">More Filters</button>
+                <button id="clearEmployeeFiltersBtn" type="button" class="btn btn-secondary">Clear Filters</button>
+              </div>
+            </div>
+            <div id="moreEmployeeFilters" class="admin-employees-more-filters hidden">
               <div>
-                <label for="filterRank">Rank</label>
-                <select id="filterRank"></select>
+                <label for="filterHireDateFrom">Hire Date From</label>
+                <input id="filterHireDateFrom" type="date" />
               </div>
               <div>
-                <label for="filterGrade">Grade</label>
-                <select id="filterGrade"></select>
-              </div>
-              <div>
-                <label for="filterSerialNumber">Serial Number</label>
-                <input id="filterSerialNumber" type="text" />
-              </div>
-              <div>
-                <label for="filterRobloxUsername">Roblox Username</label>
-                <input id="filterRobloxUsername" type="text" />
+                <label for="filterHireDateTo">Hire Date To</label>
+                <input id="filterHireDateTo" type="date" />
               </div>
             </div>
           </article>
 
           <article class="panel">
-            <h2>Employees</h2>
+            <div class="admin-employees-table-header">
+              <h2>Employees</h2>
+              <div class="admin-employees-table-actions">
+                <button id="columnVisibilityBtn" type="button" class="btn btn-secondary">Columns</button>
+              </div>
+            </div>
+            <div id="columnVisibilityMenu" class="admin-column-menu hidden"></div>
             <div class="table-wrap">
-              <table class="data-table">
+              <table class="data-table admin-employees-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Roblox Username</th>
-                    <th>Roblox User ID</th>
-                    <th>Rank</th>
-                    <th>Grade</th>
-                    <th>Serial Number</th>
-                    <th>Status</th>
-                    <th>Hire Date</th>
-                    <th>Action</th>
+                    <th><button type="button" class="table-sort-btn" data-sort="id">ID</button></th>
+                    <th data-col="roblox_username"><button type="button" class="table-sort-btn" data-sort="roblox_username">Roblox Username</button></th>
+                    <th data-col="roblox_user_id"><button type="button" class="table-sort-btn" data-sort="roblox_user_id">Roblox User ID</button></th>
+                    <th data-col="rank"><button type="button" class="table-sort-btn" data-sort="rank">Rank</button></th>
+                    <th data-col="grade"><button type="button" class="table-sort-btn" data-sort="grade">Grade</button></th>
+                    <th data-col="serial_number"><button type="button" class="table-sort-btn" data-sort="serial_number">Serial</button></th>
+                    <th data-col="employee_status"><button type="button" class="table-sort-btn" data-sort="employee_status">Status</button></th>
+                    <th data-col="hire_date"><button type="button" class="table-sort-btn" data-sort="hire_date">Hire Date</button></th>
                   </tr>
                 </thead>
                 <tbody id="employeeTableBody"></tbody>
               </table>
             </div>
+            <div class="pagination-row">
+              <div class="button-row">
+                <button id="employeePrevPageBtn" class="btn btn-secondary" type="button">Previous</button>
+                <button id="employeeNextPageBtn" class="btn btn-secondary" type="button">Next</button>
+              </div>
+              <span id="employeePaginationInfo" class="pagination-info">Page 1 of 1</span>
+            </div>
           </article>
         </section>
       </div>
     </main>
+
+    <aside id="employeeDrawer" class="admin-employee-drawer hidden" aria-hidden="true">
+      <div class="admin-employee-drawer-backdrop" data-close-drawer></div>
+      <section class="admin-employee-drawer-panel">
+        <header class="admin-employee-drawer-header">
+          <div>
+            <h2 id="drawerEmployeeName">Employee Details</h2>
+            <p id="drawerEmployeeMeta" class="finance-inline-caption">Select an employee row.</p>
+          </div>
+          <button type="button" class="btn btn-secondary" data-close-drawer>Close</button>
+        </header>
+        <div class="finance-tabs">
+          <button type="button" class="finance-tab is-active" data-drawer-tab="overview">Overview</button>
+          <button type="button" class="finance-tab" data-drawer-tab="voyages">Voyages</button>
+          <button type="button" class="finance-tab" data-drawer-tab="activity">Activity</button>
+        </div>
+        <div class="admin-employee-drawer-body">
+          <section id="drawerTabOverview" class="admin-employee-drawer-tab"></section>
+          <section id="drawerTabVoyages" class="admin-employee-drawer-tab hidden"></section>
+          <section id="drawerTabActivity" class="admin-employee-drawer-tab hidden"></section>
+        </div>
+      </section>
+    </aside>
 
     <section id="createEmployeeModal" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal-card">
@@ -113,6 +186,6 @@
         </form>
       </div>
     </section>
-    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260221d"></script>
+    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260225a"></script>
   </body>
 </html>

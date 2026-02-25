@@ -142,8 +142,20 @@ export function listEmployees(options = {}) {
   const params = new URLSearchParams();
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
+  if (options.q) params.set('q', String(options.q));
+  if (options.rank) params.set('rank', String(options.rank));
+  if (options.grade) params.set('grade', String(options.grade));
+  if (options.status) params.set('status', String(options.status));
+  if (options.hireDateFrom) params.set('hireDateFrom', String(options.hireDateFrom));
+  if (options.hireDateTo) params.set('hireDateTo', String(options.hireDateTo));
+  if (options.sortBy) params.set('sortBy', String(options.sortBy));
+  if (options.sortDir) params.set('sortDir', String(options.sortDir));
   const suffix = params.toString() ? `?${params.toString()}` : '';
-  return requestJson(`/api/admin/employees${suffix}`, { method: 'GET', cacheTtlMs: 15000 });
+  return requestJson(`/api/admin/employees${suffix}`, {
+    method: 'GET',
+    cacheTtlMs: 15000,
+    cacheKey: `GET:/api/admin/employees:${suffix}`
+  });
 }
 
 export function createEmployee(employee) {
@@ -154,7 +166,18 @@ export function createEmployee(employee) {
 }
 
 export function getEmployee(employeeId) {
-  return requestJson(`/api/admin/employees/${employeeId}`, { method: 'GET' });
+  return requestJson(`/api/admin/employees/${employeeId}`, { method: 'GET', cacheTtlMs: 10000 });
+}
+
+export function getEmployeeDrawer(employeeId, options = {}) {
+  const params = new URLSearchParams();
+  if (options.activityPageSize) params.set('activityPageSize', String(options.activityPageSize));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/admin/employees/${employeeId}/drawer${suffix}`, {
+    method: 'GET',
+    cacheTtlMs: 10000,
+    cacheKey: `GET:/api/admin/employees/${employeeId}/drawer:${suffix}`
+  });
 }
 
 export function updateEmployee(employeeId, employee) {
@@ -343,12 +366,31 @@ export function listFinanceAudit(options = {}) {
 export function listActivityTracker(options = {}) {
   const params = new URLSearchParams();
   if (options.search) params.set('search', String(options.search));
-  if (options.lessThan !== undefined && options.lessThan !== null && options.lessThan !== '') params.set('lessThan', String(options.lessThan));
-  if (options.scope) params.set('scope', String(options.scope));
+  if (options.actionType) params.set('actionType', String(options.actionType));
+  if (options.actor) params.set('actor', String(options.actor));
+  if (options.targetEmployeeId) params.set('targetEmployeeId', String(options.targetEmployeeId));
+  if (options.dateFrom) params.set('dateFrom', String(options.dateFrom));
+  if (options.dateTo) params.set('dateTo', String(options.dateTo));
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
   const suffix = params.toString() ? `?${params.toString()}` : '';
-  return requestJson(`/api/admin/activity-tracker${suffix}`, { method: 'GET' });
+  return requestJson(`/api/admin/activity-tracker${suffix}`, {
+    method: 'GET',
+    cacheTtlMs: 10000,
+    cacheKey: `GET:/api/admin/activity-tracker:${suffix}`
+  });
+}
+
+export function getActivityTrackerCsvUrl(options = {}) {
+  const params = new URLSearchParams();
+  if (options.search) params.set('search', String(options.search));
+  if (options.actionType) params.set('actionType', String(options.actionType));
+  if (options.actor) params.set('actor', String(options.actor));
+  if (options.targetEmployeeId) params.set('targetEmployeeId', String(options.targetEmployeeId));
+  if (options.dateFrom) params.set('dateFrom', String(options.dateFrom));
+  if (options.dateTo) params.set('dateTo', String(options.dateTo));
+  params.set('format', 'csv');
+  return `/api/admin/activity-tracker?${params.toString()}`;
 }
 
 export function getRankPermissions() {
@@ -569,6 +611,9 @@ export function prefetchRouteData(pathname, session) {
     const isAdmin = Boolean(session?.permissions?.includes?.('admin.access') || session?.isAdmin);
     if (!isAdmin) return Promise.resolve(null);
     return prefetchJson('/api/admin/employees?page=1&pageSize=20');
+  }
+  if (route === '/admin/activity') {
+    return prefetchJson('/api/admin/activity-tracker?page=1&pageSize=25');
   }
   return Promise.resolve(null);
 }

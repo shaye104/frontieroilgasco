@@ -1,6 +1,6 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { requirePermission } from '../../_lib/admin-auth.js';
-import { canEditEmployeeByRank, getEmployeeByDiscordUserId } from '../../../_lib/db.js';
+import { canEditEmployeeByRank, getEmployeeByDiscordUserId, writeAdminActivityEvent } from '../../../_lib/db.js';
 import { hasPermission } from '../../../_lib/permissions.js';
 
 export async function onRequestPost(context) {
@@ -57,6 +57,20 @@ export async function onRequestPost(context) {
       actor
     )
     .run();
+  await writeAdminActivityEvent(env, {
+    actorEmployeeId: actorEmployee?.id || null,
+    actorName: actor,
+    actorDiscordUserId: session.userId,
+    actionType: 'DISCIPLINARY_RECORDED',
+    targetEmployeeId: employeeId,
+    summary: `Disciplinary record added for ${targetEmployee.roblox_username || `#${employeeId}`}.`,
+    metadata: {
+      recordType,
+      recordStatus,
+      recordDate,
+      reason
+    }
+  });
 
   const records = await env.DB.prepare(
     `SELECT id, record_type, record_date, record_status, notes, issued_by, created_at

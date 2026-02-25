@@ -26,7 +26,7 @@ initIntranetPageGuard({
   }
   if (rolesLink && hasPermission(session, 'user_groups.manage')) rolesLink.classList.remove('hidden');
   if (userRanksLink && hasPermission(session, 'user_ranks.manage')) userRanksLink.classList.remove('hidden');
-  if (!coreOnly && activityTrackerLink && hasPermission(session, 'activity_tracker.view')) activityTrackerLink.classList.remove('hidden');
+  if (activityTrackerLink && hasPermission(session, 'activity_tracker.view')) activityTrackerLink.classList.remove('hidden');
   if (financeAuditLink && hasPermission(session, 'finances.audit.view')) financeAuditLink.classList.remove('hidden');
 });
 

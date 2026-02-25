@@ -346,6 +346,19 @@ export async function ensureCoreSchema(env) {
       FOREIGN KEY(entry_id) REFERENCES finance_cash_ledger_entries(id),
       FOREIGN KEY(performed_by_employee_id) REFERENCES employees(id)
     )`,
+    `CREATE TABLE IF NOT EXISTS admin_activity_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      actor_employee_id INTEGER,
+      actor_name TEXT,
+      actor_discord_user_id TEXT,
+      action_type TEXT NOT NULL,
+      target_employee_id INTEGER,
+      summary TEXT NOT NULL,
+      metadata_json TEXT,
+      FOREIGN KEY(actor_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(target_employee_id) REFERENCES employees(id)
+    )`,
     // Indexes are created after legacy-column backfills to avoid migration failures on older databases.
     `CREATE TABLE IF NOT EXISTS form_categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -913,7 +926,17 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_college_exam_attempts_exam_user ON college_exam_attempts(exam_id, user_employee_id)`,
     `CREATE INDEX IF NOT EXISTS idx_college_profiles_status_due ON college_profiles(trainee_status, due_at)`,
     `CREATE INDEX IF NOT EXISTS idx_college_library_docs_archived_at ON college_library_documents(archived_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_modules_archived_at ON college_course_modules(archived_at)`
+    `CREATE INDEX IF NOT EXISTS idx_college_modules_archived_at ON college_course_modules(archived_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(employee_status)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_rank ON employees(rank)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_grade ON employees(grade)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_serial ON employees(serial_number)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_roblox_user_id ON employees(roblox_user_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_hire_date ON employees(hire_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_admin_activity_created_at ON admin_activity_events(created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_admin_activity_action_type ON admin_activity_events(action_type)`,
+    `CREATE INDEX IF NOT EXISTS idx_admin_activity_target_employee ON admin_activity_events(target_employee_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_admin_activity_actor_employee ON admin_activity_events(actor_employee_id)`
   ];
   for (const sql of optionalIndexStatements) {
     try {
@@ -1159,4 +1182,30 @@ export async function canEditEmployeeByRank(env, actorEmployee, targetEmployee) 
   const actorRankLevel = await getRankLevelByValue(env, actorEmployee?.rank);
   const targetRankLevel = await getRankLevelByValue(env, targetEmployee?.rank);
   return actorRankLevel >= targetRankLevel;
+}
+
+export async function writeAdminActivityEvent(env, event) {
+  await ensureCoreSchema(env);
+  const actionType = String(event?.actionType || '').trim();
+  const summary = String(event?.summary || '').trim();
+  if (!actionType || !summary) return null;
+  const actorEmployeeId = Number(event?.actorEmployeeId);
+  const targetEmployeeId = Number(event?.targetEmployeeId);
+  const metadataJson = event?.metadata ? JSON.stringify(event.metadata) : null;
+  const result = await env.DB.prepare(
+    `INSERT INTO admin_activity_events
+     (actor_employee_id, actor_name, actor_discord_user_id, action_type, target_employee_id, summary, metadata_json, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+  )
+    .bind(
+      Number.isInteger(actorEmployeeId) && actorEmployeeId > 0 ? actorEmployeeId : null,
+      String(event?.actorName || '').trim() || null,
+      normalizeDiscordUserId(event?.actorDiscordUserId || ''),
+      actionType,
+      Number.isInteger(targetEmployeeId) && targetEmployeeId > 0 ? targetEmployeeId : null,
+      summary,
+      metadataJson
+    )
+    .run();
+  return Number(result?.meta?.last_row_id || 0);
 }

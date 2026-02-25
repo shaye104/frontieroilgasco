@@ -1,6 +1,6 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { requirePermission } from '../../_lib/admin-auth.js';
-import { canEditEmployeeByRank, getEmployeeByDiscordUserId } from '../../../_lib/db.js';
+import { canEditEmployeeByRank, getEmployeeByDiscordUserId, writeAdminActivityEvent } from '../../../_lib/db.js';
 import { hasPermission } from '../../../_lib/permissions.js';
 
 export async function onRequestPost(context) {
@@ -36,6 +36,18 @@ export async function onRequestPost(context) {
   await env.DB.prepare('INSERT INTO employee_notes (employee_id, note, authored_by) VALUES (?, ?, ?)')
     .bind(employeeId, finalNote, session.displayName || session.userId)
     .run();
+  await writeAdminActivityEvent(env, {
+    actorEmployeeId: actorEmployee?.id || null,
+    actorName: session.displayName || session.userId,
+    actorDiscordUserId: session.userId,
+    actionType: 'EMPLOYEE_NOTE_ADDED',
+    targetEmployeeId: employeeId,
+    summary: `Added note for ${targetEmployee.roblox_username || `#${employeeId}`}.`,
+    metadata: {
+      category: category || null,
+      notePreview: note.slice(0, 220)
+    }
+  });
 
   const notes = await env.DB.prepare(
     `SELECT id, note, authored_by, created_at

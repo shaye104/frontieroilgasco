@@ -34,15 +34,21 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/admin-panel',
   '/admin-panel.html',
   '/admin/employees',
+  '/admin/activity',
+  '/admin/activity-tracker',
   '/admin/user-groups',
   '/admin/user-ranks',
-  '/admin/cargo'
+  '/admin/cargo',
+  '/activity-tracker',
+  '/activity-tracker.html'
 ]);
 
 const CORE_ALLOWED_PAGE_PREFIXES = [
   '/voyages/',
   '/finances/',
   '/admin/employees/',
+  '/admin/activity/',
+  '/admin/activity-tracker/',
   '/admin/user-groups/',
   '/admin/user-ranks/',
   '/admin/cargo/'

@@ -1,7 +1,7 @@
 import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
-import { canEditEmployeeByRank, getEmployeeByDiscordUserId } from '../../_lib/db.js';
+import { canEditEmployeeByRank, getEmployeeByDiscordUserId, writeAdminActivityEvent } from '../../_lib/db.js';
 
 function valueText(value) {
   const text = String(value ?? '').trim();
@@ -212,6 +212,17 @@ export async function onRequestPut(context) {
           .bind(employeeId, `[Activity] ${entry.actionType}: ${entry.details}`, actor)
       )
     );
+    await writeAdminActivityEvent(env, {
+      actorEmployeeId: actorEmployee?.id || null,
+      actorName: session.displayName || session.userId,
+      actorDiscordUserId: session.userId,
+      actionType: 'EMPLOYEE_UPDATED',
+      targetEmployeeId: employeeId,
+      summary: `Updated employee ${employee.roblox_username || `#${employeeId}`}.`,
+      metadata: {
+        changes
+      }
+    });
   }
 
   return json({ employee });

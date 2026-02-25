@@ -1,7 +1,7 @@
 import { json } from '../auth/_lib/auth.js';
 import { requirePermission } from './_lib/admin-auth.js';
 import { hasPermission } from '../_lib/permissions.js';
-import { getEmployeeByDiscordUserId, normalizeDiscordUserId } from '../_lib/db.js';
+import { getEmployeeByDiscordUserId, normalizeDiscordUserId, writeAdminActivityEvent } from '../_lib/db.js';
 
 function normalizeText(value) {
   return String(value || '').trim();
@@ -37,27 +37,90 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   const { errorResponse, session } = await requirePermission(context, ['employees.read']);
   if (errorResponse) return errorResponse;
+  const startedAt = Date.now();
 
   const url = new URL(request.url);
-  const hasPaging = url.searchParams.has('page') || url.searchParams.has('pageSize');
   const page = Math.max(1, Number(url.searchParams.get('page')) || 1);
-  const pageSize = Math.min(200, Math.max(1, Number(url.searchParams.get('pageSize')) || 100));
+  const pageSize = Math.min(100, Math.max(5, Number(url.searchParams.get('pageSize')) || 20));
   const offset = (page - 1) * pageSize;
+  const query = normalizeText(url.searchParams.get('q')).toLowerCase();
+  const rankFilter = normalizeText(url.searchParams.get('rank'));
+  const gradeFilter = normalizeText(url.searchParams.get('grade'));
+  const statusFilter = normalizeText(url.searchParams.get('status'));
+  const hireDateFrom = normalizeText(url.searchParams.get('hireDateFrom'));
+  const hireDateTo = normalizeText(url.searchParams.get('hireDateTo'));
+  const sortByInput = normalizeText(url.searchParams.get('sortBy')).toLowerCase();
+  const sortDirInput = normalizeText(url.searchParams.get('sortDir')).toLowerCase();
+  const sortDir = sortDirInput === 'asc' ? 'ASC' : 'DESC';
+  const sortableColumns = new Map([
+    ['id', 'e.id'],
+    ['roblox_username', 'LOWER(COALESCE(e.roblox_username, \'\'))'],
+    ['roblox_user_id', 'COALESCE(e.roblox_user_id, \'\')'],
+    ['rank', 'LOWER(COALESCE(e.rank, \'\'))'],
+    ['grade', 'LOWER(COALESCE(e.grade, \'\'))'],
+    ['serial_number', 'LOWER(COALESCE(e.serial_number, \'\'))'],
+    ['employee_status', 'LOWER(COALESCE(e.employee_status, \'\'))'],
+    ['hire_date', 'COALESCE(e.hire_date, \'\')'],
+    ['updated_at', 'COALESCE(e.updated_at, \'\')']
+  ]);
+  const sortBySql = sortableColumns.get(sortByInput) || 'e.id';
 
-  const sql = hasPaging
-    ? `SELECT e.id, e.discord_user_id, e.roblox_username, e.roblox_user_id, e.rank, e.grade, e.serial_number, e.employee_status, e.hire_date, e.updated_at,
-              COALESCE(cr.level, 0) AS rank_level
-       FROM employees e
-       LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))
-       ORDER BY e.id DESC
-       LIMIT ? OFFSET ?`
-    : `SELECT e.id, e.discord_user_id, e.roblox_username, e.roblox_user_id, e.rank, e.grade, e.serial_number, e.employee_status, e.hire_date, e.updated_at,
-              COALESCE(cr.level, 0) AS rank_level
-       FROM employees e
-       LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))
-       ORDER BY e.id DESC`;
-  const result = hasPaging ? await env.DB.prepare(sql).bind(pageSize, offset).all() : await env.DB.prepare(sql).all();
-  const totalRow = await env.DB.prepare(`SELECT COUNT(*) AS total FROM employees`).first();
+  const whereParts = [];
+  const whereBindings = [];
+  if (query) {
+    whereParts.push(
+      `(LOWER(COALESCE(e.roblox_username, '')) LIKE ? OR LOWER(COALESCE(e.roblox_user_id, '')) LIKE ? OR LOWER(COALESCE(e.serial_number, '')) LIKE ?)`
+    );
+    whereBindings.push(`%${query}%`, `%${query}%`, `%${query}%`);
+  }
+  if (rankFilter) {
+    whereParts.push(`LOWER(COALESCE(e.rank, '')) = LOWER(?)`);
+    whereBindings.push(rankFilter);
+  }
+  if (gradeFilter) {
+    whereParts.push(`LOWER(COALESCE(e.grade, '')) = LOWER(?)`);
+    whereBindings.push(gradeFilter);
+  }
+  if (statusFilter) {
+    whereParts.push(`LOWER(COALESCE(e.employee_status, '')) = LOWER(?)`);
+    whereBindings.push(statusFilter);
+  }
+  if (hireDateFrom) {
+    whereParts.push(`DATE(COALESCE(e.hire_date, '')) >= DATE(?)`);
+    whereBindings.push(hireDateFrom);
+  }
+  if (hireDateTo) {
+    whereParts.push(`DATE(COALESCE(e.hire_date, '')) <= DATE(?)`);
+    whereBindings.push(hireDateTo);
+  }
+  const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+
+  const dbStartedAt = Date.now();
+  const [result, totalRow, statsRow] = await Promise.all([
+    env.DB
+      .prepare(
+        `SELECT e.id, e.roblox_username, e.roblox_user_id, e.rank, e.grade, e.serial_number, e.employee_status, e.hire_date, e.updated_at,
+                COALESCE(cr.level, 0) AS rank_level
+         FROM employees e
+         LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))
+         ${whereSql}
+         ORDER BY ${sortBySql} ${sortDir}, e.id DESC
+         LIMIT ? OFFSET ?`
+      )
+      .bind(...whereBindings, pageSize, offset)
+      .all(),
+    env.DB.prepare(`SELECT COUNT(*) AS total FROM employees e ${whereSql}`).bind(...whereBindings).first(),
+    env.DB
+      .prepare(
+        `SELECT
+           COUNT(*) AS total_employees,
+           SUM(CASE WHEN LOWER(COALESCE(employee_status, '')) IN ('active', 'on duty') THEN 1 ELSE 0 END) AS active_employees,
+           SUM(CASE WHEN LOWER(COALESCE(employee_status, '')) IN ('suspended', 'inactive', 'terminated', 'on leave') THEN 1 ELSE 0 END) AS inactive_employees,
+           SUM(CASE WHEN DATE(COALESCE(hire_date, '')) >= DATE('now', '-30 day') THEN 1 ELSE 0 END) AS new_hires_30d
+         FROM employees`
+      )
+      .first()
+  ]);
   const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
   const actorRankLevelRow = actorEmployee?.rank
     ? await env.DB
@@ -66,14 +129,39 @@ export async function onRequestGet(context) {
         .first()
     : null;
   const actorRankLevel = Number(actorRankLevelRow?.level || 0);
+  const dbMs = Date.now() - dbStartedAt;
+  const total = Number(totalRow?.total || 0);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  console.log(
+    JSON.stringify({
+      type: 'perf.admin.employees',
+      page,
+      pageSize,
+      total,
+      dbMs,
+      totalMs: Date.now() - startedAt
+    })
+  );
 
   return json({
     employees: result?.results || [],
     actorRankLevel,
+    overview: {
+      totalEmployees: Number(statsRow?.total_employees || 0),
+      activeEmployees: Number(statsRow?.active_employees || 0),
+      inactiveEmployees: Number(statsRow?.inactive_employees || 0),
+      newHires30d: Number(statsRow?.new_hires_30d || 0)
+    },
     pagination: {
-      page: hasPaging ? page : 1,
-      pageSize: hasPaging ? pageSize : Number(totalRow?.total || 0),
-      total: Number(totalRow?.total || 0)
+      page,
+      pageSize,
+      total,
+      totalPages
+    },
+    timing: {
+      dbMs,
+      totalMs: Date.now() - startedAt
     }
   });
 }
@@ -114,6 +202,8 @@ export async function onRequestPost(context) {
     return json({ error: 'Roblox Username/User ID must be unique.' }, 400);
   }
 
+  const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
+
   try {
     const insert = await env.DB.prepare(
       `INSERT INTO employees
@@ -149,6 +239,19 @@ export async function onRequestPost(context) {
           )
         );
       }
+      await writeAdminActivityEvent(env, {
+        actorEmployeeId: actorEmployee?.id || null,
+        actorName: session.displayName || session.userId,
+        actorDiscordUserId: session.userId,
+        actionType: 'EMPLOYEE_CREATED',
+        targetEmployeeId: employeeId,
+        summary: `Created employee ${String(payload?.robloxUsername || '').trim() || `#${employeeId}`}.`,
+        metadata: {
+          rank: String(payload?.rank || '').trim(),
+          grade: String(payload?.grade || '').trim(),
+          status: String(payload?.employeeStatus || '').trim()
+        }
+      });
     }
   } catch (error) {
     return json({ error: error.message || 'Unable to create employee.' }, 500);
