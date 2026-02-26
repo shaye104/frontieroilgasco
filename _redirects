@@ -1,11 +1,9 @@
-/ /login.html 302
-/index.html /login.html 302
-/login /login.html 302
-/login/ /login.html 302
+/ /login 302
+/index.html /login 302
 /dashboard /my-details 302
 /dashboard/ /my-details 302
-/intranet /login.html 302
-/intranet/ /login.html 302
+/intranet /login 302
+/intranet/ /login 302
 /onboarding /onboarding.html 200
 /onboarding/ /onboarding.html 200
 /onboarding/status /onboarding.html 200
