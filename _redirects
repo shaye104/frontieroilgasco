@@ -1,5 +1,7 @@
 / /login 302
 /index.html /login 302
+/login /login.html 200
+/login/ /login.html 200
 /dashboard /my-details 302
 /dashboard/ /my-details 302
 /intranet /login 302
