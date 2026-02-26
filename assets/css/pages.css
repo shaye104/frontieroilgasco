@@ -92,20 +92,24 @@
 
 .page-login .login-page.section {
   min-height: calc(100vh - 64px);
-  padding-top: 28px;
+  padding-top: 32px;
   padding-bottom: 40px;
-  display: flex;
-  align-items: center;
+  display: grid;
+  place-items: center;
+}
+
+.login-cluster {
+  width: min(1120px, 100%);
+  margin: 0 auto;
 }
 
 .login-shell {
   width: 100%;
-  max-width: 1140px;
-  margin-inline: auto;
   display: grid;
-  grid-template-columns: 560px 520px;
+  grid-template-columns: minmax(420px, 560px) minmax(360px, 520px);
   gap: 24px;
   align-items: start;
+  justify-content: center;
 }
 
 .panel.login-card,
@@ -290,13 +294,19 @@
 
   .login-shell {
     grid-template-columns: 1fr;
-    max-width: 640px;
+    justify-content: stretch;
   }
 
   .page-login .login-page.section {
     display: block;
     min-height: auto;
     padding-top: 56px;
+  }
+}
+
+@media (max-width: 960px) {
+  .login-cluster {
+    max-width: 640px;
   }
 }
 

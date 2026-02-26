@@ -32,50 +32,49 @@
   </header>
 
   <main class="section login-page">
-    <div class="container login-shell">
-      <section id="authCheckingPanel" class="panel login-card">
-        <p class="eyebrow">EMPLOYEES</p>
-        <h1>Checking session...</h1>
-        <p class="lead">Please wait while we verify your access.</p>
-        <div class="skeleton-shell" aria-hidden="true">
-          <span class="skeleton-line skeleton-w-80"></span>
-          <span class="skeleton-line skeleton-w-60"></span>
-        </div>
-      </section>
+    <div class="container login-cluster">
+      <div class="login-shell">
+        <section id="authCheckingPanel" class="panel login-card">
+          <p class="eyebrow">EMPLOYEES</p>
+          <h1>Checking session...</h1>
+          <p class="lead">Please wait while we verify your access.</p>
+          <div class="skeleton-shell" aria-hidden="true">
+            <span class="skeleton-line skeleton-w-80"></span>
+            <span class="skeleton-line skeleton-w-60"></span>
+          </div>
+        </section>
 
-      <section id="authPanel" class="panel login-card hidden">
-        <p class="eyebrow">EMPLOYEES</p>
-        <h1>Login</h1>
-        <p class="lead">Continue with Discord to access the Frontier intranet.</p>
-        <div id="loginFeedback" class="feedback" role="status" aria-live="polite"></div>
+        <section id="authPanel" class="panel login-card hidden">
+          <p class="eyebrow">EMPLOYEES</p>
+          <h1>Login</h1>
+          <p class="lead">Continue with Discord to access the Frontier intranet.</p>
+          <div id="loginFeedback" class="feedback" role="status" aria-live="polite"></div>
 
-        <!-- Added btn-icon (placeholder) + spinner stays as-is for your JS -->
-        <button id="discordLoginBtn" class="btn btn-primary btn-block" type="button">
-          <span class="btn-icon" aria-hidden="true">◆</span>
-          <span data-login-spinner class="login-spinner hidden" aria-hidden="true"></span>
-          <span data-login-label>Continue with Discord</span>
-        </button>
+          <!-- Added btn-icon (placeholder) + spinner stays as-is for your JS -->
+          <button id="discordLoginBtn" class="btn btn-primary btn-block" type="button">
+            <span class="btn-icon" aria-hidden="true">◆</span>
+            <span data-login-spinner class="login-spinner hidden" aria-hidden="true"></span>
+            <span data-login-label>Continue with Discord</span>
+          </button>
 
-        <p class="login-helper">Access is granted via employee Discord roles.</p>
-      </section>
+          <p class="login-helper">Access is granted via employee Discord roles.</p>
+        </section>
 
-      <aside class="panel login-info-panel" aria-label="Access information">
-        <article class="login-info-item">
-          <h2>Access requirements</h2>
-          <p>You must have an approved Discord employee role.</p>
-        </article>
-        <article class="login-info-item">
-          <h2>Activation review</h2>
-          <p>New accounts must submit Roblox details. Access is granted after staff activation.</p>
-        </article>
-        <article class="login-info-item">
-          <h2>Security</h2>
-          <p>Discord OAuth is used for authentication. Activity may be audited.</p>
-        </article>
-      </aside>
-    </div>
-
-    <div class="container">
+        <aside class="panel login-info-panel" aria-label="Access information">
+          <article class="login-info-item">
+            <h2>Access requirements</h2>
+            <p>You must have an approved Discord employee role.</p>
+          </article>
+          <article class="login-info-item">
+            <h2>Activation review</h2>
+            <p>New accounts must submit Roblox details. Access is granted after staff activation.</p>
+          </article>
+          <article class="login-info-item">
+            <h2>Security</h2>
+            <p>Discord OAuth is used for authentication. Activity may be audited.</p>
+          </article>
+        </aside>
+      </div>
       <p class="login-footer-copy">© Frontier Oil &amp; Gas Company · Internal Use Only</p>
     </div>
   </main>
