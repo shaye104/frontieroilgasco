@@ -6,7 +6,12 @@ import {
   serializeCookie,
   verifyStateToken
 } from '../_lib/auth.js';
-import { createOrRefreshAccessRequest, upsertPendingEmployeeFromDiscordRoles } from '../../_lib/db.js';
+import {
+  createOrRefreshAccessRequest,
+  getLinkedRanksForDiscordRoles,
+  getMappedRoleIdsForRankIds,
+  upsertPendingEmployeeFromDiscordRoles
+} from '../../_lib/db.js';
 import { buildPermissionContext, hasPermission } from '../../_lib/permissions.js';
 
 function toAccessDeniedUrl(requestUrl, params = {}) {
@@ -145,8 +150,25 @@ export async function onRequest(context) {
     return redirect(toAccessDeniedUrl(request.url, { reason: 'session_build_failed' }));
   }
   const hasMappedRoles = (permissionContext?.appRoleIds || []).length > 0;
+  let matchedRanks = [];
+  let mappedRoleIdsFromRanks = [];
+  try {
+    matchedRanks = await getLinkedRanksForDiscordRoles(env, memberRoles);
+    mappedRoleIdsFromRanks = await getMappedRoleIdsForRankIds(
+      env,
+      matchedRanks.map((rank) => Number(rank.id))
+    );
+  } catch (error) {
+    console.error('rank_link_resolution_failed', error?.message || error);
+  }
+  const hasRankLinkMatch = matchedRanks.length > 0;
+  const isQualifiedForOnboarding = hasMappedRoles || hasRankLinkMatch;
+  const mappedRoleIds = [
+    ...new Set([...(permissionContext?.appRoleIds || []), ...mappedRoleIdsFromRanks].map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))
+  ];
+  const primaryRankValue = String(matchedRanks[0]?.value || '').trim();
 
-  if (!isAdminUser && !employee && hasMappedRoles) {
+  if (!isAdminUser && !employee && isQualifiedForOnboarding) {
     try {
       const avatarUrl = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256` : '';
       await upsertPendingEmployeeFromDiscordRoles(env, {
@@ -154,7 +176,8 @@ export async function onRequest(context) {
         discordDisplayName: displayName,
         discordUsername: user.username || '',
         discordAvatarUrl: avatarUrl,
-        mappedRoleIds: permissionContext.appRoleIds || []
+        mappedRoleIds,
+        rankValue: primaryRankValue
       });
       permissionContext = await buildPermissionContext(env, {
         discordUserId: user.id,
@@ -168,7 +191,7 @@ export async function onRequest(context) {
     }
   }
 
-  if (!isAdminUser && !employee && !hasMappedRoles) {
+  if (!isAdminUser && !employee && !isQualifiedForOnboarding) {
     return redirect(toNotPermittedUrl(request.url, { reason: 'not_employee' }));
   }
 

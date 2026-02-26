@@ -167,6 +167,24 @@ export async function ensureCoreSchema(env) {
       PRIMARY KEY(rank_value, permission_key),
       FOREIGN KEY(permission_key) REFERENCES app_permissions(permission_key)
     )`,
+    `CREATE TABLE IF NOT EXISTS rank_discord_role_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      rank_id INTEGER NOT NULL,
+      discord_role_id TEXT NOT NULL,
+      discord_role_name TEXT,
+      guild_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(rank_id, discord_role_id),
+      FOREIGN KEY(rank_id) REFERENCES config_ranks(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS rank_group_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      rank_id INTEGER NOT NULL,
+      group_key TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(rank_id, group_key),
+      FOREIGN KEY(rank_id) REFERENCES config_ranks(id)
+    )`,
     `CREATE TABLE IF NOT EXISTS cargo_types (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
@@ -444,6 +462,10 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_employees_serial ON employees(serial_number)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_roblox_user_id ON employees(roblox_user_id)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_hire_date ON employees(hire_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_rank_discord_links_rank_id ON rank_discord_role_links(rank_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_rank_discord_links_role_id ON rank_discord_role_links(discord_role_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_rank_group_links_rank_id ON rank_group_links(rank_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_rank_group_links_group_key ON rank_group_links(group_key)`,
     `CREATE INDEX IF NOT EXISTS idx_voyages_status ON voyages(status)`,
     `CREATE INDEX IF NOT EXISTS idx_voyages_ended_at ON voyages(ended_at)`,
     `CREATE INDEX IF NOT EXISTS idx_voyages_company_share_status ON voyages(company_share_status)`,
@@ -624,7 +646,7 @@ export async function createOrRefreshAccessRequest(env, { discordUserId, display
 
 export async function upsertPendingEmployeeFromDiscordRoles(
   env,
-  { discordUserId, discordDisplayName, discordUsername, discordAvatarUrl, mappedRoleIds = [] }
+  { discordUserId, discordDisplayName, discordUsername, discordAvatarUrl, mappedRoleIds = [], rankValue = '' }
 ) {
   await ensureCoreSchema(env);
   const normalized = normalizeDiscordUserId(discordUserId);
@@ -632,19 +654,21 @@ export async function upsertPendingEmployeeFromDiscordRoles(
 
   const existing = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(normalized).first();
   let wasCreated = false;
+  const normalizedRankValue = String(rankValue || '').trim();
   if (!existing) {
     wasCreated = true;
     await env.DB
       .prepare(
         `INSERT INTO employees
-         (discord_user_id, discord_display_name, discord_username, discord_avatar_url, activation_status, user_status, updated_at)
-         VALUES (?, ?, ?, ?, 'PENDING', 'APPLICANT_ACCEPTED', CURRENT_TIMESTAMP)`
+         (discord_user_id, discord_display_name, discord_username, discord_avatar_url, rank, activation_status, user_status, updated_at)
+         VALUES (?, ?, ?, ?, ?, 'PENDING', 'APPLICANT_ACCEPTED', CURRENT_TIMESTAMP)`
       )
       .bind(
         normalized,
         String(discordDisplayName || '').trim() || null,
         String(discordUsername || '').trim() || null,
-        String(discordAvatarUrl || '').trim() || null
+        String(discordAvatarUrl || '').trim() || null,
+        normalizedRankValue || null
       )
       .run();
   } else {
@@ -654,6 +678,10 @@ export async function upsertPendingEmployeeFromDiscordRoles(
          SET discord_display_name = COALESCE(?, discord_display_name),
              discord_username = COALESCE(?, discord_username),
              discord_avatar_url = COALESCE(?, discord_avatar_url),
+             rank = CASE
+               WHEN COALESCE(NULLIF(TRIM(rank), ''), '') = '' AND TRIM(COALESCE(?, '')) != '' THEN ?
+               ELSE rank
+             END,
              updated_at = CURRENT_TIMESTAMP
          WHERE discord_user_id = ?`
       )
@@ -661,6 +689,8 @@ export async function upsertPendingEmployeeFromDiscordRoles(
         String(discordDisplayName || '').trim() || null,
         String(discordUsername || '').trim() || null,
         String(discordAvatarUrl || '').trim() || null,
+        normalizedRankValue || null,
+        normalizedRankValue || null,
         normalized
       )
       .run();
@@ -705,6 +735,40 @@ export function normalizeDiscordUserId(value) {
   if (/^\d{6,30}$/.test(digits)) return digits;
 
   return raw;
+}
+
+export async function getLinkedRanksForDiscordRoles(env, discordRoleIds = []) {
+  await ensureCoreSchema(env);
+  const normalizedRoleIds = [...new Set((discordRoleIds || []).map((value) => String(value || '').trim()).filter(Boolean))];
+  if (!normalizedRoleIds.length) return [];
+
+  const placeholders = normalizedRoleIds.map(() => '?').join(', ');
+  const query = `
+    SELECT r.id, r.value, r.level, r.description, l.discord_role_id
+    FROM rank_discord_role_links l
+    JOIN config_ranks r ON r.id = l.rank_id
+    WHERE l.discord_role_id IN (${placeholders})
+    ORDER BY r.level DESC, r.value ASC, r.id ASC
+  `;
+  const rows = await env.DB.prepare(query).bind(...normalizedRoleIds).all();
+  return rows?.results || [];
+}
+
+export async function getMappedRoleIdsForRankIds(env, rankIds = []) {
+  await ensureCoreSchema(env);
+  const normalizedRankIds = [...new Set((rankIds || []).map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))];
+  if (!normalizedRankIds.length) return [];
+  const placeholders = normalizedRankIds.map(() => '?').join(', ');
+  const query = `
+    SELECT DISTINCT ar.id AS role_id
+    FROM rank_group_links rgl
+    JOIN app_roles ar
+      ON LOWER(ar.role_key) = LOWER(rgl.group_key)
+      OR LOWER(ar.name) = LOWER(rgl.group_key)
+    WHERE rgl.rank_id IN (${placeholders})
+  `;
+  const rows = await env.DB.prepare(query).bind(...normalizedRankIds).all();
+  return (rows?.results || []).map((row) => Number(row.role_id)).filter((value) => Number.isInteger(value) && value > 0);
 }
 
 export function calculateTenureDays(hireDateText) {

@@ -14,9 +14,30 @@ function normalizeLevel(value) {
 async function listRanks(env) {
   const result = await env.DB
     .prepare(
-      `SELECT id, value, level, description, updated_at, created_at
-       FROM config_ranks
-       ORDER BY level DESC, value ASC, id ASC`
+      `SELECT
+         r.id,
+         r.value,
+         r.level,
+         r.description,
+         r.updated_at,
+         r.created_at,
+         COALESCE((
+           SELECT COUNT(*)
+           FROM rank_discord_role_links drl
+           WHERE drl.rank_id = r.id
+         ), 0) AS discord_links_count,
+         COALESCE((
+           SELECT COUNT(*)
+           FROM rank_group_links rgl
+           WHERE rgl.rank_id = r.id
+         ), 0) AS group_links_count,
+         COALESCE((
+           SELECT COUNT(*)
+           FROM rank_permission_mappings rpm
+           WHERE LOWER(rpm.rank_value) = LOWER(r.value)
+         ), 0) AS permission_count
+       FROM config_ranks r
+       ORDER BY r.level DESC, r.value ASC, r.id ASC`
     )
     .all();
   return result?.results || [];
@@ -47,15 +68,16 @@ export async function onRequestPost(context) {
   const level = normalizeLevel(payload?.level);
   const description = normalizeText(payload?.description);
 
-  await env.DB
+  const createResult = await env.DB
     .prepare(
-      `INSERT OR IGNORE INTO config_ranks (value, level, description, updated_at)
+      `INSERT INTO config_ranks (value, level, description, updated_at)
        VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
     )
     .bind(value, level, description)
     .run();
+  const createdId = Number(createResult?.meta?.last_row_id || 0);
 
-  return json({ ranks: await listRanks(env) }, 201);
+  return json({ ranks: await listRanks(env), createdId: Number.isInteger(createdId) && createdId > 0 ? createdId : null }, 201);
 }
 
 export async function onRequestPut(context) {
@@ -102,6 +124,8 @@ export async function onRequestDelete(context) {
 
   await env.DB.batch([
     env.DB.prepare('DELETE FROM rank_permission_mappings WHERE LOWER(rank_value) = LOWER(?)').bind(normalizeText(row.value)),
+    env.DB.prepare('DELETE FROM rank_discord_role_links WHERE rank_id = ?').bind(id),
+    env.DB.prepare('DELETE FROM rank_group_links WHERE rank_id = ?').bind(id),
     env.DB.prepare('DELETE FROM config_ranks WHERE id = ?').bind(id)
   ]);
 

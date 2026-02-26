@@ -1,5 +1,5 @@
 import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260222b';
-import { initUserRanksAdmin } from '../modules/user-ranks-admin.js';
+import { initUserRanksAdmin } from '../modules/user-ranks-admin.js?v=20260226a';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({

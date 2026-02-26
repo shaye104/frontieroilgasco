@@ -391,6 +391,148 @@
   margin-bottom: 0;
 }
 
+.user-ranks-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.user-ranks-sidebar {
+  border: 1px solid #dce5f2;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.7rem;
+  min-width: 0;
+}
+
+.user-ranks-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.user-ranks-sidebar-head h2 {
+  margin: 0;
+}
+
+.user-ranks-sidebar input[type='search'] {
+  margin-bottom: 0.55rem;
+}
+
+.user-ranks-sidebar .role-list {
+  max-height: min(70vh, 760px);
+  overflow: auto;
+  margin-top: 0;
+}
+
+.user-rank-list-button {
+  width: 100%;
+  border: 1px solid #dce5f2;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 0.55rem 0.6rem;
+  text-align: left;
+  display: grid;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.user-rank-list-button.is-active {
+  border-color: #253475;
+  background: #eef3ff;
+}
+
+.user-rank-list-title {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.user-rank-list-meta {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.user-rank-list-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.user-rank-list-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #dce5f2;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+.user-ranks-editor {
+  border: 1px solid #dce5f2;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.8rem;
+  min-width: 0;
+}
+
+.user-ranks-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin-bottom: 0.65rem;
+}
+
+.user-ranks-editor-head h2 {
+  margin: 0;
+}
+
+.user-ranks-tabs {
+  margin-bottom: 0.65rem;
+}
+
+.user-ranks-tab-panel {
+  min-width: 0;
+}
+
+.user-ranks-links-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.user-ranks-links-grid h3 {
+  margin: 0 0 0.5rem;
+}
+
+.rank-link-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+
+.rank-link-table th,
+.rank-link-table td {
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  font-size: 0.86rem;
+}
+
+.rank-link-table th {
+  color: #475569;
+  font-weight: 700;
+  background: #f8fbff;
+}
+
+.rank-link-empty {
+  padding: 0.7rem;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
 .admin-employees-filter-actions {
   display: flex;
   gap: 0.5rem;
@@ -551,6 +693,10 @@
 
   .admin-employees-filter-actions {
     justify-content: flex-start;
+  }
+
+  .user-ranks-layout {
+    grid-template-columns: 1fr;
   }
 }
 

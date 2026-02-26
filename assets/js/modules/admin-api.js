@@ -315,6 +315,69 @@ export function listUserRanks() {
   return requestJson('/api/admin/user-ranks', { method: 'GET' });
 }
 
+export function getUserRankLinks(rankId) {
+  return requestJson(`/api/admin/user-ranks/${encodeURIComponent(String(rankId))}/links`, {
+    method: 'GET',
+    cacheTtlMs: 15000
+  });
+}
+
+export function addUserRankDiscordRoleLink(rankId, payload) {
+  return requestJson(`/api/admin/user-ranks/${encodeURIComponent(String(rankId))}/links`, {
+    method: 'POST',
+    body: JSON.stringify({
+      linkType: 'discord',
+      discordRoleId: payload?.discordRoleId,
+      discordRoleName: payload?.discordRoleName || '',
+      guildId: payload?.guildId || ''
+    })
+  });
+}
+
+export function removeUserRankDiscordRoleLink(rankId, discordRoleId) {
+  return requestJson(
+    `/api/admin/user-ranks/${encodeURIComponent(String(rankId))}/links?linkType=discord&discordRoleId=${encodeURIComponent(
+      String(discordRoleId || '')
+    )}`,
+    {
+      method: 'DELETE'
+    }
+  );
+}
+
+export function addUserRankGroupLink(rankId, groupKey) {
+  return requestJson(`/api/admin/user-ranks/${encodeURIComponent(String(rankId))}/links`, {
+    method: 'POST',
+    body: JSON.stringify({
+      linkType: 'group',
+      groupKey
+    })
+  });
+}
+
+export function removeUserRankGroupLink(rankId, groupKey) {
+  return requestJson(
+    `/api/admin/user-ranks/${encodeURIComponent(String(rankId))}/links?linkType=group&groupKey=${encodeURIComponent(String(groupKey || ''))}`,
+    {
+      method: 'DELETE'
+    }
+  );
+}
+
+export function getUserRankPermissions(rankId) {
+  return requestJson(`/api/admin/user-ranks/${encodeURIComponent(String(rankId))}/permissions`, {
+    method: 'GET',
+    cacheTtlMs: 15000
+  });
+}
+
+export function saveUserRankPermissions(rankId, permissionKeys) {
+  return requestJson(`/api/admin/user-ranks/${encodeURIComponent(String(rankId))}/permissions`, {
+    method: 'PUT',
+    body: JSON.stringify({ permissionKeys })
+  });
+}
+
 export function createUserRank(payload) {
   return requestJson('/api/admin/user-ranks', {
     method: 'POST',

@@ -37,6 +37,8 @@ DROP TABLE IF EXISTS config_vessel_names;
 DROP TABLE IF EXISTS config_voyage_ports;
 DROP TABLE IF EXISTS cargo_types;
 DROP TABLE IF EXISTS rank_permission_mappings;
+DROP TABLE IF EXISTS rank_group_links;
+DROP TABLE IF EXISTS rank_discord_role_links;
 DROP TABLE IF EXISTS auth_role_mappings;
 DROP TABLE IF EXISTS employee_role_assignments;
 DROP TABLE IF EXISTS app_role_permissions;
@@ -193,6 +195,26 @@ CREATE TABLE rank_permission_mappings (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY(rank_value, permission_key),
   FOREIGN KEY(permission_key) REFERENCES app_permissions(permission_key)
+);
+
+CREATE TABLE rank_discord_role_links (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  rank_id INTEGER NOT NULL,
+  discord_role_id TEXT NOT NULL,
+  discord_role_name TEXT,
+  guild_id TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(rank_id, discord_role_id),
+  FOREIGN KEY(rank_id) REFERENCES config_ranks(id)
+);
+
+CREATE TABLE rank_group_links (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  rank_id INTEGER NOT NULL,
+  group_key TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(rank_id, group_key),
+  FOREIGN KEY(rank_id) REFERENCES config_ranks(id)
 );
 
 CREATE TABLE cargo_types (
@@ -385,6 +407,10 @@ CREATE INDEX idx_employees_grade ON employees(grade);
 CREATE INDEX idx_employees_serial ON employees(serial_number);
 CREATE INDEX idx_employees_roblox_user_id ON employees(roblox_user_id);
 CREATE INDEX idx_employees_hire_date ON employees(hire_date);
+CREATE INDEX idx_rank_discord_links_rank_id ON rank_discord_role_links(rank_id);
+CREATE INDEX idx_rank_discord_links_role_id ON rank_discord_role_links(discord_role_id);
+CREATE INDEX idx_rank_group_links_rank_id ON rank_group_links(rank_id);
+CREATE INDEX idx_rank_group_links_group_key ON rank_group_links(group_key);
 CREATE INDEX idx_voyages_status ON voyages(status);
 CREATE INDEX idx_voyages_ended_at ON voyages(ended_at);
 CREATE INDEX idx_voyages_company_share_status ON voyages(company_share_status);
