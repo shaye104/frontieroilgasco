@@ -218,6 +218,10 @@ export async function onRequest(context) {
       return Response.redirect(new URL('/login', url.origin).toString(), 302);
     }
 
+    if (pathname === '/' || pathname === '/index.html') {
+      return Response.redirect(new URL('/login', url.origin).toString(), 302);
+    }
+
     const corePublicAllowedPaths = new Set(['/login', '/login.html']);
     const isCoreBlockedRoute = coreOnlyMode && !corePublicAllowedPaths.has(pathname) && !isCoreAllowedPagePath(pathname);
     if (isCoreBlockedRoute) {
@@ -229,10 +233,6 @@ export async function onRequest(context) {
         status: 404,
         headers: { 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8' }
       });
-    }
-
-    if (pathname === '/' || pathname === '/index.html') {
-      return Response.redirect(new URL('/login', url.origin).toString(), 302);
     }
 
     if (pathname === '/login' || pathname === '/login.html') {
