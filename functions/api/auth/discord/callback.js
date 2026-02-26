@@ -113,7 +113,8 @@ export async function onRequest(context) {
       isSuperAdmin: isAdminUser
     });
     employee = permissionContext.employee;
-  } catch {
+  } catch (error) {
+    console.error('session_build_failed', error?.message || error, error?.stack || '');
     return redirect(toAccessDeniedUrl(request.url, { reason: 'session_build_failed' }));
   }
 

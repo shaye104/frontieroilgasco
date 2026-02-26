@@ -330,6 +330,82 @@ export async function ensureCoreSchema(env) {
 
   await env.DB.batch(tables.map((sql) => env.DB.prepare(sql)));
 
+  // Backfill critical columns for legacy table variants so auth can always bootstrap.
+  const employeeColumns = await env.DB.prepare(`PRAGMA table_info(employees)`).all();
+  const employeeColumnNames = new Set((employeeColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!employeeColumnNames.has('user_status')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN user_status TEXT NOT NULL DEFAULT 'ACTIVE_STAFF'`).run();
+  }
+
+  const rankColumns = await env.DB.prepare(`PRAGMA table_info(config_ranks)`).all();
+  const rankColumnNames = new Set((rankColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!rankColumnNames.has('level')) {
+    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN level INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!rankColumnNames.has('description')) {
+    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN description TEXT`).run();
+  }
+  if (!rankColumnNames.has('updated_at')) {
+    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN updated_at TEXT`).run();
+  }
+
+  const permissionColumns = await env.DB.prepare(`PRAGMA table_info(app_permissions)`).all();
+  const permissionColumnNames = new Set((permissionColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!permissionColumnNames.has('permission_group')) {
+    await env.DB.prepare(`ALTER TABLE app_permissions ADD COLUMN permission_group TEXT`).run();
+  }
+  if (!permissionColumnNames.has('label')) {
+    await env.DB.prepare(`ALTER TABLE app_permissions ADD COLUMN label TEXT`).run();
+  }
+  if (!permissionColumnNames.has('description')) {
+    await env.DB.prepare(`ALTER TABLE app_permissions ADD COLUMN description TEXT`).run();
+  }
+
+  const roleColumns = await env.DB.prepare(`PRAGMA table_info(app_roles)`).all();
+  const roleColumnNames = new Set((roleColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!roleColumnNames.has('role_key')) {
+    await env.DB.prepare(`ALTER TABLE app_roles ADD COLUMN role_key TEXT`).run();
+  }
+  if (!roleColumnNames.has('sort_order')) {
+    await env.DB.prepare(`ALTER TABLE app_roles ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!roleColumnNames.has('is_system')) {
+    await env.DB.prepare(`ALTER TABLE app_roles ADD COLUMN is_system INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!roleColumnNames.has('updated_at')) {
+    await env.DB.prepare(`ALTER TABLE app_roles ADD COLUMN updated_at TEXT`).run();
+  }
+
+  const voyageColumns = await env.DB.prepare(`PRAGMA table_info(voyages)`).all();
+  const voyageColumnNames = new Set((voyageColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!voyageColumnNames.has('ship_status')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN ship_status TEXT NOT NULL DEFAULT 'IN_PORT'`).run();
+  }
+  if (!voyageColumnNames.has('settlement_lines_json')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN settlement_lines_json TEXT`).run();
+  }
+  if (!voyageColumnNames.has('company_share_status')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_status TEXT NOT NULL DEFAULT 'UNSETTLED'`).run();
+  }
+  if (!voyageColumnNames.has('company_share_settled_at')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_at TEXT`).run();
+  }
+  if (!voyageColumnNames.has('company_share_settled_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_by_employee_id INTEGER`).run();
+  }
+  if (!voyageColumnNames.has('company_share_settled_by_discord_id')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_by_discord_id TEXT`).run();
+  }
+  if (!voyageColumnNames.has('company_share_amount')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_amount REAL`).run();
+  }
+
+  const voyageLogColumns = await env.DB.prepare(`PRAGMA table_info(voyage_logs)`).all();
+  const voyageLogColumnNames = new Set((voyageLogColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!voyageLogColumnNames.has('log_type')) {
+    await env.DB.prepare(`ALTER TABLE voyage_logs ADD COLUMN log_type TEXT NOT NULL DEFAULT 'manual'`).run();
+  }
+
   const optionalIndexes = [
     `CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(employee_status)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_user_status ON employees(user_status)`,
