@@ -5,7 +5,6 @@ const REASON_MESSAGES = {
   missing_permission: 'Your account is authenticated, but it does not have permission to access this page.',
   missing_permissions: 'Your account is missing one or more permissions required for this page.',
   admin_required: 'This page requires admin access.',
-  forms_admin_required: 'This page requires forms admin access.',
   access_pending: 'Your employee access is still pending approval.',
   oauth_callback_invalid: 'OAuth callback was invalid or incomplete.',
   oauth_state_invalid: 'OAuth state validation failed. Please try signing in again.',

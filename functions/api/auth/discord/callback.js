@@ -27,15 +27,6 @@ function toMyDetailsUrl(requestUrl, params = {}) {
   return target.toString();
 }
 
-function toCollegeUrl(requestUrl, params = {}) {
-  const source = new URL(requestUrl);
-  const target = new URL('/college', `${source.protocol}//${source.host}`);
-  Object.entries(params).forEach(([k, v]) => {
-    if (v) target.searchParams.set(k, v);
-  });
-  return target.toString();
-}
-
 async function fetchDiscordUser(accessToken) {
   const response = await fetch('https://discord.com/api/users/@me', {
     headers: { Authorization: `Bearer ${accessToken}` }
@@ -114,7 +105,6 @@ export async function onRequest(context) {
   const displayName = user.global_name || user.username || 'Employee';
   let employee = null;
   let permissionContext = null;
-  let collegeProfile = null;
 
   try {
     permissionContext = await buildPermissionContext(env, {
@@ -123,47 +113,13 @@ export async function onRequest(context) {
       isSuperAdmin: isAdminUser
     });
     employee = permissionContext.employee;
-    if (employee?.id) {
-      collegeProfile = await env.DB
-        .prepare(
-          `SELECT trainee_status, start_at, due_at, passed_at
-           FROM college_profiles
-           WHERE user_employee_id = ?
-           LIMIT 1`
-        )
-        .bind(Number(employee.id))
-        .first();
-    }
   } catch {
     return redirect(toAccessDeniedUrl(request.url, { reason: 'session_build_failed' }));
   }
 
   const userStatus = String(employee?.user_status || '').trim().toUpperCase() || 'ACTIVE_STAFF';
-  const collegeTraineeStatus = String(
-    collegeProfile?.trainee_status ||
-      (employee?.college_passed_at ? 'TRAINEE_PASSED' : userStatus === 'APPLICANT_ACCEPTED' ? 'TRAINEE_ACTIVE' : 'NOT_A_TRAINEE')
-  )
-    .trim()
-    .toUpperCase();
-  const collegePassedAt = collegeProfile?.passed_at || employee?.college_passed_at || null;
-  const isCollegeRestricted = collegeTraineeStatus === 'TRAINEE_ACTIVE' && !collegePassedAt;
   const hasEntryPermission = hasPermission({ permissions: permissionContext.permissions }, 'my_details.view');
-  const hasCollegePermission =
-    hasPermission({ permissions: permissionContext.permissions }, 'college.view') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college:read') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college.manage') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college:manage_users') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college:manage_courses') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college:manage_library') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college:manage_exams') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college:mark_exams') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college.roles.manage') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college.enrollments.manage') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college.courses.manage') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college.library.manage') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college.exams.manage') ||
-    hasPermission({ permissions: permissionContext.permissions }, 'college.exams.grade');
-  if (!isAdminUser && !hasEntryPermission && !(isCollegeRestricted || hasCollegePermission)) {
+  if (!isAdminUser && !hasEntryPermission) {
     const clearStateCookie = serializeCookie('fog_oauth_state', '', {
       path: '/',
       httpOnly: true,
@@ -203,11 +159,6 @@ export async function onRequest(context) {
     hasEmployee: Boolean(employee),
     accessPending: !isAdminUser && !employee,
     userStatus,
-    collegeTraineeStatus,
-    collegeStartAt: collegeProfile?.start_at || employee?.college_start_at || null,
-    collegeDueAt: collegeProfile?.due_at || employee?.college_due_at || null,
-    collegePassedAt,
-    collegeRestricted: isCollegeRestricted,
     exp: Date.now() + 8 * 60 * 60 * 1000
   });
 
@@ -227,6 +178,5 @@ export async function onRequest(context) {
     maxAge: 8 * 60 * 60
   });
 
-  const shouldLandOnCollege = isCollegeRestricted || (!hasEntryPermission && hasCollegePermission);
-  return redirect(shouldLandOnCollege ? toCollegeUrl(request.url) : toMyDetailsUrl(request.url), [clearStateCookie, sessionCookie]);
+  return redirect(toMyDetailsUrl(request.url), [clearStateCookie, sessionCookie]);
 }

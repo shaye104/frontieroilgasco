@@ -3,14 +3,15 @@
 Static, modular website for Frontier Oil & Gas Company:
 
 - `index.html`: public landing page and company details
-- `application.html`: candidate application form
 - `intranet.html`: employee intranet login via Discord OAuth2 role-based access
-- `voyage-tracker.html`: intranet placeholder page (protected)
-- `my-fleet.html`: intranet placeholder page (protected)
+- `voyage-tracker.html`: voyage operations page
 - `my-details.html`: employee HR profile page
+- `finances.html`: finance dashboard
 - `admin-panel.html`: admin-only operations hub
 - `manage-employees.html`: admin employee management
-- `admin-config.html`: admin system configuration (statuses/types/ranks/grades)
+- `roles.html`: user groups and permissions configuration
+- `user-ranks.html`: user rank + rank permission mappings
+- `activity-tracker.html`: global website activity audit log
 
 ## Project Structure
 

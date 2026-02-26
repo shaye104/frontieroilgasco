@@ -10,14 +10,9 @@ async function initHomePage() {
     const response = await fetch('/api/auth/session', { method: 'GET', credentials: 'include' });
     const session = response.ok ? await response.json() : { loggedIn: false };
     if (session.loggedIn) {
-      const collegeRestricted =
-        !session.isAdmin &&
-        String(session.collegeTraineeStatus || session.userStatus || '').trim().toUpperCase() === 'TRAINEE_ACTIVE' &&
-        !session.collegePassedAt;
       const permissions = Array.isArray(session.permissions) ? session.permissions : [];
       const hasMyDetails = permissions.includes('my_details.view') || permissions.includes('admin.override') || Boolean(session.isAdmin);
-      const shouldLandOnCollege = collegeRestricted || (!hasMyDetails && Boolean(session.canAccessCollege));
-      window.location.href = shouldLandOnCollege ? '/college' : '/my-details';
+      window.location.href = hasMyDetails ? '/my-details' : '/voyages/my';
       return;
     }
   } catch {

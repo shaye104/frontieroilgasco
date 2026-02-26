@@ -723,17 +723,6 @@ textarea:focus {
   margin-top: var(--space-4);
 }
 
-.forms-category-stack {
-  display: grid;
-  gap: var(--space-4);
-  margin-top: var(--space-3);
-}
-
-.forms-category-section {
-  display: grid;
-  gap: var(--space-3);
-}
-
 .roles-layout {
   display: grid;
   grid-template-columns: minmax(280px, 0.34fr) minmax(0, 0.66fr);

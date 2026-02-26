@@ -201,119 +201,8 @@ export function addEmployeeNote(employeeId, entry) {
   });
 }
 
-export function listAccessRequests(status = '') {
-  const suffix = status ? `?status=${encodeURIComponent(status)}` : '';
-  return requestJson(`/api/admin/access-requests${suffix}`, { method: 'GET' });
-}
-
-export function processAccessRequest(payload) {
-  return requestJson('/api/admin/access-requests', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
-
 export function getMyDetails() {
   return requestJson('/api/me/details', { method: 'GET', cacheTtlMs: 30000 });
-}
-
-export function listAvailableForms() {
-  return requestJson('/api/forms', { method: 'GET', cacheTtlMs: 30000 });
-}
-
-export function getAvailableForm(formId) {
-  return requestJson(`/api/forms/${formId}`, { method: 'GET' });
-}
-
-export function submitFormResponse(formId, payload) {
-  return requestJson(`/api/forms/${formId}/responses`, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
-
-export function listFormCategories() {
-  return requestJson('/api/admin/forms/categories', { method: 'GET' });
-}
-
-export function createFormCategory(payload) {
-  return requestJson('/api/admin/forms/categories', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
-
-export function updateFormCategory(payload) {
-  return requestJson('/api/admin/forms/categories', {
-    method: 'PUT',
-    body: JSON.stringify(payload)
-  });
-}
-
-export function deleteFormCategory(categoryId) {
-  return requestJson(`/api/admin/forms/categories?id=${encodeURIComponent(String(categoryId))}`, {
-    method: 'DELETE'
-  });
-}
-
-export function listFormsAdmin() {
-  return requestJson('/api/admin/forms/forms', { method: 'GET' });
-}
-
-export function createFormAdmin(payload) {
-  return requestJson('/api/admin/forms/forms', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
-
-export function getFormAdmin(formId) {
-  return requestJson(`/api/admin/forms/forms/${formId}`, { method: 'GET' });
-}
-
-export function updateFormAdmin(formId, payload) {
-  return requestJson(`/api/admin/forms/forms/${formId}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload)
-  });
-}
-
-export function deleteFormAdmin(formId) {
-  return requestJson(`/api/admin/forms/forms/${formId}`, { method: 'DELETE' });
-}
-
-export function listFormResponses(filters = {}) {
-  const params = new URLSearchParams();
-  if (filters.formId) params.set('formId', String(filters.formId));
-  if (filters.categoryId) params.set('categoryId', String(filters.categoryId));
-  if (filters.employeeId) params.set('employeeId', String(filters.employeeId));
-  if (filters.dateFrom) params.set('dateFrom', String(filters.dateFrom));
-  if (filters.dateTo) params.set('dateTo', String(filters.dateTo));
-  if (filters.page) params.set('page', String(filters.page));
-  if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
-  const suffix = params.toString() ? `?${params.toString()}` : '';
-  return requestJson(`/api/admin/forms/responses${suffix}`, { method: 'GET' });
-}
-
-export function getFormResponse(responseId) {
-  return requestJson(`/api/admin/forms/responses/${responseId}`, { method: 'GET' });
-}
-
-export function listAccessibleFormResponses(filters = {}) {
-  const params = new URLSearchParams();
-  if (filters.formId) params.set('formId', String(filters.formId));
-  if (filters.categoryId) params.set('categoryId', String(filters.categoryId));
-  if (filters.employeeId) params.set('employeeId', String(filters.employeeId));
-  if (filters.dateFrom) params.set('dateFrom', String(filters.dateFrom));
-  if (filters.dateTo) params.set('dateTo', String(filters.dateTo));
-  if (filters.page) params.set('page', String(filters.page));
-  if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
-  const suffix = params.toString() ? `?${params.toString()}` : '';
-  return requestJson(`/api/forms/responses${suffix}`, { method: 'GET' });
-}
-
-export function getAccessibleFormResponse(responseId) {
-  return requestJson(`/api/forms/responses/${responseId}`, { method: 'GET' });
 }
 
 export function listVoyages(options = {}) {
@@ -547,30 +436,6 @@ export function deleteVoyageConfigValue(type, id) {
   });
 }
 
-export function listCargoTypesAdmin() {
-  return requestJson('/api/admin/cargo-types', { method: 'GET' });
-}
-
-export function createCargoType(payload) {
-  return requestJson('/api/admin/cargo-types', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
-
-export function updateCargoType(payload) {
-  return requestJson('/api/admin/cargo-types', {
-    method: 'PUT',
-    body: JSON.stringify(payload)
-  });
-}
-
-export function deleteCargoType(cargoTypeId) {
-  return requestJson(`/api/admin/cargo-types?id=${encodeURIComponent(String(cargoTypeId))}`, {
-    method: 'DELETE'
-  });
-}
-
 export function prefetchRouteData(pathname, session) {
   const route = String(pathname || '').replace(/\/+$/, '') || '/';
   if (route === '/my-details') {
@@ -579,24 +444,8 @@ export function prefetchRouteData(pathname, session) {
   if (route === '/voyages/my' || route === '/voyages') {
     return prefetchJson('/api/voyages?overview=1&includeSetup=1&archivedLimit=6');
   }
-  if (route === '/forms') {
-    return prefetchJson('/api/forms');
-  }
-  if (route === '/college') {
-    return Promise.all([prefetchJson('/api/college/me'), prefetchJson('/api/college/library')]).then(() => null);
-  }
-  if (route === '/college/admin') {
-    return Promise.all([
-      prefetchJson('/api/college/admin/overview'),
-      prefetchJson('/api/college/admin/people?page=1&pageSize=20'),
-      prefetchJson('/api/college/admin/enrollments?page=1&pageSize=20')
-    ]).then(() => null);
-  }
   if (route === '/finances') {
     return prefetchJson('/api/finances/overview?range=month&unsettledScope=all');
-  }
-  if (route === '/finances/analytics') {
-    return prefetchJson('/api/finances/overview?range=month&unsettledScope=range');
   }
   if (route === '/finances/debts') {
     return prefetchJson('/api/finances/debts');

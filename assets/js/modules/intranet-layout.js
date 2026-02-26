@@ -34,27 +34,16 @@ function ensureNavbarFallback(session) {
   const nav = document.querySelector('.site-nav');
   if (!nav) return;
 
-  const restrictedCollegeOnly =
-    !session?.isAdmin &&
-    String(session?.collegeTraineeStatus || session?.userStatus || '').trim().toUpperCase() === 'TRAINEE_ACTIVE' &&
-    !session?.collegePassedAt;
-
   const links = [...nav.querySelectorAll('a[href]')];
   const hasAnyLink = links.length > 0;
   const hasFinances = links.some(
     (link) => normalizePathname(new URL(link.getAttribute('href') || '', window.location.origin).pathname) === '/finances'
   );
-  const hasCollege = links.some(
-    (link) => normalizePathname(new URL(link.getAttribute('href') || '', window.location.origin).pathname) === '/college'
-  );
 
-  if (restrictedCollegeOnly && hasAnyLink && hasCollege && links.length === 1) return;
-  if (!restrictedCollegeOnly && hasAnyLink && hasFinances) return;
+  if (hasAnyLink && hasFinances) return;
 
   nav.innerHTML = '';
-  if (restrictedCollegeOnly) {
-    nav.append(buildLink('/college', 'College'));
-  } else if (isCoreOnlyMode(session)) {
+  if (isCoreOnlyMode(session)) {
     nav.append(buildLink('/my-details', 'My Details'));
     nav.append(buildLink('/voyages/my', 'Voyages'));
     if (hasPermission(session, 'finances.view')) nav.append(buildLink('/finances', 'Finances'));
@@ -62,9 +51,6 @@ function ensureNavbarFallback(session) {
   } else {
     nav.append(buildLink('/my-details', 'My Details'));
     nav.append(buildLink('/voyages/my', 'Voyages'));
-    nav.append(buildLink('/my-fleet', 'My Fleet'));
-    nav.append(buildLink('/forms', 'Forms'));
-    if (session?.canAccessCollege) nav.append(buildLink('/college', 'College'));
     if (hasPermission(session, 'finances.view')) nav.append(buildLink('/finances', 'Finances'));
     if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
   }
@@ -103,26 +89,18 @@ function isAdminLikePath(pathname) {
     '/activity-tracker',
     '/roles',
     '/user-ranks',
-    '/manage-employees',
-    '/employee-profile'
+    '/manage-employees'
   ]);
   return legacyAdminPages.has(path);
 }
 
 export async function initIntranetLayout(config) {
-  const isCollegePage = document.body.classList.contains('page-college');
-  if (isCollegePage) {
-    document.documentElement.classList.remove('intranet-no-scroll');
-    document.body.classList.remove('intranet-no-scroll');
-  } else {
-    document.documentElement.classList.add('intranet-no-scroll');
-    document.body.classList.add('intranet-no-scroll');
-  }
+  document.documentElement.classList.add('intranet-no-scroll');
+  document.body.classList.add('intranet-no-scroll');
 
   const feedback = document.querySelector(config.feedbackSelector);
   const protectedContent = document.querySelector(config.protectedContentSelector);
   const requireAdmin = Boolean(config.requireAdmin);
-  const requireFormsAdmin = Boolean(config.requireFormsAdmin);
   const requireEmployee = Boolean(config.requireEmployee);
   const requiredPermissions = Array.isArray(config.requiredPermissions) ? config.requiredPermissions : [];
   const requiredAnyPermissions = Array.isArray(config.requiredAnyPermissions) ? config.requiredAnyPermissions : [];
@@ -148,11 +126,6 @@ export async function initIntranetLayout(config) {
 
     if (requireAdmin && !hasPermission(session, 'admin.access')) {
       window.location.href = toAccessDeniedUrl('admin_required');
-      return null;
-    }
-
-    if (requireFormsAdmin && !hasPermission(session, 'forms.manage')) {
-      window.location.href = toAccessDeniedUrl('forms_admin_required');
       return null;
     }
 

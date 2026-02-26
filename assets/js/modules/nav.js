@@ -1,5 +1,3 @@
-import { isCoreOnlyMode } from './app-mode.js?v=20260222a';
-
 const PERMISSION_ALIASES = {
   'roles.read': 'user_groups.read',
   'roles.manage': 'user_groups.manage',
@@ -37,16 +35,6 @@ function buildNavLink(href, label) {
 const INTRANET_NAV_ITEMS = [
   { href: '/my-details', label: 'My Details' },
   { href: '/voyages/my', label: 'Voyages' },
-  { href: '/my-fleet', label: 'My Fleet' },
-  { href: '/forms', label: 'Forms' },
-  { href: '/college', label: 'College', sessionFlag: 'canAccessCollege' },
-  { href: '/finances', label: 'Finances', anyPermissions: ['finances.view'] },
-  { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
-];
-
-const CORE_NAV_ITEMS = [
-  { href: '/my-details', label: 'My Details' },
-  { href: '/voyages/my', label: 'Voyages' },
   { href: '/finances', label: 'Finances', anyPermissions: ['finances.view'] },
   { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
 ];
@@ -79,21 +67,12 @@ export function renderIntranetNavbar(session) {
   if (!nav) return;
 
   nav.innerHTML = '';
-  const restrictedCollegeOnly =
-    !session?.isAdmin &&
-    String(session?.collegeTraineeStatus || session?.userStatus || '').trim().toUpperCase() === 'TRAINEE_ACTIVE' &&
-    !session?.collegePassedAt;
-
-  if (restrictedCollegeOnly) {
-    nav.append(buildNavLink('/college', 'College'));
-  } else {
-    const navItems = isCoreOnlyMode(session) ? CORE_NAV_ITEMS : INTRANET_NAV_ITEMS;
-    navItems.forEach((item) => {
-      if (!canRenderNavItem(session, item)) return;
-      const link = buildNavLink(item.href, item.label);
-      nav.append(link);
-    });
-  }
+  const navItems = INTRANET_NAV_ITEMS;
+  navItems.forEach((item) => {
+    if (!canRenderNavItem(session, item)) return;
+    const link = buildNavLink(item.href, item.label);
+    nav.append(link);
+  });
 
   const spacer = document.createElement('span');
   spacer.className = 'nav-spacer';

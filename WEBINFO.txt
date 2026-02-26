@@ -1,38 +1,21 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-26T18:53:45.267Z
+Generated: 2026-02-26T19:12:55.852Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
-- Includes two key user paths: job application submission and employee intranet login.
+- Includes employee intranet login and operational dashboards.
 - Built for Cloudflare Pages with optional Pages Functions for authenticated intranet access.
 
 SITE STRUCTURE
 - access-denied.html | title: Frontier Oil & Gas Company | Access Denied | primary heading: You cannot access this page
 - activity-tracker.html | title: Frontier Oil & Gas Company | Activity Tracker | primary heading: Activity Tracker
-- admin-config.html | title: Frontier Oil & Gas Company | System Config | primary heading: System Config
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
-- application.html | title: Frontier Oil & Gas Company | Application | primary heading: Application Form
-- cargo-admin.html | title: Frontier Oil & Gas Company | Voyage Config | primary heading: Voyage Config
-- college.html | title: Frontier Oil & Gas Company | College | primary heading: College
-- employee-profile.html | title: Frontier Oil & Gas Company | Employee Profile | primary heading: Employee Profile
-- finances-analytics.html | title: Frontier Oil & Gas Company | Finance Analytics | primary heading: Finances
-- finances-audit.html | title: Frontier Oil & Gas Company | Finance Audit | primary heading: Finances
-- finances-debts.html | title: Frontier Oil & Gas Company | Finance Debts | primary heading: Finances
 - finances.html | title: Frontier Oil & Gas Company | Finances | primary heading: Finances
-- form-fill.html | title: Frontier Oil & Gas Company | Fill Form | primary heading: Form
-- forms-admin.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
-- forms-builder.html | title: Frontier Oil & Gas Company | Form Builder | primary heading: Form Builder
-- forms-categories.html | title: Frontier Oil & Gas Company | Manage Categories | primary heading: Manage Categories
-- forms-config.html | title: Frontier Oil & Gas Company | Forms Config | primary heading: Forms Config
-- forms-manage.html | title: Frontier Oil & Gas Company | Manage Forms | primary heading: Manage Forms
-- forms-responses.html | title: Frontier Oil & Gas Company | Form Responses | primary heading: Form Responses
-- forms.html | title: Frontier Oil & Gas Company | Forms | primary heading: Forms
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
 - intranet.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
 - login.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
-- my-fleet.html | title: Frontier Oil & Gas Company | My Fleet | primary heading: My Fleet
 - roles.html | title: Frontier Oil & Gas Company | User Groups | primary heading: User Groups
 - user-ranks.html | title: Frontier Oil & Gas Company | User Ranks | primary heading: User Ranks
 - voyage-archive.html | title: Frontier Oil & Gas Company | Archived Voyages | primary heading: Archived Voyages
@@ -41,21 +24,10 @@ SITE STRUCTURE
 
 JAVASCRIPT MODULES
 - assets/js/modules/activity-tracker.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, cancelVoyage, createAdminRole, createCargoType, createConfigValue, createEmployee, createFormAdmin, createFormCategory, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteCargoType, deleteConfigValue, deleteFormAdmin, deleteFormCategory, deleteUserRank, deleteVoyageConfigValue, endVoyage, getAccessibleFormResponse, getActivityTrackerCsvUrl, getAdminRoles, getAvailableForm, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getFormAdmin, getFormResponse, getMyDetails, getRankPermissions, getSession, getVoyage, getVoyageManifest, getVoyageOverview, listAccessRequests, listAccessibleFormResponses, listActivityTracker, listAvailableForms, listCargoTypes, listCargoTypesAdmin, listEmployees, listFinanceAudit, listFinanceDebts, listFormCategories, listFormResponses, listFormsAdmin, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, processAccessRequest, reorderAdminRole, saveRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitFormResponse, updateAdminRole, updateCargoType, updateConfigValue, updateEmployee, updateFormAdmin, updateFormCategory, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus
-- assets/js/modules/admin-config-menu.js | exports: No public exports
+- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMyDetails, getRankPermissions, getSession, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, reorderAdminRole, saveRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus
 - assets/js/modules/app-mode.js | exports: isCoreAllowedPagePath, isCoreOnlyMode, normalizeAppMode
-- assets/js/modules/application-form.js | exports: initApplicationForm
-- assets/js/modules/cargo-admin.js | exports: No public exports
 - assets/js/modules/company-data.js | exports: companyProfile
-- assets/js/modules/employee-profile.js | exports: No public exports
 - assets/js/modules/finances.js | exports: No public exports
-- assets/js/modules/form-fill.js | exports: No public exports
-- assets/js/modules/forms-admin.js | exports: No public exports
-- assets/js/modules/forms-builder-admin.js | exports: No public exports
-- assets/js/modules/forms-categories-admin.js | exports: No public exports
-- assets/js/modules/forms-list.js | exports: No public exports
-- assets/js/modules/forms-manage-admin.js | exports: No public exports
-- assets/js/modules/forms-responses.js | exports: No public exports
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
 - assets/js/modules/intranet-layout.js | exports: No public exports
 - assets/js/modules/intranet-page-guard.js | exports: No public exports
@@ -72,29 +44,12 @@ JAVASCRIPT MODULES
 - assets/js/modules/year.js | exports: initializeYear
 - assets/js/pages/access-denied-page.js | exports: No public exports
 - assets/js/pages/activity-tracker-page.js | exports: No public exports
-- assets/js/pages/admin-config-page.js | exports: No public exports
 - assets/js/pages/admin-panel-page.js | exports: No public exports
-- assets/js/pages/application-page.js | exports: No public exports
-- assets/js/pages/cargo-admin-page.js | exports: No public exports
-- assets/js/pages/college-page.js | exports: No public exports
-- assets/js/pages/employee-profile-page.js | exports: No public exports
-- assets/js/pages/finances-analytics-page.js | exports: No public exports
-- assets/js/pages/finances-audit-page.js | exports: No public exports
-- assets/js/pages/finances-debts-page.js | exports: No public exports
 - assets/js/pages/finances-page.js | exports: No public exports
-- assets/js/pages/form-fill-page.js | exports: No public exports
-- assets/js/pages/forms-admin-page.js | exports: No public exports
-- assets/js/pages/forms-builder-page.js | exports: No public exports
-- assets/js/pages/forms-categories-page.js | exports: No public exports
-- assets/js/pages/forms-config-page.js | exports: No public exports
-- assets/js/pages/forms-manage-page.js | exports: No public exports
-- assets/js/pages/forms-page.js | exports: No public exports
-- assets/js/pages/forms-responses-page.js | exports: No public exports
 - assets/js/pages/home.js | exports: No public exports
 - assets/js/pages/intranet-page.js | exports: No public exports
 - assets/js/pages/manage-employees-page.js | exports: No public exports
 - assets/js/pages/my-details-page.js | exports: No public exports
-- assets/js/pages/my-fleet-page.js | exports: No public exports
 - assets/js/pages/roles-page.js | exports: No public exports
 - assets/js/pages/user-ranks-page.js | exports: No public exports
 - assets/js/pages/voyage-archive-page.js | exports: No public exports
@@ -109,12 +64,11 @@ CSS MODULES
 
 DATA FLOW
 - Landing page imports company data from `assets/js/modules/company-data.js` and renders cards/stats via `renderHomeContent`.
-- Application form validates client-side inputs, displays status messages, and stores submissions in localStorage as `frontierApplications`.
 - Intranet login starts Discord OAuth2 at `/api/auth/discord/start` and enforces access by Discord role membership.
 - Cloudflare Pages Functions in `functions/api/auth/*` exchange Discord auth code, verify guild roles, and issue a signed session cookie with admin flag.
 - Users with valid auth role but no employee record are not auto-added; an access request is created in D1 for admin approval.
 - Admin actions for employee CRUD, disciplinaries, notes, access requests, and system config are handled by `functions/api/admin/*`.
-- Protected intranet subpages (`voyage-tracker.html`, `my-fleet.html`, `my-details.html`) verify active session via `/api/auth/session` before rendering content.
+- Protected intranet pages verify active session via `/api/auth/session` before rendering content.
 - Shared feedback UI is handled in `assets/js/modules/notice.js`.
 
 MAINTENANCE WORKFLOW

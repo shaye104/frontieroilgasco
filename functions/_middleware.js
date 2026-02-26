@@ -1,5 +1,4 @@
 import { readSessionFromRequest } from './api/auth/_lib/auth.js';
-import { getEmployeeByDiscordUserId } from './api/_lib/db.js';
 import { isCoreAllowedApiPath, isCoreAllowedPagePath, isCoreOnly } from './api/_lib/app-mode.js';
 
 function normalizePath(pathname) {
@@ -14,28 +13,10 @@ function toLoginRedirect(url) {
   return target.toString();
 }
 
-function toCollegeRedirect(url) {
-  return new URL('/college', url.origin).toString();
-}
-
-function isCollegePath(pathname) {
-  return pathname === '/college' || pathname === '/college.html' || pathname.startsWith('/college/');
-}
-
-function isAllowedRestrictedApiPath(pathname) {
-  if (!pathname.startsWith('/api/')) return false;
-  if (pathname.startsWith('/api/college')) return true;
-  if (pathname === '/api/auth/session' || pathname === '/api/auth/logout') return true;
-  if (pathname.startsWith('/api/auth/discord/')) return true;
-  return false;
-}
-
 function isProtectedPath(pathname) {
   const protectedPaths = new Set([
     '/my-details',
     '/my-details.html',
-    '/my-fleet',
-    '/my-fleet.html',
     '/voyages',
     '/voyages/my',
     '/voyage-tracker',
@@ -44,57 +25,25 @@ function isProtectedPath(pathname) {
     '/voyage-archive.html',
     '/voyage-details',
     '/voyage-details.html',
-    '/forms',
-    '/forms.html',
-    '/forms-config',
     '/finances',
     '/finances.html',
-    '/finances-analytics',
-    '/finances-analytics.html',
-    '/finances-debts',
-    '/finances-debts.html',
-    '/finances-audit',
-    '/finances-audit.html',
-    '/college',
-    '/college.html',
-    '/form-fill',
-    '/form-fill.html',
-    '/forms-categories',
-    '/forms-config.html',
-    '/forms-manage',
-    '/forms-categories.html',
-    '/forms-builder',
-    '/forms-manage.html',
-    '/forms-admin',
-    '/forms-builder.html',
-    '/forms-responses',
-    '/forms-admin.html',
-    '/forms-responses.html',
     '/admin',
     '/admin-panel',
     '/admin-panel.html',
-    '/admin-config',
-    '/admin-config.html',
-    '/cargo-admin',
-    '/cargo-admin.html',
     '/roles',
     '/roles.html',
     '/user-ranks',
     '/user-ranks.html',
     '/manage-employees',
     '/manage-employees.html',
-    '/employee-profile',
     '/activity-tracker',
-    '/activity-tracker.html',
-    '/employee-profile.html'
+    '/activity-tracker.html'
   ]);
 
   if (protectedPaths.has(pathname)) return true;
   if (pathname.startsWith('/voyages/')) return true;
   if (pathname.startsWith('/admin/')) return true;
-  if (pathname.startsWith('/forms/')) return true;
   if (pathname.startsWith('/finances/')) return true;
-  if (pathname.startsWith('/college/')) return true;
   return false;
 }
 
@@ -111,9 +60,7 @@ function isAdminLikePath(pathname) {
     '/user-ranks',
     '/user-ranks.html',
     '/manage-employees',
-    '/manage-employees.html',
-    '/employee-profile',
-    '/employee-profile.html'
+    '/manage-employees.html'
   ]);
   return legacyAdminPaths.has(pathname);
 }
@@ -178,36 +125,6 @@ export async function onRequest(context) {
     const isLoggedIn = Boolean(session);
     const isApiPath = pathname.startsWith('/api/');
     const requestMethod = String(context.request.method || 'GET').toUpperCase();
-    const sessionPermissions = Array.isArray(session?.permissions) ? session.permissions : [];
-    const hasEntryPermission =
-      Boolean(session?.isAdmin) ||
-      sessionPermissions.includes('my_details.view') ||
-      sessionPermissions.includes('admin.override') ||
-      sessionPermissions.includes('super.admin');
-    const hasCollegePermission =
-      sessionPermissions.includes('college.view') ||
-      sessionPermissions.includes('college.manage') ||
-      sessionPermissions.includes('college.roles.manage') ||
-      sessionPermissions.includes('college.enrollments.manage') ||
-      sessionPermissions.includes('college.courses.manage') ||
-      sessionPermissions.includes('college.library.manage') ||
-      sessionPermissions.includes('college.exams.manage') ||
-      sessionPermissions.includes('college.exams.grade') ||
-      sessionPermissions.includes('admin.override') ||
-      sessionPermissions.includes('super.admin');
-    let collegeRestricted = false;
-
-    if (isLoggedIn && !session.isAdmin && session.userId) {
-      try {
-        const employee = await getEmployeeByDiscordUserId(context.env, session.userId);
-        const userStatus = String(employee?.user_status || session.userStatus || '').trim().toUpperCase();
-        collegeRestricted = userStatus === 'APPLICANT_ACCEPTED' && !(employee?.college_passed_at || session.collegePassedAt);
-      } catch {
-        collegeRestricted = String(session.userStatus || '').trim().toUpperCase() === 'APPLICANT_ACCEPTED' && !session.collegePassedAt;
-      }
-    }
-    const shouldLandOnCollege = collegeRestricted || (isLoggedIn && !hasEntryPermission && hasCollegePermission);
-
     if (isApiPath) {
       if (coreOnlyMode && !isCoreAllowedApiPath(pathname)) {
         const blockedResponse = new Response(JSON.stringify({ error: 'Not found.' }), {
@@ -226,21 +143,6 @@ export async function onRequest(context) {
         }
         return blockedResponse;
       }
-      if (isLoggedIn && collegeRestricted && !isAllowedRestrictedApiPath(pathname)) {
-        const restrictedResponse = new Response(JSON.stringify({ error: 'College restricted access. Complete onboarding to unlock the full intranet.' }), {
-          status: 403,
-          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
-        });
-        await logWebsiteAction(context.env, {
-          session,
-          pathname,
-          method: requestMethod,
-          responseStatus: restrictedResponse.status,
-          isApiPath,
-          metadata: { reason: 'college_restricted' }
-        });
-        return restrictedResponse;
-      }
       const apiResponse = await context.next();
       if (isLoggedIn) {
         await logWebsiteAction(context.env, {
@@ -255,7 +157,7 @@ export async function onRequest(context) {
     }
 
     if (pathname === '/dashboard') {
-      return Response.redirect(new URL(shouldLandOnCollege ? '/college' : '/my-details', url.origin).toString(), 302);
+      return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
     }
 
     if (pathname === '/intranet' || pathname === '/intranet.html') {
@@ -280,21 +182,17 @@ export async function onRequest(context) {
         return context.next();
       }
       if (isLoggedIn) {
-        return Response.redirect(new URL(shouldLandOnCollege ? '/college' : '/my-details', url.origin).toString(), 302);
+        return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
       }
       return context.next();
     }
 
     if (isLoggedIn && (pathname === '/' || pathname === '/index.html')) {
-      return Response.redirect(new URL(shouldLandOnCollege ? '/college' : '/my-details', url.origin).toString(), 302);
+      return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
     }
 
     if (!isLoggedIn && isProtectedPath(pathname)) {
       return Response.redirect(toLoginRedirect(url), 302);
-    }
-
-    if (isLoggedIn && collegeRestricted && !isCollegePath(pathname)) {
-      return Response.redirect(toCollegeRedirect(url), 302);
     }
 
     const pageResponse = await context.next();

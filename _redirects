@@ -3,21 +3,6 @@
 /intranet /login 302
 /intranet/ /login 302
 
-/forms/config /forms-config 200
-/forms/config/ /forms-config 200
-/forms/config/categories /forms-categories 200
-/forms/config/categories/ /forms-categories 200
-/forms/config/forms /forms-manage 200
-/forms/config/forms/ /forms-manage 200
-/forms/config/forms/new /forms-builder?mode=new 200
-/forms/config/forms/new/ /forms-builder?mode=new 200
-/forms/config/forms/:id /forms-builder?formId=:id 200
-/forms/config/forms/:id/ /forms-builder?formId=:id 200
-/forms/fill/:id /form-fill?formId=:id 200
-/forms/fill/:id/ /form-fill?formId=:id 200
-/forms/responses /forms-responses 200
-/forms/responses/ /forms-responses 200
-
 /voyages/my /voyage-tracker 200
 /voyages/my/ /voyage-tracker 200
 /voyages /voyage-tracker 200
@@ -38,18 +23,6 @@
 /finances/audit /finances?tab=audit 302
 /finances/audit/ /finances?tab=audit 302
 
-/college/ /college 301
-/college/courses /college?tab=courses 302
-/college/courses/ /college?tab=courses 302
-/college/courses/:id /college?tab=courses&courseId=:id 302
-/college/courses/:id/ /college?tab=courses&courseId=:id 302
-/college/courses/:courseId/modules/:moduleId /college?tab=courses&courseId=:courseId&moduleId=:moduleId 302
-/college/courses/:courseId/modules/:moduleId/ /college?tab=courses&courseId=:courseId&moduleId=:moduleId 302
-/college/library /college?tab=library 302
-/college/library/ /college?tab=library 302
-/college/admin /college?tab=admin 302
-/college/admin/ /college?tab=admin 302
-
 /admin /admin-panel 200
 /admin/ /admin-panel 200
 /admin/user-groups /roles 200
@@ -60,5 +33,3 @@
 /admin/activity/ /activity-tracker 200
 /admin/employees /manage-employees 200
 /admin/employees/ /manage-employees 200
-/admin/employees/:id /employee-profile?employeeId=:id 200
-/admin/employees/:id/ /employee-profile?employeeId=:id 200
