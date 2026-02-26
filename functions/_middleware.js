@@ -8,7 +8,7 @@ function normalizePath(pathname) {
 }
 
 function toLoginRedirect(url) {
-  const target = new URL('/login', url.origin);
+  const target = new URL('/login.html', url.origin);
   target.searchParams.set('auth', 'denied');
   target.searchParams.set('reason', 'login_required');
   return target.toString();
@@ -215,11 +215,11 @@ export async function onRequest(context) {
     }
 
     if (pathname === '/intranet' || pathname === '/intranet.html') {
-      return Response.redirect(new URL('/login', url.origin).toString(), 302);
+      return Response.redirect(new URL('/login.html', url.origin).toString(), 302);
     }
 
     if (pathname === '/' || pathname === '/index.html') {
-      return Response.redirect(new URL('/login', url.origin).toString(), 302);
+      return Response.redirect(new URL('/login.html', url.origin).toString(), 302);
     }
 
     const corePublicAllowedPaths = new Set(['/login', '/login.html']);
