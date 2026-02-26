@@ -21,6 +21,12 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/admin-panel.html',
   '/admin/employees',
   '/admin/activity',
+  '/admin/user-groups',
+  '/admin/user-ranks',
+  '/roles',
+  '/roles.html',
+  '/user-ranks',
+  '/user-ranks.html',
   '/activity-tracker',
   '/activity-tracker.html'
 ]);
@@ -30,6 +36,8 @@ const CORE_ALLOWED_PAGE_PREFIXES = [
   '/finances/',
   '/admin/employees/',
   '/admin/activity/',
+  '/admin/user-groups/',
+  '/admin/user-ranks/',
   '/activity-tracker/'
 ];
 
@@ -44,6 +52,9 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/cargo-types',
   '/api/finances',
   '/api/admin/employees',
+  '/api/admin/roles',
+  '/api/admin/user-ranks',
+  '/api/admin/rank-permissions',
   '/api/admin/config',
   '/api/admin/activity',
   '/api/admin/activity-tracker',

@@ -106,12 +106,55 @@ function isAdminLikePath(pathname) {
     '/admin-panel.html',
     '/activity-tracker',
     '/activity-tracker.html',
+    '/roles',
+    '/roles.html',
+    '/user-ranks',
+    '/user-ranks.html',
     '/manage-employees',
     '/manage-employees.html',
     '/employee-profile',
     '/employee-profile.html'
   ]);
   return legacyAdminPaths.has(pathname);
+}
+
+function shouldAuditRequest(pathname, method, isApiPath) {
+  const normalizedMethod = String(method || 'GET').toUpperCase();
+  if (pathname.startsWith('/assets/') || pathname === '/favicon.ico') return false;
+  if (pathname === '/api/auth/session' || pathname === '/api/auth/logout') return false;
+  if (pathname.startsWith('/api/auth/discord/')) return false;
+  if (isApiPath) return true;
+  return normalizedMethod === 'GET' || normalizedMethod === 'HEAD';
+}
+
+async function logWebsiteAction(env, { session, pathname, method, responseStatus, isApiPath, metadata }) {
+  if (!env?.DB || !session?.userId) return;
+  if (!shouldAuditRequest(pathname, method, isApiPath)) return;
+  const actionType = isApiPath ? `API_${String(method || 'GET').toUpperCase()}` : 'PAGE_VIEW';
+  const summary = isApiPath
+    ? `${String(method || 'GET').toUpperCase()} ${pathname} -> ${Number(responseStatus || 0)}`
+    : `Visited ${pathname}`;
+  const metadataJson = metadata ? JSON.stringify(metadata) : null;
+  try {
+    await env.DB
+      .prepare(
+        `INSERT INTO admin_activity_events
+         (actor_employee_id, actor_name, actor_discord_user_id, action_type, target_employee_id, summary, metadata_json, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+      )
+      .bind(
+        null,
+        String(session.displayName || session.userId || '').trim() || null,
+        String(session.userId || '').trim() || null,
+        actionType,
+        null,
+        summary,
+        metadataJson
+      )
+      .run();
+  } catch {
+    // Keep middleware non-fatal if audit writes fail.
+  }
 }
 
 export async function onRequest(context) {
@@ -134,6 +177,7 @@ export async function onRequest(context) {
     const session = await readSessionFromRequest(context.env, context.request);
     const isLoggedIn = Boolean(session);
     const isApiPath = pathname.startsWith('/api/');
+    const requestMethod = String(context.request.method || 'GET').toUpperCase();
     const sessionPermissions = Array.isArray(session?.permissions) ? session.permissions : [];
     const hasEntryPermission =
       Boolean(session?.isAdmin) ||
@@ -166,18 +210,48 @@ export async function onRequest(context) {
 
     if (isApiPath) {
       if (coreOnlyMode && !isCoreAllowedApiPath(pathname)) {
-        return new Response(JSON.stringify({ error: 'Not found.' }), {
+        const blockedResponse = new Response(JSON.stringify({ error: 'Not found.' }), {
           status: 404,
           headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
         });
+        if (isLoggedIn) {
+          await logWebsiteAction(context.env, {
+            session,
+            pathname,
+            method: requestMethod,
+            responseStatus: blockedResponse.status,
+            isApiPath,
+            metadata: { reason: 'core_api_blocked' }
+          });
+        }
+        return blockedResponse;
       }
       if (isLoggedIn && collegeRestricted && !isAllowedRestrictedApiPath(pathname)) {
-        return new Response(JSON.stringify({ error: 'College restricted access. Complete onboarding to unlock the full intranet.' }), {
+        const restrictedResponse = new Response(JSON.stringify({ error: 'College restricted access. Complete onboarding to unlock the full intranet.' }), {
           status: 403,
           headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
         });
+        await logWebsiteAction(context.env, {
+          session,
+          pathname,
+          method: requestMethod,
+          responseStatus: restrictedResponse.status,
+          isApiPath,
+          metadata: { reason: 'college_restricted' }
+        });
+        return restrictedResponse;
       }
-      return context.next();
+      const apiResponse = await context.next();
+      if (isLoggedIn) {
+        await logWebsiteAction(context.env, {
+          session,
+          pathname,
+          method: requestMethod,
+          responseStatus: apiResponse.status,
+          isApiPath
+        });
+      }
+      return apiResponse;
     }
 
     if (pathname === '/dashboard') {
@@ -223,7 +297,17 @@ export async function onRequest(context) {
       return Response.redirect(toCollegeRedirect(url), 302);
     }
 
-    return context.next();
+    const pageResponse = await context.next();
+    if (isLoggedIn) {
+      await logWebsiteAction(context.env, {
+        session,
+        pathname,
+        method: requestMethod,
+        responseStatus: pageResponse.status,
+        isApiPath: false
+      });
+    }
+    return pageResponse;
   } catch {
     return context.next();
   }
