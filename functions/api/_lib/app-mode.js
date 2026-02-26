@@ -50,6 +50,8 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/auth/discord/start',
   '/api/auth/discord/callback',
   '/api/onboarding',
+  '/api/me/bootstrap',
+  '/api/roblox/resolve',
   '/api/me/details',
   '/api/voyages',
   '/api/voyage-config',

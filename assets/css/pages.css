@@ -1073,6 +1073,91 @@
   }
 }
 
+.page-onboarding .onboarding-shell {
+  gap: 0.9rem;
+  padding-bottom: clamp(2.5rem, 8vh, 4rem);
+}
+
+.page-onboarding .onboarding-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.page-onboarding .onboarding-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.page-onboarding .onboarding-card {
+  min-width: 0;
+}
+
+.page-onboarding .onboarding-meta {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.page-onboarding .onboarding-meta dt {
+  font-size: 0.78rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.page-onboarding .onboarding-meta dd {
+  margin: 0.15rem 0 0;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.page-onboarding .onboarding-status-copy {
+  margin: 0 0 0.65rem;
+  color: #334155;
+}
+
+.page-onboarding .onboarding-checklist {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.38rem;
+}
+
+.page-onboarding .onboarding-checklist li {
+  color: #475569;
+}
+
+.page-onboarding .onboarding-checklist li.is-done {
+  color: #166534;
+  font-weight: 600;
+}
+
+.page-onboarding .onboarding-form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.page-onboarding .onboarding-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.page-onboarding .onboarding-verify-result {
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+@media (max-width: 960px) {
+  .page-onboarding .onboarding-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .voyage-control-subtitle {
   margin: 0;
   color: var(--color-muted);

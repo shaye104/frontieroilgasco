@@ -62,6 +62,8 @@ export async function ensureCoreSchema(env) {
       activation_status TEXT NOT NULL DEFAULT 'PENDING' CHECK (activation_status IN ('PENDING','ACTIVE','REJECTED','DISABLED')),
       activated_at TEXT,
       activated_by_employee_id INTEGER,
+      onboarding_submitted_at TEXT,
+      onboarding_review_note TEXT,
       hire_date TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -379,6 +381,12 @@ export async function ensureCoreSchema(env) {
   }
   if (!employeeColumnNames.has('activated_by_employee_id')) {
     await env.DB.prepare(`ALTER TABLE employees ADD COLUMN activated_by_employee_id INTEGER`).run();
+  }
+  if (!employeeColumnNames.has('onboarding_submitted_at')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN onboarding_submitted_at TEXT`).run();
+  }
+  if (!employeeColumnNames.has('onboarding_review_note')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN onboarding_review_note TEXT`).run();
   }
 
   const rankColumns = await env.DB.prepare(`PRAGMA table_info(config_ranks)`).all();

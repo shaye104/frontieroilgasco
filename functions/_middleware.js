@@ -80,7 +80,13 @@ function isOnboardingPath(pathname) {
 
 function isOnboardingAllowedApiPath(pathname) {
   const path = normalizePath(pathname);
-  return path === '/api/onboarding/me' || path === '/api/onboarding/roblox-profile';
+  return (
+    path === '/api/onboarding/me' ||
+    path === '/api/onboarding/roblox-profile' ||
+    path === '/api/onboarding/submit' ||
+    path === '/api/me/bootstrap' ||
+    path === '/api/roblox/resolve'
+  );
 }
 
 async function getLiveActivationStatus(env, session) {

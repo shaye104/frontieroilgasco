@@ -38,6 +38,7 @@ async function requestJson(url, options = {}) {
   const method = String(options.method || 'GET').toUpperCase();
   const cacheTtlMs = Number(options.cacheTtlMs || 0);
   const cacheKey = String(options.cacheKey || `${method}:${url}`);
+  const timeoutMs = Number(options.timeoutMs || 0);
 
   if (method === 'GET' && cacheTtlMs > 0) {
     const cached = cacheGet(cacheKey, cacheTtlMs);
@@ -47,12 +48,28 @@ async function requestJson(url, options = {}) {
   const fetchOptions = { ...options };
   delete fetchOptions.cacheTtlMs;
   delete fetchOptions.cacheKey;
+  delete fetchOptions.timeoutMs;
 
   markApiRequest(url);
+  const controller = timeoutMs > 0 ? new AbortController() : null;
+  const timeoutHandle =
+    controller && timeoutMs > 0
+      ? setTimeout(() => {
+          try {
+            controller.abort('timeout');
+          } catch {
+            // no-op
+          }
+        }, timeoutMs)
+      : null;
   const response = await fetch(url, {
     credentials: 'include',
     headers: { 'content-type': 'application/json', ...(fetchOptions.headers || {}) },
+    keepalive: method !== 'GET',
+    signal: controller ? controller.signal : fetchOptions.signal,
     ...fetchOptions
+  }).finally(() => {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
   });
 
   if (response.status === 304) {
@@ -87,10 +104,40 @@ export function getOnboardingMe() {
   return requestJson('/api/onboarding/me', { method: 'GET' });
 }
 
+export function getMeBootstrap() {
+  return requestJson('/api/me/bootstrap', {
+    method: 'GET',
+    timeoutMs: 8000,
+    cacheTtlMs: 15000,
+    cacheKey: 'GET:/api/me/bootstrap'
+  });
+}
+
 export function submitOnboardingRobloxProfile(payload) {
   return requestJson('/api/onboarding/roblox-profile', {
     method: 'POST',
     body: JSON.stringify(payload)
+  });
+}
+
+export function submitOnboarding(payload) {
+  return requestJson('/api/onboarding/submit', {
+    method: 'POST',
+    timeoutMs: 8000,
+    body: JSON.stringify(payload)
+  });
+}
+
+export function resolveRobloxIdentity(params = {}) {
+  const query = new URLSearchParams();
+  if (params.userId) query.set('userId', String(params.userId));
+  if (params.username) query.set('username', String(params.username));
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+  return requestJson(`/api/roblox/resolve${suffix}`, {
+    method: 'GET',
+    timeoutMs: 8000,
+    cacheTtlMs: 30000,
+    cacheKey: `GET:/api/roblox/resolve:${suffix}`
   });
 }
 
