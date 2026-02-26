@@ -11,6 +11,11 @@ function getAuthMessageFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const auth = params.get('auth');
   const reason = params.get('reason');
+  const error = params.get('error');
+
+  if (error === 'not_permitted') {
+    return { text: 'Access denied. You are not permitted to access this intranet.', type: 'error' };
+  }
 
   if (auth === 'denied') {
     if (reason === 'login_required') return { text: 'Please sign in to access the intranet.', type: 'error' };
@@ -25,9 +30,10 @@ function getAuthMessageFromUrl() {
 
 function cleanAuthQuery() {
   const url = new URL(window.location.href);
-  if (!url.searchParams.has('auth') && !url.searchParams.has('reason')) return;
+  if (!url.searchParams.has('auth') && !url.searchParams.has('reason') && !url.searchParams.has('error')) return;
   url.searchParams.delete('auth');
   url.searchParams.delete('reason');
+  url.searchParams.delete('error');
   window.history.replaceState({}, '', url.toString());
 }
 
@@ -35,11 +41,18 @@ export function initIntranetAuth(config) {
   const authPanel = document.querySelector(config.authPanelSelector);
   const loginButton = document.querySelector(config.loginButtonSelector);
   const feedback = document.querySelector(config.feedbackSelector);
+  const checkingPanel = document.querySelector('#authCheckingPanel');
   renderPublicNavbar();
 
   if (!authPanel || !loginButton || !feedback) return;
 
   loginButton.addEventListener('click', () => {
+    loginButton.disabled = true;
+    loginButton.setAttribute('aria-busy', 'true');
+    const label = loginButton.querySelector('[data-login-label]');
+    const spinner = loginButton.querySelector('[data-login-spinner]');
+    if (label) label.textContent = 'Redirecting...';
+    if (spinner) spinner.classList.remove('hidden');
     window.location.href = '/api/auth/discord/start';
   });
 
@@ -56,14 +69,24 @@ export function initIntranetAuth(config) {
     .then((session) => {
       if (session.loggedIn && !hasAuthQuery) {
         const activationStatus = String(session.activationStatus || '').trim().toUpperCase();
-        window.location.href = !session.isAdmin && activationStatus && activationStatus !== 'ACTIVE' ? '/onboarding' : '/dashboard';
+        if (!session.isAdmin && activationStatus === 'PENDING') {
+          window.location.href = '/access-setup';
+          return;
+        }
+        if (!session.isAdmin && (activationStatus === 'REJECTED' || activationStatus === 'DISABLED' || activationStatus === 'NONE')) {
+          window.location.href = '/not-permitted';
+          return;
+        }
+        window.location.href = '/dashboard';
         return;
       }
 
+      checkingPanel?.classList.add('hidden');
       authPanel.classList.remove('hidden');
-      clearMessage(feedback);
+      if (!urlMessage) clearMessage(feedback);
     })
     .catch(() => {
+      checkingPanel?.classList.add('hidden');
       showMessage(feedback, 'Unable to verify session.', 'error');
       authPanel.classList.remove('hidden');
     });

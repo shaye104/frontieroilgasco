@@ -1,4 +1,4 @@
-import { initIntranetAuth } from '../modules/intranet-auth.js';
+import { initIntranetAuth } from '../modules/intranet-auth.js?v=20260226a';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetAuth({

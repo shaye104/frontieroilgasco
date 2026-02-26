@@ -37,12 +37,17 @@ async function init() {
     if (discordId) discordId.textContent = text(me?.employee?.discordUserId) || 'Unknown';
 
     if (activationStatus === 'ACTIVE') {
-      window.location.href = '/my-details';
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    if (activationStatus === 'REJECTED' || activationStatus === 'DISABLED') {
+      window.location.href = '/not-permitted';
       return;
     }
 
     const hasProfile = Boolean(text(me?.employee?.robloxUserId) && text(me?.employee?.robloxUsername));
-    if (hasProfile || activationStatus === 'REJECTED' || activationStatus === 'DISABLED') {
+    if (hasProfile) {
       form?.classList.add('hidden');
       waitPanel?.classList.remove('hidden');
     } else {

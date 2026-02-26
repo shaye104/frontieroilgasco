@@ -18,18 +18,36 @@ function toAccessDeniedUrl(requestUrl, params = {}) {
   return target.toString();
 }
 
-function toMyDetailsUrl(requestUrl, params = {}) {
+function toLoginUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
-  const target = new URL('/my-details', `${source.protocol}//${source.host}`);
+  const target = new URL('/login', `${source.protocol}//${source.host}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v) target.searchParams.set(k, v);
   });
   return target.toString();
 }
 
-function toOnboardingUrl(requestUrl, params = {}) {
+function toMyDetailsUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
-  const target = new URL('/onboarding', `${source.protocol}//${source.host}`);
+  const target = new URL('/dashboard', `${source.protocol}//${source.host}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v) target.searchParams.set(k, v);
+  });
+  return target.toString();
+}
+
+function toAccessSetupUrl(requestUrl, params = {}) {
+  const source = new URL(requestUrl);
+  const target = new URL('/access-setup', `${source.protocol}//${source.host}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v) target.searchParams.set(k, v);
+  });
+  return target.toString();
+}
+
+function toNotPermittedUrl(requestUrl, params = {}) {
+  const source = new URL(requestUrl);
+  const target = new URL('/not-permitted', `${source.protocol}//${source.host}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v) target.searchParams.set(k, v);
   });
@@ -74,13 +92,13 @@ export async function onRequest(context) {
   const oauthError = url.searchParams.get('error');
 
   if (oauthError || !code || !state) {
-    return redirect(toAccessDeniedUrl(request.url, { reason: 'oauth_callback_invalid' }));
+    return redirect(toLoginUrl(request.url, { auth: 'error', reason: 'oauth_callback_invalid' }));
   }
 
   const cookies = parseCookies(request.headers.get('Cookie'));
   const stateValid = await verifyStateToken(env.SESSION_SECRET, cookies.fog_oauth_state, state);
   if (!stateValid) {
-    return redirect(toAccessDeniedUrl(request.url, { reason: 'oauth_state_invalid' }));
+    return redirect(toLoginUrl(request.url, { auth: 'error', reason: 'oauth_state_invalid' }));
   }
 
   const origin = `${url.protocol}//${url.host}`;
@@ -99,13 +117,13 @@ export async function onRequest(context) {
   });
 
   if (!tokenResponse.ok) {
-    return redirect(toAccessDeniedUrl(request.url, { reason: 'oauth_token_exchange_failed' }));
+    return redirect(toLoginUrl(request.url, { auth: 'error', reason: 'oauth_token_exchange_failed' }));
   }
 
   const tokenData = await tokenResponse.json();
   const user = await fetchDiscordUser(tokenData.access_token);
   if (!user || !user.id) {
-    return redirect(toAccessDeniedUrl(request.url, { reason: 'oauth_user_fetch_failed' }));
+    return redirect(toLoginUrl(request.url, { auth: 'error', reason: 'oauth_user_fetch_failed' }));
   }
 
   const isAdminUser = user.id === String(env.ADMIN_DISCORD_USER_ID).trim();
@@ -151,7 +169,7 @@ export async function onRequest(context) {
   }
 
   if (!isAdminUser && !employee && !hasMappedRoles) {
-    return redirect(toAccessDeniedUrl(request.url, { reason: 'missing_permission' }));
+    return redirect(toNotPermittedUrl(request.url, { reason: 'not_employee' }));
   }
 
   const userStatus = String(employee?.user_status || '').trim().toUpperCase() || 'ACTIVE_STAFF';
@@ -218,7 +236,10 @@ export async function onRequest(context) {
   });
 
   if (!isAdminUser && (activationStatus === 'PENDING' || activationStatus === 'REJECTED' || activationStatus === 'DISABLED')) {
-    return redirect(toOnboardingUrl(request.url, { status: activationStatus.toLowerCase() }), [clearStateCookie, sessionCookie]);
+    if (activationStatus === 'PENDING') {
+      return redirect(toAccessSetupUrl(request.url, { status: activationStatus.toLowerCase() }), [clearStateCookie, sessionCookie]);
+    }
+    return redirect(toNotPermittedUrl(request.url, { status: activationStatus.toLowerCase() }), [clearStateCookie, sessionCookie]);
   }
 
   return redirect(toMyDetailsUrl(request.url), [clearStateCookie, sessionCookie]);

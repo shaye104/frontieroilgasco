@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Access is not permitted." />
+    <title>Frontier Oil &amp; Gas Company | Not Permitted</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css" />
+    <link rel="stylesheet" href="/assets/css/base.css" />
+    <link rel="stylesheet" href="/assets/css/components.css" />
+    <link rel="stylesheet" href="/assets/css/pages.css" />
+  </head>
+  <body class="page page-intranet">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/login">
+          <span class="brand-mark" aria-hidden="true">FOG</span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+          <span class="login-brand-badge">Intranet</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section login-page">
+      <div class="container login-shell">
+        <section class="panel login-card">
+          <p class="eyebrow">ACCESS</p>
+          <h1>Not permitted</h1>
+          <p class="lead">You are not permitted to access the intranet because you are not an employee.</p>
+          <p id="notPermittedAccount" class="login-helper hidden"></p>
+          <div class="button-row">
+            <a class="btn btn-primary" href="/login">Back to Login</a>
+            <button id="switchDiscordAccountBtn" class="btn btn-secondary hidden" type="button">Switch Discord Account</button>
+          </div>
+        </section>
+
+        <aside class="panel login-info-panel">
+          <article class="login-info-item">
+            <h2>Need access?</h2>
+            <p>Contact an employee manager to get an approved Discord employee role and activation.</p>
+          </article>
+        </aside>
+      </div>
+    </main>
+    <script type="module" src="/assets/js/pages/not-permitted-page.js?v=20260226a"></script>
+  </body>
+</html>

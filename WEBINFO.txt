@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-26T21:42:55.136Z
+Generated: 2026-02-26T22:05:39.586Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -13,10 +13,11 @@ SITE STRUCTURE
 - finances.html | title: Frontier Oil & Gas Company | Finances | primary heading: Finances
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
 - intranet.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
-- login.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
+- login.html | title: Frontier Oil & Gas Company | Login | primary heading: Checking session...
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
-- onboarding.html | title: Frontier Oil & Gas Company | Onboarding | primary heading: Complete your Roblox Profile
+- not-permitted.html | title: Frontier Oil &amp; Gas Company | Not Permitted | primary heading: Not permitted
+- onboarding.html | title: Frontier Oil & Gas Company | Access Setup | primary heading: Employee Setup
 - roles.html | title: Frontier Oil & Gas Company | User Groups | primary heading: User Groups
 - user-ranks.html | title: Frontier Oil & Gas Company | User Ranks | primary heading: User Ranks
 - voyage-archive.html | title: Frontier Oil & Gas Company | Archived Voyages | primary heading: Archived Voyages
@@ -51,6 +52,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/intranet-page.js | exports: No public exports
 - assets/js/pages/manage-employees-page.js | exports: No public exports
 - assets/js/pages/my-details-page.js | exports: No public exports
+- assets/js/pages/not-permitted-page.js | exports: No public exports
 - assets/js/pages/onboarding-page.js | exports: No public exports
 - assets/js/pages/roles-page.js | exports: No public exports
 - assets/js/pages/user-ranks-page.js | exports: No public exports

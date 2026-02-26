@@ -52,6 +52,10 @@ export function renderPublicNavbar() {
   if (!nav) return;
 
   nav.innerHTML = '';
+  const path = String(window.location.pathname || '').replace(/\/+$/, '') || '/';
+  const isLoginPage = path === '/login' || path === '/login.html';
+  if (isLoginPage) return;
+
   const spacer = document.createElement('span');
   spacer.className = 'nav-spacer';
   nav.append(spacer);
@@ -69,7 +73,7 @@ export function renderIntranetNavbar(session) {
   const activationStatus = String(session?.activationStatus || '').trim().toUpperCase();
   const isPendingActivation = !session?.isAdmin && activationStatus && activationStatus !== 'ACTIVE';
   if (isPendingActivation) {
-    nav.append(buildNavLink('/onboarding', 'Onboarding'));
+    nav.append(buildNavLink('/access-setup', 'Access Setup'));
   }
   const navItems = INTRANET_NAV_ITEMS;
   if (!isPendingActivation) {

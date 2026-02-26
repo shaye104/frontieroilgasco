@@ -12,7 +12,7 @@ async function initHomePage() {
     if (session.loggedIn) {
       const activationStatus = String(session.activationStatus || '').trim().toUpperCase();
       if (!session.isAdmin && activationStatus && activationStatus !== 'ACTIVE') {
-        window.location.href = '/onboarding';
+        window.location.href = '/access-setup';
         return;
       }
       const permissions = Array.isArray(session.permissions) ? session.permissions : [];

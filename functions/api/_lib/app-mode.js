@@ -23,6 +23,10 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/user-ranks.html',
   '/activity-tracker',
   '/activity-tracker.html',
+  '/access-setup',
+  '/access-setup.html',
+  '/not-permitted',
+  '/not-permitted.html',
   '/onboarding',
   '/onboarding.html',
   '/onboarding/status'
@@ -36,6 +40,7 @@ const CORE_ALLOWED_PAGE_PREFIXES = [
   '/admin/user-groups/',
   '/admin/user-ranks/',
   '/activity-tracker/',
+  '/access-setup/',
   '/onboarding/'
 ];
 

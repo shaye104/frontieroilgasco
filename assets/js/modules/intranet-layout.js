@@ -46,7 +46,7 @@ function ensureNavbarFallback(session) {
 
   nav.innerHTML = '';
   if (isPendingActivation) {
-    nav.append(buildLink('/onboarding', 'Onboarding'));
+    nav.append(buildLink('/access-setup', 'Access Setup'));
   } else if (isCoreOnlyMode(session)) {
     nav.append(buildLink('/my-details', 'My Details'));
     nav.append(buildLink('/voyages/my', 'Voyages'));
@@ -144,7 +144,7 @@ export async function initIntranetLayout(config) {
     }
 
     if (requireEmployee && !session.isAdmin && session.accessPending) {
-      window.location.href = '/onboarding';
+      window.location.href = '/access-setup';
       return null;
     }
 
