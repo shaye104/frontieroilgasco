@@ -142,6 +142,7 @@ export async function initUserRanksAdmin(config) {
   let overviewSnapshot = null;
   let overviewDirty = false;
   let permissionsDirty = false;
+  let isSavingPermissions = false;
 
   function setFeedback(message, type = 'success', { autoClear = true } = {}) {
     if (successTimer) {
@@ -162,6 +163,15 @@ export async function initUserRanksAdmin(config) {
 
   function selectedRank() {
     return ranks.find((rank) => Number(rank.id) === Number(selectedRankId)) || null;
+  }
+
+  function clearTabTransientState() {
+    discordLinkForm?.reset();
+    groupLinkForm?.reset();
+    if (permissionsSearchInput) permissionsSearchInput.value = '';
+    if (linksDiscordList) linksDiscordList.innerHTML = '';
+    if (linksGroupList) linksGroupList.innerHTML = '';
+    if (permissionsEditor) permissionsEditor.innerHTML = '';
   }
 
   function readOverviewDraft() {
@@ -265,6 +275,9 @@ export async function initUserRanksAdmin(config) {
 
     list.querySelectorAll('[data-select-rank]').forEach((button) => {
       button.addEventListener('click', () => {
+        const nextRankId = Number(button.getAttribute('data-select-rank'));
+        if (Number(nextRankId) === Number(selectedRankId)) return;
+        clearTabTransientState();
         selectedRankId = Number(button.getAttribute('data-select-rank'));
         activeTab = 'overview';
         overviewDirty = false;
@@ -572,6 +585,41 @@ export async function initUserRanksAdmin(config) {
     updateTopActionState();
   }
 
+  async function persistPermissions({ askConfirm = false } = {}) {
+    const rank = selectedRank();
+    if (!rank || isSavingPermissions) return;
+    const permissionKeys = collectCheckedPermissionKeys();
+
+    if (askConfirm) {
+      const shouldSave = window.confirm(`Save ${permissionKeys.length} permission${permissionKeys.length === 1 ? '' : 's'} for "${text(rank.value)}"?`);
+      if (!shouldSave) return;
+    }
+
+    const originalLabel = savePermissionsButton?.textContent || 'Save Permissions';
+    isSavingPermissions = true;
+    if (savePermissionsButton) {
+      savePermissionsButton.disabled = true;
+      savePermissionsButton.textContent = 'Saving...';
+    }
+    try {
+      await saveUserRankPermissions(rank.id, permissionKeys);
+      permissionsCache.delete(Number(rank.id));
+      await refreshRanks();
+      await loadPermissions(rank.id, true);
+      permissionsDirty = false;
+      updateTopActionState();
+      setFeedback('Rank permissions updated.', 'success');
+    } catch (error) {
+      setFeedback(error.message || 'Unable to update rank permissions.', 'error', { autoClear: false });
+    } finally {
+      isSavingPermissions = false;
+      if (savePermissionsButton) {
+        savePermissionsButton.disabled = false;
+        savePermissionsButton.textContent = originalLabel;
+      }
+    }
+  }
+
   async function duplicateSelectedRank() {
     const rank = selectedRank();
     if (!rank) return;
@@ -632,7 +680,15 @@ export async function initUserRanksAdmin(config) {
 
   tabs.querySelectorAll('[data-rank-tab]').forEach((button) => {
     button.addEventListener('click', () => {
-      activeTab = text(button.getAttribute('data-rank-tab')).toLowerCase() || 'overview';
+      const nextTab = text(button.getAttribute('data-rank-tab')).toLowerCase() || 'overview';
+      if (nextTab !== activeTab) {
+        if (nextTab !== 'permissions' && permissionsSearchInput) {
+          permissionsSearchInput.value = '';
+        }
+        // Keep each tab fresh to avoid stale data carrying across rank/tab switches.
+        clearTabTransientState();
+      }
+      activeTab = nextTab;
       renderEditorShell();
     });
   });
@@ -661,7 +717,7 @@ export async function initUserRanksAdmin(config) {
       return;
     }
     if (activeTab === 'permissions') {
-      savePermissionsButton?.click();
+      void persistPermissions({ askConfirm: true });
       return;
     }
     setFeedback('Links are saved immediately when added or removed.', 'success');
@@ -809,20 +865,7 @@ export async function initUserRanksAdmin(config) {
   });
 
   savePermissionsButton?.addEventListener('click', async () => {
-    const rank = selectedRank();
-    if (!rank) return;
-    const permissionKeys = collectCheckedPermissionKeys();
-    try {
-      await saveUserRankPermissions(rank.id, permissionKeys);
-      permissionsCache.delete(Number(rank.id));
-      await refreshRanks();
-      await loadPermissions(rank.id, true);
-      permissionsDirty = false;
-      updateTopActionState();
-      setFeedback('Rank permissions updated.', 'success');
-    } catch (error) {
-      setFeedback(error.message || 'Unable to update rank permissions.', 'error', { autoClear: false });
-    }
+    await persistPermissions({ askConfirm: true });
   });
 
   try {
