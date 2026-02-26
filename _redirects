@@ -4,14 +4,12 @@
 /dashboard/ /my-details 302
 /intranet /login 302
 /intranet/ /login 302
-/access-setup /onboarding.html 200
-/access-setup/ /onboarding.html 200
+/access-setup /onboarding 302
+/access-setup/ /onboarding 302
 /not-permitted /not-permitted.html 200
 /not-permitted/ /not-permitted.html 200
-/onboarding /onboarding.html 200
-/onboarding/ /onboarding.html 200
-/onboarding/status /onboarding.html 200
-/onboarding/status/ /onboarding.html 200
+/onboarding/status /onboarding 302
+/onboarding/status/ /onboarding 302
 
 /voyages/my /voyage-tracker 200
 /voyages/my/ /voyage-tracker 200

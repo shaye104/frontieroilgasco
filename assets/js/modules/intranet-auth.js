@@ -70,7 +70,7 @@ export function initIntranetAuth(config) {
       if (session.loggedIn && !hasAuthQuery) {
         const activationStatus = String(session.activationStatus || '').trim().toUpperCase();
         if (!session.isAdmin && activationStatus === 'PENDING') {
-          window.location.href = '/access-setup';
+          window.location.href = '/onboarding';
           return;
         }
         if (!session.isAdmin && (activationStatus === 'REJECTED' || activationStatus === 'DISABLED' || activationStatus === 'NONE')) {

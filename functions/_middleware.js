@@ -262,7 +262,7 @@ export async function onRequest(context) {
       if (isLoggedIn) {
         const activationStatus = await getLiveActivationStatus(context.env, session);
         let redirectPath = '/dashboard';
-        if (!session?.isAdmin && activationStatus === 'PENDING') redirectPath = '/access-setup';
+        if (!session?.isAdmin && activationStatus === 'PENDING') redirectPath = '/onboarding';
         if (!session?.isAdmin && (activationStatus === 'REJECTED' || activationStatus === 'DISABLED' || activationStatus === 'NONE')) {
           redirectPath = '/not-permitted';
         }
@@ -277,8 +277,8 @@ export async function onRequest(context) {
 
     if (isLoggedIn && !session.isAdmin) {
       const activationStatus = await getLiveActivationStatus(context.env, session);
-      if (activationStatus !== 'ACTIVE' && !isOnboardingPath(pathname)) {
-        const redirectPath = activationStatus === 'PENDING' ? '/access-setup' : '/not-permitted';
+      if (activationStatus !== 'ACTIVE' && !isOnboardingPath(pathname) && !isPublicPagePath(pathname)) {
+        const redirectPath = activationStatus === 'PENDING' ? '/onboarding' : '/not-permitted';
         return Response.redirect(new URL(redirectPath, url.origin).toString(), 302);
       }
       if (activationStatus === 'ACTIVE' && isOnboardingPath(pathname)) {

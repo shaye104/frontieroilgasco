@@ -43,7 +43,7 @@ function toMyDetailsUrl(requestUrl, params = {}) {
 
 function toAccessSetupUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
-  const target = new URL('/access-setup', `${source.protocol}//${source.host}`);
+  const target = new URL('/onboarding', `${source.protocol}//${source.host}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v) target.searchParams.set(k, v);
   });

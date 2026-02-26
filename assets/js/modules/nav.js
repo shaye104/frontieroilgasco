@@ -82,7 +82,7 @@ export function renderIntranetNavbar(session) {
   const activationStatus = String(session?.activationStatus || '').trim().toUpperCase();
   const isPendingActivation = !session?.isAdmin && activationStatus && activationStatus !== 'ACTIVE';
   if (isPendingActivation) {
-    nav.append(buildNavLink('/access-setup', 'Access Setup'));
+    nav.append(buildNavLink('/onboarding', 'Access Setup'));
   }
   const navItems = INTRANET_NAV_ITEMS;
   if (!isPendingActivation) {
