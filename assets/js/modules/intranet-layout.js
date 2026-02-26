@@ -100,10 +100,6 @@ function isAdminLikePath(pathname) {
   const legacyAdminPages = new Set([
     '/admin',
     '/admin-panel',
-    '/admin-config',
-    '/cargo-admin',
-    '/roles',
-    '/user-ranks',
     '/activity-tracker',
     '/manage-employees',
     '/employee-profile'

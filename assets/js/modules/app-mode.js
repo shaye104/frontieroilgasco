@@ -35,10 +35,6 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/admin-panel.html',
   '/admin/employees',
   '/admin/activity',
-  '/admin/activity-tracker',
-  '/admin/user-groups',
-  '/admin/user-ranks',
-  '/admin/cargo',
   '/activity-tracker',
   '/activity-tracker.html'
 ]);
@@ -48,10 +44,7 @@ const CORE_ALLOWED_PAGE_PREFIXES = [
   '/finances/',
   '/admin/employees/',
   '/admin/activity/',
-  '/admin/activity-tracker/',
-  '/admin/user-groups/',
-  '/admin/user-ranks/',
-  '/admin/cargo/'
+  '/activity-tracker/'
 ];
 
 export function isCoreAllowedPagePath(pathname) {

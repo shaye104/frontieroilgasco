@@ -54,14 +54,6 @@
 /admin/ /admin-panel 200
 /admin/config /admin-config 200
 /admin/config/ /admin-config 200
-/admin/cargo /cargo-admin 200
-/admin/cargo/ /cargo-admin 200
-/admin/user-groups /roles 200
-/admin/user-groups/ /roles 200
-/admin/user-ranks /user-ranks 200
-/admin/user-ranks/ /user-ranks 200
-/admin/activity-tracker /activity-tracker 200
-/admin/activity-tracker/ /activity-tracker 200
 /admin/activity /activity-tracker 200
 /admin/activity/ /activity-tracker 200
 /admin/employees /manage-employees 200
