@@ -17,6 +17,15 @@ function text(value) {
   return String(value ?? '').trim();
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function openModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
@@ -37,6 +46,27 @@ function normalizeTemplate(templateKey) {
   return '';
 }
 
+function normalizePermissionKeySet(values) {
+  return [...new Set((values || []).map((value) => text(value)).filter(Boolean))].sort();
+}
+
+function sameKeySets(a, b) {
+  const left = normalizePermissionKeySet(a);
+  const right = normalizePermissionKeySet(b);
+  if (left.length !== right.length) return false;
+  return left.every((value, index) => value === right[index]);
+}
+
+function groupPermissions(permissionCatalog) {
+  const groups = new Map();
+  (permissionCatalog || []).forEach((permission) => {
+    const groupName = text(permission.groupLabel || permission.group || 'Other');
+    if (!groups.has(groupName)) groups.set(groupName, []);
+    groups.get(groupName).push(permission);
+  });
+  return groups;
+}
+
 function defaultPermissionTemplate(templateKey, permissionCatalog) {
   const key = normalizeTemplate(templateKey);
   const allKeys = (permissionCatalog || []).map((permission) => String(permission.key || '').trim()).filter(Boolean);
@@ -53,25 +83,6 @@ function defaultPermissionTemplate(templateKey, permissionCatalog) {
   return [];
 }
 
-function groupPermissions(permissionCatalog) {
-  const groups = new Map();
-  (permissionCatalog || []).forEach((permission) => {
-    const groupName = text(permission.groupLabel || permission.group || 'Other');
-    if (!groups.has(groupName)) groups.set(groupName, []);
-    groups.get(groupName).push(permission);
-  });
-  return groups;
-}
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 export async function initUserRanksAdmin(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const list = document.querySelector(config.listSelector);
@@ -79,11 +90,21 @@ export async function initUserRanksAdmin(config) {
   const form = document.querySelector(config.formSelector);
   const editorShell = document.querySelector('#userRanksEditorShell');
   const editorTitle = document.querySelector('#userRanksEditorTitle');
+  const editorLevelChip = document.querySelector('#userRanksEditorLevelChip');
+  const editorDiscordChip = document.querySelector('#userRanksEditorDiscordChip');
+  const editorGroupsChip = document.querySelector('#userRanksEditorGroupsChip');
+  const editorPermsChip = document.querySelector('#userRanksEditorPermsChip');
+  const unsavedIndicator = document.querySelector('#userRanksUnsavedIndicator');
   const tabs = document.querySelector('#userRanksTabs');
   const panels = [...document.querySelectorAll('[data-rank-panel]')];
   const openCreateRankBtn = document.querySelector(config.openCreateRankBtnSelector);
   const createForm = document.querySelector(config.createFormSelector);
   const deleteButton = document.querySelector(config.deleteButtonSelector);
+  const duplicateButton = document.querySelector('#duplicateUserRankBtn');
+  const menuButton = document.querySelector('#userRankMenuBtn');
+  const menuPanel = document.querySelector('#userRankMenuPanel');
+  const saveTopButton = document.querySelector('#saveUserRankTopBtn');
+  const revertButton = document.querySelector('#revertUserRankBtn');
   const searchInput = document.querySelector('#userRanksSearchInput');
   const linksDiscordList = document.querySelector('#userRankDiscordLinksList');
   const linksGroupList = document.querySelector('#userRankGroupLinksList');
@@ -93,6 +114,7 @@ export async function initUserRanksAdmin(config) {
   const permissionsEditor = document.querySelector(config.permissionsEditorSelector);
   const permissionsSearchInput = document.querySelector('#userRanksPermissionsSearch');
   const savePermissionsButton = document.querySelector('#saveUserRanksPermissionsBtn');
+
   if (
     !feedback ||
     !list ||
@@ -103,20 +125,101 @@ export async function initUserRanksAdmin(config) {
     !panels.length ||
     !permissionsEditor ||
     !createForm ||
-    !deleteButton
+    !deleteButton ||
+    !saveTopButton ||
+    !revertButton
   ) {
     return;
   }
 
+  let successTimer = null;
   let ranks = [];
   let selectedRankId = null;
   let searchTerm = '';
   let activeTab = 'overview';
   let linksCache = new Map();
   let permissionsCache = new Map();
+  let overviewSnapshot = null;
+  let overviewDirty = false;
+  let permissionsDirty = false;
+
+  function setFeedback(message, type = 'success', { autoClear = true } = {}) {
+    if (successTimer) {
+      clearTimeout(successTimer);
+      successTimer = null;
+    }
+    showMessage(feedback, message, type);
+    if (type === 'success' && autoClear) {
+      successTimer = setTimeout(() => clearMessage(feedback), 4000);
+    }
+  }
+
+  function setMenuOpen(isOpen) {
+    if (!menuButton || !menuPanel) return;
+    menuPanel.classList.toggle('hidden', !isOpen);
+    menuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  }
 
   function selectedRank() {
     return ranks.find((rank) => Number(rank.id) === Number(selectedRankId)) || null;
+  }
+
+  function readOverviewDraft() {
+    return {
+      value: text(form.querySelector('[name="value"]')?.value),
+      level: Number(form.querySelector('[name="level"]')?.value || 0),
+      description: text(form.querySelector('[name="description"]')?.value)
+    };
+  }
+
+  function updateTopActionState() {
+    const canSaveOverview = activeTab === 'overview' && overviewDirty;
+    const canSavePermissions = activeTab === 'permissions' && permissionsDirty;
+    const canCancelOverview = activeTab === 'overview' && overviewDirty;
+    const canCancelPermissions = activeTab === 'permissions' && permissionsDirty;
+
+    saveTopButton.disabled = !(canSaveOverview || canSavePermissions);
+    revertButton.disabled = !(canCancelOverview || canCancelPermissions);
+
+    const showUnsaved = overviewDirty || permissionsDirty;
+    unsavedIndicator?.classList.toggle('hidden', !showUnsaved);
+  }
+
+  function syncOverviewDirtyState() {
+    if (!overviewSnapshot) {
+      overviewDirty = false;
+      updateTopActionState();
+      return;
+    }
+    const current = readOverviewDraft();
+    overviewDirty =
+      current.value !== overviewSnapshot.value ||
+      Number(current.level) !== Number(overviewSnapshot.level) ||
+      current.description !== overviewSnapshot.description;
+    updateTopActionState();
+  }
+
+  function collectCheckedPermissionKeys() {
+    return [...permissionsEditor.querySelectorAll('[data-rank-permission-key]:checked')]
+      .map((node) => text(node.getAttribute('data-rank-permission-key')))
+      .filter(Boolean);
+  }
+
+  function syncPermissionsDirtyState() {
+    const rank = selectedRank();
+    if (!rank) {
+      permissionsDirty = false;
+      updateTopActionState();
+      return;
+    }
+    const payload = permissionsCache.get(Number(rank.id));
+    if (!payload) {
+      permissionsDirty = false;
+      updateTopActionState();
+      return;
+    }
+    permissionsDirty = !sameKeySets(payload.assignedPermissionKeys || [], collectCheckedPermissionKeys());
+    updateTopActionState();
   }
 
   function visibleRanks() {
@@ -139,16 +242,21 @@ export async function initUserRanksAdmin(config) {
     list.innerHTML = visible
       .map((rank) => {
         const isActive = Number(rank.id) === Number(selectedRankId);
+        const discordCount = Number(rank.discord_links_count || 0);
+        const groupCount = Number(rank.group_links_count || 0);
+        const permissionCount = Number(rank.permission_count || 0);
         return `
           <li class="role-item">
-            <button class="user-rank-list-button ${isActive ? 'is-active' : ''}" type="button" data-select-rank="${rank.id}">
-              <span class="user-rank-list-title">${escapeHtml(rank.value)}</span>
-              <span class="user-rank-list-meta">Level ${Number(rank.level || 0)}</span>
-              <span class="user-rank-list-badges">
-                <span class="user-rank-list-badge">Discord: ${Number(rank.discord_links_count || 0)}</span>
-                <span class="user-rank-list-badge">Groups: ${Number(rank.group_links_count || 0)}</span>
-                <span class="user-rank-list-badge">Perms: ${Number(rank.permission_count || 0)}</span>
-              </span>
+            <button class="rank-item ${isActive ? 'is-active' : ''}" type="button" data-select-rank="${rank.id}">
+              <div class="rank-item-top">
+                <span class="rank-item-name">${escapeHtml(rank.value)}</span>
+                <span class="chip ${Number(rank.level || 0) > 0 ? '' : 'chip-muted'}">Lvl ${Number(rank.level || 0)}</span>
+              </div>
+              <div class="rank-item-badges">
+                <span class="chip ${discordCount === 0 ? 'chip-muted' : ''}">Discord ${discordCount}</span>
+                <span class="chip ${groupCount === 0 ? 'chip-muted' : ''}">Groups ${groupCount}</span>
+                <span class="chip ${permissionCount === 0 ? 'chip-muted' : ''}">Perms ${permissionCount}</span>
+              </div>
             </button>
           </li>
         `;
@@ -159,10 +267,32 @@ export async function initUserRanksAdmin(config) {
       button.addEventListener('click', () => {
         selectedRankId = Number(button.getAttribute('data-select-rank'));
         activeTab = 'overview';
+        overviewDirty = false;
+        permissionsDirty = false;
+        setMenuOpen(false);
         renderRankList();
         renderEditorShell();
       });
     });
+  }
+
+  function renderEditorCounts(rank) {
+    const discordCount = Number(rank?.discord_links_count || 0);
+    const groupsCount = Number(rank?.group_links_count || 0);
+    const permsCount = Number(rank?.permission_count || 0);
+    if (editorLevelChip) editorLevelChip.textContent = `Lvl ${Number(rank?.level || 0)}`;
+    if (editorDiscordChip) {
+      editorDiscordChip.textContent = `Discord ${discordCount}`;
+      editorDiscordChip.classList.toggle('chip-muted', discordCount === 0);
+    }
+    if (editorGroupsChip) {
+      editorGroupsChip.textContent = `Groups ${groupsCount}`;
+      editorGroupsChip.classList.toggle('chip-muted', groupsCount === 0);
+    }
+    if (editorPermsChip) {
+      editorPermsChip.textContent = `Perms ${permsCount}`;
+      editorPermsChip.classList.toggle('chip-muted', permsCount === 0);
+    }
   }
 
   function renderEditorShell() {
@@ -170,20 +300,28 @@ export async function initUserRanksAdmin(config) {
     if (!rank) {
       hint.classList.remove('hidden');
       editorShell.classList.add('hidden');
+      overviewSnapshot = null;
+      overviewDirty = false;
+      permissionsDirty = false;
+      updateTopActionState();
       return;
     }
 
     hint.classList.add('hidden');
     editorShell.classList.remove('hidden');
-    editorTitle.textContent = `${text(rank.value) || 'Rank'} · Level ${Number(rank.level || 0)}`;
+    editorTitle.textContent = text(rank.value) || 'Rank';
+    renderEditorCounts(rank);
     form.querySelector('[name="id"]').value = String(rank.id);
     form.querySelector('[name="value"]').value = rank.value || '';
     form.querySelector('[name="level"]').value = String(Number(rank.level || 0));
     form.querySelector('[name="description"]').value = rank.description || '';
+    overviewSnapshot = readOverviewDraft();
+    overviewDirty = false;
 
     tabs.querySelectorAll('[data-rank-tab]').forEach((button) => {
       const isActive = button.getAttribute('data-rank-tab') === activeTab;
       button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
     panels.forEach((panel) => {
       panel.classList.toggle('hidden', panel.getAttribute('data-rank-panel') !== activeTab);
@@ -191,6 +329,7 @@ export async function initUserRanksAdmin(config) {
 
     if (activeTab === 'links') void loadLinks(rank.id);
     if (activeTab === 'permissions') void loadPermissions(rank.id);
+    updateTopActionState();
   }
 
   function renderLinks(rankId, payload) {
@@ -201,7 +340,9 @@ export async function initUserRanksAdmin(config) {
 
     groupSelect.innerHTML = ['<option value="">Select user group...</option>']
       .concat(
-        availableGroups.map((group) => `<option value="${escapeHtml(group.key)}">${escapeHtml(group.label)} (${escapeHtml(group.key)})</option>`)
+        availableGroups.map(
+          (group) => `<option value="${escapeHtml(group.key)}">${escapeHtml(group.label)} (${escapeHtml(group.key)})</option>`
+        )
       )
       .join('');
 
@@ -213,7 +354,7 @@ export async function initUserRanksAdmin(config) {
           <thead>
             <tr>
               <th>Role Name</th>
-              <th>Discord Role ID</th>
+              <th>Role ID</th>
               <th></th>
             </tr>
           </thead>
@@ -223,7 +364,7 @@ export async function initUserRanksAdmin(config) {
                 (link) => `
                   <tr>
                     <td>${escapeHtml(link.discord_role_name || '—')}</td>
-                    <td>${escapeHtml(link.discord_role_id)}</td>
+                    <td><code>${escapeHtml(link.discord_role_id)}</code></td>
                     <td class="align-right">
                       <button class="btn btn-secondary btn-compact" type="button" data-remove-discord-link="${escapeHtml(link.discord_role_id)}">Remove</button>
                     </td>
@@ -242,16 +383,16 @@ export async function initUserRanksAdmin(config) {
             linksCache.set(Number(rankId), nextPayload);
             await refreshRanks();
             renderLinks(rankId, nextPayload);
-            showMessage(feedback, 'Discord role link removed.', 'success');
+            setFeedback('Discord role link removed.', 'success');
           } catch (error) {
-            showMessage(feedback, error.message || 'Unable to remove Discord role link.', 'error');
+            setFeedback(error.message || 'Unable to remove Discord role link.', 'error', { autoClear: false });
           }
         });
       });
     }
 
     if (!groupLinks.length) {
-      linksGroupList.innerHTML = '<p class="rank-link-empty">No user group links configured.</p>';
+      linksGroupList.innerHTML = '<p class="rank-link-empty">No website group links configured.</p>';
     } else {
       linksGroupList.innerHTML = `
         <table class="rank-link-table">
@@ -285,9 +426,9 @@ export async function initUserRanksAdmin(config) {
             linksCache.set(Number(rankId), nextPayload);
             await refreshRanks();
             renderLinks(rankId, nextPayload);
-            showMessage(feedback, 'User group link removed.', 'success');
+            setFeedback('Website group link removed.', 'success');
           } catch (error) {
-            showMessage(feedback, error.message || 'Unable to remove user group link.', 'error');
+            setFeedback(error.message || 'Unable to remove website group link.', 'error', { autoClear: false });
           }
         });
       });
@@ -306,7 +447,7 @@ export async function initUserRanksAdmin(config) {
       linksCache.set(key, payload);
       renderLinks(rankId, payload);
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to load rank links.', 'error');
+      setFeedback(error.message || 'Unable to load rank links.', 'error', { autoClear: false });
     }
   }
 
@@ -332,8 +473,8 @@ export async function initUserRanksAdmin(config) {
             <div class="modal-header">
               <h4>${escapeHtml(groupLabel)} <small>(${enabledCount} enabled)</small></h4>
               <div class="modal-actions">
-                <button class="btn btn-secondary btn-compact" type="button" data-select-group="${escapeHtml(groupLabel)}">Select all</button>
-                <button class="btn btn-secondary btn-compact" type="button" data-clear-group="${escapeHtml(groupLabel)}">Select none</button>
+                <button class="btn btn-secondary btn-compact" type="button" data-select-group="${escapeHtml(groupLabel)}">All</button>
+                <button class="btn btn-secondary btn-compact" type="button" data-clear-group="${escapeHtml(groupLabel)}">None</button>
               </div>
             </div>
             <div class="permissions-list">
@@ -362,6 +503,7 @@ export async function initUserRanksAdmin(config) {
         section?.querySelectorAll('[data-rank-permission-key]').forEach((input) => {
           input.checked = true;
         });
+        syncPermissionsDirtyState();
       });
     });
     permissionsEditor.querySelectorAll('[data-clear-group]').forEach((button) => {
@@ -370,8 +512,14 @@ export async function initUserRanksAdmin(config) {
         section?.querySelectorAll('[data-rank-permission-key]').forEach((input) => {
           input.checked = false;
         });
+        syncPermissionsDirtyState();
       });
     });
+    permissionsEditor.querySelectorAll('[data-rank-permission-key]').forEach((input) => {
+      input.addEventListener('change', syncPermissionsDirtyState);
+    });
+
+    syncPermissionsDirtyState();
   }
 
   async function loadPermissions(rankId, force = false) {
@@ -386,19 +534,87 @@ export async function initUserRanksAdmin(config) {
       permissionsCache.set(key, payload);
       renderPermissions(rankId, payload);
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to load rank permissions.', 'error');
+      setFeedback(error.message || 'Unable to load rank permissions.', 'error', { autoClear: false });
     }
   }
 
   async function refreshRanks() {
     const payload = await listUserRanks();
-    ranks = payload?.ranks || [];
+    ranks = (payload?.ranks || []).slice().sort((a, b) => {
+      const levelDiff = Number(b.level || 0) - Number(a.level || 0);
+      if (levelDiff !== 0) return levelDiff;
+      return text(a.value).localeCompare(text(b.value));
+    });
     if (!ranks.some((rank) => Number(rank.id) === Number(selectedRankId))) {
       selectedRankId = ranks[0]?.id || null;
       activeTab = 'overview';
     }
     renderRankList();
     renderEditorShell();
+  }
+
+  function resetOverviewToSnapshot() {
+    if (!overviewSnapshot) return;
+    form.querySelector('[name="value"]').value = overviewSnapshot.value || '';
+    form.querySelector('[name="level"]').value = String(Number(overviewSnapshot.level || 0));
+    form.querySelector('[name="description"]').value = overviewSnapshot.description || '';
+    overviewDirty = false;
+    updateTopActionState();
+  }
+
+  function resetPermissionsToCache() {
+    const rank = selectedRank();
+    if (!rank) return;
+    const payload = permissionsCache.get(Number(rank.id));
+    if (!payload) return;
+    renderPermissions(rank.id, payload);
+    permissionsDirty = false;
+    updateTopActionState();
+  }
+
+  async function duplicateSelectedRank() {
+    const rank = selectedRank();
+    if (!rank) return;
+
+    try {
+      const createPayload = await createUserRank({
+        value: `${text(rank.value)} Copy`,
+        level: Number(rank.level || 0),
+        description: text(rank.description)
+      });
+      const newRankId = Number(createPayload?.createdId || 0);
+      if (Number.isInteger(newRankId) && newRankId > 0) {
+        const currentPermissionsPayload =
+          permissionsCache.get(Number(rank.id)) || (await getUserRankPermissions(rank.id).catch(() => ({ assignedPermissionKeys: [] })));
+        const permissionKeys = currentPermissionsPayload?.assignedPermissionKeys || [];
+        if (permissionKeys.length) {
+          await saveUserRankPermissions(newRankId, permissionKeys);
+        }
+
+        const linksPayload = linksCache.get(Number(rank.id)) || (await getUserRankLinks(rank.id).catch(() => ({ discordLinks: [], groupLinks: [] })));
+        const discordLinks = linksPayload?.discordLinks || [];
+        const groupLinks = linksPayload?.groupLinks || [];
+        for (const link of discordLinks) {
+          await addUserRankDiscordRoleLink(newRankId, {
+            discordRoleId: text(link.discord_role_id),
+            discordRoleName: text(link.discord_role_name)
+          });
+        }
+        for (const link of groupLinks) {
+          await addUserRankGroupLink(newRankId, text(link.group_key));
+        }
+      }
+
+      linksCache = new Map();
+      permissionsCache = new Map();
+      await refreshRanks();
+      if (newRankId > 0) selectedRankId = newRankId;
+      renderRankList();
+      renderEditorShell();
+      setFeedback('Rank duplicated.', 'success');
+    } catch (error) {
+      setFeedback(error.message || 'Unable to duplicate rank.', 'error', { autoClear: false });
+    }
   }
 
   openCreateRankBtn?.addEventListener('click', () => openModal('createUserRankModal'));
@@ -419,6 +635,51 @@ export async function initUserRanksAdmin(config) {
       activeTab = text(button.getAttribute('data-rank-tab')).toLowerCase() || 'overview';
       renderEditorShell();
     });
+  });
+
+  menuButton?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    setMenuOpen(menuPanel?.classList.contains('hidden'));
+  });
+  document.addEventListener('click', (event) => {
+    if (!menuPanel || menuPanel.classList.contains('hidden')) return;
+    if (menuPanel.contains(event.target) || menuButton?.contains(event.target)) return;
+    setMenuOpen(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setMenuOpen(false);
+  });
+
+  duplicateButton?.addEventListener('click', async () => {
+    setMenuOpen(false);
+    await duplicateSelectedRank();
+  });
+
+  saveTopButton.addEventListener('click', () => {
+    if (activeTab === 'overview') {
+      form.requestSubmit();
+      return;
+    }
+    if (activeTab === 'permissions') {
+      savePermissionsButton?.click();
+      return;
+    }
+    setFeedback('Links are saved immediately when added or removed.', 'success');
+  });
+
+  revertButton.addEventListener('click', () => {
+    if (activeTab === 'overview') {
+      resetOverviewToSnapshot();
+      return;
+    }
+    if (activeTab === 'permissions') {
+      resetPermissionsToCache();
+    }
+  });
+
+  form.querySelectorAll('input, textarea, select').forEach((input) => {
+    input.addEventListener('input', syncOverviewDirtyState);
+    input.addEventListener('change', syncOverviewDirtyState);
   });
 
   createForm.addEventListener('submit', async (event) => {
@@ -451,9 +712,9 @@ export async function initUserRanksAdmin(config) {
         }
       }
 
-      showMessage(feedback, 'User rank created.', 'success');
+      setFeedback('User rank created.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to create user rank.', 'error');
+      setFeedback(error.message || 'Unable to create user rank.', 'error', { autoClear: false });
     }
   });
 
@@ -471,10 +732,11 @@ export async function initUserRanksAdmin(config) {
       });
       linksCache.delete(Number(rank.id));
       permissionsCache.delete(Number(rank.id));
+      overviewDirty = false;
       await refreshRanks();
-      showMessage(feedback, 'Rank overview updated.', 'success');
+      setFeedback('Rank saved.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to update rank.', 'error');
+      setFeedback(error.message || 'Unable to update rank.', 'error', { autoClear: false });
     }
   });
 
@@ -486,10 +748,11 @@ export async function initUserRanksAdmin(config) {
       await deleteUserRank(rank.id);
       linksCache.delete(Number(rank.id));
       permissionsCache.delete(Number(rank.id));
+      selectedRankId = null;
       await refreshRanks();
-      showMessage(feedback, 'Rank deleted.', 'success');
+      setFeedback('Rank deleted.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to delete rank.', 'error');
+      setFeedback(error.message || 'Unable to delete rank.', 'error', { autoClear: false });
     }
   });
 
@@ -500,15 +763,19 @@ export async function initUserRanksAdmin(config) {
     const data = new FormData(discordLinkForm);
     const discordRoleId = text(data.get('discordRoleId'));
     const discordRoleName = text(data.get('discordRoleName'));
+    if (!/^\d{17,20}$/.test(discordRoleId)) {
+      setFeedback('Discord Role ID must be numeric and 17-20 digits.', 'error', { autoClear: false });
+      return;
+    }
     try {
       const payload = await addUserRankDiscordRoleLink(rank.id, { discordRoleId, discordRoleName });
       linksCache.set(Number(rank.id), payload);
       discordLinkForm.reset();
       await refreshRanks();
       renderLinks(rank.id, payload);
-      showMessage(feedback, 'Discord role link added.', 'success');
+      setFeedback('Discord role link added.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to add Discord role link.', 'error');
+      setFeedback(error.message || 'Unable to add Discord role link.', 'error', { autoClear: false });
     }
   });
 
@@ -519,7 +786,7 @@ export async function initUserRanksAdmin(config) {
     const data = new FormData(groupLinkForm);
     const groupKey = text(data.get('groupKey'));
     if (!groupKey) {
-      showMessage(feedback, 'Select a user group.', 'error');
+      setFeedback('Select a user group.', 'error', { autoClear: false });
       return;
     }
     try {
@@ -527,9 +794,9 @@ export async function initUserRanksAdmin(config) {
       linksCache.set(Number(rank.id), payload);
       await refreshRanks();
       renderLinks(rank.id, payload);
-      showMessage(feedback, 'User group link added.', 'success');
+      setFeedback('Website group link added.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to add user group link.', 'error');
+      setFeedback(error.message || 'Unable to add website group link.', 'error', { autoClear: false });
     }
   });
 
@@ -544,17 +811,17 @@ export async function initUserRanksAdmin(config) {
   savePermissionsButton?.addEventListener('click', async () => {
     const rank = selectedRank();
     if (!rank) return;
-    const permissionKeys = [...permissionsEditor.querySelectorAll('[data-rank-permission-key]:checked')]
-      .map((node) => text(node.getAttribute('data-rank-permission-key')))
-      .filter(Boolean);
+    const permissionKeys = collectCheckedPermissionKeys();
     try {
       await saveUserRankPermissions(rank.id, permissionKeys);
       permissionsCache.delete(Number(rank.id));
       await refreshRanks();
       await loadPermissions(rank.id, true);
-      showMessage(feedback, 'Rank permissions updated.', 'success');
+      permissionsDirty = false;
+      updateTopActionState();
+      setFeedback('Rank permissions updated.', 'success');
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to update rank permissions.', 'error');
+      setFeedback(error.message || 'Unable to update rank permissions.', 'error', { autoClear: false });
     }
   });
 
@@ -562,6 +829,6 @@ export async function initUserRanksAdmin(config) {
     await refreshRanks();
     clearMessage(feedback);
   } catch (error) {
-    showMessage(feedback, error.message || 'Unable to initialize user ranks.', 'error');
+    setFeedback(error.message || 'Unable to initialize user ranks.', 'error', { autoClear: false });
   }
 }
