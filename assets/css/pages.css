@@ -696,6 +696,11 @@
   gap: 0.6rem;
 }
 
+.admin-employee-drawer-tab.hidden,
+.admin-employee-drawer-tab[aria-hidden='true'] {
+  display: none !important;
+}
+
 .admin-employee-drawer-tab textarea {
   margin-bottom: 0;
 }

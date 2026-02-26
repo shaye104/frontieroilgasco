@@ -582,6 +582,7 @@ export async function initManageEmployees(config) {
     showSystemNotes: false,
     drawerOverviewEditMode: false,
     drawerOverviewDraft: null,
+    drawerPayload: null,
     configOptions: {
       ranks: [],
       grades: [],
@@ -699,22 +700,76 @@ export async function initManageEmployees(config) {
     const allowedTabs = new Set(['overview', 'voyages', 'activity', 'notes', 'disciplinary']);
     const activeTab = allowedTabs.has(tab) ? tab : 'overview';
     state.drawerTab = activeTab;
+    const setPanelVisibility = (panel, isActive) => {
+      if (!panel) return;
+      panel.classList.toggle('hidden', !isActive);
+      panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+      if (isActive) panel.style.removeProperty('display');
+      else panel.style.display = 'none';
+    };
     drawer?.querySelectorAll('[data-drawer-tab], [data-employee-tab]').forEach((btn) => {
       const tabKey = String(btn.getAttribute('data-drawer-tab') || btn.getAttribute('data-employee-tab') || '');
       const isActive = tabKey === activeTab;
       btn.classList.toggle('is-active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
-    drawerOverview?.classList.toggle('hidden', activeTab !== 'overview');
-    drawerOverview?.setAttribute('aria-hidden', activeTab === 'overview' ? 'false' : 'true');
-    drawerVoyages?.classList.toggle('hidden', activeTab !== 'voyages');
-    drawerVoyages?.setAttribute('aria-hidden', activeTab === 'voyages' ? 'false' : 'true');
-    drawerActivity?.classList.toggle('hidden', activeTab !== 'activity');
-    drawerActivity?.setAttribute('aria-hidden', activeTab === 'activity' ? 'false' : 'true');
-    drawerNotes?.classList.toggle('hidden', activeTab !== 'notes');
-    drawerNotes?.setAttribute('aria-hidden', activeTab === 'notes' ? 'false' : 'true');
-    drawerDisciplinary?.classList.toggle('hidden', activeTab !== 'disciplinary');
-    drawerDisciplinary?.setAttribute('aria-hidden', activeTab === 'disciplinary' ? 'false' : 'true');
+    setPanelVisibility(drawerOverview, activeTab === 'overview');
+    setPanelVisibility(drawerVoyages, activeTab === 'voyages');
+    setPanelVisibility(drawerActivity, activeTab === 'activity');
+    setPanelVisibility(drawerNotes, activeTab === 'notes');
+    setPanelVisibility(drawerDisciplinary, activeTab === 'disciplinary');
+    if (state.drawerPayload && state.selectedEmployeeId) {
+      renderActiveDrawerTab(state.drawerPayload, state.selectedEmployeeId, {});
+    }
+  }
+
+  function renderActiveDrawerTab(payload, employeeId, options = {}) {
+    const activeTab = state.drawerTab || 'overview';
+
+    if (activeTab === 'overview') {
+      renderDrawerOverview(drawerOverview, payload, {
+        canEdit: Boolean(payload?.capabilities?.canActivate),
+        isEditing: state.drawerOverviewEditMode,
+        draft: state.drawerOverviewDraft,
+        configOptions: state.configOptions
+      });
+      return;
+    }
+
+    if (activeTab === 'voyages') {
+      renderDrawerVoyages(drawerVoyages, payload);
+      return;
+    }
+
+    if (activeTab === 'activity') {
+      renderDrawerActivity(drawerActivity, payload);
+      return;
+    }
+
+    if (activeTab === 'notes') {
+      renderDrawerNotes(
+        drawerNotes,
+        payload,
+        options.showSystem ?? state.showSystemNotes,
+        options.tab === 'notes' ? options.feedback : null,
+        employeeId,
+        refreshDrawerData,
+        (value) => {
+          state.showSystemNotes = Boolean(value);
+        }
+      );
+      return;
+    }
+
+    if (activeTab === 'disciplinary') {
+      renderDrawerDisciplinary(
+        drawerDisciplinary,
+        payload,
+        options.tab === 'disciplinary' ? options.feedback : null,
+        employeeId,
+        refreshDrawerData
+      );
+    }
   }
 
   async function refreshDrawerData(employeeId, options = {}) {
@@ -746,33 +801,9 @@ export async function initManageEmployees(config) {
       };
     }
 
-    renderDrawerOverview(drawerOverview, payload, {
-      canEdit: Boolean(payload?.capabilities?.canActivate),
-      isEditing: state.drawerOverviewEditMode,
-      draft: state.drawerOverviewDraft,
-      configOptions: state.configOptions
-    });
-    renderDrawerVoyages(drawerVoyages, payload);
-    renderDrawerActivity(drawerActivity, payload);
-    renderDrawerNotes(
-      drawerNotes,
-      payload,
-      options.showSystem ?? state.showSystemNotes,
-      options.tab === 'notes' ? options.feedback : null,
-      employeeId,
-      refreshDrawerData,
-      (value) => {
-        state.showSystemNotes = Boolean(value);
-      }
-    );
-    renderDrawerDisciplinary(
-      drawerDisciplinary,
-      payload,
-      options.tab === 'disciplinary' ? options.feedback : null,
-      employeeId,
-      refreshDrawerData
-    );
+    state.drawerPayload = payload;
     if (options.tab) setDrawerTab(options.tab);
+    renderActiveDrawerTab(payload, employeeId, options);
     const overviewFeedback = drawerOverview?.querySelector('#drawerOverviewFeedback');
     const editBtn = drawerOverview?.querySelector('#drawerEditEmployeeBtn');
     editBtn?.addEventListener('click', () => {
@@ -908,6 +939,7 @@ export async function initManageEmployees(config) {
     state.selectedEmployeeId = employeeId;
     state.drawerOverviewEditMode = false;
     state.drawerOverviewDraft = null;
+    state.drawerPayload = null;
     state.showSystemNotes = false;
     drawer.classList.remove('hidden');
     drawer.setAttribute('aria-hidden', 'false');

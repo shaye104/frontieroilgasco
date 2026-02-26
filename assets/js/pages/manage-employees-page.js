@@ -9,7 +9,7 @@ initIntranetPageGuard({
 }).then((session) => {
   if (!session) return;
 
-  import('../modules/manage-employees.js?v=20260227b').then(({ initManageEmployees }) =>
+  import('../modules/manage-employees.js?v=20260227c').then(({ initManageEmployees }) =>
     initManageEmployees(
     {
       feedbackSelector: '#manageEmployeesFeedback',
