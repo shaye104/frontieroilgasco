@@ -63,6 +63,9 @@ CREATE TABLE intranet_allowed_roles (
 CREATE TABLE employees (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   discord_user_id TEXT NOT NULL UNIQUE,
+  discord_display_name TEXT,
+  discord_username TEXT,
+  discord_avatar_url TEXT,
   roblox_username TEXT,
   roblox_user_id TEXT,
   rank TEXT,
@@ -70,9 +73,13 @@ CREATE TABLE employees (
   serial_number TEXT,
   employee_status TEXT,
   user_status TEXT NOT NULL DEFAULT 'ACTIVE_STAFF',
+  activation_status TEXT NOT NULL DEFAULT 'PENDING' CHECK (activation_status IN ('PENDING','ACTIVE','REJECTED','DISABLED')),
+  activated_at TEXT,
+  activated_by_employee_id INTEGER,
   hire_date TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(activated_by_employee_id) REFERENCES employees(id)
 );
 
 CREATE TABLE disciplinary_records (
@@ -146,6 +153,7 @@ CREATE TABLE app_roles (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   role_key TEXT UNIQUE,
   name TEXT NOT NULL UNIQUE,
+  discord_role_id TEXT,
   description TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
   is_system INTEGER NOT NULL DEFAULT 0,
@@ -371,6 +379,7 @@ CREATE TABLE admin_activity_events (
 
 CREATE INDEX idx_employees_status ON employees(employee_status);
 CREATE INDEX idx_employees_user_status ON employees(user_status);
+CREATE INDEX idx_employees_activation_status ON employees(activation_status);
 CREATE INDEX idx_employees_rank ON employees(rank);
 CREATE INDEX idx_employees_grade ON employees(grade);
 CREATE INDEX idx_employees_serial ON employees(serial_number);
@@ -395,6 +404,9 @@ CREATE INDEX idx_admin_activity_created_at ON admin_activity_events(created_at D
 CREATE INDEX idx_admin_activity_action_type ON admin_activity_events(action_type);
 CREATE INDEX idx_admin_activity_target_employee ON admin_activity_events(target_employee_id);
 CREATE INDEX idx_admin_activity_actor_employee ON admin_activity_events(actor_employee_id);
+CREATE UNIQUE INDEX ux_app_roles_discord_role_id
+  ON app_roles(discord_role_id)
+  WHERE discord_role_id IS NOT NULL AND TRIM(discord_role_id) != '';
 
 INSERT OR IGNORE INTO finance_cash_settings (id, starting_balance, updated_at) VALUES (1, 0, CURRENT_TIMESTAMP);
 

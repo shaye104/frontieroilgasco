@@ -1,4 +1,4 @@
-import { addDisciplinary, addEmployeeNote, createEmployee, getConfig, getEmployeeDrawer, listEmployees } from './admin-api.js';
+import { activateEmployee, addDisciplinary, addEmployeeNote, createEmployee, getConfig, getEmployeeDrawer, listEmployees } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
 
 const VISIBLE_COLUMNS_STORAGE_KEY = 'manageEmployees_visibleColumns';
@@ -55,7 +55,7 @@ function closeModal(id) {
   modal.setAttribute('aria-hidden', 'true');
 }
 
-const DEFAULT_VISIBLE_COLUMNS = ['roblox_username', 'roblox_user_id', 'rank', 'grade', 'serial_number', 'employee_status', 'hire_date'];
+const DEFAULT_VISIBLE_COLUMNS = ['roblox_username', 'roblox_user_id', 'rank', 'grade', 'serial_number', 'employee_status', 'activation_status', 'hire_date'];
 const COLUMN_LABELS = {
   roblox_username: 'Roblox Username',
   roblox_user_id: 'Roblox User ID',
@@ -63,6 +63,7 @@ const COLUMN_LABELS = {
   grade: 'Grade',
   serial_number: 'Serial',
   employee_status: 'Status',
+  activation_status: 'Activation',
   hire_date: 'Hire Date'
 };
 
@@ -97,8 +98,17 @@ function employeeRowSkeleton() {
     <td><span class="skeleton-line skeleton-w-45"></span></td>
     <td><span class="skeleton-line skeleton-w-60"></span></td>
     <td><span class="skeleton-line skeleton-w-55"></span></td>
+    <td><span class="skeleton-line skeleton-w-55"></span></td>
     <td><span class="skeleton-line skeleton-w-60"></span></td>
   </tr>`;
+}
+
+function activationClass(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (normalized === 'active') return 'is-active';
+  if (normalized === 'pending') return 'is-inactive';
+  if (normalized === 'disabled' || normalized === 'rejected') return 'is-suspended';
+  return '';
 }
 
 function renderStatCards(payload) {
@@ -136,7 +146,7 @@ function renderSortHeaders(sortBy, sortDir) {
 function renderTable(target, employees, visibleColumns) {
   if (!target) return;
   if (!employees.length) {
-    target.innerHTML = '<tr><td colspan="8">No employees found for the selected filters.</td></tr>';
+    target.innerHTML = '<tr><td colspan="9">No employees found for the selected filters.</td></tr>';
     return;
   }
 
@@ -151,6 +161,9 @@ function renderTable(target, employees, visibleColumns) {
         <td data-col="grade">${escapeHtml(text(emp.grade))}</td>
         <td data-col="serial_number">${escapeHtml(text(emp.serial_number))}</td>
         <td data-col="employee_status"><span class="badge badge-status ${statusClass(emp.employee_status)}">${escapeHtml(text(emp.employee_status))}</span></td>
+        <td data-col="activation_status"><span class="badge badge-status ${activationClass(emp.activation_status)}">${escapeHtml(
+          text(emp.activation_status || 'PENDING')
+        )}</span></td>
         <td data-col="hire_date">${escapeHtml(formatDate(emp.hire_date))}</td>
       </tr>`
     )
@@ -173,9 +186,17 @@ function renderDrawerOverview(target, payload) {
       <dt>Grade</dt><dd>${escapeHtml(text(employee.grade))}</dd>
       <dt>Serial</dt><dd>${escapeHtml(text(employee.serial_number))}</dd>
       <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(text(employee.employee_status))}</span></dd>
+      <dt>Activation</dt><dd><span class="badge badge-status ${activationClass(employee.activation_status)}">${escapeHtml(
+        text(employee.activation_status || 'PENDING')
+      )}</span></dd>
       <dt>Hire Date</dt><dd>${escapeHtml(formatDate(employee.hire_date))}</dd>
       <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at, true))}</dd>
     </div>
+    ${
+      String(employee.activation_status || '').trim().toUpperCase() === 'PENDING' && payload?.capabilities?.canActivate
+        ? '<div class="button-row"><button id="drawerActivateEmployeeBtn" class="btn btn-primary" type="button">Activate</button></div>'
+        : ''
+    }
   `;
 }
 
@@ -420,6 +441,7 @@ export async function initManageEmployees(config) {
   const filterRank = document.querySelector(config.filterRankSelector);
   const filterGrade = document.querySelector(config.filterGradeSelector);
   const filterStatus = document.querySelector(config.filterStatusSelector);
+  const filterActivation = document.querySelector(config.filterActivationSelector);
   const filterHireDateFrom = document.querySelector(config.filterHireDateFromSelector);
   const filterHireDateTo = document.querySelector(config.filterHireDateToSelector);
   const clearFiltersBtn = document.querySelector(config.clearFiltersBtnSelector);
@@ -518,6 +540,7 @@ export async function initManageEmployees(config) {
       rank: filterRank?.value || '',
       grade: filterGrade?.value || '',
       status: filterStatus?.value || '',
+      activationStatus: filterActivation?.value || '',
       hireFrom: filterHireDateFrom?.value || '',
       hireTo: filterHireDateTo?.value || '',
       page: state.page,
@@ -547,7 +570,7 @@ export async function initManageEmployees(config) {
       clearMessage(feedback);
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to load employees.', 'error');
-      tableBody.innerHTML = '<tr><td colspan="8">Unable to load employees.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="9">Unable to load employees.</td></tr>';
     }
   }
 
@@ -615,6 +638,18 @@ export async function initManageEmployees(config) {
       refreshDrawerData
     );
     if (options.tab) setDrawerTab(options.tab);
+    const activateBtn = drawerOverview?.querySelector('#drawerActivateEmployeeBtn');
+    activateBtn?.addEventListener('click', async () => {
+      try {
+        await activateEmployee(employeeId);
+        drawerCache.delete(employeeId);
+        await loadEmployees();
+        await refreshDrawerData(employeeId, { force: true, tab: 'overview' });
+        showMessage(feedback, 'Employee activated.', 'success');
+      } catch (error) {
+        showMessage(feedback, error.message || 'Unable to activate employee.', 'error');
+      }
+    });
   }
 
   async function openDrawer(employeeId) {
@@ -671,13 +706,13 @@ export async function initManageEmployees(config) {
     }, 360);
   };
 
-  [filterQuery, filterRank, filterGrade, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {
+  [filterQuery, filterRank, filterGrade, filterStatus, filterActivation, filterHireDateFrom, filterHireDateTo].forEach((input) => {
     input?.addEventListener('input', scheduleReload);
     input?.addEventListener('change', scheduleReload);
   });
 
   clearFiltersBtn?.addEventListener('click', () => {
-    [filterQuery, filterRank, filterGrade, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {
+    [filterQuery, filterRank, filterGrade, filterStatus, filterActivation, filterHireDateFrom, filterHireDateTo].forEach((input) => {
       if (!input) return;
       input.value = '';
     });
@@ -738,6 +773,7 @@ export async function initManageEmployees(config) {
         grade: String(data.get('grade') || '').trim(),
         serialNumber: String(data.get('serialNumber') || '').trim(),
         employeeStatus: String(data.get('employeeStatus') || '').trim(),
+        activationStatus: String(data.get('activationStatus') || '').trim(),
         hireDate: String(data.get('hireDate') || '').trim()
       });
       createForm.reset();

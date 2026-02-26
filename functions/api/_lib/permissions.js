@@ -158,12 +158,22 @@ async function getMappedRoleIdsByDiscordRoles(env, discordRoleIds) {
   if (!normalizedRoleIds.length) return [];
 
   const placeholders = normalizedRoleIds.map(() => '?').join(', ');
-  const result = await env.DB
-    .prepare(`SELECT role_id FROM auth_role_mappings WHERE discord_role_id IN (${placeholders})`)
-    .bind(...normalizedRoleIds)
-    .all();
+  const [mappingRows, directRoleRows] = await Promise.all([
+    env.DB
+      .prepare(`SELECT role_id FROM auth_role_mappings WHERE discord_role_id IN (${placeholders})`)
+      .bind(...normalizedRoleIds)
+      .all(),
+    env.DB
+      .prepare(`SELECT id FROM app_roles WHERE discord_role_id IN (${placeholders})`)
+      .bind(...normalizedRoleIds)
+      .all()
+  ]);
 
-  return [...new Set((result?.results || []).map((row) => Number(row.role_id)).filter((value) => Number.isInteger(value) && value > 0))];
+  const roleIds = [
+    ...(mappingRows?.results || []).map((row) => Number(row.role_id)),
+    ...(directRoleRows?.results || []).map((row) => Number(row.id))
+  ];
+  return [...new Set(roleIds.filter((value) => Number.isInteger(value) && value > 0))];
 }
 
 async function getAssignedRoleIdsByEmployeeId(env, employeeId) {

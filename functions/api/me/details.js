@@ -50,6 +50,18 @@ export async function onRequestGet(context) {
     });
   }
 
+  const activationStatus = String(employee.activation_status || '').trim().toUpperCase() || 'PENDING';
+  if (!session.isAdmin && activationStatus !== 'ACTIVE') {
+    return json(
+      {
+        error: 'Account pending activation.',
+        activationStatus,
+        accessPending: true
+      },
+      403
+    );
+  }
+
   const disciplinaryQuery = await env.DB.prepare(
     `SELECT id, record_type, record_date, record_status, notes, issued_by, created_at
      FROM disciplinary_records

@@ -13,10 +13,18 @@ function toInt(value) {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+function normalizeDiscordRoleId(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  if (!/^\d{17,20}$/.test(raw)) return null;
+  return raw;
+}
+
 async function getRolesWithPermissions(env) {
   const rolesResult = await env.DB
     .prepare(
       `SELECT id, role_key, name, description, sort_order, is_system, created_at, updated_at
+       ,discord_role_id
        FROM app_roles
        ORDER BY sort_order ASC, id ASC`
     )
@@ -133,18 +141,28 @@ export async function onRequestPost(context) {
 
   const name = String(payload?.name || '').trim();
   const description = String(payload?.description || '').trim();
+  const discordRoleIdRaw = String(payload?.discordRoleId || '').trim();
+  const discordRoleId = normalizeDiscordRoleId(discordRoleIdRaw);
   if (!name) return json({ error: 'Role name is required.' }, 400);
+  if (discordRoleIdRaw && !discordRoleId) return json({ error: 'Discord Role ID must be 17-20 digits.' }, 400);
 
   const orderRow = await env.DB.prepare('SELECT COALESCE(MAX(sort_order), 0) AS max_sort FROM app_roles').first();
   const nextSort = Number(orderRow?.max_sort || 0) + 1;
 
   await env.DB
     .prepare(
-      `INSERT INTO app_roles (name, description, sort_order, is_system, updated_at)
-       VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)`
+      `INSERT INTO app_roles (name, description, discord_role_id, sort_order, is_system, updated_at)
+       VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`
     )
-    .bind(name, description, nextSort)
+    .bind(name, description, discordRoleId, nextSort)
     .run();
+  if (discordRoleId) {
+    const createdRole = await env.DB.prepare('SELECT id FROM app_roles WHERE name = ?').bind(name).first();
+    const createdRoleId = Number(createdRole?.id || 0);
+    if (createdRoleId > 0) {
+      await env.DB.prepare('INSERT OR IGNORE INTO auth_role_mappings (discord_role_id, role_id) VALUES (?, ?)').bind(discordRoleId, createdRoleId).run();
+    }
+  }
 
   const roles = await getRolesWithPermissions(env);
   return json({ roles }, 201);
@@ -170,7 +188,10 @@ export async function onRequestPut(context) {
 
   const name = String(payload?.name || '').trim();
   const description = String(payload?.description || '').trim();
+  const discordRoleIdRaw = String(payload?.discordRoleId || '').trim();
+  const discordRoleId = normalizeDiscordRoleId(discordRoleIdRaw);
   if (!name) return json({ error: 'Role name is required.' }, 400);
+  if (discordRoleIdRaw && !discordRoleId) return json({ error: 'Discord Role ID must be 17-20 digits.' }, 400);
 
   const permissionKeys = normalizePermissionKeys(payload?.permissionKeys);
   const includesManage =
@@ -217,11 +238,15 @@ export async function onRequestPut(context) {
     env.DB
       .prepare(
         `UPDATE app_roles
-         SET name = ?, description = ?, updated_at = CURRENT_TIMESTAMP
+         SET name = ?, description = ?, discord_role_id = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`
       )
-      .bind(name, description, roleId),
+      .bind(name, description, discordRoleId, roleId),
     env.DB.prepare('DELETE FROM app_role_permissions WHERE role_id = ?').bind(roleId),
+    env.DB.prepare('DELETE FROM auth_role_mappings WHERE role_id = ?').bind(roleId),
+    ...(discordRoleId
+      ? [env.DB.prepare('INSERT OR IGNORE INTO auth_role_mappings (discord_role_id, role_id) VALUES (?, ?)').bind(discordRoleId, roleId)]
+      : []),
     ...permissionKeys.map((permissionKey) =>
       env.DB.prepare('INSERT INTO app_role_permissions (role_id, permission_key) VALUES (?, ?)').bind(roleId, permissionKey)
     )

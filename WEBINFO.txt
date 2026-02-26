@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-26T20:45:02.646Z
+Generated: 2026-02-26T21:09:11.739Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -16,6 +16,7 @@ SITE STRUCTURE
 - login.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
+- onboarding.html | title: Frontier Oil & Gas Company | Onboarding | primary heading: Complete your Roblox Profile
 - roles.html | title: Frontier Oil & Gas Company | User Groups | primary heading: User Groups
 - user-ranks.html | title: Frontier Oil & Gas Company | User Ranks | primary heading: User Ranks
 - voyage-archive.html | title: Frontier Oil & Gas Company | Archived Voyages | primary heading: Archived Voyages
@@ -24,7 +25,7 @@ SITE STRUCTURE
 
 JAVASCRIPT MODULES
 - assets/js/modules/activity-tracker.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: addDisciplinary, addEmployeeNote, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMyDetails, getRankPermissions, getSession, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, reorderAdminRole, saveRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus
+- assets/js/modules/admin-api.js | exports: activateEmployee, addDisciplinary, addEmployeeNote, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMyDetails, getOnboardingMe, getRankPermissions, getSession, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, reorderAdminRole, saveRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitOnboardingRobloxProfile, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus
 - assets/js/modules/app-mode.js | exports: isCoreAllowedPagePath, isCoreOnlyMode, normalizeAppMode
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/finances.js | exports: No public exports
@@ -50,6 +51,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/intranet-page.js | exports: No public exports
 - assets/js/pages/manage-employees-page.js | exports: No public exports
 - assets/js/pages/my-details-page.js | exports: No public exports
+- assets/js/pages/onboarding-page.js | exports: No public exports
 - assets/js/pages/roles-page.js | exports: No public exports
 - assets/js/pages/user-ranks-page.js | exports: No public exports
 - assets/js/pages/voyage-archive-page.js | exports: No public exports

@@ -83,6 +83,17 @@ export function getSession() {
   return requestJson('/api/auth/session', { method: 'GET' });
 }
 
+export function getOnboardingMe() {
+  return requestJson('/api/onboarding/me', { method: 'GET' });
+}
+
+export function submitOnboardingRobloxProfile(payload) {
+  return requestJson('/api/onboarding/roblox-profile', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
 export function getAdminRoles() {
   return requestJson('/api/admin/roles', { method: 'GET' });
 }
@@ -146,6 +157,7 @@ export function listEmployees(options = {}) {
   if (options.rank) params.set('rank', String(options.rank));
   if (options.grade) params.set('grade', String(options.grade));
   if (options.status) params.set('status', String(options.status));
+  if (options.activationStatus) params.set('activationStatus', String(options.activationStatus));
   if (options.hireFrom) params.set('hireFrom', String(options.hireFrom));
   if (options.hireTo) params.set('hireTo', String(options.hireTo));
   if (options.hireDateFrom) params.set('hireDateFrom', String(options.hireDateFrom));
@@ -187,6 +199,10 @@ export function updateEmployee(employeeId, employee) {
     method: 'PUT',
     body: JSON.stringify(employee)
   });
+}
+
+export function activateEmployee(employeeId) {
+  return requestJson(`/api/admin/employees/${employeeId}/activate`, { method: 'POST' });
 }
 
 export function addDisciplinary(employeeId, entry) {

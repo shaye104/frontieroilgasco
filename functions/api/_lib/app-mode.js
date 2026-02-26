@@ -22,7 +22,10 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/user-ranks',
   '/user-ranks.html',
   '/activity-tracker',
-  '/activity-tracker.html'
+  '/activity-tracker.html',
+  '/onboarding',
+  '/onboarding.html',
+  '/onboarding/status'
 ]);
 
 const CORE_ALLOWED_PAGE_PREFIXES = [
@@ -32,7 +35,8 @@ const CORE_ALLOWED_PAGE_PREFIXES = [
   '/admin/activity/',
   '/admin/user-groups/',
   '/admin/user-ranks/',
-  '/activity-tracker/'
+  '/activity-tracker/',
+  '/onboarding/'
 ];
 
 const CORE_ALLOWED_API_PREFIXES = [
@@ -40,6 +44,7 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/auth/logout',
   '/api/auth/discord/start',
   '/api/auth/discord/callback',
+  '/api/onboarding',
   '/api/me/details',
   '/api/voyages',
   '/api/voyage-config',

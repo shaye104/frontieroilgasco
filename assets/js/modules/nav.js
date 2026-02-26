@@ -67,12 +67,19 @@ export function renderIntranetNavbar(session) {
   if (!nav) return;
 
   nav.innerHTML = '';
+  const activationStatus = String(session?.activationStatus || '').trim().toUpperCase();
+  const isPendingActivation = !session?.isAdmin && activationStatus && activationStatus !== 'ACTIVE';
+  if (isPendingActivation) {
+    nav.append(buildNavLink('/onboarding', 'Onboarding'));
+  }
   const navItems = INTRANET_NAV_ITEMS;
-  navItems.forEach((item) => {
-    if (!canRenderNavItem(session, item)) return;
-    const link = buildNavLink(item.href, item.label);
-    nav.append(link);
-  });
+  if (!isPendingActivation) {
+    navItems.forEach((item) => {
+      if (!canRenderNavItem(session, item)) return;
+      const link = buildNavLink(item.href, item.label);
+      nav.append(link);
+    });
+  }
 
   const spacer = document.createElement('span');
   spacer.className = 'nav-spacer';

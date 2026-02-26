@@ -13,6 +13,7 @@ function buildChangeEntries(previous, next) {
     { key: 'rank', label: 'Rank changed' },
     { key: 'grade', label: 'Grade changed' },
     { key: 'employee_status', label: 'Status changed' },
+    { key: 'activation_status', label: 'Activation changed' },
     { key: 'serial_number', label: 'Serial Number changed' },
     { key: 'hire_date', label: 'Hire Date changed' }
   ];
@@ -168,6 +169,7 @@ export async function onRequestPut(context) {
          grade = ?,
          serial_number = ?,
          employee_status = ?,
+         activation_status = ?,
          hire_date = ?,
          updated_at = CURRENT_TIMESTAMP
      WHERE id = ?`
@@ -179,6 +181,7 @@ export async function onRequestPut(context) {
       String(payload?.grade || '').trim(),
       String(payload?.serialNumber || '').trim(),
       String(payload?.employeeStatus || '').trim(),
+      String(payload?.activationStatus || existing.activation_status || '').trim().toUpperCase() || 'PENDING',
       String(payload?.hireDate || '').trim(),
       employeeId
     )

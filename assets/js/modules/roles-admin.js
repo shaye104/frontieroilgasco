@@ -96,6 +96,7 @@ export async function initRolesAdmin(config) {
             <button class="btn btn-secondary role-row-main" type="button" data-select-role="${role.id}">
               <span>${text(role.name)}</span>
               <small>${text(role.description || '')}</small>
+              <small>${role.discord_role_id ? `Discord Role ID: ${text(role.discord_role_id)}` : 'Discord Role ID: —'}</small>
             </button>
             <div class="modal-actions">
               <button class="btn btn-secondary" type="button" data-role-move="${role.id}" data-direction="up" ${
@@ -164,6 +165,7 @@ export async function initRolesAdmin(config) {
     form.querySelector('[name="id"]').value = String(role.id);
     form.querySelector('[name="name"]').value = role.name || '';
     form.querySelector('[name="description"]').value = role.description || '';
+    form.querySelector('[name="discordRoleId"]').value = role.discord_role_id || '';
     renderPermissions(role);
   }
 
@@ -190,7 +192,8 @@ export async function initRolesAdmin(config) {
     try {
       const payload = await createAdminRole({
         name: text(data.get('name')),
-        description: text(data.get('description'))
+        description: text(data.get('description')),
+        discordRoleId: text(data.get('discordRoleId'))
       });
       roles = payload.roles || [];
       createRoleForm.reset();
@@ -216,6 +219,7 @@ export async function initRolesAdmin(config) {
         id: role.id,
         name: text(form.querySelector('[name="name"]').value),
         description: text(form.querySelector('[name="description"]').value),
+        discordRoleId: text(form.querySelector('[name="discordRoleId"]').value),
         permissionKeys
       });
       roles = payload.roles || [];
@@ -233,7 +237,8 @@ export async function initRolesAdmin(config) {
     try {
       const createPayload = await createAdminRole({
         name: `${role.name} Copy`,
-        description: role.description || ''
+        description: role.description || '',
+        discordRoleId: ''
       });
       roles = createPayload.roles || [];
       const cloned = roles.find((item) => item.name === `${role.name} Copy`) || roles[roles.length - 1];
@@ -242,6 +247,7 @@ export async function initRolesAdmin(config) {
           id: cloned.id,
           name: cloned.name,
           description: cloned.description || '',
+          discordRoleId: cloned.discord_role_id || '',
           permissionKeys: role.permissions || []
         });
       }

@@ -91,6 +91,12 @@ export async function requireFinancePermission(context, permissionKey) {
   if (!hasPermission(session, permissionKey)) {
     return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null };
   }
+  if (!session.isAdmin) {
+    const activationStatus = String(session?.employee?.activation_status || '').trim().toUpperCase();
+    if (!session.employee || activationStatus !== 'ACTIVE') {
+      return { errorResponse: json({ error: 'Account pending activation.' }, 403), session: null };
+    }
+  }
 
   return { errorResponse: null, session };
 }

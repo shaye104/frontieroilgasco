@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
   const [employee, recentVoyagesRows, activityRows, notesRows, disciplinariesRows] = await Promise.all([
     env.DB
       .prepare(
-        `SELECT id, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, hire_date, updated_at
+        `SELECT id, discord_user_id, discord_display_name, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, activation_status, activated_at, hire_date, updated_at
          FROM employees
          WHERE id = ?`
       )
@@ -145,7 +145,8 @@ export async function onRequestGet(context) {
     disciplinaries: disciplinariesRows?.results || [],
     capabilities: {
       canAddNotes: hasPermission(session, 'employees.notes'),
-      canAddDisciplinary: hasPermission(session, 'employees.discipline')
+      canAddDisciplinary: hasPermission(session, 'employees.discipline'),
+      canActivate: hasPermission(session, 'employees.edit')
     },
     timing: { dbMs, totalMs: Date.now() - startedAt }
   });

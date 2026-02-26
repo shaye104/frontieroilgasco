@@ -49,6 +49,9 @@ export async function ensureCoreSchema(env) {
     `CREATE TABLE IF NOT EXISTS employees (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       discord_user_id TEXT NOT NULL UNIQUE,
+      discord_display_name TEXT,
+      discord_username TEXT,
+      discord_avatar_url TEXT,
       roblox_username TEXT,
       roblox_user_id TEXT,
       rank TEXT,
@@ -56,9 +59,13 @@ export async function ensureCoreSchema(env) {
       serial_number TEXT,
       employee_status TEXT,
       user_status TEXT NOT NULL DEFAULT 'ACTIVE_STAFF',
+      activation_status TEXT NOT NULL DEFAULT 'PENDING' CHECK (activation_status IN ('PENDING','ACTIVE','REJECTED','DISABLED')),
+      activated_at TEXT,
+      activated_by_employee_id INTEGER,
       hire_date TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(activated_by_employee_id) REFERENCES employees(id)
     )`,
     `CREATE TABLE IF NOT EXISTS disciplinary_records (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,6 +130,7 @@ export async function ensureCoreSchema(env) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       role_key TEXT UNIQUE,
       name TEXT NOT NULL UNIQUE,
+      discord_role_id TEXT,
       description TEXT,
       sort_order INTEGER NOT NULL DEFAULT 0,
       is_system INTEGER NOT NULL DEFAULT 0,
@@ -336,6 +344,24 @@ export async function ensureCoreSchema(env) {
   if (!employeeColumnNames.has('user_status')) {
     await env.DB.prepare(`ALTER TABLE employees ADD COLUMN user_status TEXT NOT NULL DEFAULT 'ACTIVE_STAFF'`).run();
   }
+  if (!employeeColumnNames.has('discord_display_name')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN discord_display_name TEXT`).run();
+  }
+  if (!employeeColumnNames.has('discord_username')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN discord_username TEXT`).run();
+  }
+  if (!employeeColumnNames.has('discord_avatar_url')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN discord_avatar_url TEXT`).run();
+  }
+  if (!employeeColumnNames.has('activation_status')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN activation_status TEXT NOT NULL DEFAULT 'PENDING'`).run();
+  }
+  if (!employeeColumnNames.has('activated_at')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN activated_at TEXT`).run();
+  }
+  if (!employeeColumnNames.has('activated_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN activated_by_employee_id INTEGER`).run();
+  }
 
   const rankColumns = await env.DB.prepare(`PRAGMA table_info(config_ranks)`).all();
   const rankColumnNames = new Set((rankColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
@@ -365,6 +391,9 @@ export async function ensureCoreSchema(env) {
   const roleColumnNames = new Set((roleColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
   if (!roleColumnNames.has('role_key')) {
     await env.DB.prepare(`ALTER TABLE app_roles ADD COLUMN role_key TEXT`).run();
+  }
+  if (!roleColumnNames.has('discord_role_id')) {
+    await env.DB.prepare(`ALTER TABLE app_roles ADD COLUMN discord_role_id TEXT`).run();
   }
   if (!roleColumnNames.has('sort_order')) {
     await env.DB.prepare(`ALTER TABLE app_roles ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`).run();
@@ -408,6 +437,7 @@ export async function ensureCoreSchema(env) {
 
   const optionalIndexes = [
     `CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(employee_status)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_activation_status ON employees(activation_status)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_user_status ON employees(user_status)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_rank ON employees(rank)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_grade ON employees(grade)`,
@@ -525,6 +555,15 @@ export async function ensureCoreSchema(env) {
 
   await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
   await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();
+  await env.DB
+    .prepare(
+      `UPDATE employees
+       SET activation_status = CASE
+         WHEN UPPER(COALESCE(activation_status, '')) IN ('ACTIVE','PENDING','REJECTED','DISABLED') THEN UPPER(activation_status)
+         ELSE CASE WHEN id > 0 THEN 'ACTIVE' ELSE 'PENDING' END
+       END`
+    )
+    .run();
   await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
   await env.DB
     .prepare(
@@ -532,6 +571,18 @@ export async function ensureCoreSchema(env) {
        SET company_share_status = COALESCE(NULLIF(company_share_status, ''), 'UNSETTLED')`
     )
     .run();
+
+  try {
+    await env.DB
+      .prepare(
+        `CREATE UNIQUE INDEX IF NOT EXISTS ux_app_roles_discord_role_id
+         ON app_roles(discord_role_id)
+         WHERE discord_role_id IS NOT NULL AND TRIM(discord_role_id) != ''`
+      )
+      .run();
+  } catch {
+    // Keep bootstrap non-fatal.
+  }
 }
 
 export async function getEmployeeByDiscordUserId(env, discordUserId) {
@@ -569,6 +620,81 @@ export async function createOrRefreshAccessRequest(env, { discordUserId, display
       )
       .bind(displayName, normalized)
   ]);
+}
+
+export async function upsertPendingEmployeeFromDiscordRoles(
+  env,
+  { discordUserId, discordDisplayName, discordUsername, discordAvatarUrl, mappedRoleIds = [] }
+) {
+  await ensureCoreSchema(env);
+  const normalized = normalizeDiscordUserId(discordUserId);
+  if (!/^\d{6,30}$/.test(normalized)) return null;
+
+  const existing = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(normalized).first();
+  let wasCreated = false;
+  if (!existing) {
+    wasCreated = true;
+    await env.DB
+      .prepare(
+        `INSERT INTO employees
+         (discord_user_id, discord_display_name, discord_username, discord_avatar_url, activation_status, user_status, updated_at)
+         VALUES (?, ?, ?, ?, 'PENDING', 'APPLICANT_ACCEPTED', CURRENT_TIMESTAMP)`
+      )
+      .bind(
+        normalized,
+        String(discordDisplayName || '').trim() || null,
+        String(discordUsername || '').trim() || null,
+        String(discordAvatarUrl || '').trim() || null
+      )
+      .run();
+  } else {
+    await env.DB
+      .prepare(
+        `UPDATE employees
+         SET discord_display_name = COALESCE(?, discord_display_name),
+             discord_username = COALESCE(?, discord_username),
+             discord_avatar_url = COALESCE(?, discord_avatar_url),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE discord_user_id = ?`
+      )
+      .bind(
+        String(discordDisplayName || '').trim() || null,
+        String(discordUsername || '').trim() || null,
+        String(discordAvatarUrl || '').trim() || null,
+        normalized
+      )
+      .run();
+  }
+
+  const employee = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(normalized).first();
+  const employeeId = Number(employee?.id || 0);
+  if (employeeId > 0 && Array.isArray(mappedRoleIds) && mappedRoleIds.length) {
+    await env.DB.batch(
+      [...new Set(mappedRoleIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))].map((roleId) =>
+        env.DB.prepare('INSERT OR IGNORE INTO employee_role_assignments (employee_id, role_id) VALUES (?, ?)').bind(employeeId, roleId)
+      )
+    );
+  }
+
+  if (wasCreated && employeeId > 0) {
+    await env.DB
+      .prepare(`INSERT INTO employee_notes (employee_id, note, authored_by) VALUES (?, ?, ?)`)
+      .bind(employeeId, '[System] AUTO_EMPLOYEE_CREATED_FROM_DISCORD_ROLE: Account created and pending activation.', 'System')
+      .run();
+    await writeAdminActivityEvent(env, {
+      actorEmployeeId: null,
+      actorName: 'System',
+      actorDiscordUserId: '',
+      actionType: 'AUTO_EMPLOYEE_CREATED_FROM_DISCORD_ROLE',
+      targetEmployeeId: employeeId,
+      summary: 'Employee account auto-created from Discord role mapping.',
+      metadata: {
+        mappedRoleIds
+      }
+    });
+  }
+
+  return employee || null;
 }
 
 export function normalizeDiscordUserId(value) {

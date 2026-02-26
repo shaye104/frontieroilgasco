@@ -2,6 +2,10 @@
 /dashboard/ /my-details 302
 /intranet /login 302
 /intranet/ /login 302
+/onboarding /onboarding.html 200
+/onboarding/ /onboarding.html 200
+/onboarding/status /onboarding.html 200
+/onboarding/status/ /onboarding.html 200
 
 /voyages/my /voyage-tracker 200
 /voyages/my/ /voyage-tracker 200

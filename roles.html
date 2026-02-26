@@ -54,6 +54,8 @@
                 <input name="name" type="text" required />
                 <label>Description</label>
                 <textarea name="description" rows="3"></textarea>
+                <label>Discord Role ID (optional)</label>
+                <input name="discordRoleId" type="text" inputmode="numeric" placeholder="e.g. 123456789012345678" />
 
                 <h3>Permissions</h3>
                 <div id="permissionsEditor" class="permissions-grid"></div>
@@ -81,6 +83,8 @@
           <input name="name" type="text" required />
           <label>Description</label>
           <textarea name="description" rows="3"></textarea>
+          <label>Discord Role ID (optional)</label>
+          <input name="discordRoleId" type="text" inputmode="numeric" placeholder="e.g. 123456789012345678" />
           <div class="modal-actions">
             <button class="btn btn-primary" type="submit">Create Group</button>
             <button class="btn btn-secondary" type="button" data-close-modal="createRoleModal">Cancel</button>

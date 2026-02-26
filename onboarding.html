@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier onboarding profile setup." />
+    <title>Frontier Oil & Gas Company | Onboarding</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css" />
+    <link rel="stylesheet" href="/assets/css/base.css" />
+    <link rel="stylesheet" href="/assets/css/components.css" />
+    <link rel="stylesheet" href="/assets/css/pages.css" />
+  </head>
+  <body class="page page-intranet">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">FOG</span>
+          <span class="brand-text">Frontier Oil & Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section id="onboardingShell" class="panel hidden">
+          <div class="modal-header">
+            <div>
+              <h1>Complete your Roblox Profile</h1>
+              <p class="my-details-subtitle">Your account is pending activation. Submit your Roblox profile for review.</p>
+            </div>
+            <span id="onboardingStatusPill" class="badge badge-status is-inactive">PENDING</span>
+          </div>
+          <div id="onboardingFeedback" class="feedback" role="status" aria-live="polite"></div>
+
+          <article class="panel">
+            <h2>Discord Account</h2>
+            <p><strong>Display name:</strong> <span id="onboardingDiscordName">Unknown</span></p>
+            <p><strong>Discord user ID:</strong> <span id="onboardingDiscordId">Unknown</span></p>
+          </article>
+
+          <form id="onboardingForm" class="finance-cashflow-entry-form">
+            <div>
+              <label for="onboardingRobloxUserId">Roblox User ID</label>
+              <input id="onboardingRobloxUserId" name="robloxUserId" type="text" inputmode="numeric" required />
+            </div>
+            <div>
+              <label for="onboardingRobloxUsername">Roblox Username</label>
+              <input id="onboardingRobloxUsername" name="robloxUsername" type="text" required />
+            </div>
+            <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+              <button class="btn btn-primary" type="submit">Submit for Review</button>
+            </div>
+          </form>
+
+          <article id="onboardingWaitPanel" class="panel hidden">
+            <h2>Waiting for activation</h2>
+            <p class="finance-inline-caption">Your profile has been submitted. An employee manager must activate your account before you can access the site.</p>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="/assets/js/pages/onboarding-page.js?v=20260226d"></script>
+  </body>
+</html>

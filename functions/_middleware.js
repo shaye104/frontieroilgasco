@@ -1,4 +1,5 @@
 import { readSessionFromRequest } from './api/auth/_lib/auth.js';
+import { ensureCoreSchema, getEmployeeByDiscordUserId } from './api/_lib/db.js';
 import { isCoreAllowedApiPath, isCoreAllowedPagePath, isCoreOnly } from './api/_lib/app-mode.js';
 
 function normalizePath(pathname) {
@@ -37,7 +38,10 @@ function isProtectedPath(pathname) {
     '/manage-employees',
     '/manage-employees.html',
     '/activity-tracker',
-    '/activity-tracker.html'
+    '/activity-tracker.html',
+    '/onboarding',
+    '/onboarding.html',
+    '/onboarding/status'
   ]);
 
   if (protectedPaths.has(pathname)) return true;
@@ -45,6 +49,28 @@ function isProtectedPath(pathname) {
   if (pathname.startsWith('/admin/')) return true;
   if (pathname.startsWith('/finances/')) return true;
   return false;
+}
+
+function isOnboardingPath(pathname) {
+  const path = normalizePath(pathname);
+  return path === '/onboarding' || path === '/onboarding.html' || path === '/onboarding/status';
+}
+
+function isOnboardingAllowedApiPath(pathname) {
+  const path = normalizePath(pathname);
+  return path === '/api/onboarding/me' || path === '/api/onboarding/roblox-profile';
+}
+
+async function getLiveActivationStatus(env, session) {
+  if (!session || session.isAdmin) return 'ACTIVE';
+  try {
+    await ensureCoreSchema(env);
+    const employee = await getEmployeeByDiscordUserId(env, session.userId);
+    if (!employee) return 'NONE';
+    return String(employee.activation_status || '').trim().toUpperCase() || 'PENDING';
+  } catch {
+    return String(session.activationStatus || '').trim().toUpperCase() || 'NONE';
+  }
 }
 
 function isAdminLikePath(pathname) {
@@ -126,6 +152,9 @@ export async function onRequest(context) {
     const isApiPath = pathname.startsWith('/api/');
     const requestMethod = String(context.request.method || 'GET').toUpperCase();
     if (isApiPath) {
+      const activationStatus = isLoggedIn ? await getLiveActivationStatus(context.env, session) : 'NONE';
+      const isPendingActivation = isLoggedIn && !session?.isAdmin && activationStatus !== 'ACTIVE';
+
       if (coreOnlyMode && !isCoreAllowedApiPath(pathname)) {
         const blockedResponse = new Response(JSON.stringify({ error: 'Not found.' }), {
           status: 404,
@@ -142,6 +171,15 @@ export async function onRequest(context) {
           });
         }
         return blockedResponse;
+      }
+      if (isPendingActivation) {
+        const allowApi = pathname.startsWith('/api/auth/') || isOnboardingAllowedApiPath(pathname);
+        if (!allowApi) {
+          return new Response(JSON.stringify({ error: 'Account pending activation.' }), {
+            status: 403,
+            headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+          });
+        }
       }
       const apiResponse = await context.next();
       if (isLoggedIn) {
@@ -182,17 +220,31 @@ export async function onRequest(context) {
         return context.next();
       }
       if (isLoggedIn) {
-        return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
+        const activationStatus = await getLiveActivationStatus(context.env, session);
+        const redirectPath = !session?.isAdmin && activationStatus !== 'ACTIVE' ? '/onboarding' : '/my-details';
+        return Response.redirect(new URL(redirectPath, url.origin).toString(), 302);
       }
       return context.next();
     }
 
     if (isLoggedIn && (pathname === '/' || pathname === '/index.html')) {
-      return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
+      const activationStatus = await getLiveActivationStatus(context.env, session);
+      const redirectPath = !session?.isAdmin && activationStatus !== 'ACTIVE' ? '/onboarding' : '/my-details';
+      return Response.redirect(new URL(redirectPath, url.origin).toString(), 302);
     }
 
     if (!isLoggedIn && isProtectedPath(pathname)) {
       return Response.redirect(toLoginRedirect(url), 302);
+    }
+
+    if (isLoggedIn && !session.isAdmin) {
+      const activationStatus = await getLiveActivationStatus(context.env, session);
+      if (activationStatus !== 'ACTIVE' && !isOnboardingPath(pathname)) {
+        return Response.redirect(new URL('/onboarding', url.origin).toString(), 302);
+      }
+      if (activationStatus === 'ACTIVE' && isOnboardingPath(pathname)) {
+        return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
+      }
     }
 
     const pageResponse = await context.next();

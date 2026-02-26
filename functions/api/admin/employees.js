@@ -47,6 +47,7 @@ export async function onRequestGet(context) {
   const rankFilter = normalizeText(url.searchParams.get('rank'));
   const gradeFilter = normalizeText(url.searchParams.get('grade'));
   const statusFilter = normalizeText(url.searchParams.get('status'));
+  const activationStatusFilter = normalizeText(url.searchParams.get('activationStatus') || url.searchParams.get('activation_status'));
   const hireDateFrom = normalizeText(url.searchParams.get('hireFrom') || url.searchParams.get('hireDateFrom'));
   const hireDateTo = normalizeText(url.searchParams.get('hireTo') || url.searchParams.get('hireDateTo'));
   const sortByInput = normalizeText(url.searchParams.get('sortBy')).toLowerCase();
@@ -61,6 +62,7 @@ export async function onRequestGet(context) {
     ['grade', 'LOWER(COALESCE(e.grade, \'\'))'],
     ['serial_number', 'LOWER(COALESCE(e.serial_number, \'\'))'],
     ['employee_status', 'LOWER(COALESCE(e.employee_status, \'\'))'],
+    ['activation_status', 'LOWER(COALESCE(e.activation_status, \'\'))'],
     ['hire_date', 'COALESCE(e.hire_date, \'\')'],
     ['updated_at', 'COALESCE(e.updated_at, \'\')']
   ]);
@@ -86,6 +88,10 @@ export async function onRequestGet(context) {
     whereParts.push(`LOWER(COALESCE(e.employee_status, '')) = LOWER(?)`);
     whereBindings.push(statusFilter);
   }
+  if (activationStatusFilter) {
+    whereParts.push(`LOWER(COALESCE(e.activation_status, '')) = LOWER(?)`);
+    whereBindings.push(activationStatusFilter);
+  }
   if (hireDateFrom) {
     whereParts.push(`DATE(COALESCE(e.hire_date, '')) >= DATE(?)`);
     whereBindings.push(hireDateFrom);
@@ -100,7 +106,7 @@ export async function onRequestGet(context) {
   const [result, totalRow, statsRow] = await Promise.all([
     env.DB
       .prepare(
-        `SELECT e.id, e.roblox_username, e.roblox_user_id, e.rank, e.grade, e.serial_number, e.employee_status, e.hire_date, e.updated_at,
+        `SELECT e.id, e.discord_user_id, e.discord_display_name, e.roblox_username, e.roblox_user_id, e.rank, e.grade, e.serial_number, e.employee_status, e.activation_status, e.hire_date, e.updated_at,
                 COALESCE(cr.level, 0) AS rank_level
          FROM employees e
          LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))
@@ -117,7 +123,8 @@ export async function onRequestGet(context) {
            COUNT(*) AS total_employees,
            SUM(CASE WHEN LOWER(COALESCE(employee_status, '')) IN ('active', 'on duty') THEN 1 ELSE 0 END) AS active_employees,
            SUM(CASE WHEN LOWER(COALESCE(employee_status, '')) IN ('suspended', 'inactive', 'terminated', 'on leave') THEN 1 ELSE 0 END) AS inactive_employees,
-           SUM(CASE WHEN DATE(COALESCE(hire_date, '')) >= DATE('now', '-30 day') THEN 1 ELSE 0 END) AS new_hires_30d
+           SUM(CASE WHEN DATE(COALESCE(hire_date, '')) >= DATE('now', '-30 day') THEN 1 ELSE 0 END) AS new_hires_30d,
+           SUM(CASE WHEN UPPER(COALESCE(activation_status, '')) = 'PENDING' THEN 1 ELSE 0 END) AS pending_activation
          FROM employees`
       )
       .first()
@@ -165,7 +172,8 @@ export async function onRequestGet(context) {
         total: overview.totalEmployees,
         active: overview.activeEmployees,
         inactiveSuspended: overview.inactiveEmployees,
-        newHires30d: overview.newHires30d
+        newHires30d: overview.newHires30d,
+        pendingActivation: Number(statsRow?.pending_activation || 0)
       }
     },
     actorRankLevel,
@@ -224,8 +232,8 @@ export async function onRequestPost(context) {
   try {
     const insert = await env.DB.prepare(
       `INSERT INTO employees
-       (discord_user_id, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, hire_date, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+       (discord_user_id, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, activation_status, hire_date, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
     )
       .bind(
         discordUserId,
@@ -235,6 +243,7 @@ export async function onRequestPost(context) {
         String(payload?.grade || '').trim(),
         String(payload?.serialNumber || '').trim(),
         String(payload?.employeeStatus || '').trim(),
+        String(payload?.activationStatus || '').trim().toUpperCase() || 'ACTIVE',
         String(payload?.hireDate || '').trim()
       )
       .run();

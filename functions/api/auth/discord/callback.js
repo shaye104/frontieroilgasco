@@ -6,7 +6,7 @@ import {
   serializeCookie,
   verifyStateToken
 } from '../_lib/auth.js';
-import { createOrRefreshAccessRequest } from '../../_lib/db.js';
+import { createOrRefreshAccessRequest, upsertPendingEmployeeFromDiscordRoles } from '../../_lib/db.js';
 import { buildPermissionContext, hasPermission } from '../../_lib/permissions.js';
 
 function toAccessDeniedUrl(requestUrl, params = {}) {
@@ -21,6 +21,15 @@ function toAccessDeniedUrl(requestUrl, params = {}) {
 function toMyDetailsUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
   const target = new URL('/my-details', `${source.protocol}//${source.host}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v) target.searchParams.set(k, v);
+  });
+  return target.toString();
+}
+
+function toOnboardingUrl(requestUrl, params = {}) {
+  const source = new URL(requestUrl);
+  const target = new URL('/onboarding', `${source.protocol}//${source.host}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v) target.searchParams.set(k, v);
   });
@@ -117,10 +126,38 @@ export async function onRequest(context) {
     console.error('session_build_failed', error?.message || error, error?.stack || '');
     return redirect(toAccessDeniedUrl(request.url, { reason: 'session_build_failed' }));
   }
+  const hasMappedRoles = (permissionContext?.appRoleIds || []).length > 0;
+
+  if (!isAdminUser && !employee && hasMappedRoles) {
+    try {
+      const avatarUrl = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256` : '';
+      await upsertPendingEmployeeFromDiscordRoles(env, {
+        discordUserId: user.id,
+        discordDisplayName: displayName,
+        discordUsername: user.username || '',
+        discordAvatarUrl: avatarUrl,
+        mappedRoleIds: permissionContext.appRoleIds || []
+      });
+      permissionContext = await buildPermissionContext(env, {
+        discordUserId: user.id,
+        discordRoleIds: memberRoles,
+        isSuperAdmin: isAdminUser
+      });
+      employee = permissionContext.employee;
+    } catch (error) {
+      console.error('pending_employee_upsert_failed', error?.message || error);
+      return redirect(toAccessDeniedUrl(request.url, { reason: 'session_build_failed' }));
+    }
+  }
+
+  if (!isAdminUser && !employee && !hasMappedRoles) {
+    return redirect(toAccessDeniedUrl(request.url, { reason: 'missing_permission' }));
+  }
 
   const userStatus = String(employee?.user_status || '').trim().toUpperCase() || 'ACTIVE_STAFF';
+  const activationStatus = String(employee?.activation_status || '').trim().toUpperCase() || (employee ? 'PENDING' : 'NONE');
   const hasEntryPermission = hasPermission({ permissions: permissionContext.permissions }, 'my_details.view');
-  if (!isAdminUser && !hasEntryPermission) {
+  if (!isAdminUser && !hasEntryPermission && activationStatus === 'ACTIVE') {
     const clearStateCookie = serializeCookie('fog_oauth_state', '', {
       path: '/',
       httpOnly: true,
@@ -158,8 +195,9 @@ export async function onRequest(context) {
     permissions: permissionContext.permissions || [],
     isAdmin: isAdminUser,
     hasEmployee: Boolean(employee),
-    accessPending: !isAdminUser && !employee,
+    accessPending: !isAdminUser && (!employee || activationStatus !== 'ACTIVE'),
     userStatus,
+    activationStatus,
     exp: Date.now() + 8 * 60 * 60 * 1000
   });
 
@@ -178,6 +216,10 @@ export async function onRequest(context) {
     sameSite: 'Lax',
     maxAge: 8 * 60 * 60
   });
+
+  if (!isAdminUser && (activationStatus === 'PENDING' || activationStatus === 'REJECTED' || activationStatus === 'DISABLED')) {
+    return redirect(toOnboardingUrl(request.url, { status: activationStatus.toLowerCase() }), [clearStateCookie, sessionCookie]);
+  }
 
   return redirect(toMyDetailsUrl(request.url), [clearStateCookie, sessionCookie]);
 }

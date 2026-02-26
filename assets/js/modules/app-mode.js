@@ -36,7 +36,10 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/user-ranks',
   '/user-ranks.html',
   '/activity-tracker',
-  '/activity-tracker.html'
+  '/activity-tracker.html',
+  '/onboarding',
+  '/onboarding.html',
+  '/onboarding/status'
 ]);
 
 const CORE_ALLOWED_PAGE_PREFIXES = [
@@ -48,7 +51,8 @@ const CORE_ALLOWED_PAGE_PREFIXES = [
   '/admin/user-ranks/',
   '/activity-tracker/',
   '/roles/',
-  '/user-ranks/'
+  '/user-ranks/',
+  '/onboarding/'
 ];
 
 export function isCoreAllowedPagePath(pathname) {

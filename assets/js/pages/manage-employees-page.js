@@ -18,6 +18,7 @@ initIntranetPageGuard({
       filterRankSelector: '#filterRank',
       filterGradeSelector: '#filterGrade',
       filterStatusSelector: '#filterStatus',
+      filterActivationSelector: '#filterActivationStatus',
       filterHireDateFromSelector: '#filterHireDateFrom',
       filterHireDateToSelector: '#filterHireDateTo',
       clearFiltersBtnSelector: '#clearEmployeeFiltersBtn',

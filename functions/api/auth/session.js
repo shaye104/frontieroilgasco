@@ -36,6 +36,8 @@ export async function onRequest(context) {
 
   const appMode = normalizeAppMode(env.APP_MODE);
   const isCoreMode = appMode === 'core';
+  const activationStatus = String(employee?.activation_status || payload.activationStatus || '').trim().toUpperCase() || 'NONE';
+  const isActivationPending = !payload.isAdmin && employee && activationStatus !== 'ACTIVE';
 
   return json({
     loggedIn: true,
@@ -49,8 +51,9 @@ export async function onRequest(context) {
     appMode,
     isCoreMode,
     hasEmployee: payload.isAdmin ? true : Boolean(employee),
-    accessPending: payload.isAdmin ? false : !employee,
+    accessPending: payload.isAdmin ? false : !employee || isActivationPending,
     userStatus: String(employee?.user_status || payload.userStatus || '').trim() || 'ACTIVE_STAFF',
+    activationStatus,
     canAccessAdminPanel: hasPermission({ permissions: permissionContext?.permissions || [] }, 'admin.access'),
     canManageRoles: hasPermission({ permissions: permissionContext?.permissions || [] }, 'user_groups.manage'),
     canManageConfig: hasPermission({ permissions: permissionContext?.permissions || [] }, 'config.manage')

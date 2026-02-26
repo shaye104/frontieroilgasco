@@ -39,11 +39,15 @@ function ensureNavbarFallback(session) {
   const hasFinances = links.some(
     (link) => normalizePathname(new URL(link.getAttribute('href') || '', window.location.origin).pathname) === '/finances'
   );
+  const activationStatus = String(session?.activationStatus || '').trim().toUpperCase();
+  const isPendingActivation = !session?.isAdmin && activationStatus && activationStatus !== 'ACTIVE';
 
-  if (hasAnyLink && hasFinances) return;
+  if ((isPendingActivation && hasAnyLink) || (hasAnyLink && hasFinances)) return;
 
   nav.innerHTML = '';
-  if (isCoreOnlyMode(session)) {
+  if (isPendingActivation) {
+    nav.append(buildLink('/onboarding', 'Onboarding'));
+  } else if (isCoreOnlyMode(session)) {
     nav.append(buildLink('/my-details', 'My Details'));
     nav.append(buildLink('/voyages/my', 'Voyages'));
     if (hasPermission(session, 'finances.view')) nav.append(buildLink('/finances', 'Finances'));
@@ -140,7 +144,7 @@ export async function initIntranetLayout(config) {
     }
 
     if (requireEmployee && !session.isAdmin && session.accessPending) {
-      window.location.href = toAccessDeniedUrl('access_pending');
+      window.location.href = '/onboarding';
       return null;
     }
 

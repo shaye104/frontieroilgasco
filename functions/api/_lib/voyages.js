@@ -28,6 +28,10 @@ export async function requireVoyagePermission(context, permissionKey) {
   if (!session.employee) {
     return { errorResponse: json({ error: 'Employee profile required for voyages.' }, 403), session: null, employee: null };
   }
+  const activationStatus = String(session.employee.activation_status || '').trim().toUpperCase();
+  if (activationStatus !== 'ACTIVE') {
+    return { errorResponse: json({ error: 'Account pending activation.' }, 403), session: null, employee: null };
+  }
 
   return { errorResponse: null, session, employee: session.employee };
 }
