@@ -1,77 +1,86 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier Oil & Gas Company employee login." />
-    <title>Frontier Oil & Gas Company | Login</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/assets/css/tokens.css" />
-    <link rel="stylesheet" href="/assets/css/base.css" />
-    <link rel="stylesheet" href="/assets/css/components.css" />
-    <link rel="stylesheet" href="/assets/css/pages.css" />
-  </head>
-  <body class="page page-intranet">
-    <header class="site-header">
-      <div class="container header-row">
-        <a class="brand" href="/">
-          <span class="brand-mark" aria-hidden="true">FOG</span>
-          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
-          <span class="login-brand-badge">Intranet</span>
-        </a>
-        <nav class="site-nav" aria-label="Primary"></nav>
-      </div>
-    </header>
 
-    <main class="section login-page">
-      <div class="container login-shell">
-        <section id="authCheckingPanel" class="panel login-card">
-          <p class="eyebrow">EMPLOYEES</p>
-          <h1>Checking session...</h1>
-          <p class="lead">Please wait while we verify your access.</p>
-          <div class="skeleton-shell" aria-hidden="true">
-            <span class="skeleton-line skeleton-w-80"></span>
-            <span class="skeleton-line skeleton-w-60"></span>
-          </div>
-        </section>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Frontier Oil & Gas Company employee login." />
+  <title>Frontier Oil & Gas Company | Login</title>
 
-        <section id="authPanel" class="panel login-card hidden">
-          <p class="eyebrow">EMPLOYEES</p>
-          <h1>Login</h1>
-          <p class="lead">Continue with Discord to access the Frontier intranet.</p>
-          <div id="loginFeedback" class="feedback" role="status" aria-live="polite"></div>
-          <button id="discordLoginBtn" class="btn btn-primary btn-block" type="button">
-            <span data-login-spinner class="login-spinner hidden" aria-hidden="true"></span>
-            <span data-login-label>Continue with Discord</span>
-          </button>
-          <p class="login-helper">Access is granted via employee Discord roles.</p>
-        </section>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-        <aside class="panel login-info-panel" aria-label="Access information">
-          <article class="login-info-item">
-            <h2>Access requirements</h2>
-            <p>You must have an approved Discord employee role.</p>
-          </article>
-          <article class="login-info-item">
-            <h2>Activation review</h2>
-            <p>New accounts must submit Roblox details. Access is granted after staff activation.</p>
-          </article>
-          <article class="login-info-item">
-            <h2>Security</h2>
-            <p>Discord OAuth is used for authentication. Activity may be audited.</p>
-          </article>
-        </aside>
-      </div>
+  <link rel="stylesheet" href="/assets/css/tokens.css" />
+  <link rel="stylesheet" href="/assets/css/base.css" />
+  <link rel="stylesheet" href="/assets/css/components.css" />
+  <link rel="stylesheet" href="/assets/css/pages.css" />
 
-      <div class="container">
-        <p class="login-footer-copy">© Frontier Oil &amp; Gas Company · Internal Use Only</p>
-      </div>
-    </main>
-    <script type="module" src="/assets/js/pages/intranet-page.js?v=20260226e"></script>
-  </body>
+</head>
+
+<body class="page page-intranet page-login">
+  <header class="site-header">
+    <div class="container header-row">
+      <!-- Changed href from / to /login so it never hits a removed public home -->
+      <a class="brand" href="/login" aria-label="Frontier intranet login">
+        <span class="brand-mark" aria-hidden="true">FOG</span>
+        <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        <span class="login-brand-badge">Intranet</span>
+      </a>
+      <nav class="site-nav" aria-label="Primary"></nav>
+    </div>
+  </header>
+
+  <main class="section login-page">
+    <div class="container login-shell">
+      <section id="authCheckingPanel" class="panel login-card">
+        <p class="eyebrow">EMPLOYEES</p>
+        <h1>Checking session...</h1>
+        <p class="lead">Please wait while we verify your access.</p>
+        <div class="skeleton-shell" aria-hidden="true">
+          <span class="skeleton-line skeleton-w-80"></span>
+          <span class="skeleton-line skeleton-w-60"></span>
+        </div>
+      </section>
+
+      <section id="authPanel" class="panel login-card hidden">
+        <p class="eyebrow">EMPLOYEES</p>
+        <h1>Login</h1>
+        <p class="lead">Continue with Discord to access the Frontier intranet.</p>
+        <div id="loginFeedback" class="feedback" role="status" aria-live="polite"></div>
+
+        <!-- Added btn-icon (placeholder) + spinner stays as-is for your JS -->
+        <button id="discordLoginBtn" class="btn btn-primary btn-block" type="button">
+          <span class="btn-icon" aria-hidden="true">◆</span>
+          <span data-login-spinner class="login-spinner hidden" aria-hidden="true"></span>
+          <span data-login-label>Continue with Discord</span>
+        </button>
+
+        <p class="login-helper">Access is granted via employee Discord roles.</p>
+      </section>
+
+      <aside class="panel login-info-panel" aria-label="Access information">
+        <article class="login-info-item">
+          <h2>Access requirements</h2>
+          <p>You must have an approved Discord employee role.</p>
+        </article>
+        <article class="login-info-item">
+          <h2>Activation review</h2>
+          <p>New accounts must submit Roblox details. Access is granted after staff activation.</p>
+        </article>
+        <article class="login-info-item">
+          <h2>Security</h2>
+          <p>Discord OAuth is used for authentication. Activity may be audited.</p>
+        </article>
+      </aside>
+    </div>
+
+    <div class="container">
+      <p class="login-footer-copy">© Frontier Oil &amp; Gas Company · Internal Use Only</p>
+    </div>
+  </main>
+
+  <script type="module" src="/assets/js/pages/intranet-page.js?v=20260226e"></script>
+</body>
+
 </html>
