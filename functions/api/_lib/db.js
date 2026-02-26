@@ -6,8 +6,10 @@ function parseStartingBalance(value) {
 
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
+
   const permissionSeed = [
     ['super.admin', 'roles', 'Super Admin', 'Global bypass permission.'],
+    ['admin.override', 'admin', 'Admin Override', 'Grant all permissions across the application.'],
     ['admin.access', 'general', 'Admin Panel Access', 'View the admin panel entry points.'],
     ['dashboard.view', 'general', 'Dashboard View', 'Access the intranet dashboard.'],
     ['my_details.view', 'general', 'My Details View', 'View employee self-service details.'],
@@ -18,60 +20,28 @@ export async function ensureCoreSchema(env) {
     ['employees.notes', 'employees', 'Manage Notes', 'Add employee notes and activity log entries.'],
     ['employees.access_requests.review', 'employees', 'Review Access Requests', 'Approve or deny access requests.'],
     ['config.manage', 'config', 'Manage Config', 'Manage statuses, ranks, grades, and disciplinary types.'],
-    ['roles.read', 'roles', 'View Roles', 'View role definitions and permissions.'],
-    ['roles.manage', 'roles', 'Manage Roles', 'Create, edit, delete, and reorder roles.'],
-    ['roles.assign', 'roles', 'Assign Roles', 'Assign and unassign roles for employees.'],
+    ['roles.read', 'user_groups', 'View User Groups', 'View role definitions and permissions.'],
+    ['roles.manage', 'user_groups', 'Manage User Groups', 'Create, edit, delete, and reorder user groups.'],
+    ['roles.assign', 'user_groups', 'Assign User Groups', 'Assign and unassign user groups for employees.'],
     ['user_groups.read', 'user_groups', 'View User Groups', 'View user group definitions and permissions.'],
     ['user_groups.manage', 'user_groups', 'Manage User Groups', 'Create, edit, delete, and reorder user groups.'],
     ['user_groups.assign', 'user_groups', 'Assign User Groups', 'Assign and unassign user groups for employees.'],
     ['user_ranks.manage', 'user_ranks', 'Manage User Ranks', 'Create, edit, delete, and reorder user ranks.'],
     ['user_ranks.permissions.manage', 'user_ranks', 'Manage User Rank Permissions', 'Edit permission mappings granted by user ranks.'],
-    ['admin.override', 'admin', 'Admin Override', 'Grant all permissions across the application.'],
     ['activity_tracker.view', 'activity_tracker', 'View Activity Tracker', 'View employee voyage activity statistics.'],
     ['activity_tracker.manage', 'activity_tracker', 'Manage Activity Tracker', 'Manage advanced activity tracker features.'],
-    ['forms.read', 'forms', 'View Forms', 'View forms list and form details.'],
-    ['forms.submit', 'forms', 'Submit Forms', 'Submit form responses.'],
-    ['forms.manage', 'forms', 'Manage Forms', 'Create/edit forms, categories, and question builders.'],
-    ['forms.responses.read', 'forms', 'View Form Responses', 'Read form responses.'],
-    ['forms.responses.manage', 'forms', 'Manage Form Responses', 'Manage/export/delete responses.'],
     ['voyages.read', 'voyages', 'View Voyages', 'View voyage tracker.'],
     ['voyages.create', 'voyages', 'Create Voyages', 'Create voyage entries.'],
     ['voyages.edit', 'voyages', 'Edit Voyages', 'Edit voyage entries.'],
     ['voyages.end', 'voyages', 'End Voyages', 'End voyages and finalize voyage accounting.'],
     ['voyages.config.manage', 'voyages', 'Manage Voyage Config', 'Manage voyage config lists for ports and vessels.'],
     ['cargo.manage', 'voyages', 'Manage Cargo', 'Manage cargo type definitions for manifests.'],
-    ['fleet.read', 'voyages', 'View Fleet', 'View fleet information.'],
-    ['fleet.manage', 'voyages', 'Manage Fleet', 'Manage fleet assignments/settings.'],
     ['finances.view', 'finances', 'View Finances', 'View the finance dashboard and debt summaries.'],
     ['finances.debts.settle', 'finances', 'Settle Finance Debts', 'Settle outstanding company share debts.'],
-    ['finances.audit.view', 'finances', 'View Finance Audit', 'View finance settlement audit logs.'],
-    ['college.view', 'college', 'View College', 'Access the college training centre.'],
-    ['college.manage', 'college', 'Manage College', 'Manage college deadlines and pass overrides.'],
-    ['college.roles.manage', 'college', 'Manage College Roles', 'Assign college scoped roles for users.'],
-    ['college.enrollments.manage', 'college', 'Manage College Enrollments', 'Enroll or remove users from courses.'],
-    ['college.courses.manage', 'college', 'Manage College Courses', 'Create and update college courses and modules.'],
-    ['college.library.manage', 'college', 'Manage College Library', 'Create and publish college library documents.'],
-    ['college.exams.manage', 'college', 'Manage College Exams', 'Create and update college exams and question banks.'],
-    ['college.exams.grade', 'college', 'Grade College Exams', 'Grade college assessment attempts and overrides.'],
-    ['college:read', 'college', 'College Read', 'Read college pages and allowed learning resources.'],
-    ['college:manage_users', 'college', 'College Manage Users', 'Create/extend/withdraw trainees and manage trainee lifecycle.'],
-    ['college:manage_courses', 'college', 'College Manage Courses', 'Create, edit, publish, and archive courses/modules.'],
-    ['college:manage_library', 'college', 'College Manage Library', 'Create, edit, publish, and archive college documents.'],
-    ['college:manage_exams', 'college', 'College Manage Exams', 'Create and maintain exams/question banks.'],
-    ['college:mark_exams', 'college', 'College Mark Exams', 'Grade attempts and override module completion.'],
-    ['college:audit_read', 'college', 'College Audit Read', 'Read college audit events.'],
-    ['college:admin', 'college', 'College Admin', 'Manage all college administration features.'],
-    ['course:manage', 'college', 'Course Manage', 'Create, edit, publish, and archive courses/modules/material.'],
-    ['enrollment:manage', 'college', 'Enrollment Manage', 'Manage course enrollments and required flags.'],
-    ['progress:view', 'college', 'Progress View', 'View progress for other users.'],
-    ['progress:override', 'college', 'Progress Override', 'Override module progress and assessment outcomes.'],
-    ['exam:view', 'college', 'Exam View', 'View exam definitions and attempts.'],
-    ['exam:mark', 'college', 'Exam Mark', 'Mark exam attempts pass/fail.'],
-    ['library:manage', 'college', 'Library Manage', 'Create, update, map, and publish college library docs.'],
-    ['library:view', 'college', 'Library View', 'View college library documents per visibility rules.']
+    ['finances.audit.view', 'finances', 'View Finance Audit', 'View finance settlement audit logs.']
   ];
 
-  const statements = [
+  const tables = [
     `CREATE TABLE IF NOT EXISTS intranet_allowed_roles (
       role_id TEXT PRIMARY KEY,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -86,9 +56,6 @@ export async function ensureCoreSchema(env) {
       serial_number TEXT,
       employee_status TEXT,
       user_status TEXT NOT NULL DEFAULT 'ACTIVE_STAFF',
-      college_start_at TEXT,
-      college_due_at TEXT,
-      college_passed_at TEXT,
       hire_date TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -358,591 +325,45 @@ export async function ensureCoreSchema(env) {
       metadata_json TEXT,
       FOREIGN KEY(actor_employee_id) REFERENCES employees(id),
       FOREIGN KEY(target_employee_id) REFERENCES employees(id)
-    )`,
-    // Indexes are created after legacy-column backfills to avoid migration failures on older databases.
-    `CREATE TABLE IF NOT EXISTS form_categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE,
-      description TEXT,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS forms (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT,
-      instructions TEXT,
-      category_id INTEGER,
-      status TEXT NOT NULL DEFAULT 'draft',
-      created_by TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(category_id) REFERENCES form_categories(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS form_questions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      form_id INTEGER NOT NULL,
-      label TEXT NOT NULL,
-      question_type TEXT NOT NULL,
-      is_required INTEGER NOT NULL DEFAULT 0,
-      help_text TEXT,
-      options_json TEXT,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(form_id) REFERENCES forms(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS form_access_employees (
-      form_id INTEGER NOT NULL,
-      employee_id INTEGER NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY(form_id, employee_id),
-      FOREIGN KEY(form_id) REFERENCES forms(id),
-      FOREIGN KEY(employee_id) REFERENCES employees(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS form_access_roles (
-      form_id INTEGER NOT NULL,
-      role_id TEXT NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY(form_id, role_id),
-      FOREIGN KEY(form_id) REFERENCES forms(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS form_responses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      form_id INTEGER NOT NULL,
-      employee_id INTEGER,
-      respondent_discord_user_id TEXT NOT NULL,
-      submitted_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(form_id) REFERENCES forms(id),
-      FOREIGN KEY(employee_id) REFERENCES employees(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS form_response_answers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      response_id INTEGER NOT NULL,
-      question_id INTEGER NOT NULL,
-      answer_json TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(response_id) REFERENCES form_responses(id),
-      FOREIGN KEY(question_id) REFERENCES form_questions(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_courses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      code TEXT NOT NULL UNIQUE,
-      title TEXT NOT NULL,
-      description TEXT,
-      visibility TEXT NOT NULL DEFAULT 'all',
-      is_required_for_applicants INTEGER NOT NULL DEFAULT 0,
-      published INTEGER NOT NULL DEFAULT 1,
-      archived_at TEXT,
-      estimated_minutes INTEGER NOT NULL DEFAULT 60,
-      created_by_employee_id INTEGER,
-      updated_by_employee_id INTEGER,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_course_modules (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      course_id INTEGER NOT NULL,
-      title TEXT NOT NULL,
-      order_index INTEGER NOT NULL DEFAULT 0,
-      content_type TEXT NOT NULL DEFAULT 'markdown',
-      completion_rule TEXT NOT NULL DEFAULT 'manual',
-      self_completable INTEGER NOT NULL DEFAULT 0,
-      required INTEGER NOT NULL DEFAULT 1,
-      content TEXT,
-      content_link TEXT,
-      attachment_url TEXT,
-      video_url TEXT,
-      published INTEGER NOT NULL DEFAULT 1,
-      archived_at TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(course_id, order_index),
-      FOREIGN KEY(course_id) REFERENCES college_courses(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_enrollments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_employee_id INTEGER NOT NULL,
-      course_id INTEGER NOT NULL,
-      enrolled_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      required INTEGER NOT NULL DEFAULT 0,
-      status TEXT NOT NULL DEFAULT 'in_progress',
-      final_quiz_passed INTEGER NOT NULL DEFAULT 0,
-      terms_acknowledged INTEGER NOT NULL DEFAULT 0,
-      practical_approved INTEGER NOT NULL DEFAULT 0,
-      completed_at TEXT,
-      passed_at TEXT,
-      withdrawn_at TEXT,
-      UNIQUE(user_employee_id, course_id),
-      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
-      FOREIGN KEY(course_id) REFERENCES college_courses(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_module_progress (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_employee_id INTEGER NOT NULL,
-      module_id INTEGER NOT NULL,
-      status TEXT NOT NULL DEFAULT 'available',
-      requested_at TEXT,
-      completed_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      completed_by_employee_id INTEGER,
-      completion_meta_json TEXT,
-      UNIQUE(user_employee_id, module_id),
-      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
-      FOREIGN KEY(module_id) REFERENCES college_course_modules(id),
-      FOREIGN KEY(completed_by_employee_id) REFERENCES employees(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_library_documents (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      category TEXT NOT NULL DEFAULT 'General',
-      tags TEXT,
-      summary TEXT,
-      content_markdown TEXT,
-      document_url TEXT,
-      visibility TEXT NOT NULL DEFAULT 'public',
-      course_id INTEGER,
-      published INTEGER NOT NULL DEFAULT 1,
-      archived_at TEXT,
-      updated_by_employee_id INTEGER,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(course_id) REFERENCES college_courses(id),
-      FOREIGN KEY(updated_by_employee_id) REFERENCES employees(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_library_doc_links (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      doc_id INTEGER NOT NULL,
-      course_id INTEGER,
-      module_id INTEGER,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(doc_id) REFERENCES college_library_documents(id),
-      FOREIGN KEY(course_id) REFERENCES college_courses(id),
-      FOREIGN KEY(module_id) REFERENCES college_course_modules(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_role_assignments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      employee_id INTEGER NOT NULL,
-      role_key TEXT NOT NULL,
-      assigned_by_employee_id INTEGER,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(employee_id, role_key),
-      FOREIGN KEY(employee_id) REFERENCES employees(id),
-      FOREIGN KEY(assigned_by_employee_id) REFERENCES employees(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_audit_events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_employee_id INTEGER NOT NULL,
-      action TEXT NOT NULL,
-      performed_by_employee_id INTEGER,
-      meta_json TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
-      FOREIGN KEY(performed_by_employee_id) REFERENCES employees(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_exams (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      course_id INTEGER,
-      module_id INTEGER,
-      title TEXT NOT NULL,
-      passing_score INTEGER NOT NULL DEFAULT 70,
-      attempt_limit INTEGER NOT NULL DEFAULT 3,
-      time_limit_minutes INTEGER,
-      published INTEGER NOT NULL DEFAULT 0,
-      archived_at TEXT,
-      created_by_employee_id INTEGER,
-      updated_by_employee_id INTEGER,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(course_id) REFERENCES college_courses(id),
-      FOREIGN KEY(module_id) REFERENCES college_course_modules(id),
-      FOREIGN KEY(created_by_employee_id) REFERENCES employees(id),
-      FOREIGN KEY(updated_by_employee_id) REFERENCES employees(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_exam_questions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      exam_id INTEGER NOT NULL,
-      question_type TEXT NOT NULL DEFAULT 'mcq',
-      prompt TEXT NOT NULL,
-      choices_json TEXT,
-      correct_answer_json TEXT,
-      points INTEGER NOT NULL DEFAULT 1,
-      order_index INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(exam_id) REFERENCES college_exams(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_exam_attempts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      exam_id INTEGER NOT NULL,
-      user_employee_id INTEGER NOT NULL,
-      started_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      submitted_at TEXT,
-      score INTEGER,
-      passed INTEGER NOT NULL DEFAULT 0,
-      graded_by_employee_id INTEGER,
-      grading_notes TEXT,
-      answers_json TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(exam_id) REFERENCES college_exams(id),
-      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
-      FOREIGN KEY(graded_by_employee_id) REFERENCES employees(id)
-    )`,
-    `CREATE TABLE IF NOT EXISTS college_profiles (
-      user_employee_id INTEGER PRIMARY KEY,
-      trainee_status TEXT NOT NULL DEFAULT 'NOT_A_TRAINEE',
-      start_at TEXT,
-      due_at TEXT,
-      passed_at TEXT,
-      failed_at TEXT,
-      assigned_by_user_employee_id INTEGER,
-      last_activity_at TEXT,
-      notes TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_employee_id) REFERENCES employees(id),
-      FOREIGN KEY(assigned_by_user_employee_id) REFERENCES employees(id)
     )`
   ];
 
-  await env.DB.batch(statements.map((sql) => env.DB.prepare(sql)));
+  await env.DB.batch(tables.map((sql) => env.DB.prepare(sql)));
 
-  const voyageColumns = await env.DB.prepare(`PRAGMA table_info(voyages)`).all();
-  const voyageColumnNames = new Set((voyageColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!voyageColumnNames.has('ship_status')) {
-    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN ship_status TEXT NOT NULL DEFAULT 'IN_PORT'`).run();
-  }
-  if (!voyageColumnNames.has('settlement_lines_json')) {
-    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN settlement_lines_json TEXT`).run();
-  }
-  if (!voyageColumnNames.has('company_share_status')) {
-    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_status TEXT NOT NULL DEFAULT 'UNSETTLED'`).run();
-  }
-  if (!voyageColumnNames.has('company_share_settled_at')) {
-    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_at TEXT`).run();
-  }
-  if (!voyageColumnNames.has('company_share_settled_by_employee_id')) {
-    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_by_employee_id INTEGER`).run();
-  }
-  if (!voyageColumnNames.has('company_share_settled_by_discord_id')) {
-    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_settled_by_discord_id TEXT`).run();
-  }
-  if (!voyageColumnNames.has('company_share_amount')) {
-    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_amount REAL`).run();
-  }
-  const voyageLogColumns = await env.DB.prepare(`PRAGMA table_info(voyage_logs)`).all();
-  const voyageLogColumnNames = new Set((voyageLogColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!voyageLogColumnNames.has('log_type')) {
-    await env.DB.prepare(`ALTER TABLE voyage_logs ADD COLUMN log_type TEXT NOT NULL DEFAULT 'manual'`).run();
-  }
-  const rankColumns = await env.DB.prepare(`PRAGMA table_info(config_ranks)`).all();
-  const rankColumnNames = new Set((rankColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!rankColumnNames.has('level')) {
-    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN level INTEGER NOT NULL DEFAULT 0`).run();
-  }
-  if (!rankColumnNames.has('description')) {
-    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN description TEXT`).run();
-  }
-  if (!rankColumnNames.has('updated_at')) {
-    await env.DB.prepare(`ALTER TABLE config_ranks ADD COLUMN updated_at TEXT`).run();
-  }
-  const employeeColumns = await env.DB.prepare(`PRAGMA table_info(employees)`).all();
-  const employeeColumnNames = new Set((employeeColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!employeeColumnNames.has('user_status')) {
-    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN user_status TEXT NOT NULL DEFAULT 'ACTIVE_STAFF'`).run();
-  }
-  if (!employeeColumnNames.has('college_start_at')) {
-    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN college_start_at TEXT`).run();
-  }
-  if (!employeeColumnNames.has('college_due_at')) {
-    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN college_due_at TEXT`).run();
-  }
-  if (!employeeColumnNames.has('college_passed_at')) {
-    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN college_passed_at TEXT`).run();
-  }
-  const courseColumns = await env.DB.prepare(`PRAGMA table_info(college_courses)`).all();
-  const courseColumnNames = new Set((courseColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!courseColumnNames.has('visibility')) {
-    await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN visibility TEXT NOT NULL DEFAULT 'all'`).run();
-  }
-  if (!courseColumnNames.has('created_by_employee_id')) {
-    await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN created_by_employee_id INTEGER`).run();
-  }
-  if (!courseColumnNames.has('updated_by_employee_id')) {
-    await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN updated_by_employee_id INTEGER`).run();
-  }
-  if (!courseColumnNames.has('archived_at')) {
-    await env.DB.prepare(`ALTER TABLE college_courses ADD COLUMN archived_at TEXT`).run();
-  }
-  const moduleColumns = await env.DB.prepare(`PRAGMA table_info(college_course_modules)`).all();
-  const moduleColumnNames = new Set((moduleColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!moduleColumnNames.has('completion_rule')) {
-    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN completion_rule TEXT NOT NULL DEFAULT 'manual'`).run();
-  }
-  if (!moduleColumnNames.has('self_completable')) {
-    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN self_completable INTEGER NOT NULL DEFAULT 0`).run();
-  }
-  if (!moduleColumnNames.has('required')) {
-    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN required INTEGER NOT NULL DEFAULT 1`).run();
-  }
-  if (!moduleColumnNames.has('content_link')) {
-    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN content_link TEXT`).run();
-  }
-  if (!moduleColumnNames.has('published')) {
-    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN published INTEGER NOT NULL DEFAULT 1`).run();
-  }
-  if (!moduleColumnNames.has('archived_at')) {
-    await env.DB.prepare(`ALTER TABLE college_course_modules ADD COLUMN archived_at TEXT`).run();
-  }
-  const enrollmentColumns = await env.DB.prepare(`PRAGMA table_info(college_enrollments)`).all();
-  const enrollmentColumnNames = new Set((enrollmentColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!enrollmentColumnNames.has('withdrawn_at')) {
-    await env.DB.prepare(`ALTER TABLE college_enrollments ADD COLUMN withdrawn_at TEXT`).run();
-  }
-  const moduleProgressColumns = await env.DB.prepare(`PRAGMA table_info(college_module_progress)`).all();
-  const moduleProgressColumnNames = new Set((moduleProgressColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!moduleProgressColumnNames.has('status')) {
-    await env.DB.prepare(`ALTER TABLE college_module_progress ADD COLUMN status TEXT NOT NULL DEFAULT 'available'`).run();
-  }
-  if (!moduleProgressColumnNames.has('requested_at')) {
-    await env.DB.prepare(`ALTER TABLE college_module_progress ADD COLUMN requested_at TEXT`).run();
-  }
-  if (!moduleProgressColumnNames.has('completed_by_employee_id')) {
-    await env.DB.prepare(`ALTER TABLE college_module_progress ADD COLUMN completed_by_employee_id INTEGER`).run();
-  }
-  if (!moduleProgressColumnNames.has('completion_meta_json')) {
-    await env.DB.prepare(`ALTER TABLE college_module_progress ADD COLUMN completion_meta_json TEXT`).run();
-  }
-  const libraryColumns = await env.DB.prepare(`PRAGMA table_info(college_library_documents)`).all();
-  const libraryColumnNames = new Set((libraryColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!libraryColumnNames.has('content_markdown')) {
-    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN content_markdown TEXT`).run();
-  }
-  if (!libraryColumnNames.has('visibility')) {
-    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public'`).run();
-  }
-  if (!libraryColumnNames.has('course_id')) {
-    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN course_id INTEGER`).run();
-  }
-  if (!libraryColumnNames.has('updated_by_employee_id')) {
-    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN updated_by_employee_id INTEGER`).run();
-  }
-  if (!libraryColumnNames.has('archived_at')) {
-    await env.DB.prepare(`ALTER TABLE college_library_documents ADD COLUMN archived_at TEXT`).run();
-  }
-  const examColumns = await env.DB.prepare(`PRAGMA table_info(college_exams)`).all();
-  const examColumnNames = new Set((examColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!examColumnNames.has('archived_at')) {
-    await env.DB.prepare(`ALTER TABLE college_exams ADD COLUMN archived_at TEXT`).run();
-  }
-  const collegeProfileColumns = await env.DB.prepare(`PRAGMA table_info(college_profiles)`).all();
-  const collegeProfileColumnNames = new Set((collegeProfileColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!collegeProfileColumnNames.size) {
-    await env.DB
-      .prepare(
-        `CREATE TABLE IF NOT EXISTS college_profiles (
-          user_employee_id INTEGER PRIMARY KEY,
-          trainee_status TEXT NOT NULL DEFAULT 'NOT_A_TRAINEE',
-          start_at TEXT,
-          due_at TEXT,
-          passed_at TEXT,
-          failed_at TEXT,
-          assigned_by_user_employee_id INTEGER,
-          last_activity_at TEXT,
-          notes TEXT,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(user_employee_id) REFERENCES employees(id),
-          FOREIGN KEY(assigned_by_user_employee_id) REFERENCES employees(id)
-        )`
-      )
-      .run();
-  } else {
-    if (!collegeProfileColumnNames.has('trainee_status')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN trainee_status TEXT NOT NULL DEFAULT 'NOT_A_TRAINEE'`).run();
-    }
-    if (!collegeProfileColumnNames.has('start_at')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN start_at TEXT`).run();
-    }
-    if (!collegeProfileColumnNames.has('due_at')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN due_at TEXT`).run();
-    }
-    if (!collegeProfileColumnNames.has('passed_at')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN passed_at TEXT`).run();
-    }
-    if (!collegeProfileColumnNames.has('failed_at')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN failed_at TEXT`).run();
-    }
-    if (!collegeProfileColumnNames.has('assigned_by_user_employee_id')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN assigned_by_user_employee_id INTEGER`).run();
-    }
-    if (!collegeProfileColumnNames.has('last_activity_at')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN last_activity_at TEXT`).run();
-    }
-    if (!collegeProfileColumnNames.has('notes')) {
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN notes TEXT`).run();
-    }
-    if (!collegeProfileColumnNames.has('created_at')) {
-      // D1/SQLite ALTER TABLE does not safely support non-constant defaults here.
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN created_at TEXT`).run();
-    }
-    if (!collegeProfileColumnNames.has('updated_at')) {
-      // D1/SQLite ALTER TABLE does not safely support non-constant defaults here.
-      await env.DB.prepare(`ALTER TABLE college_profiles ADD COLUMN updated_at TEXT`).run();
-    }
-  }
-  await env.DB
-    .prepare(
-      `CREATE TABLE IF NOT EXISTS college_library_doc_links (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        doc_id INTEGER NOT NULL,
-        course_id INTEGER,
-        module_id INTEGER,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(doc_id) REFERENCES college_library_documents(id),
-        FOREIGN KEY(course_id) REFERENCES college_courses(id),
-        FOREIGN KEY(module_id) REFERENCES college_course_modules(id)
-      )`
-    )
-    .run();
-  await env.DB
-    .prepare(
-      `INSERT OR IGNORE INTO college_library_doc_links (doc_id, course_id, module_id, created_at)
-       SELECT d.id, d.course_id, NULL, COALESCE(d.created_at, CURRENT_TIMESTAMP)
-       FROM college_library_documents d
-       WHERE d.course_id IS NOT NULL`
-    )
-    .run();
-  await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
-  await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();
-  await env.DB
-    .prepare(
-      `INSERT OR IGNORE INTO college_profiles
-       (user_employee_id, trainee_status, start_at, due_at, passed_at, failed_at, assigned_by_user_employee_id, last_activity_at, created_at, updated_at)
-       SELECT
-         e.id,
-         CASE
-           WHEN e.college_passed_at IS NOT NULL THEN 'TRAINEE_PASSED'
-           WHEN UPPER(COALESCE(e.user_status, '')) = 'APPLICANT_ACCEPTED' THEN 'TRAINEE_ACTIVE'
-           ELSE 'NOT_A_TRAINEE'
-         END,
-         e.college_start_at,
-         e.college_due_at,
-         e.college_passed_at,
-         NULL,
-         NULL,
-         CURRENT_TIMESTAMP,
-         CURRENT_TIMESTAMP,
-         CURRENT_TIMESTAMP
-       FROM employees e`
-    )
-    .run();
-  await env.DB
-    .prepare(
-      `UPDATE college_profiles
-       SET
-         trainee_status = CASE
-           WHEN trainee_status IS NULL OR TRIM(trainee_status) = '' THEN
-             CASE
-               WHEN passed_at IS NOT NULL THEN 'TRAINEE_PASSED'
-               WHEN due_at IS NOT NULL THEN 'TRAINEE_ACTIVE'
-               ELSE 'NOT_A_TRAINEE'
-             END
-           ELSE UPPER(TRIM(trainee_status))
-         END,
-         start_at = COALESCE(start_at, (
-           SELECT college_start_at FROM employees e WHERE e.id = college_profiles.user_employee_id
-         )),
-         due_at = COALESCE(due_at, (
-           SELECT college_due_at FROM employees e WHERE e.id = college_profiles.user_employee_id
-         )),
-         passed_at = COALESCE(passed_at, (
-           SELECT college_passed_at FROM employees e WHERE e.id = college_profiles.user_employee_id
-         )),
-         created_at = COALESCE(created_at, CURRENT_TIMESTAMP),
-         updated_at = CURRENT_TIMESTAMP`
-    )
-    .run();
-  await env.DB.prepare(`UPDATE college_courses SET visibility = COALESCE(NULLIF(TRIM(visibility), ''), 'all')`).run();
-  await env.DB.prepare(`UPDATE college_library_documents SET visibility = COALESCE(NULLIF(TRIM(visibility), ''), 'PUBLIC')`).run();
-  await env.DB
-    .prepare(
-      `UPDATE college_library_documents
-       SET visibility = CASE LOWER(TRIM(visibility))
-         WHEN 'public' THEN 'PUBLIC'
-         WHEN 'staff' THEN 'STAFF'
-         WHEN 'enrolled' THEN 'COURSE_LINKED'
-         WHEN 'course_linked' THEN 'COURSE_LINKED'
-         ELSE 'PUBLIC'
-       END`
-    )
-    .run();
-  await env.DB
-    .prepare(
-      `UPDATE college_module_progress
-       SET status = CASE
-         WHEN completed_at IS NOT NULL THEN 'complete'
-         WHEN requested_at IS NOT NULL THEN 'awaiting_marking'
-         ELSE COALESCE(NULLIF(TRIM(status), ''), 'available')
-       END`
-    )
-    .run();
-  await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
-  await env.DB
-    .prepare(
-      `UPDATE voyages
-       SET company_share_status = CASE
-         WHEN status = 'ENDED' THEN COALESCE(NULLIF(company_share_status, ''), 'UNSETTLED')
-         ELSE COALESCE(NULLIF(company_share_status, ''), 'UNSETTLED')
-       END`
-    )
-    .run();
-
-  // Non-critical indexes should never block auth/session bootstrap on older databases.
-  const optionalIndexStatements = [
-    `CREATE INDEX IF NOT EXISTS idx_voyages_company_share_status ON voyages(company_share_status)`,
-    `CREATE INDEX IF NOT EXISTS idx_voyages_ended_at ON voyages(ended_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_finance_settlement_audit_created_at ON finance_settlement_audit(created_at DESC)`,
-    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_created_at ON finance_cash_ledger_entries(created_at DESC)`,
-    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_type ON finance_cash_ledger_entries(type)`,
-    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_deleted_at ON finance_cash_ledger_entries(deleted_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_finance_cashflow_audit_created_at ON finance_cashflow_audit(created_at DESC)`,
-    `CREATE INDEX IF NOT EXISTS idx_employees_user_status ON employees(user_status)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_enrollments_user ON college_enrollments(user_employee_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_modules_course ON college_course_modules(course_id, order_index)`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS ux_college_modules_course_order ON college_course_modules(course_id, order_index)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_module_progress_user_module ON college_module_progress(user_employee_id, module_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_library_documents_category ON college_library_documents(category)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_library_documents_visibility ON college_library_documents(visibility)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_library_documents_course ON college_library_documents(course_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_library_doc_links_doc ON college_library_doc_links(doc_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_library_doc_links_course ON college_library_doc_links(course_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_library_doc_links_module ON college_library_doc_links(module_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_roles_employee ON college_role_assignments(employee_id, role_key)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_courses_visibility ON college_courses(visibility)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_courses_archived_at ON college_courses(archived_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_exams_course ON college_exams(course_id, published)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_exams_archived_at ON college_exams(archived_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_exam_attempts_exam_user ON college_exam_attempts(exam_id, user_employee_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_profiles_status_due ON college_profiles(trainee_status, due_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_library_docs_archived_at ON college_library_documents(archived_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_college_modules_archived_at ON college_course_modules(archived_at)`,
+  const optionalIndexes = [
     `CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(employee_status)`,
+    `CREATE INDEX IF NOT EXISTS idx_employees_user_status ON employees(user_status)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_rank ON employees(rank)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_grade ON employees(grade)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_serial ON employees(serial_number)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_roblox_user_id ON employees(roblox_user_id)`,
     `CREATE INDEX IF NOT EXISTS idx_employees_hire_date ON employees(hire_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyages_status ON voyages(status)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyages_ended_at ON voyages(ended_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyages_company_share_status ON voyages(company_share_status)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS ux_voyages_active_vessel_callsign
+      ON voyages (LOWER(vessel_name), LOWER(vessel_callsign))
+      WHERE status = 'ONGOING'`,
+    `CREATE INDEX IF NOT EXISTS idx_voyage_participants_employee ON voyage_participants(employee_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyage_crew_members_employee ON voyage_crew_members(employee_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyage_manifest_voyage ON voyage_manifest_lines(voyage_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyage_logs_voyage ON voyage_logs(voyage_id, created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_settlement_audit_created_at ON finance_settlement_audit(created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_created_at ON finance_cash_ledger_entries(created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_type ON finance_cash_ledger_entries(type)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_deleted_at ON finance_cash_ledger_entries(deleted_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cashflow_audit_created_at ON finance_cashflow_audit(created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_created_at ON admin_activity_events(created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_action_type ON admin_activity_events(action_type)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_target_employee ON admin_activity_events(target_employee_id)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_actor_employee ON admin_activity_events(actor_employee_id)`
   ];
-  for (const sql of optionalIndexStatements) {
+
+  for (const sql of optionalIndexes) {
     try {
       await env.DB.prepare(sql).run();
     } catch {
-      // Keep runtime healthy even if optional index creation fails in legacy states.
+      // Keep schema bootstrap non-fatal if index creation fails on odd legacy states.
     }
   }
 
@@ -954,18 +375,6 @@ export async function ensureCoreSchema(env) {
     )
     .bind(startingBalanceSeed)
     .run();
-
-  try {
-    await env.DB
-      .prepare(
-        `CREATE UNIQUE INDEX IF NOT EXISTS ux_voyages_active_vessel_callsign
-         ON voyages (LOWER(vessel_name), LOWER(vessel_callsign))
-         WHERE status = 'ONGOING'`
-      )
-      .run();
-  } catch {
-    // Keep schema bootstrap non-fatal; API-level duplicate checks still enforce this invariant.
-  }
 
   await env.DB.batch(
     permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>
@@ -1021,25 +430,10 @@ export async function ensureCoreSchema(env) {
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'my_details.view')`)
         .bind(employeeRole.id),
       env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'forms.read')`)
-        .bind(employeeRole.id),
-      env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'forms.submit')`)
-        .bind(employeeRole.id),
-      env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'forms.responses.read')`)
-        .bind(employeeRole.id),
-      env.DB
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'voyages.read')`)
         .bind(employeeRole.id),
       env.DB
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'finances.view')`)
-        .bind(employeeRole.id),
-      env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'college.view')`)
-        .bind(employeeRole.id),
-      env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'fleet.read')`)
         .bind(employeeRole.id)
     ]);
 
@@ -1053,59 +447,15 @@ export async function ensureCoreSchema(env) {
       .run();
   }
 
-  await env.DB.batch([
-    env.DB
-      .prepare(
-        `INSERT OR IGNORE INTO college_courses
-         (code, title, description, visibility, is_required_for_applicants, published, estimated_minutes, updated_at)
-         VALUES
-         ('COL-IND-001', 'Core Induction', 'Mandatory induction for accepted applicants.', 'trainee', 1, 1, 90, CURRENT_TIMESTAMP)`
-      ),
-    env.DB
-      .prepare(
-        `INSERT OR IGNORE INTO college_library_documents
-         (title, category, tags, summary, document_url, visibility, published, updated_at)
-         VALUES
-         ('Fleet Safety SOP', 'Safety', 'safety,sop,operations', 'Core safety operating procedures for voyages.', '/forms', 'public', 1, CURRENT_TIMESTAMP)`
-      ),
-    env.DB
-      .prepare(
-        `INSERT OR IGNORE INTO college_library_documents
-         (title, category, tags, summary, document_url, visibility, published, updated_at)
-         VALUES
-         ('Navigation Standards', 'Navigation', 'navigation,route,bridge', 'Navigation and route-planning standards.', '/voyages/my', 'staff', 1, CURRENT_TIMESTAMP)`
-      )
-  ]);
-
-  const inductionCourse = await env.DB.prepare(`SELECT id FROM college_courses WHERE code = 'COL-IND-001' LIMIT 1`).first();
-  if (inductionCourse?.id) {
-    await env.DB.batch([
-      env.DB
-        .prepare(
-          `INSERT OR IGNORE INTO college_course_modules
-           (course_id, title, order_index, content_type, content, updated_at)
-           VALUES
-           (?, 'Welcome & Expectations', 1, 'markdown', '# Welcome\nComplete all modules and pass your induction within 14 days of acceptance.', CURRENT_TIMESTAMP)`
-        )
-        .bind(inductionCourse.id),
-      env.DB
-        .prepare(
-          `INSERT OR IGNORE INTO college_course_modules
-           (course_id, title, order_index, content_type, content, updated_at)
-           VALUES
-           (?, 'Safety Fundamentals', 2, 'markdown', 'Review safety procedures and emergency protocols before active duty.', CURRENT_TIMESTAMP)`
-        )
-        .bind(inductionCourse.id),
-      env.DB
-        .prepare(
-          `INSERT OR IGNORE INTO college_course_modules
-           (course_id, title, order_index, content_type, content, updated_at)
-           VALUES
-           (?, 'Final Quiz', 3, 'quiz', 'Final knowledge check. Passing this marks your final assessment complete.', CURRENT_TIMESTAMP)`
-        )
-        .bind(inductionCourse.id)
-    ]);
-  }
+  await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
+  await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();
+  await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
+  await env.DB
+    .prepare(
+      `UPDATE voyages
+       SET company_share_status = COALESCE(NULLIF(company_share_status, ''), 'UNSETTLED')`
+    )
+    .run();
 }
 
 export async function getEmployeeByDiscordUserId(env, discordUserId) {
@@ -1149,7 +499,6 @@ export function normalizeDiscordUserId(value) {
   const raw = String(value ?? '').trim();
   if (/^\d{6,30}$/.test(raw)) return raw;
 
-  // Allow pasted mention-like values such as <@123...> by extracting the snowflake digits.
   const digits = raw.replace(/\D/g, '');
   if (/^\d{6,30}$/.test(digits)) return digits;
 
@@ -1192,11 +541,12 @@ export async function writeAdminActivityEvent(env, event) {
   const actorEmployeeId = Number(event?.actorEmployeeId);
   const targetEmployeeId = Number(event?.targetEmployeeId);
   const metadataJson = event?.metadata ? JSON.stringify(event.metadata) : null;
-  const result = await env.DB.prepare(
-    `INSERT INTO admin_activity_events
-     (actor_employee_id, actor_name, actor_discord_user_id, action_type, target_employee_id, summary, metadata_json, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-  )
+  const result = await env.DB
+    .prepare(
+      `INSERT INTO admin_activity_events
+       (actor_employee_id, actor_name, actor_discord_user_id, action_type, target_employee_id, summary, metadata_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+    )
     .bind(
       Number.isInteger(actorEmployeeId) && actorEmployeeId > 0 ? actorEmployeeId : null,
       String(event?.actorName || '').trim() || null,
