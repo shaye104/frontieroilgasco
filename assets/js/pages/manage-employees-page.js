@@ -34,6 +34,8 @@ initIntranetPageGuard({
       drawerOverviewSelector: '#drawerTabOverview',
       drawerVoyagesSelector: '#drawerTabVoyages',
       drawerActivitySelector: '#drawerTabActivity',
+      drawerNotesSelector: '#drawerTabNotes',
+      drawerDisciplinarySelector: '#drawerTabDisciplinary',
       openCreateEmployeeBtnSelector: '#openCreateEmployeeBtn',
       createFormSelector: '#createEmployeeForm'
     })

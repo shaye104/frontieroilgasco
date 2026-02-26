@@ -174,6 +174,12 @@
   background: #f8fbff;
 }
 
+.admin-employees-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .admin-column-menu {
   margin-bottom: 0.65rem;
   border: 1px solid #dce5f2;
@@ -246,6 +252,10 @@
 .admin-employee-drawer-tab {
   display: grid;
   gap: 0.6rem;
+}
+
+.admin-employee-drawer-tab textarea {
+  margin-bottom: 0;
 }
 
 @media (max-width: 1080px) {
@@ -1471,6 +1481,12 @@
   background: #fff2f2;
   border-color: #ffe2e2;
   color: #b43f3f;
+}
+
+.badge-status.is-suspended {
+  background: #fff1f2;
+  border-color: #fecaca;
+  color: #b91c1c;
 }
 
 .my-details-main-grid {

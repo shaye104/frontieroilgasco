@@ -1,5 +1,7 @@
-import { createEmployee, getConfig, getEmployeeDrawer, listEmployees } from './admin-api.js';
+import { addDisciplinary, addEmployeeNote, createEmployee, getConfig, getEmployeeDrawer, listEmployees } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
+
+const VISIBLE_COLUMNS_STORAGE_KEY = 'manageEmployees_visibleColumns';
 
 function text(value) {
   const s = String(value ?? '').trim();
@@ -15,26 +17,26 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-function formatDate(value) {
+function formatDate(value, withTime = false) {
   const raw = String(value || '').trim();
   if (!raw) return 'N/A';
   const date = new Date(raw);
   if (Number.isNaN(date.getTime())) return raw;
-  return date.toLocaleDateString();
+  return withTime ? date.toLocaleString() : date.toLocaleDateString();
 }
 
 function statusClass(status) {
   const normalized = String(status || '').trim().toLowerCase();
   if (normalized === 'active' || normalized === 'on duty') return 'is-active';
-  if (normalized === 'suspended' || normalized === 'inactive' || normalized === 'terminated' || normalized === 'on leave') return 'is-inactive';
+  if (normalized === 'suspended') return 'is-suspended';
+  if (normalized === 'inactive' || normalized === 'terminated' || normalized === 'on leave') return 'is-inactive';
   return '';
 }
 
 function fillOptions(select, items, placeholder = 'All') {
   if (!select) return;
   const current = select.value;
-  select.innerHTML =
-    `<option value="">${placeholder}</option>` +
+  select.innerHTML = `<option value="">${placeholder}</option>` +
     items.map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.value)}</option>`).join('');
   if (current) select.value = current;
 }
@@ -64,6 +66,28 @@ const COLUMN_LABELS = {
   hire_date: 'Hire Date'
 };
 
+function loadVisibleColumns() {
+  try {
+    const raw = window.localStorage.getItem(VISIBLE_COLUMNS_STORAGE_KEY);
+    if (!raw) return new Set(DEFAULT_VISIBLE_COLUMNS);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set(DEFAULT_VISIBLE_COLUMNS);
+    const valid = parsed.filter((key) => Object.prototype.hasOwnProperty.call(COLUMN_LABELS, key));
+    if (!valid.length) return new Set(DEFAULT_VISIBLE_COLUMNS);
+    return new Set(valid);
+  } catch {
+    return new Set(DEFAULT_VISIBLE_COLUMNS);
+  }
+}
+
+function saveVisibleColumns(columns) {
+  try {
+    window.localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify([...columns]));
+  } catch {
+    // best effort only
+  }
+}
+
 function employeeRowSkeleton() {
   return `<tr>
     <td><span class="skeleton-line skeleton-w-55"></span></td>
@@ -77,15 +101,23 @@ function employeeRowSkeleton() {
   </tr>`;
 }
 
-function renderStatCards(stats) {
+function renderStatCards(payload) {
+  const counts = payload?.meta?.counts || null;
+  const overview = payload?.overview || null;
   const totalNode = document.querySelector('#employeeStatTotal');
   const activeNode = document.querySelector('#employeeStatActive');
   const inactiveNode = document.querySelector('#employeeStatInactive');
   const newHiresNode = document.querySelector('#employeeStatNewHires');
-  if (totalNode) totalNode.textContent = String(Number(stats?.totalEmployees || 0));
-  if (activeNode) activeNode.textContent = String(Number(stats?.activeEmployees || 0));
-  if (inactiveNode) inactiveNode.textContent = String(Number(stats?.inactiveEmployees || 0));
-  if (newHiresNode) newHiresNode.textContent = String(Number(stats?.newHires30d || 0));
+
+  const total = Number(counts?.total ?? overview?.totalEmployees ?? 0);
+  const active = Number(counts?.active ?? overview?.activeEmployees ?? 0);
+  const inactive = Number(counts?.inactiveSuspended ?? overview?.inactiveEmployees ?? 0);
+  const newHires = Number(counts?.newHires30d ?? overview?.newHires30d ?? 0);
+
+  if (totalNode) totalNode.textContent = String(total);
+  if (activeNode) activeNode.textContent = String(active);
+  if (inactiveNode) inactiveNode.textContent = String(inactive);
+  if (newHiresNode) newHiresNode.textContent = String(newHires);
 }
 
 function renderSortHeaders(sortBy, sortDir) {
@@ -93,9 +125,11 @@ function renderSortHeaders(sortBy, sortDir) {
     const key = String(btn.getAttribute('data-sort') || '');
     if (!key) return;
     const active = key === sortBy;
+    const baseLabel = String(btn.getAttribute('data-label') || btn.textContent || '').replace(/[↑↓]/g, '').trim();
+    btn.setAttribute('data-label', baseLabel);
     btn.classList.toggle('is-active', active);
     btn.setAttribute('aria-sort', active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none');
-    btn.textContent = `${btn.textContent.replace(/[↑↓]/g, '').trim()}${active ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}`;
+    btn.textContent = `${baseLabel}${active ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}`;
   });
 }
 
@@ -116,9 +150,7 @@ function renderTable(target, employees, visibleColumns) {
         <td data-col="rank">${escapeHtml(text(emp.rank))}</td>
         <td data-col="grade">${escapeHtml(text(emp.grade))}</td>
         <td data-col="serial_number">${escapeHtml(text(emp.serial_number))}</td>
-        <td data-col="employee_status"><span class="badge badge-status ${statusClass(emp.employee_status)}">${escapeHtml(
-          text(emp.employee_status)
-        )}</span></td>
+        <td data-col="employee_status"><span class="badge badge-status ${statusClass(emp.employee_status)}">${escapeHtml(text(emp.employee_status))}</span></td>
         <td data-col="hire_date">${escapeHtml(formatDate(emp.hire_date))}</td>
       </tr>`
     )
@@ -140,11 +172,9 @@ function renderDrawerOverview(target, payload) {
       <dt>Rank</dt><dd>${escapeHtml(text(employee.rank))}</dd>
       <dt>Grade</dt><dd>${escapeHtml(text(employee.grade))}</dd>
       <dt>Serial</dt><dd>${escapeHtml(text(employee.serial_number))}</dd>
-      <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(
-    text(employee.employee_status)
-  )}</span></dd>
+      <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(text(employee.employee_status))}</span></dd>
       <dt>Hire Date</dt><dd>${escapeHtml(formatDate(employee.hire_date))}</dd>
-      <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at))}</dd>
+      <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at, true))}</dd>
     </div>
   `;
 }
@@ -169,8 +199,8 @@ function renderDrawerVoyages(target, payload) {
               <td>${escapeHtml(text(voyage.vessel_name))} (${escapeHtml(text(voyage.vessel_callsign))})</td>
               <td>${escapeHtml(text(voyage.departure_port))} → ${escapeHtml(text(voyage.destination_port))}</td>
               <td>${escapeHtml(text(voyage.status))}</td>
-              <td>${escapeHtml(formatDate(voyage.ended_at || voyage.started_at))}</td>
-              <td class="align-right">ƒ ${Number(voyage.net_profit || 0).toLocaleString()}</td>
+              <td>${escapeHtml(formatDate(voyage.ended_at || voyage.started_at, true))}</td>
+              <td class="align-right">ƒ ${Math.round(Number(voyage.net_profit || 0)).toLocaleString()}</td>
             </tr>`
             )
             .join('')}
@@ -195,7 +225,7 @@ function renderDrawerActivity(target, payload) {
           <div>
             <strong>${escapeHtml(text(entry.actionType))}</strong>
             <p class="finance-inline-caption">${escapeHtml(text(entry.summary))}</p>
-            <p class="finance-inline-caption">${escapeHtml(formatDate(entry.createdAt))}</p>
+            <p class="finance-inline-caption">${escapeHtml(formatDate(entry.createdAt, true))}</p>
           </div>
           <span class="role-id">${escapeHtml(text(entry.actorName || entry.actorDiscordId || 'System'))}</span>
         </li>
@@ -203,6 +233,183 @@ function renderDrawerActivity(target, payload) {
         )
         .join('')}
     </ul>`;
+}
+
+function isSystemNote(noteText) {
+  const value = String(noteText || '').trim().toLowerCase();
+  return value.startsWith('[activity]') || value.startsWith('[system]');
+}
+
+function renderDrawerNotes(target, payload, showSystem, notesFeedback, selectedEmployeeId, refreshDrawerData, setShowSystem) {
+  if (!target) return;
+  const allNotes = Array.isArray(payload?.notes) ? payload.notes : [];
+  const canAddNotes = Boolean(payload?.capabilities?.canAddNotes);
+  const notes = showSystem ? allNotes : allNotes.filter((note) => !isSystemNote(note.note));
+
+  target.innerHTML = `
+    <div class="button-row">
+      <label class="finance-toggle-wrap"><input id="drawerSystemNotesToggle" type="checkbox" ${showSystem ? 'checked' : ''}/> Show system messages</label>
+    </div>
+    ${
+      canAddNotes
+        ? `<form id="drawerAddNoteForm" class="finance-cashflow-entry-form">
+      <div>
+        <label for="drawerNoteCategory">Category</label>
+        <select id="drawerNoteCategory" name="category">
+          <option value="">General</option>
+          <option value="Info">Info</option>
+          <option value="Warning">Warning</option>
+          <option value="Performance">Performance</option>
+          <option value="HR">HR</option>
+        </select>
+      </div>
+      <div class="finance-cashflow-entry-wide">
+        <label for="drawerNoteBody">Note</label>
+        <textarea id="drawerNoteBody" name="note" rows="3" minlength="2" required></textarea>
+      </div>
+      <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+        <button class="btn btn-primary" type="submit">Add Note</button>
+      </div>
+    </form>`
+        : '<p class="finance-inline-caption">You do not have permission to add notes.</p>'
+    }
+    <div id="drawerNotesFeedback" class="feedback" role="status" aria-live="polite"></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Created</th><th>Author</th><th>Note</th></tr></thead>
+        <tbody>
+          ${notes.length ? notes
+            .map((entry) => `<tr><td>${escapeHtml(formatDate(entry.created_at, true))}</td><td>${escapeHtml(text(entry.authored_by || 'System'))}</td><td>${escapeHtml(text(entry.note))}</td></tr>`)
+            .join('') : '<tr><td colspan="3">No notes found.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  const feedbackNode = target.querySelector('#drawerNotesFeedback');
+  if (feedbackNode && notesFeedback?.message) showMessage(feedbackNode, notesFeedback.message, notesFeedback.type || 'info');
+
+  const toggle = target.querySelector('#drawerSystemNotesToggle');
+  toggle?.addEventListener('change', () => {
+    const nextShowSystem = Boolean(toggle.checked);
+    if (typeof setShowSystem === 'function') setShowSystem(nextShowSystem);
+    renderDrawerNotes(target, payload, nextShowSystem, null, selectedEmployeeId, refreshDrawerData, setShowSystem);
+  });
+
+  const form = target.querySelector('#drawerAddNoteForm');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const fd = new FormData(form);
+    const note = String(fd.get('note') || '').trim();
+    if (!note) return;
+    try {
+      await addEmployeeNote(selectedEmployeeId, {
+        category: String(fd.get('category') || '').trim(),
+        note
+      });
+      await refreshDrawerData(selectedEmployeeId, {
+        force: true,
+        feedback: { message: 'Note added.', type: 'success' },
+        tab: 'notes',
+        showSystem: Boolean(toggle?.checked)
+      });
+    } catch (error) {
+      renderDrawerNotes(
+        target,
+        payload,
+        Boolean(toggle?.checked),
+        { message: error.message || 'Unable to add note.', type: 'error' },
+        selectedEmployeeId,
+        refreshDrawerData,
+        setShowSystem
+      );
+    }
+  });
+}
+
+function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selectedEmployeeId, refreshDrawerData) {
+  if (!target) return;
+  const records = Array.isArray(payload?.disciplinaries) ? payload.disciplinaries : [];
+  const canAddDisciplinary = Boolean(payload?.capabilities?.canAddDisciplinary);
+
+  target.innerHTML = `
+    ${
+      canAddDisciplinary
+        ? `<form id="drawerAddDisciplinaryForm" class="finance-cashflow-entry-form">
+      <div>
+        <label for="drawerRecordType">Action Type</label>
+        <input id="drawerRecordType" name="recordType" type="text" required placeholder="Warning, Suspension, Demotion" />
+      </div>
+      <div>
+        <label for="drawerRecordStatus">Status</label>
+        <select id="drawerRecordStatus" name="recordStatus"><option value="open">Open</option><option value="resolved">Resolved</option></select>
+      </div>
+      <div>
+        <label for="drawerRecordDate">Record Date</label>
+        <input id="drawerRecordDate" name="recordDate" type="date" />
+      </div>
+      <div class="finance-cashflow-entry-wide">
+        <label for="drawerRecordReason">Reason / Notes</label>
+        <textarea id="drawerRecordReason" name="reason" rows="3" minlength="2"></textarea>
+      </div>
+      <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+        <button class="btn btn-primary" type="submit">Add Disciplinary Record</button>
+      </div>
+    </form>`
+        : '<p class="finance-inline-caption">You do not have permission to add disciplinary records.</p>'
+    }
+    <div id="drawerDisciplinaryFeedback" class="feedback" role="status" aria-live="polite"></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Type</th><th>Status</th><th>Issued By</th><th>Notes</th></tr></thead>
+        <tbody>
+          ${records.length ? records
+            .map((entry) => `<tr><td>${escapeHtml(formatDate(entry.record_date || entry.created_at))}</td><td>${escapeHtml(text(entry.record_type))}</td><td><span class="badge badge-status ${statusClass(entry.record_status)}">${escapeHtml(text(entry.record_status))}</span></td><td>${escapeHtml(text(entry.issued_by || 'System'))}</td><td>${escapeHtml(text(entry.notes))}</td></tr>`)
+            .join('') : '<tr><td colspan="5">No disciplinary records found.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  const feedbackNode = target.querySelector('#drawerDisciplinaryFeedback');
+  if (feedbackNode && disciplinaryFeedback?.message) showMessage(feedbackNode, disciplinaryFeedback.message, disciplinaryFeedback.type || 'info');
+
+  const form = target.querySelector('#drawerAddDisciplinaryForm');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const fd = new FormData(form);
+    try {
+      await addDisciplinary(selectedEmployeeId, {
+        recordType: String(fd.get('recordType') || '').trim(),
+        recordStatus: String(fd.get('recordStatus') || '').trim(),
+        recordDate: String(fd.get('recordDate') || '').trim(),
+        reason: String(fd.get('reason') || '').trim()
+      });
+      await refreshDrawerData(selectedEmployeeId, {
+        force: true,
+        feedback: { message: 'Disciplinary record added.', type: 'success' },
+        tab: 'disciplinary'
+      });
+    } catch (error) {
+      renderDrawerDisciplinary(target, payload, { message: error.message || 'Unable to add disciplinary record.', type: 'error' }, selectedEmployeeId, refreshDrawerData);
+    }
+  });
+}
+
+function normalizeEmployeesPayload(payload) {
+  const employees = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.employees) ? payload.employees : [];
+  const pagination = payload?.pagination || {};
+  const meta = payload?.meta || {};
+  return {
+    ...payload,
+    employees,
+    pagination: {
+      page: Number(meta.page || pagination.page || 1),
+      pageSize: Number(meta.pageSize || pagination.pageSize || employees.length || 20),
+      total: Number(meta.total || pagination.total || 0),
+      totalPages: Number(meta.totalPages || pagination.totalPages || 1)
+    }
+  };
 }
 
 export async function initManageEmployees(config) {
@@ -235,6 +442,8 @@ export async function initManageEmployees(config) {
   const drawerOverview = document.querySelector(config.drawerOverviewSelector);
   const drawerVoyages = document.querySelector(config.drawerVoyagesSelector);
   const drawerActivity = document.querySelector(config.drawerActivitySelector);
+  const drawerNotes = document.querySelector(config.drawerNotesSelector);
+  const drawerDisciplinary = document.querySelector(config.drawerDisciplinarySelector);
 
   if (!feedback || !tableBody || !createForm) return;
 
@@ -244,9 +453,10 @@ export async function initManageEmployees(config) {
     totalPages: 1,
     sortBy: 'id',
     sortDir: 'desc',
-    visibleColumns: new Set(DEFAULT_VISIBLE_COLUMNS),
+    visibleColumns: loadVisibleColumns(),
     drawerTab: 'overview',
-    selectedEmployeeId: null
+    selectedEmployeeId: null,
+    showSystemNotes: false
   };
   const drawerCache = new Map();
   let debounceTimer = null;
@@ -270,15 +480,36 @@ export async function initManageEmployees(config) {
         </label>`
       )
       .join('');
+
     columnVisibilityMenu.querySelectorAll('input[data-column-key]').forEach((checkbox) => {
       checkbox.addEventListener('change', () => {
         const key = String(checkbox.getAttribute('data-column-key') || '');
         if (!key) return;
-        if (checkbox.checked) state.visibleColumns.add(key);
-        else state.visibleColumns.delete(key);
+        if (checkbox.checked) {
+          state.visibleColumns.add(key);
+        } else {
+          if (state.visibleColumns.size <= 1) {
+            checkbox.checked = true;
+            showMessage(feedback, 'At least one column must stay visible.', 'error');
+            return;
+          }
+          state.visibleColumns.delete(key);
+        }
+        saveVisibleColumns(state.visibleColumns);
         applyColumnVisibility();
       });
     });
+  }
+
+  function validateFilterDates() {
+    const from = String(filterHireDateFrom?.value || '').trim();
+    const to = String(filterHireDateTo?.value || '').trim();
+    if (from && to && from > to) {
+      showMessage(feedback, 'Hire date range is invalid. "From" must be on or before "To".', 'error');
+      return false;
+    }
+    clearMessage(feedback);
+    return true;
   }
 
   function collectFilters() {
@@ -287,8 +518,8 @@ export async function initManageEmployees(config) {
       rank: filterRank?.value || '',
       grade: filterGrade?.value || '',
       status: filterStatus?.value || '',
-      hireDateFrom: filterHireDateFrom?.value || '',
-      hireDateTo: filterHireDateTo?.value || '',
+      hireFrom: filterHireDateFrom?.value || '',
+      hireTo: filterHireDateTo?.value || '',
       page: state.page,
       pageSize: state.pageSize,
       sortBy: state.sortBy,
@@ -297,10 +528,13 @@ export async function initManageEmployees(config) {
   }
 
   async function loadEmployees() {
+    if (!validateFilterDates()) return;
+
     tableBody.innerHTML = Array.from({ length: 8 }, () => employeeRowSkeleton()).join('');
     try {
-      const payload = await listEmployees(collectFilters());
-      renderStatCards(payload.overview || {});
+      const rawPayload = await listEmployees(collectFilters());
+      const payload = normalizeEmployeesPayload(rawPayload);
+      renderStatCards(payload);
       renderTable(tableBody, payload.employees || [], state.visibleColumns);
       const pagination = payload.pagination || {};
       state.totalPages = Math.max(1, Number(pagination.totalPages || 1));
@@ -335,6 +569,48 @@ export async function initManageEmployees(config) {
     drawerOverview?.classList.toggle('hidden', tab !== 'overview');
     drawerVoyages?.classList.toggle('hidden', tab !== 'voyages');
     drawerActivity?.classList.toggle('hidden', tab !== 'activity');
+    drawerNotes?.classList.toggle('hidden', tab !== 'notes');
+    drawerDisciplinary?.classList.toggle('hidden', tab !== 'disciplinary');
+  }
+
+  async function refreshDrawerData(employeeId, options = {}) {
+    const force = Boolean(options.force);
+    let payload = drawerCache.get(employeeId);
+    if (!payload || force) {
+      payload = await getEmployeeDrawer(employeeId, { activityPageSize: 20 });
+      drawerCache.set(employeeId, payload);
+    }
+
+    if (drawerName) drawerName.textContent = payload.employee?.roblox_username || `Employee #${employeeId}`;
+    if (drawerMeta) {
+      const serial = payload.employee?.serial_number ? payload.employee.serial_number : 'No serial';
+      const rank = payload.employee?.rank ? payload.employee.rank : 'Unset rank';
+      const status = payload.employee?.employee_status ? payload.employee.employee_status : 'Unknown status';
+      drawerMeta.textContent = `${serial} • ${rank} • ${status}`;
+    }
+
+    renderDrawerOverview(drawerOverview, payload);
+    renderDrawerVoyages(drawerVoyages, payload);
+    renderDrawerActivity(drawerActivity, payload);
+    renderDrawerNotes(
+      drawerNotes,
+      payload,
+      options.showSystem ?? state.showSystemNotes,
+      options.tab === 'notes' ? options.feedback : null,
+      employeeId,
+      refreshDrawerData,
+      (value) => {
+        state.showSystemNotes = Boolean(value);
+      }
+    );
+    renderDrawerDisciplinary(
+      drawerDisciplinary,
+      payload,
+      options.tab === 'disciplinary' ? options.feedback : null,
+      employeeId,
+      refreshDrawerData
+    );
+    if (options.tab) setDrawerTab(options.tab);
   }
 
   async function openDrawer(employeeId) {
@@ -346,18 +622,11 @@ export async function initManageEmployees(config) {
     if (drawerOverview) drawerOverview.innerHTML = '<span class="skeleton-line skeleton-w-70"></span><span class="skeleton-line skeleton-w-90"></span>';
     if (drawerVoyages) drawerVoyages.innerHTML = '<div class="finance-chart-skeleton"></div>';
     if (drawerActivity) drawerActivity.innerHTML = '<div class="finance-chart-skeleton"></div>';
+    if (drawerNotes) drawerNotes.innerHTML = '<div class="finance-chart-skeleton"></div>';
+    if (drawerDisciplinary) drawerDisciplinary.innerHTML = '<div class="finance-chart-skeleton"></div>';
 
     try {
-      let payload = drawerCache.get(employeeId);
-      if (!payload) {
-        payload = await getEmployeeDrawer(employeeId, { activityPageSize: 20 });
-        drawerCache.set(employeeId, payload);
-      }
-      if (drawerName) drawerName.textContent = payload.employee?.roblox_username || `Employee #${employeeId}`;
-      if (drawerMeta) drawerMeta.textContent = `${payload.employee?.serial_number || 'No serial'} • ${payload.employee?.rank || 'Unset rank'}`;
-      renderDrawerOverview(drawerOverview, payload);
-      renderDrawerVoyages(drawerVoyages, payload);
-      renderDrawerActivity(drawerActivity, payload);
+      await refreshDrawerData(employeeId);
     } catch (error) {
       if (drawerOverview) drawerOverview.innerHTML = `<p class="finance-inline-caption">${escapeHtml(error.message || 'Unable to load employee details.')}</p>`;
     }
@@ -395,7 +664,7 @@ export async function initManageEmployees(config) {
     debounceTimer = window.setTimeout(() => {
       state.page = 1;
       loadEmployees();
-    }, 220);
+    }, 360);
   };
 
   [filterQuery, filterRank, filterGrade, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {

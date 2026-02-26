@@ -1,9 +1,10 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { requirePermission } from '../../_lib/admin-auth.js';
+import { hasPermission } from '../../../_lib/permissions.js';
 
 export async function onRequestGet(context) {
   const { env, params, request } = context;
-  const { errorResponse } = await requirePermission(context, ['employees.read']);
+  const { errorResponse, session } = await requirePermission(context, ['employees.read']);
   if (errorResponse) return errorResponse;
   const startedAt = Date.now();
 
@@ -14,7 +15,7 @@ export async function onRequestGet(context) {
   const activityPageSize = Math.min(50, Math.max(5, Number(url.searchParams.get('activityPageSize')) || 15));
 
   const dbStartedAt = Date.now();
-  const [employee, recentVoyagesRows, activityRows] = await Promise.all([
+  const [employee, recentVoyagesRows, activityRows, notesRows, disciplinariesRows] = await Promise.all([
     env.DB
       .prepare(
         `SELECT id, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, hire_date, updated_at
@@ -61,6 +62,26 @@ export async function onRequestGet(context) {
          LIMIT ?`
       )
       .bind(employeeId, activityPageSize)
+      .all(),
+    env.DB
+      .prepare(
+        `SELECT id, note, authored_by, created_at
+         FROM employee_notes
+         WHERE employee_id = ?
+         ORDER BY created_at DESC
+         LIMIT 80`
+      )
+      .bind(employeeId)
+      .all(),
+    env.DB
+      .prepare(
+        `SELECT id, record_type, record_date, record_status, notes, issued_by, created_at
+         FROM disciplinary_records
+         WHERE employee_id = ?
+         ORDER BY COALESCE(record_date, created_at) DESC, id DESC
+         LIMIT 80`
+      )
+      .bind(employeeId)
       .all()
   ]);
   if (!employee) return json({ error: 'Employee not found.' }, 404);
@@ -120,6 +141,12 @@ export async function onRequestGet(context) {
     employee,
     recentVoyages: recentVoyagesRows?.results || [],
     activity,
+    notes: notesRows?.results || [],
+    disciplinaries: disciplinariesRows?.results || [],
+    capabilities: {
+      canAddNotes: hasPermission(session, 'employees.notes'),
+      canAddDisciplinary: hasPermission(session, 'employees.discipline')
+    },
     timing: { dbMs, totalMs: Date.now() - startedAt }
   });
 }

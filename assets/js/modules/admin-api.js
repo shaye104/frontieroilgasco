@@ -146,6 +146,8 @@ export function listEmployees(options = {}) {
   if (options.rank) params.set('rank', String(options.rank));
   if (options.grade) params.set('grade', String(options.grade));
   if (options.status) params.set('status', String(options.status));
+  if (options.hireFrom) params.set('hireFrom', String(options.hireFrom));
+  if (options.hireTo) params.set('hireTo', String(options.hireTo));
   if (options.hireDateFrom) params.set('hireDateFrom', String(options.hireDateFrom));
   if (options.hireDateTo) params.set('hireDateTo', String(options.hireDateTo));
   if (options.sortBy) params.set('sortBy', String(options.sortBy));

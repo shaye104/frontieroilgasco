@@ -52,6 +52,7 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/admin/config',
   '/api/admin/activity',
   '/api/admin/activity-tracker',
+  '/api/employees',
   '/api/employees/search'
 ];
 

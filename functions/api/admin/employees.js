@@ -47,13 +47,14 @@ export async function onRequestGet(context) {
   const rankFilter = normalizeText(url.searchParams.get('rank'));
   const gradeFilter = normalizeText(url.searchParams.get('grade'));
   const statusFilter = normalizeText(url.searchParams.get('status'));
-  const hireDateFrom = normalizeText(url.searchParams.get('hireDateFrom'));
-  const hireDateTo = normalizeText(url.searchParams.get('hireDateTo'));
+  const hireDateFrom = normalizeText(url.searchParams.get('hireFrom') || url.searchParams.get('hireDateFrom'));
+  const hireDateTo = normalizeText(url.searchParams.get('hireTo') || url.searchParams.get('hireDateTo'));
   const sortByInput = normalizeText(url.searchParams.get('sortBy')).toLowerCase();
   const sortDirInput = normalizeText(url.searchParams.get('sortDir')).toLowerCase();
   const sortDir = sortDirInput === 'asc' ? 'ASC' : 'DESC';
   const sortableColumns = new Map([
     ['id', 'e.id'],
+    ['username', 'LOWER(COALESCE(e.roblox_username, \'\'))'],
     ['roblox_username', 'LOWER(COALESCE(e.roblox_username, \'\'))'],
     ['roblox_user_id', 'COALESCE(e.roblox_user_id, \'\')'],
     ['rank', 'LOWER(COALESCE(e.rank, \'\'))'],
@@ -144,15 +145,31 @@ export async function onRequestGet(context) {
     })
   );
 
+  const rows = result?.results || [];
+  const overview = {
+    totalEmployees: Number(statsRow?.total_employees || 0),
+    activeEmployees: Number(statsRow?.active_employees || 0),
+    inactiveEmployees: Number(statsRow?.inactive_employees || 0),
+    newHires30d: Number(statsRow?.new_hires_30d || 0)
+  };
+
   return json({
-    employees: result?.results || [],
-    actorRankLevel,
-    overview: {
-      totalEmployees: Number(statsRow?.total_employees || 0),
-      activeEmployees: Number(statsRow?.active_employees || 0),
-      inactiveEmployees: Number(statsRow?.inactive_employees || 0),
-      newHires30d: Number(statsRow?.new_hires_30d || 0)
+    data: rows,
+    employees: rows,
+    meta: {
+      total,
+      page,
+      pageSize,
+      totalPages,
+      counts: {
+        total: overview.totalEmployees,
+        active: overview.activeEmployees,
+        inactiveSuspended: overview.inactiveEmployees,
+        newHires30d: overview.newHires30d
+      }
     },
+    actorRankLevel,
+    overview,
     pagination: {
       page,
       pageSize,
