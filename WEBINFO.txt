@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-26T22:39:51.897Z
+Generated: 2026-02-26T22:40:35.604Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -35,7 +35,7 @@ JAVASCRIPT MODULES
 - assets/js/modules/intranet-page-guard.js | exports: No public exports
 - assets/js/modules/manage-employees.js | exports: No public exports
 - assets/js/modules/my-details-panel.js | exports: No public exports
-- assets/js/modules/nav.js | exports: hasPermission, renderIntranetNavbar, renderPublicNavbar
+- assets/js/modules/nav.js | exports: getPreferredUserLabel, hasPermission, renderIntranetNavbar, renderPublicNavbar
 - assets/js/modules/notice.js | exports: clearMessage, showMessage
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/roles-admin.js | exports: No public exports

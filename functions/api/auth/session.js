@@ -43,6 +43,8 @@ export async function onRequest(context) {
     loggedIn: true,
     userId: payload.userId,
     displayName: payload.displayName,
+    robloxUsername: String(employee?.roblox_username || '').trim(),
+    robloxUserId: String(employee?.roblox_user_id || '').trim(),
     roles: Array.isArray(payload.discordRoles) ? payload.discordRoles : [],
     appRoleIds: permissionContext?.appRoleIds || [],
     appRoles: permissionContext?.appRoles || [],

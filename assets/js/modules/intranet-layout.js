@@ -1,5 +1,5 @@
 import { showMessage } from './notice.js';
-import { hasPermission, renderIntranetNavbar } from './nav.js?v=20260222a';
+import { getPreferredUserLabel, hasPermission, renderIntranetNavbar } from './nav.js?v=20260222a';
 import { isCoreAllowedPagePath, isCoreOnlyMode } from './app-mode.js?v=20260222a';
 
 async function fetchSession() {
@@ -63,10 +63,11 @@ function ensureNavbarFallback(session) {
   spacer.className = 'nav-spacer';
   nav.append(spacer);
 
-  if (session?.displayName) {
+  const preferredLabel = getPreferredUserLabel(session);
+  if (preferredLabel) {
     const user = document.createElement('span');
     user.className = 'nav-user';
-    user.textContent = session.displayName;
+    user.textContent = preferredLabel;
     nav.append(user);
   }
 

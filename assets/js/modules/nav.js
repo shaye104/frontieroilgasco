@@ -32,6 +32,15 @@ function buildNavLink(href, label) {
   return link;
 }
 
+export function getPreferredUserLabel(session) {
+  const robloxUsername = String(session?.robloxUsername || '').trim();
+  if (robloxUsername) return robloxUsername;
+  const displayName = String(session?.displayName || '').trim();
+  if (displayName) return displayName;
+  const userId = String(session?.userId || '').trim();
+  return userId || '';
+}
+
 const INTRANET_NAV_ITEMS = [
   { href: '/my-details', label: 'My Details' },
   { href: '/voyages/my', label: 'Voyages' },
@@ -88,10 +97,11 @@ export function renderIntranetNavbar(session) {
   spacer.className = 'nav-spacer';
   nav.append(spacer);
 
-  if (session?.displayName) {
+  const preferredLabel = getPreferredUserLabel(session);
+  if (preferredLabel) {
     const user = document.createElement('span');
     user.className = 'nav-user';
-    user.textContent = session.displayName;
+    user.textContent = preferredLabel;
     nav.append(user);
   }
 
