@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Frontier user ranks management." />
     <title>Frontier Oil & Gas Company | User Ranks</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
     <link rel="stylesheet" href="/assets/css/tokens.css" />
     <link rel="stylesheet" href="/assets/css/base.css" />
     <link rel="stylesheet" href="/assets/css/components.css" />
     <link rel="stylesheet" href="/assets/css/pages.css" />
+
   </head>
-  <body class="page page-intranet">
+
+  <body class="page page-intranet page-user-ranks">
     <header class="site-header">
       <div class="container header-row">
         <a class="brand" href="/">
@@ -26,8 +30,9 @@
 
     <main class="section">
       <div class="container intranet-layout">
+        <!-- Top banner panel -->
         <section class="panel">
-          <div class="modal-header">
+          <div class="page-title-row">
             <h1>User Ranks</h1>
             <a class="btn btn-secondary" href="admin-panel.html">&larr; Back to Admin Panel</a>
           </div>
@@ -35,97 +40,177 @@
           <div id="userRanksFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
+        <!-- Protected content -->
         <section id="protectedContent" class="hidden">
           <article class="panel user-ranks-layout">
+            <!-- LEFT: ranks list -->
             <section class="user-ranks-sidebar">
               <div class="user-ranks-sidebar-head">
                 <h2>Ranks</h2>
                 <button id="openCreateRankBtn" class="btn btn-primary" type="button">+ New Rank</button>
               </div>
-              <input id="userRanksSearchInput" type="search" placeholder="Search ranks..." />
-              <ul id="userRanksList" class="role-list"></ul>
+
+              <input
+                id="userRanksSearchInput"
+                class="user-ranks-search"
+                type="search"
+                placeholder="Search ranks..."
+                autocomplete="off"
+              />
+
+              <!-- IMPORTANT: JS should render list items using .rank-item markup below -->
+              <ul id="userRanksList" class="rank-list" aria-label="Ranks list">
+                <!-- Example item shape for your JS renderer:
+                <li class="rank-item is-active" data-rank-id="1">
+                  <div class="rank-item-top">
+                    <div class="rank-item-name">Chief Executive Officer</div>
+                    <span class="chip">Lvl 50</span>
+                  </div>
+                  <div class="rank-item-badges">
+                    <span class="chip chip-muted">Discord: 2</span>
+                    <span class="chip chip-muted">Groups: 1</span>
+                    <span class="chip chip-muted">Perms: 18</span>
+                  </div>
+                </li>
+                -->
+              </ul>
             </section>
 
+            <!-- RIGHT: editor -->
             <section class="user-ranks-editor">
-              <p id="userRanksHint">Select a rank to edit overview, links, and permissions.</p>
+              <p id="userRanksHint" class="user-ranks-hint">Select a rank to edit overview, links, and permissions.</p>
+
               <div id="userRanksEditorShell" class="hidden">
-                <div class="user-ranks-editor-head">
-                  <h2 id="userRanksEditorTitle">Rank Editor</h2>
-                  <div class="modal-actions">
-                    <button id="deleteUserRankBtn" class="btn btn-danger" type="button">Delete Rank</button>
+                <div class="rank-editor-card">
+                  <div class="rank-editor-head">
+                    <div>
+                      <h2 id="userRanksEditorTitle" class="rank-editor-title">Rank Editor</h2>
+                      <div class="rank-editor-sub">
+                        <span id="userRanksEditorLevelChip" class="chip">Lvl —</span>
+                        <span id="userRanksEditorCountsChip" class="chip chip-muted">Discord: 0 · Groups: 0 · Perms: 0</span>
+                      </div>
+                    </div>
+
+                    <div class="rank-actions">
+                      <button id="saveUserRankTopBtn" class="btn btn-primary" type="button" disabled>Save</button>
+                      <button id="revertUserRankBtn" class="btn btn-ghost" type="button" disabled>Cancel changes</button>
+
+                      <div class="menu">
+                        <button id="userRankMenuBtn" class="kebab" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Rank actions">
+                          ⋯
+                        </button>
+                        <div id="userRankMenuPanel" class="menu-panel hidden" role="menu" aria-label="Rank actions menu">
+                          <button id="duplicateUserRankBtn" type="button" role="menuitem">Duplicate</button>
+                          <button id="deleteUserRankBtn" type="button" role="menuitem" class="danger">Delete</button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div class="finance-tabs user-ranks-tabs" id="userRanksTabs">
-                  <button class="finance-tab is-active" type="button" data-rank-tab="overview">Overview</button>
-                  <button class="finance-tab" type="button" data-rank-tab="links">Links</button>
-                  <button class="finance-tab" type="button" data-rank-tab="permissions">Permissions</button>
-                </div>
+                  <div class="user-ranks-tabs" id="userRanksTabs" role="tablist" aria-label="Rank editor tabs">
+                    <button class="finance-tab is-active" type="button" data-rank-tab="overview" role="tab" aria-selected="true">Overview</button>
+                    <button class="finance-tab" type="button" data-rank-tab="links" role="tab" aria-selected="false">Links</button>
+                    <button class="finance-tab" type="button" data-rank-tab="permissions" role="tab" aria-selected="false">Permissions</button>
+                  </div>
 
-                <div id="userRanksTabPanels">
-                  <section class="user-ranks-tab-panel" data-rank-panel="overview">
-                    <form id="userRanksDetailsForm">
-                      <input type="hidden" name="id" />
-                      <label>Rank Name</label>
-                      <input name="value" type="text" required />
-                      <label>Rank Level</label>
-                      <input name="level" type="number" step="1" required />
-                      <label>Description</label>
-                      <textarea name="description" rows="3" placeholder="Optional description"></textarea>
-                      <div class="modal-actions">
-                        <button class="btn btn-primary" type="submit">Save Rank</button>
+                  <div id="userRanksTabPanels">
+                    <!-- OVERVIEW -->
+                    <section class="user-ranks-tab-panel" data-rank-panel="overview">
+                      <form id="userRanksDetailsForm">
+                        <input type="hidden" name="id" />
+
+                        <div class="rank-form-grid">
+                          <div>
+                            <label>Rank Name</label>
+                            <input name="value" type="text" required />
+                          </div>
+
+                          <div>
+                            <label>Rank Level</label>
+                            <input name="level" type="number" step="1" required />
+                          </div>
+
+                          <div class="rank-form-full">
+                            <label>Description</label>
+                            <textarea name="description" rows="3" placeholder="Optional description"></textarea>
+                          </div>
+                        </div>
+
+                        <div class="modal-actions rank-form-actions">
+                          <button class="btn btn-primary" type="submit">Save changes</button>
+                        </div>
+                      </form>
+                    </section>
+
+                    <!-- LINKS -->
+                    <section class="user-ranks-tab-panel hidden" data-rank-panel="links">
+                      <div class="user-ranks-links-grid">
+                        <article class="panel section-surface">
+                          <h3>Discord Roles</h3>
+                          <p class="user-ranks-hint user-ranks-hint-tight">
+                            Users with these Discord roles qualify for this rank.
+                          </p>
+
+                          <form id="userRankDiscordLinkForm" class="filter-row rank-links-form">
+                            <div>
+                              <label>Discord Role ID</label>
+                              <input
+                                name="discordRoleId"
+                                type="text"
+                                inputmode="numeric"
+                                placeholder="123456789012345678"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label>Role Name (optional)</label>
+                              <input name="discordRoleName" type="text" placeholder="Cached role name" />
+                            </div>
+                            <div class="modal-actions">
+                              <button class="btn btn-secondary" type="submit">Add</button>
+                            </div>
+                          </form>
+
+                          <div id="userRankDiscordLinksList" class="table-wrap"></div>
+                        </article>
+
+                        <article class="panel section-surface">
+                          <h3>Website Groups</h3>
+                          <p class="user-ranks-hint user-ranks-hint-tight">
+                            Assign groups automatically when this rank is applied.
+                          </p>
+
+                          <form id="userRankGroupLinkForm" class="filter-row rank-links-form">
+                            <div>
+                              <label>User Group</label>
+                              <select name="groupKey" id="userRankGroupKeySelect"></select>
+                            </div>
+                            <div class="modal-actions">
+                              <button class="btn btn-secondary" type="submit">Add</button>
+                            </div>
+                          </form>
+
+                          <div id="userRankGroupLinksList" class="table-wrap"></div>
+                        </article>
                       </div>
-                    </form>
-                  </section>
+                    </section>
 
-                  <section class="user-ranks-tab-panel hidden" data-rank-panel="links">
-                    <div class="user-ranks-links-grid">
-                      <article class="panel section-surface">
-                        <h3>Discord Role Links</h3>
-                        <form id="userRankDiscordLinkForm" class="filter-row">
-                          <div>
-                            <label>Discord Role ID</label>
-                            <input name="discordRoleId" type="text" inputmode="numeric" placeholder="123456789012345678" required />
-                          </div>
-                          <div>
-                            <label>Role Name (optional)</label>
-                            <input name="discordRoleName" type="text" placeholder="Cached role name" />
-                          </div>
-                          <div class="modal-actions">
-                            <button class="btn btn-secondary" type="submit">Add Discord Link</button>
-                          </div>
-                        </form>
-                        <div id="userRankDiscordLinksList" class="table-wrap"></div>
-                      </article>
-
-                      <article class="panel section-surface">
-                        <h3>Website User Group Links</h3>
-                        <form id="userRankGroupLinkForm" class="filter-row">
-                          <div>
-                            <label>User Group</label>
-                            <select name="groupKey" id="userRankGroupKeySelect"></select>
-                          </div>
-                          <div class="modal-actions">
-                            <button class="btn btn-secondary" type="submit">Add Group Link</button>
-                          </div>
-                        </form>
-                        <div id="userRankGroupLinksList" class="table-wrap"></div>
-                      </article>
-                    </div>
-                  </section>
-
-                  <section class="user-ranks-tab-panel hidden" data-rank-panel="permissions">
-                    <div class="filter-row">
-                      <div>
-                        <label>Search permissions</label>
-                        <input id="userRanksPermissionsSearch" type="search" placeholder="Search permissions..." />
+                    <!-- PERMISSIONS -->
+                    <section class="user-ranks-tab-panel hidden" data-rank-panel="permissions">
+                      <div class="filter-row">
+                        <div class="full-width-field">
+                          <label>Search permissions</label>
+                          <input id="userRanksPermissionsSearch" type="search" placeholder="Search permissions..." />
+                        </div>
                       </div>
-                    </div>
-                    <div id="userRanksPermissionsEditor" class="permissions-grid"></div>
-                    <div class="modal-actions rank-permissions-actions">
-                      <button id="saveUserRanksPermissionsBtn" class="btn btn-primary" type="button">Save Permissions</button>
-                    </div>
-                  </section>
+
+                      <div id="userRanksPermissionsEditor" class="permissions-grid"></div>
+
+                      <div class="modal-actions rank-permissions-actions">
+                        <button id="saveUserRanksPermissionsBtn" class="btn btn-primary" type="button">Save Permissions</button>
+                      </div>
+                    </section>
+                  </div>
                 </div>
               </div>
             </section>
@@ -134,17 +219,21 @@
       </div>
     </main>
 
+    <!-- Create Rank Modal -->
     <section id="createUserRankModal" class="modal-overlay hidden" aria-hidden="true">
       <div class="modal-card">
         <div class="modal-header">
           <h2>Create Rank</h2>
           <button class="btn btn-secondary" type="button" data-close-modal="createUserRankModal">Close</button>
         </div>
+
         <form id="createUserRankForm">
           <label>Rank Name</label>
           <input name="value" type="text" required />
+
           <label>Rank Level</label>
           <input name="level" type="number" step="1" required />
+
           <label>Start with template (optional)</label>
           <select name="template">
             <option value="">None</option>
@@ -153,6 +242,7 @@
             <option value="manager">Manager</option>
             <option value="admin">Admin</option>
           </select>
+
           <div class="modal-actions">
             <button class="btn btn-primary" type="submit">Create Rank</button>
             <button class="btn btn-secondary" type="button" data-close-modal="createUserRankModal">Cancel</button>
@@ -160,6 +250,7 @@
         </form>
       </div>
     </section>
+
     <script type="module" src="/assets/js/pages/user-ranks-page.js?v=20260226a"></script>
   </body>
 </html>
