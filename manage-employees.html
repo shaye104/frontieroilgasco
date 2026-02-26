@@ -143,12 +143,12 @@
           </div>
           <button type="button" class="btn btn-secondary" data-close-drawer>Close</button>
         </header>
-        <div class="finance-tabs">
-          <button type="button" class="finance-tab is-active" data-drawer-tab="overview">Overview</button>
-          <button type="button" class="finance-tab" data-drawer-tab="voyages">Voyages</button>
-          <button type="button" class="finance-tab" data-drawer-tab="activity">Activity</button>
-          <button type="button" class="finance-tab" data-drawer-tab="notes">Notes</button>
-          <button type="button" class="finance-tab" data-drawer-tab="disciplinary">Disciplinary</button>
+        <div class="admin-employee-drawer-tabs" role="tablist" aria-label="Employee drawer sections">
+          <button type="button" class="finance-tab is-active" data-drawer-tab="overview" role="tab" aria-selected="true" aria-controls="drawerTabOverview">Overview</button>
+          <button type="button" class="finance-tab" data-drawer-tab="voyages" role="tab" aria-selected="false" aria-controls="drawerTabVoyages">Voyages</button>
+          <button type="button" class="finance-tab" data-drawer-tab="activity" role="tab" aria-selected="false" aria-controls="drawerTabActivity">Activity</button>
+          <button type="button" class="finance-tab" data-drawer-tab="notes" role="tab" aria-selected="false" aria-controls="drawerTabNotes">Notes</button>
+          <button type="button" class="finance-tab" data-drawer-tab="disciplinary" role="tab" aria-selected="false" aria-controls="drawerTabDisciplinary">Disciplinary</button>
         </div>
         <div class="admin-employee-drawer-body">
           <section id="drawerTabOverview" class="admin-employee-drawer-tab"></section>
@@ -190,6 +190,6 @@
         </form>
       </div>
     </section>
-    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260225a"></script>
+    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260226b"></script>
   </body>
 </html>

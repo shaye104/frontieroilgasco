@@ -562,15 +562,19 @@ export async function initManageEmployees(config) {
   }
 
   function setDrawerTab(tab) {
-    state.drawerTab = tab;
+    const allowedTabs = new Set(['overview', 'voyages', 'activity', 'notes', 'disciplinary']);
+    const activeTab = allowedTabs.has(tab) ? tab : 'overview';
+    state.drawerTab = activeTab;
     drawer?.querySelectorAll('[data-drawer-tab]').forEach((btn) => {
-      btn.classList.toggle('is-active', btn.getAttribute('data-drawer-tab') === tab);
+      const isActive = btn.getAttribute('data-drawer-tab') === activeTab;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
-    drawerOverview?.classList.toggle('hidden', tab !== 'overview');
-    drawerVoyages?.classList.toggle('hidden', tab !== 'voyages');
-    drawerActivity?.classList.toggle('hidden', tab !== 'activity');
-    drawerNotes?.classList.toggle('hidden', tab !== 'notes');
-    drawerDisciplinary?.classList.toggle('hidden', tab !== 'disciplinary');
+    drawerOverview?.classList.toggle('hidden', activeTab !== 'overview');
+    drawerVoyages?.classList.toggle('hidden', activeTab !== 'voyages');
+    drawerActivity?.classList.toggle('hidden', activeTab !== 'activity');
+    drawerNotes?.classList.toggle('hidden', activeTab !== 'notes');
+    drawerDisciplinary?.classList.toggle('hidden', activeTab !== 'disciplinary');
   }
 
   async function refreshDrawerData(employeeId, options = {}) {
