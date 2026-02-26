@@ -55,7 +55,8 @@ export function initIntranetAuth(config) {
   fetchSession()
     .then((session) => {
       if (session.loggedIn && !hasAuthQuery) {
-        window.location.href = '/my-details';
+        const activationStatus = String(session.activationStatus || '').trim().toUpperCase();
+        window.location.href = !session.isAdmin && activationStatus && activationStatus !== 'ACTIVE' ? '/onboarding' : '/dashboard';
         return;
       }
 

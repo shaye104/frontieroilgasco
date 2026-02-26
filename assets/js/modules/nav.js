@@ -52,7 +52,6 @@ export function renderPublicNavbar() {
   if (!nav) return;
 
   nav.innerHTML = '';
-  nav.append(buildNavLink('/', 'Home'));
   const spacer = document.createElement('span');
   spacer.className = 'nav-spacer';
   nav.append(spacer);

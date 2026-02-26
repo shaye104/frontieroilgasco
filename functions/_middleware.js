@@ -14,6 +14,10 @@ function toLoginRedirect(url) {
   return target.toString();
 }
 
+function toDashboardRedirect(url) {
+  return new URL('/dashboard', url.origin).toString();
+}
+
 function isProtectedPath(pathname) {
   const protectedPaths = new Set([
     '/my-details',
@@ -49,6 +53,11 @@ function isProtectedPath(pathname) {
   if (pathname.startsWith('/admin/')) return true;
   if (pathname.startsWith('/finances/')) return true;
   return false;
+}
+
+function isPublicPagePath(pathname) {
+  const path = normalizePath(pathname);
+  return path === '/login' || path === '/login.html';
 }
 
 function isOnboardingPath(pathname) {
@@ -138,11 +147,12 @@ export async function onRequest(context) {
 
     if (
       pathname.startsWith('/assets/') ||
+      pathname.startsWith('/public/') ||
+      pathname.startsWith('/functions/') ||
+      pathname.startsWith('/favicon') ||
       pathname === '/favicon.ico' ||
       pathname === '/_redirects' ||
-      pathname === '/_headers' ||
-      pathname === '/access-denied' ||
-      pathname === '/access-denied.html'
+      pathname === '/_headers'
     ) {
       return context.next();
     }
@@ -152,6 +162,12 @@ export async function onRequest(context) {
     const isApiPath = pathname.startsWith('/api/');
     const requestMethod = String(context.request.method || 'GET').toUpperCase();
     if (isApiPath) {
+      if (!isLoggedIn && !pathname.startsWith('/api/auth/')) {
+        return new Response(JSON.stringify({ error: 'Authentication required.' }), {
+          status: 401,
+          headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+        });
+      }
       const activationStatus = isLoggedIn ? await getLiveActivationStatus(context.env, session) : 'NONE';
       const isPendingActivation = isLoggedIn && !session?.isAdmin && activationStatus !== 'ACTIVE';
 
@@ -202,7 +218,7 @@ export async function onRequest(context) {
       return Response.redirect(new URL('/login', url.origin).toString(), 302);
     }
 
-    const corePublicAllowedPaths = new Set(['/', '/index.html', '/login', '/login.html', '/dashboard', '/intranet', '/intranet.html']);
+    const corePublicAllowedPaths = new Set(['/login', '/login.html']);
     const isCoreBlockedRoute = coreOnlyMode && !corePublicAllowedPaths.has(pathname) && !isCoreAllowedPagePath(pathname);
     if (isCoreBlockedRoute) {
       if (isLoggedIn) {
@@ -215,25 +231,23 @@ export async function onRequest(context) {
       });
     }
 
+    if (pathname === '/' || pathname === '/index.html') {
+      return Response.redirect(new URL('/login', url.origin).toString(), 302);
+    }
+
     if (pathname === '/login' || pathname === '/login.html') {
       if (url.searchParams.has('auth') || url.searchParams.has('reason')) {
         return context.next();
       }
       if (isLoggedIn) {
         const activationStatus = await getLiveActivationStatus(context.env, session);
-        const redirectPath = !session?.isAdmin && activationStatus !== 'ACTIVE' ? '/onboarding' : '/my-details';
+        const redirectPath = !session?.isAdmin && activationStatus !== 'ACTIVE' ? '/onboarding' : '/dashboard';
         return Response.redirect(new URL(redirectPath, url.origin).toString(), 302);
       }
       return context.next();
     }
 
-    if (isLoggedIn && (pathname === '/' || pathname === '/index.html')) {
-      const activationStatus = await getLiveActivationStatus(context.env, session);
-      const redirectPath = !session?.isAdmin && activationStatus !== 'ACTIVE' ? '/onboarding' : '/my-details';
-      return Response.redirect(new URL(redirectPath, url.origin).toString(), 302);
-    }
-
-    if (!isLoggedIn && isProtectedPath(pathname)) {
+    if (!isLoggedIn && !isPublicPagePath(pathname)) {
       return Response.redirect(toLoginRedirect(url), 302);
     }
 
@@ -243,7 +257,7 @@ export async function onRequest(context) {
         return Response.redirect(new URL('/onboarding', url.origin).toString(), 302);
       }
       if (activationStatus === 'ACTIVE' && isOnboardingPath(pathname)) {
-        return Response.redirect(new URL('/my-details', url.origin).toString(), 302);
+        return Response.redirect(toDashboardRedirect(url), 302);
       }
     }
 
