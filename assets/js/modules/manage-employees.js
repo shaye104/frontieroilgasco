@@ -699,8 +699,9 @@ export async function initManageEmployees(config) {
     const allowedTabs = new Set(['overview', 'voyages', 'activity', 'notes', 'disciplinary']);
     const activeTab = allowedTabs.has(tab) ? tab : 'overview';
     state.drawerTab = activeTab;
-    drawer?.querySelectorAll('[data-drawer-tab]').forEach((btn) => {
-      const isActive = btn.getAttribute('data-drawer-tab') === activeTab;
+    drawer?.querySelectorAll('[data-drawer-tab], [data-employee-tab]').forEach((btn) => {
+      const tabKey = String(btn.getAttribute('data-drawer-tab') || btn.getAttribute('data-employee-tab') || '');
+      const isActive = tabKey === activeTab;
       btn.classList.toggle('is-active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
@@ -943,9 +944,9 @@ export async function initManageEmployees(config) {
   drawer?.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    const tabButton = target.closest('[data-drawer-tab]');
+    const tabButton = target.closest('[data-drawer-tab], [data-employee-tab]');
     if (!tabButton) return;
-    setDrawerTab(String(tabButton.getAttribute('data-drawer-tab') || 'overview'));
+    setDrawerTab(String(tabButton.getAttribute('data-drawer-tab') || tabButton.getAttribute('data-employee-tab') || 'overview'));
   });
 
   tableBody.addEventListener('click', (event) => {
