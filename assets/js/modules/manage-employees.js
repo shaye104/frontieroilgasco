@@ -1,4 +1,4 @@
-import { activateEmployee, addDisciplinary, addEmployeeNote, createEmployee, getConfig, getEmployeeDrawer, listEmployees } from './admin-api.js';
+import { activateEmployee, addDisciplinary, addEmployeeNote, createEmployee, getConfig, getEmployeeDrawer, listEmployees, updateEmployee } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
 
 const VISIBLE_COLUMNS_STORAGE_KEY = 'manageEmployees_visibleColumns';
@@ -39,6 +39,16 @@ function fillOptions(select, items, placeholder = 'All') {
   select.innerHTML = `<option value="">${placeholder}</option>` +
     items.map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.value)}</option>`).join('');
   if (current) select.value = current;
+}
+
+function renderSelectOptions(items, selectedValue = '', placeholder = 'Select') {
+  const selected = String(selectedValue || '').trim();
+  const options = (items || [])
+    .map((item) => String(item?.value || '').trim())
+    .filter(Boolean)
+    .map((value) => `<option value="${escapeHtml(value)}" ${selected === value ? 'selected' : ''}>${escapeHtml(value)}</option>`)
+    .join('');
+  return `<option value="">${escapeHtml(placeholder)}</option>${options}`;
 }
 
 function openModal(id) {
@@ -175,28 +185,93 @@ function renderTable(target, employees, visibleColumns) {
   });
 }
 
-function renderDrawerOverview(target, payload) {
+function renderDrawerOverview(target, payload, options = {}) {
   if (!target) return;
   const employee = payload?.employee || {};
+  const canEdit = Boolean(options.canEdit);
+  const isEditing = Boolean(options.isEditing);
+  const draft = options.draft || {};
+  const ranks = options?.configOptions?.ranks || [];
+  const grades = options?.configOptions?.grades || [];
+  const statuses = options?.configOptions?.statuses || [];
+  const activationStatus = String(employee.activation_status || 'PENDING').trim().toUpperCase() || 'PENDING';
+
+  if (!isEditing) {
+    target.innerHTML = `
+      <div class="admin-employees-table-header">
+        <h3>Overview</h3>
+        ${canEdit ? '<button id="drawerEditEmployeeBtn" class="btn btn-secondary btn-compact" type="button">Edit details</button>' : ''}
+      </div>
+      <div class="profile-kv-grid">
+        <dt>Discord User ID</dt><dd>${escapeHtml(text(employee.discord_user_id))}</dd>
+        <dt>Roblox Username</dt><dd>${escapeHtml(text(employee.roblox_username))}</dd>
+        <dt>Roblox User ID</dt><dd>${escapeHtml(text(employee.roblox_user_id))}</dd>
+        <dt>Rank</dt><dd>${escapeHtml(text(employee.rank))}</dd>
+        <dt>Grade</dt><dd>${escapeHtml(text(employee.grade))}</dd>
+        <dt>Serial</dt><dd>${escapeHtml(text(employee.serial_number))}</dd>
+        <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(text(employee.employee_status))}</span></dd>
+        <dt>Activation</dt><dd><span class="badge badge-status ${activationClass(employee.activation_status)}">${escapeHtml(activationStatus)}</span></dd>
+        <dt>Hire Date</dt><dd>${escapeHtml(formatDate(employee.hire_date))}</dd>
+        <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at, true))}</dd>
+      </div>
+      ${
+        activationStatus === 'PENDING' && payload?.capabilities?.canActivate
+          ? '<div class="button-row"><button id="drawerActivateEmployeeBtn" class="btn btn-primary" type="button">Activate</button></div>'
+          : ''
+      }
+      <div id="drawerOverviewFeedback" class="feedback" role="status" aria-live="polite"></div>
+    `;
+    return;
+  }
+
   target.innerHTML = `
-    <div class="profile-kv-grid">
-      <dt>Roblox Username</dt><dd>${escapeHtml(text(employee.roblox_username))}</dd>
-      <dt>Roblox User ID</dt><dd>${escapeHtml(text(employee.roblox_user_id))}</dd>
-      <dt>Rank</dt><dd>${escapeHtml(text(employee.rank))}</dd>
-      <dt>Grade</dt><dd>${escapeHtml(text(employee.grade))}</dd>
-      <dt>Serial</dt><dd>${escapeHtml(text(employee.serial_number))}</dd>
-      <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(text(employee.employee_status))}</span></dd>
-      <dt>Activation</dt><dd><span class="badge badge-status ${activationClass(employee.activation_status)}">${escapeHtml(
-        text(employee.activation_status || 'PENDING')
-      )}</span></dd>
-      <dt>Hire Date</dt><dd>${escapeHtml(formatDate(employee.hire_date))}</dd>
-      <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at, true))}</dd>
+    <div class="admin-employees-table-header">
+      <h3>Edit Overview</h3>
     </div>
-    ${
-      String(employee.activation_status || '').trim().toUpperCase() === 'PENDING' && payload?.capabilities?.canActivate
-        ? '<div class="button-row"><button id="drawerActivateEmployeeBtn" class="btn btn-primary" type="button">Activate</button></div>'
-        : ''
-    }
+    <form id="drawerOverviewEditForm" class="finance-cashflow-entry-form">
+      <div>
+        <label for="drawerEditRobloxUsername">Roblox Username</label>
+        <input id="drawerEditRobloxUsername" name="robloxUsername" type="text" value="${escapeHtml(text(draft.robloxUsername))}" />
+      </div>
+      <div>
+        <label for="drawerEditRobloxUserId">Roblox User ID</label>
+        <input id="drawerEditRobloxUserId" name="robloxUserId" type="text" value="${escapeHtml(text(draft.robloxUserId))}" inputmode="numeric" />
+      </div>
+      <div>
+        <label for="drawerEditRank">Rank</label>
+        <select id="drawerEditRank" name="rank">${renderSelectOptions(ranks, draft.rank)}</select>
+      </div>
+      <div>
+        <label for="drawerEditGrade">Grade</label>
+        <select id="drawerEditGrade" name="grade">${renderSelectOptions(grades, draft.grade)}</select>
+      </div>
+      <div>
+        <label for="drawerEditSerialNumber">Serial</label>
+        <input id="drawerEditSerialNumber" name="serialNumber" type="text" value="${escapeHtml(text(draft.serialNumber))}" />
+      </div>
+      <div>
+        <label for="drawerEditEmployeeStatus">Status</label>
+        <select id="drawerEditEmployeeStatus" name="employeeStatus">${renderSelectOptions(statuses, draft.employeeStatus)}</select>
+      </div>
+      <div>
+        <label for="drawerEditActivationStatus">Activation</label>
+        <select id="drawerEditActivationStatus" name="activationStatus">
+          <option value="ACTIVE" ${String(draft.activationStatus).toUpperCase() === 'ACTIVE' ? 'selected' : ''}>ACTIVE</option>
+          <option value="PENDING" ${String(draft.activationStatus).toUpperCase() === 'PENDING' ? 'selected' : ''}>PENDING</option>
+          <option value="DISABLED" ${String(draft.activationStatus).toUpperCase() === 'DISABLED' ? 'selected' : ''}>DISABLED</option>
+          <option value="REJECTED" ${String(draft.activationStatus).toUpperCase() === 'REJECTED' ? 'selected' : ''}>REJECTED</option>
+        </select>
+      </div>
+      <div>
+        <label for="drawerEditHireDate">Hire Date</label>
+        <input id="drawerEditHireDate" name="hireDate" type="date" value="${escapeHtml(text(draft.hireDate))}" />
+      </div>
+      <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+        <button id="drawerSaveOverviewBtn" class="btn btn-primary" type="submit">Save</button>
+        <button id="drawerCancelOverviewBtn" class="btn btn-secondary" type="button">Cancel</button>
+      </div>
+    </form>
+    <div id="drawerOverviewFeedback" class="feedback" role="status" aria-live="polite"></div>
   `;
 }
 
@@ -263,9 +338,26 @@ function isSystemNote(noteText) {
 
 function renderDrawerNotes(target, payload, showSystem, notesFeedback, selectedEmployeeId, refreshDrawerData, setShowSystem) {
   if (!target) return;
-  const allNotes = Array.isArray(payload?.notes) ? payload.notes : [];
+  const rawNotes = Array.isArray(payload?.notes) ? payload.notes : [];
+  const systemActivity = Array.isArray(payload?.activity) ? payload.activity : [];
+  const allNotes = [
+    ...rawNotes.map((entry) => ({
+      id: `note-${entry.id}`,
+      note: entry.note,
+      authored_by: entry.authored_by,
+      created_at: entry.created_at,
+      isSystem: isSystemNote(entry.note)
+    })),
+    ...systemActivity.map((entry) => ({
+      id: `activity-${entry.id}`,
+      note: `${text(entry.actionType)}: ${text(entry.summary)}`,
+      authored_by: entry.actorName || entry.actorDiscordId || 'System',
+      created_at: entry.createdAt,
+      isSystem: true
+    }))
+  ].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   const canAddNotes = Boolean(payload?.capabilities?.canAddNotes);
-  const notes = showSystem ? allNotes : allNotes.filter((note) => !isSystemNote(note.note));
+  const notes = showSystem ? allNotes : allNotes.filter((note) => !note.isSystem);
 
   target.innerHTML = `
     <div class="button-row">
@@ -297,11 +389,20 @@ function renderDrawerNotes(target, payload, showSystem, notesFeedback, selectedE
     <div id="drawerNotesFeedback" class="feedback" role="status" aria-live="polite"></div>
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>Created</th><th>Author</th><th>Note</th></tr></thead>
+        <thead><tr><th>When</th><th>Author</th><th>Entry</th></tr></thead>
         <tbody>
-          ${notes.length ? notes
-            .map((entry) => `<tr><td>${escapeHtml(formatDate(entry.created_at, true))}</td><td>${escapeHtml(text(entry.authored_by || 'System'))}</td><td>${escapeHtml(text(entry.note))}</td></tr>`)
-            .join('') : '<tr><td colspan="3">No notes found.</td></tr>'}
+          ${notes.length
+            ? notes
+                .map(
+                  (entry) =>
+                    `<tr>
+                      <td>${escapeHtml(formatDate(entry.created_at, true))}</td>
+                      <td>${escapeHtml(text(entry.authored_by || 'System'))}</td>
+                      <td>${entry.isSystem ? '<span class="badge badge-status is-inactive">SYSTEM</span> ' : ''}${escapeHtml(text(entry.note))}</td>
+                    </tr>`
+                )
+                .join('')
+            : '<tr><td colspan="3">No notes found.</td></tr>'}
         </tbody>
       </table>
     </div>
@@ -478,7 +579,14 @@ export async function initManageEmployees(config) {
     visibleColumns: loadVisibleColumns(),
     drawerTab: 'overview',
     selectedEmployeeId: null,
-    showSystemNotes: false
+    showSystemNotes: false,
+    drawerOverviewEditMode: false,
+    drawerOverviewDraft: null,
+    configOptions: {
+      ranks: [],
+      grades: [],
+      statuses: []
+    }
   };
   const drawerCache = new Map();
   let debounceTimer = null;
@@ -576,6 +684,9 @@ export async function initManageEmployees(config) {
 
   async function refreshConfig() {
     const [statuses, ranks, grades] = await Promise.all([getConfig('statuses'), getConfig('ranks'), getConfig('grades')]);
+    state.configOptions.statuses = statuses.items || [];
+    state.configOptions.ranks = ranks.items || [];
+    state.configOptions.grades = grades.items || [];
     fillOptions(filterRank, ranks.items || [], 'All Ranks');
     fillOptions(filterGrade, grades.items || [], 'All Grades');
     fillOptions(filterStatus, statuses.items || [], 'All Statuses');
@@ -594,10 +705,15 @@ export async function initManageEmployees(config) {
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
     drawerOverview?.classList.toggle('hidden', activeTab !== 'overview');
+    drawerOverview?.setAttribute('aria-hidden', activeTab === 'overview' ? 'false' : 'true');
     drawerVoyages?.classList.toggle('hidden', activeTab !== 'voyages');
+    drawerVoyages?.setAttribute('aria-hidden', activeTab === 'voyages' ? 'false' : 'true');
     drawerActivity?.classList.toggle('hidden', activeTab !== 'activity');
+    drawerActivity?.setAttribute('aria-hidden', activeTab === 'activity' ? 'false' : 'true');
     drawerNotes?.classList.toggle('hidden', activeTab !== 'notes');
+    drawerNotes?.setAttribute('aria-hidden', activeTab === 'notes' ? 'false' : 'true');
     drawerDisciplinary?.classList.toggle('hidden', activeTab !== 'disciplinary');
+    drawerDisciplinary?.setAttribute('aria-hidden', activeTab === 'disciplinary' ? 'false' : 'true');
   }
 
   async function refreshDrawerData(employeeId, options = {}) {
@@ -616,7 +732,25 @@ export async function initManageEmployees(config) {
       drawerMeta.textContent = `${serial} • ${rank} • ${status}`;
     }
 
-    renderDrawerOverview(drawerOverview, payload);
+    if (!state.drawerOverviewDraft) {
+      state.drawerOverviewDraft = {
+        robloxUsername: payload.employee?.roblox_username || '',
+        robloxUserId: payload.employee?.roblox_user_id || '',
+        rank: payload.employee?.rank || '',
+        grade: payload.employee?.grade || '',
+        serialNumber: payload.employee?.serial_number || '',
+        employeeStatus: payload.employee?.employee_status || '',
+        activationStatus: payload.employee?.activation_status || 'PENDING',
+        hireDate: payload.employee?.hire_date || ''
+      };
+    }
+
+    renderDrawerOverview(drawerOverview, payload, {
+      canEdit: Boolean(payload?.capabilities?.canActivate),
+      isEditing: state.drawerOverviewEditMode,
+      draft: state.drawerOverviewDraft,
+      configOptions: state.configOptions
+    });
     renderDrawerVoyages(drawerVoyages, payload);
     renderDrawerActivity(drawerActivity, payload);
     renderDrawerNotes(
@@ -638,12 +772,128 @@ export async function initManageEmployees(config) {
       refreshDrawerData
     );
     if (options.tab) setDrawerTab(options.tab);
+    const overviewFeedback = drawerOverview?.querySelector('#drawerOverviewFeedback');
+    const editBtn = drawerOverview?.querySelector('#drawerEditEmployeeBtn');
+    editBtn?.addEventListener('click', () => {
+      state.drawerOverviewEditMode = true;
+      state.drawerOverviewDraft = {
+        robloxUsername: payload.employee?.roblox_username || '',
+        robloxUserId: payload.employee?.roblox_user_id || '',
+        rank: payload.employee?.rank || '',
+        grade: payload.employee?.grade || '',
+        serialNumber: payload.employee?.serial_number || '',
+        employeeStatus: payload.employee?.employee_status || '',
+        activationStatus: payload.employee?.activation_status || 'PENDING',
+        hireDate: payload.employee?.hire_date || ''
+      };
+      renderDrawerOverview(drawerOverview, payload, {
+        canEdit: Boolean(payload?.capabilities?.canActivate),
+        isEditing: true,
+        draft: state.drawerOverviewDraft,
+        configOptions: state.configOptions
+      });
+    });
+
+    const cancelOverviewBtn = drawerOverview?.querySelector('#drawerCancelOverviewBtn');
+    cancelOverviewBtn?.addEventListener('click', () => {
+      state.drawerOverviewEditMode = false;
+      state.drawerOverviewDraft = null;
+      void refreshDrawerData(employeeId, { force: false, tab: 'overview' });
+    });
+
+    const overviewForm = drawerOverview?.querySelector('#drawerOverviewEditForm');
+    overviewForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(overviewForm);
+      const nextDraft = {
+        robloxUsername: String(formData.get('robloxUsername') || '').trim(),
+        robloxUserId: String(formData.get('robloxUserId') || '').trim(),
+        rank: String(formData.get('rank') || '').trim(),
+        grade: String(formData.get('grade') || '').trim(),
+        serialNumber: String(formData.get('serialNumber') || '').trim(),
+        employeeStatus: String(formData.get('employeeStatus') || '').trim(),
+        activationStatus: String(formData.get('activationStatus') || '').trim().toUpperCase() || 'PENDING',
+        hireDate: String(formData.get('hireDate') || '').trim()
+      };
+      const changedPayload = {};
+      if (nextDraft.robloxUsername !== String(payload.employee?.roblox_username || '')) changedPayload.robloxUsername = nextDraft.robloxUsername;
+      if (nextDraft.robloxUserId !== String(payload.employee?.roblox_user_id || '')) changedPayload.robloxUserId = nextDraft.robloxUserId;
+      if (nextDraft.rank !== String(payload.employee?.rank || '')) changedPayload.rank = nextDraft.rank;
+      if (nextDraft.grade !== String(payload.employee?.grade || '')) changedPayload.grade = nextDraft.grade;
+      if (nextDraft.serialNumber !== String(payload.employee?.serial_number || '')) changedPayload.serialNumber = nextDraft.serialNumber;
+      if (nextDraft.employeeStatus !== String(payload.employee?.employee_status || '')) changedPayload.employeeStatus = nextDraft.employeeStatus;
+      if (nextDraft.activationStatus !== String(payload.employee?.activation_status || 'PENDING').toUpperCase()) {
+        changedPayload.activationStatus = nextDraft.activationStatus;
+      }
+      if (nextDraft.hireDate !== String(payload.employee?.hire_date || '')) changedPayload.hireDate = nextDraft.hireDate;
+      if (!Object.keys(changedPayload).length) {
+        state.drawerOverviewEditMode = false;
+        state.drawerOverviewDraft = null;
+        renderDrawerOverview(drawerOverview, payload, {
+          canEdit: Boolean(payload?.capabilities?.canActivate),
+          isEditing: false,
+          draft: null,
+          configOptions: state.configOptions
+        });
+        if (overviewFeedback) showMessage(overviewFeedback, 'No changes to save.', 'info');
+        return;
+      }
+      const previous = {
+        ...payload.employee
+      };
+      payload.employee = {
+        ...payload.employee,
+        roblox_username: nextDraft.robloxUsername,
+        roblox_user_id: nextDraft.robloxUserId,
+        rank: nextDraft.rank,
+        grade: nextDraft.grade,
+        serial_number: nextDraft.serialNumber,
+        employee_status: nextDraft.employeeStatus,
+        activation_status: nextDraft.activationStatus,
+        hire_date: nextDraft.hireDate
+      };
+      state.drawerOverviewEditMode = false;
+      state.drawerOverviewDraft = null;
+      drawerCache.set(employeeId, payload);
+      renderDrawerOverview(drawerOverview, payload, {
+        canEdit: Boolean(payload?.capabilities?.canActivate),
+        isEditing: false,
+        draft: null,
+        configOptions: state.configOptions
+      });
+      if (drawerMeta) drawerMeta.textContent = `${nextDraft.serialNumber || 'No serial'} • ${nextDraft.rank || 'Unset rank'} • ${nextDraft.employeeStatus || 'Unknown status'}`;
+      if (overviewFeedback) showMessage(overviewFeedback, 'Saved.', 'success');
+
+      try {
+        await updateEmployee(employeeId, changedPayload);
+        void loadEmployees();
+      } catch (error) {
+        payload.employee = previous;
+        drawerCache.set(employeeId, payload);
+        renderDrawerOverview(drawerOverview, payload, {
+          canEdit: Boolean(payload?.capabilities?.canActivate),
+          isEditing: false,
+          draft: null,
+          configOptions: state.configOptions
+        });
+        if (overviewFeedback) showMessage(overviewFeedback, error.message || 'Unable to save employee.', 'error');
+      }
+    });
+
     const activateBtn = drawerOverview?.querySelector('#drawerActivateEmployeeBtn');
     activateBtn?.addEventListener('click', async () => {
       try {
+        payload.employee.activation_status = 'ACTIVE';
+        drawerCache.set(employeeId, payload);
+        renderDrawerOverview(drawerOverview, payload, {
+          canEdit: Boolean(payload?.capabilities?.canActivate),
+          isEditing: false,
+          draft: null,
+          configOptions: state.configOptions
+        });
         await activateEmployee(employeeId);
         drawerCache.delete(employeeId);
-        await loadEmployees();
+        void loadEmployees();
         await refreshDrawerData(employeeId, { force: true, tab: 'overview' });
         showMessage(feedback, 'Employee activated.', 'success');
       } catch (error) {
@@ -655,6 +905,9 @@ export async function initManageEmployees(config) {
   async function openDrawer(employeeId) {
     if (!drawer) return;
     state.selectedEmployeeId = employeeId;
+    state.drawerOverviewEditMode = false;
+    state.drawerOverviewDraft = null;
+    state.showSystemNotes = false;
     drawer.classList.remove('hidden');
     drawer.setAttribute('aria-hidden', 'false');
     setDrawerTab('overview');
@@ -687,8 +940,12 @@ export async function initManageEmployees(config) {
     });
   });
 
-  drawer?.querySelectorAll('[data-drawer-tab]').forEach((btn) => {
-    btn.addEventListener('click', () => setDrawerTab(String(btn.getAttribute('data-drawer-tab') || 'overview')));
+  drawer?.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const tabButton = target.closest('[data-drawer-tab]');
+    if (!tabButton) return;
+    setDrawerTab(String(tabButton.getAttribute('data-drawer-tab') || 'overview'));
   });
 
   tableBody.addEventListener('click', (event) => {

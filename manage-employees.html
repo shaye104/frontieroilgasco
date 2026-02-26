@@ -155,18 +155,18 @@
           <button type="button" class="btn btn-secondary" data-close-drawer>Close</button>
         </header>
         <div class="admin-employee-drawer-tabs" role="tablist" aria-label="Employee drawer sections">
-          <button type="button" class="finance-tab is-active" data-drawer-tab="overview" role="tab" aria-selected="true" aria-controls="drawerTabOverview">Overview</button>
-          <button type="button" class="finance-tab" data-drawer-tab="voyages" role="tab" aria-selected="false" aria-controls="drawerTabVoyages">Voyages</button>
-          <button type="button" class="finance-tab" data-drawer-tab="activity" role="tab" aria-selected="false" aria-controls="drawerTabActivity">Activity</button>
-          <button type="button" class="finance-tab" data-drawer-tab="notes" role="tab" aria-selected="false" aria-controls="drawerTabNotes">Notes</button>
-          <button type="button" class="finance-tab" data-drawer-tab="disciplinary" role="tab" aria-selected="false" aria-controls="drawerTabDisciplinary">Disciplinary</button>
+          <button type="button" class="finance-tab is-active" data-drawer-tab="overview" data-employee-tab="overview" role="tab" aria-selected="true" aria-controls="drawerTabOverview">Overview</button>
+          <button type="button" class="finance-tab" data-drawer-tab="voyages" data-employee-tab="voyages" role="tab" aria-selected="false" aria-controls="drawerTabVoyages">Voyages</button>
+          <button type="button" class="finance-tab" data-drawer-tab="activity" data-employee-tab="activity" role="tab" aria-selected="false" aria-controls="drawerTabActivity">Activity</button>
+          <button type="button" class="finance-tab" data-drawer-tab="notes" data-employee-tab="notes" role="tab" aria-selected="false" aria-controls="drawerTabNotes">Notes</button>
+          <button type="button" class="finance-tab" data-drawer-tab="disciplinary" data-employee-tab="disciplinary" role="tab" aria-selected="false" aria-controls="drawerTabDisciplinary">Disciplinary</button>
         </div>
         <div class="admin-employee-drawer-body">
-          <section id="drawerTabOverview" class="admin-employee-drawer-tab"></section>
-          <section id="drawerTabVoyages" class="admin-employee-drawer-tab hidden"></section>
-          <section id="drawerTabActivity" class="admin-employee-drawer-tab hidden"></section>
-          <section id="drawerTabNotes" class="admin-employee-drawer-tab hidden"></section>
-          <section id="drawerTabDisciplinary" class="admin-employee-drawer-tab hidden"></section>
+          <section id="drawerTabOverview" class="admin-employee-drawer-tab" role="tabpanel" data-employee-panel="overview"></section>
+          <section id="drawerTabVoyages" class="admin-employee-drawer-tab hidden" role="tabpanel" data-employee-panel="voyages"></section>
+          <section id="drawerTabActivity" class="admin-employee-drawer-tab hidden" role="tabpanel" data-employee-panel="activity"></section>
+          <section id="drawerTabNotes" class="admin-employee-drawer-tab hidden" role="tabpanel" data-employee-panel="notes"></section>
+          <section id="drawerTabDisciplinary" class="admin-employee-drawer-tab hidden" role="tabpanel" data-employee-panel="disciplinary"></section>
         </div>
       </section>
     </aside>

@@ -642,6 +642,9 @@
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 0.7rem;
   min-width: 0;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
 }
 
 .admin-employee-drawer-header {
@@ -649,6 +652,10 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.65rem;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #ffffff;
 }
 
 .admin-employee-drawer-header h2 {
@@ -661,6 +668,11 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.4rem;
   min-width: 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #ffffff;
+  padding-bottom: 0.2rem;
 }
 
 .admin-employee-drawer-tabs .finance-tab {
@@ -673,8 +685,10 @@
 .admin-employee-drawer-body {
   min-height: 0;
   min-width: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 0.1rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-employee-drawer-tab {
