@@ -28,7 +28,7 @@ export function getRankSyncConfig(env) {
 export async function sendRankSyncWebhook(env, payload) {
   const { webhookUrl, secret, timeoutMs } = getRankSyncConfig(env);
   if (!webhookUrl || !secret) {
-    return { ok: false, skipped: true, error: 'Rank sync webhook not configured.' };
+    return { ok: false, skipped: true, error: 'Rank sync webhook not configured.', webhookUrl: webhookUrl || null };
   }
 
   const timestamp = String(Date.now());
@@ -56,16 +56,17 @@ export async function sendRankSyncWebhook(env, payload) {
       ok: response.ok,
       skipped: false,
       status: response.status,
-      responseText: responseText.slice(0, 500)
+      responseText: responseText.slice(0, 500),
+      webhookUrl
     };
   } catch (error) {
     return {
       ok: false,
       skipped: false,
-      error: text(error?.message || 'Webhook request failed.')
+      error: text(error?.message || 'Webhook request failed.'),
+      webhookUrl
     };
   } finally {
     clearTimeout(timer);
   }
 }
-

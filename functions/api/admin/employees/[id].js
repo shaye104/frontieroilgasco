@@ -282,12 +282,19 @@ export async function onRequestPut(context) {
       : syncResult.skipped
       ? syncResult.error || 'webhook_not_configured'
       : syncResult.error || syncResult.responseText || `http_${Number(syncResult.status || 0)}`;
+    let webhookHost = null;
+    try {
+      webhookHost = syncResult.webhookUrl ? new URL(String(syncResult.webhookUrl)).host : null;
+    } catch {
+      webhookHost = null;
+    }
     rankSyncDebug = {
       ok: Boolean(syncResult.ok),
       skipped: Boolean(syncResult.skipped),
       status: Number(syncResult.status || 0) || null,
       reason: String(syncReason || 'unknown_error'),
-      responseText: String(syncResult.responseText || '').slice(0, 500) || null
+      responseText: String(syncResult.responseText || '').slice(0, 500) || null,
+      webhookHost
     };
     await writeAdminActivityEvent(env, {
       actorEmployeeId: actorEmployee?.id || null,
@@ -307,6 +314,7 @@ export async function onRequestPut(context) {
           employee: syncPayload.employee,
           rank: syncPayload.rank
         },
+        webhookHost,
         syncResult
       }
     });
