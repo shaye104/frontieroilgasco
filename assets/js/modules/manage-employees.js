@@ -1161,8 +1161,7 @@ export async function initManageEmployees(config) {
 
   try {
     renderColumnMenu();
-    await refreshConfig();
-    await loadEmployees();
+    await Promise.all([refreshConfig(), loadEmployees()]);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to initialize Manage Employees.', 'error');
   }

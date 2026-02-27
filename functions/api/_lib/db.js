@@ -4,8 +4,17 @@ function parseStartingBalance(value) {
   return Math.round(parsed);
 }
 
+let schemaBootstrapPromise = null;
+let schemaCheckedAtMs = 0;
+const SCHEMA_CHECK_TTL_MS = 5 * 60 * 1000;
+
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
+  const now = Date.now();
+  if (schemaCheckedAtMs && now - schemaCheckedAtMs < SCHEMA_CHECK_TTL_MS) return;
+  if (schemaBootstrapPromise) return schemaBootstrapPromise;
+
+  schemaBootstrapPromise = (async () => {
 
   const permissionSeed = [
     ['super.admin', 'roles', 'Super Admin', 'Global bypass permission.'],
@@ -630,6 +639,14 @@ export async function ensureCoreSchema(env) {
       .run();
   } catch {
     // Keep bootstrap non-fatal.
+  }
+  schemaCheckedAtMs = Date.now();
+  })();
+
+  try {
+    await schemaBootstrapPromise;
+  } finally {
+    schemaBootstrapPromise = null;
   }
 }
 

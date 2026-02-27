@@ -1,4 +1,4 @@
-import { initIntranetLayout } from '../modules/intranet-layout.js?v=20260227h';
+import { initIntranetLayout } from '../modules/intranet-layout.js?v=20260227i';
 
 initIntranetLayout({
   feedbackSelector: '#guardFeedback',
@@ -8,7 +8,7 @@ initIntranetLayout({
 }).then((session) => {
   if (!session) return;
 
-  import('../modules/manage-employees.js?v=20260227h').then(({ initManageEmployees }) =>
+  import('../modules/manage-employees.js?v=20260227i').then(({ initManageEmployees }) =>
     initManageEmployees(
     {
       feedbackSelector: '#manageEmployeesFeedback',
