@@ -332,11 +332,11 @@ function renderDrawerOverview(target, payload, options = {}) {
         <select id="drawerEditGrade" name="grade">${renderSelectOptions(grades, draft.grade)}</select>
       </div>
       <div>
-        <label for="drawerEditSerialNumber">Serial</label>
-        <div class="drawer-user-groups-actions">
-          <input id="drawerEditSerialNumber" name="serialNumber" type="text" value="${escapeHtml(text(draft.serialNumber))}" />
-          <button id="drawerRandomizeSerialBtn" class="btn btn-secondary btn-compact" type="button">Randomise</button>
-        </div>
+        <label for="drawerEditSerialNumber" class="drawer-serial-label">
+          <span>Serial</span>
+          <button id="drawerRandomizeSerialBtn" class="drawer-serial-randomize-link" type="button">Randomise</button>
+        </label>
+        <input id="drawerEditSerialNumber" name="serialNumber" type="text" value="${escapeHtml(text(draft.serialNumber))}" />
       </div>
       <div>
         <label for="drawerEditEmployeeStatus">Status</label>

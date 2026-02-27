@@ -8,7 +8,7 @@ initIntranetLayout({
 }).then((session) => {
   if (!session) return;
 
-  import('../modules/manage-employees.js?v=20260227m').then(({ initManageEmployees }) =>
+  import('../modules/manage-employees.js?v=20260227n').then(({ initManageEmployees }) =>
     initManageEmployees(
     {
       feedbackSelector: '#manageEmployeesFeedback',
