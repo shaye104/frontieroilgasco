@@ -210,11 +210,11 @@ async function init() {
     }
   } catch (error) {
     const message = text(error.message);
-    if (message.includes('401')) {
+    if (message.includes('401') || message.toLowerCase().includes('authentication required') || message.toLowerCase().includes('login')) {
       window.location.href = '/login?auth=denied&reason=login_required';
       return;
     }
-    showMessage(feedback, 'Unable to load onboarding.', 'error');
+    showMessage(feedback, message || 'Unable to load onboarding.', 'error');
     return;
   }
 

@@ -21,19 +21,18 @@ async function hasQualifyingDiscordRole(env, roleIds = []) {
   if (!ids.length) return false;
   const placeholders = ids.map(() => '?').join(', ');
 
+  const safeQueryFirst = async (sql) => {
+    try {
+      return await env.DB.prepare(sql).bind(...ids).first();
+    } catch {
+      return null;
+    }
+  };
+
   const [directRole, mappedRole, linkedRank] = await Promise.all([
-    env.DB
-      .prepare(`SELECT 1 AS hit FROM app_roles WHERE discord_role_id IN (${placeholders}) LIMIT 1`)
-      .bind(...ids)
-      .first(),
-    env.DB
-      .prepare(`SELECT 1 AS hit FROM auth_role_mappings WHERE discord_role_id IN (${placeholders}) LIMIT 1`)
-      .bind(...ids)
-      .first(),
-    env.DB
-      .prepare(`SELECT 1 AS hit FROM rank_discord_role_links WHERE discord_role_id IN (${placeholders}) LIMIT 1`)
-      .bind(...ids)
-      .first()
+    safeQueryFirst(`SELECT 1 AS hit FROM app_roles WHERE discord_role_id IN (${placeholders}) LIMIT 1`),
+    safeQueryFirst(`SELECT 1 AS hit FROM auth_role_mappings WHERE discord_role_id IN (${placeholders}) LIMIT 1`),
+    safeQueryFirst(`SELECT 1 AS hit FROM rank_discord_role_links WHERE discord_role_id IN (${placeholders}) LIMIT 1`)
   ]);
 
   return Boolean(directRole?.hit || mappedRole?.hit || linkedRank?.hit);
@@ -46,11 +45,25 @@ export async function onRequestGet(context) {
   const session = await readSessionFromRequest(env, request);
   if (!session) return json({ loggedIn: false }, 401);
 
-  await ensureCoreSchema(env);
-  const [employee, qualifiesByRole] = await Promise.all([
-    getEmployeeByDiscordUserId(env, session.userId),
-    hasQualifyingDiscordRole(env, Array.isArray(session.discordRoles) ? session.discordRoles : Array.isArray(session.roles) ? session.roles : [])
-  ]);
+  let schemaError = null;
+  try {
+    await ensureCoreSchema(env);
+  } catch (error) {
+    schemaError = error;
+  }
+
+  let employee = null;
+  let qualifiesByRole = false;
+  try {
+    const [employeeResult, roleResult] = await Promise.all([
+      getEmployeeByDiscordUserId(env, session.userId),
+      hasQualifyingDiscordRole(env, Array.isArray(session.discordRoles) ? session.discordRoles : Array.isArray(session.roles) ? session.roles : [])
+    ]);
+    employee = employeeResult;
+    qualifiesByRole = roleResult;
+  } catch (error) {
+    if (!schemaError) schemaError = error;
+  }
 
   const state = deriveOnboardingState(employee);
   const qualifies = Boolean(session.isAdmin) || Boolean(employee || qualifiesByRole);
@@ -95,5 +108,14 @@ export async function onRequestGet(context) {
   const durationMs = Date.now() - startedAt;
   response.headers.set('Server-Timing', `app;dur=${durationMs}`);
   response.headers.set('x-response-time-ms', String(durationMs));
+  if (schemaError) {
+    response.headers.set('x-onboarding-schema-warning', '1');
+    console.log(
+      JSON.stringify({
+        type: 'warn.onboarding.bootstrap',
+        message: String(schemaError?.message || 'schema_or_query_warning')
+      })
+    );
+  }
   return response;
 }
