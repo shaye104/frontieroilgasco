@@ -1,7 +1,7 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { requirePermission } from '../../_lib/admin-auth.js';
 import { hasPermission } from '../../../_lib/permissions.js';
-import { canViewEmployeeByHierarchy, getActorAccessScope, hasHierarchyBypass } from '../../_lib/access-scope.js';
+import { canManageRoleRowByHierarchy, canViewEmployeeByHierarchy, getActorAccessScope, hasHierarchyBypass } from '../../_lib/access-scope.js';
 import { canEditEmployeeByRank } from '../../../_lib/db.js';
 
 export async function onRequestGet(context) {
@@ -98,6 +98,22 @@ export async function onRequestGet(context) {
     : scope.actorEmployee
     ? await canEditEmployeeByRank(env, scope.actorEmployee, employee, { allowSelf: false, allowEqual: false })
     : false;
+  const [assignedRolesRows, availableRolesRows] = await Promise.all([
+    env.DB
+      .prepare(
+        `SELECT ar.id, ar.name, ar.description, ar.sort_order
+         FROM employee_role_assignments era
+         INNER JOIN app_roles ar ON ar.id = era.role_id
+         WHERE era.employee_id = ?
+         ORDER BY ar.sort_order ASC, ar.id ASC`
+      )
+      .bind(employeeId)
+      .all(),
+    env.DB.prepare('SELECT id, name, description, sort_order, is_system FROM app_roles ORDER BY sort_order ASC, id ASC').all()
+  ]);
+  const availableRoleRows = hasHierarchyBypass(env, session)
+    ? availableRolesRows?.results || []
+    : (availableRolesRows?.results || []).filter((row) => canManageRoleRowByHierarchy(scope, row));
 
   const dbMs = Date.now() - dbStartedAt;
   let activity = (activityRows?.results || []).map((row) => ({
@@ -157,11 +173,14 @@ export async function onRequestGet(context) {
     activity,
     notes: notesRows?.results || [],
     disciplinaries: disciplinariesRows?.results || [],
+    assignedRoles: assignedRolesRows?.results || [],
+    availableRoles: availableRoleRows,
     capabilities: {
       canAddNotes: hasPermission(session, 'employees.notes') && canEditByHierarchy,
       canAddDisciplinary: hasPermission(session, 'employees.discipline') && canEditByHierarchy,
       canActivate: hasPermission(session, 'employees.edit') && canEditByHierarchy,
-      canDelete: hasPermission(session, 'employees.delete') && canEditByHierarchy
+      canDelete: hasPermission(session, 'employees.delete') && canEditByHierarchy,
+      canAssignUserGroups: hasPermission(session, 'user_groups.assign') && hasPermission(session, 'employees.edit') && canEditByHierarchy
     },
     timing: { dbMs, totalMs: Date.now() - startedAt }
   });

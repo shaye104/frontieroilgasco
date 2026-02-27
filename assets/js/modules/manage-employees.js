@@ -197,6 +197,64 @@ function renderTable(target, employees, visibleColumns) {
   });
 }
 
+function renderDrawerUserGroupsSection(payload, options = {}) {
+  const assignedRoles = Array.isArray(payload?.assignedRoles) ? payload.assignedRoles : [];
+  const availableRoles = Array.isArray(payload?.availableRoles) ? payload.availableRoles : [];
+  const canAssign = Boolean(payload?.capabilities?.canAssignUserGroups);
+  const isBusy = Boolean(options.isBusy);
+  const assignedIds = new Set(assignedRoles.map((row) => Number(row.id)).filter((id) => Number.isInteger(id) && id > 0));
+  const addable = availableRoles.filter((row) => !assignedIds.has(Number(row.id)));
+
+  return `
+    <article class="drawer-user-groups-card">
+      <div class="admin-employees-table-header">
+        <h3>User Groups</h3>
+      </div>
+      ${
+        assignedRoles.length
+          ? `<ul class="drawer-user-groups-list">
+              ${assignedRoles
+                .map(
+                  (role) => `
+                    <li class="drawer-user-groups-item">
+                      <div>
+                        <strong>${escapeHtml(text(role.name))}</strong>
+                        <small>${escapeHtml(text(role.description || 'No description'))}</small>
+                      </div>
+                      ${
+                        canAssign
+                          ? `<button class="btn btn-secondary btn-compact" type="button" data-remove-employee-group="${Number(role.id)}" ${
+                              isBusy ? 'disabled' : ''
+                            }>Remove</button>`
+                          : ''
+                      }
+                    </li>
+                  `
+                )
+                .join('')}
+            </ul>`
+          : '<p class="finance-inline-caption">No user groups assigned.</p>'
+      }
+      ${
+        canAssign
+          ? `<div class="drawer-user-groups-actions">
+               <select id="drawerUserGroupSelect" ${isBusy ? 'disabled' : ''}>
+                 <option value="">Select user group...</option>
+                 ${addable
+                   .map((row) => `<option value="${Number(row.id)}">${escapeHtml(text(row.name))}</option>`)
+                   .join('')}
+               </select>
+               <button id="drawerAddEmployeeGroupBtn" class="btn btn-primary btn-compact" type="button" ${
+                 isBusy || !addable.length ? 'disabled' : ''
+               }>Add Group</button>
+             </div>`
+          : '<p class="finance-inline-caption">You do not have permission to assign user groups.</p>'
+      }
+      <div id="drawerUserGroupsFeedback" class="feedback" role="status" aria-live="polite"></div>
+    </article>
+  `;
+}
+
 function renderDrawerOverview(target, payload, options = {}) {
   if (!target) return;
   const employee = payload?.employee || {};
@@ -233,6 +291,7 @@ function renderDrawerOverview(target, payload, options = {}) {
         <dt>Hire Date</dt><dd>${escapeHtml(formatDate(employee.hire_date))}</dd>
         <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at, true))}</dd>
       </div>
+      ${renderDrawerUserGroupsSection(payload, { isBusy: options.userGroupsBusy })}
       ${
         activationStatus === 'PENDING' && payload?.capabilities?.canActivate
           ? '<div class="button-row"><button id="drawerActivateEmployeeBtn" class="btn btn-primary" type="button">Activate</button></div>'
@@ -290,6 +349,7 @@ function renderDrawerOverview(target, payload, options = {}) {
         <button id="drawerCancelOverviewBtn" class="btn btn-secondary" type="button">Cancel</button>
       </div>
     </form>
+    ${renderDrawerUserGroupsSection(payload, { isBusy: options.userGroupsBusy })}
     <div id="drawerOverviewFeedback" class="feedback" role="status" aria-live="polite"></div>
   `;
 }
@@ -606,6 +666,7 @@ export async function initManageEmployees(config) {
     drawerOverviewEditMode: false,
     drawerOverviewDraft: null,
     drawerPayload: null,
+    drawerUserGroupsBusy: false,
     configBootstrapped: false,
     configOptions: {
       ranks: [],
@@ -635,7 +696,8 @@ export async function initManageEmployees(config) {
       canEdit: Boolean(state.drawerPayload?.capabilities?.canActivate),
       isEditing: state.drawerOverviewEditMode,
       draft: state.drawerOverviewDraft,
-      configOptions: state.configOptions
+      configOptions: state.configOptions,
+      userGroupsBusy: state.drawerUserGroupsBusy
     });
   }
 
@@ -810,7 +872,8 @@ export async function initManageEmployees(config) {
         canEdit: Boolean(payload?.capabilities?.canActivate),
         isEditing: state.drawerOverviewEditMode,
         draft: state.drawerOverviewDraft,
-        configOptions: state.configOptions
+        configOptions: state.configOptions,
+        userGroupsBusy: state.drawerUserGroupsBusy
       });
       return;
     }
@@ -880,6 +943,7 @@ export async function initManageEmployees(config) {
     state.drawerOverviewEditMode = false;
     state.drawerOverviewDraft = null;
     state.drawerPayload = null;
+    state.drawerUserGroupsBusy = false;
     state.showSystemNotes = false;
     drawer.classList.remove('hidden');
     drawer.setAttribute('aria-hidden', 'false');
@@ -977,6 +1041,83 @@ export async function initManageEmployees(config) {
           showMessage(feedback, 'User deleted from employee records.', 'success');
         } catch (error) {
           showMessage(feedback, error.message || 'Unable to delete employee.', 'error');
+        }
+      })();
+      return;
+    }
+
+    if (target.closest('#drawerAddEmployeeGroupBtn')) {
+      if (!state.selectedEmployeeId || !state.drawerPayload || state.drawerUserGroupsBusy) return;
+      const employeeId = state.selectedEmployeeId;
+      const select = drawerOverview?.querySelector('#drawerUserGroupSelect');
+      const roleId = Number(select?.value || 0);
+      if (!Number.isInteger(roleId) || roleId <= 0) return;
+
+      const payload = state.drawerPayload;
+      const existingIds = new Set((payload.assignedRoles || []).map((row) => Number(row.id)).filter((id) => Number.isInteger(id) && id > 0));
+      if (existingIds.has(roleId)) return;
+      const roleRow = (payload.availableRoles || []).find((row) => Number(row.id) === roleId);
+      if (!roleRow) return;
+
+      const previousAssigned = [...(payload.assignedRoles || [])];
+      const nextRoleIds = [...existingIds, roleId];
+      payload.assignedRoles = [...previousAssigned, roleRow].sort(
+        (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || Number(a.id || 0) - Number(b.id || 0)
+      );
+      state.drawerUserGroupsBusy = true;
+      drawerCache.set(employeeId, payload);
+      renderOverviewFromState();
+
+      void (async () => {
+        try {
+          await updateEmployee(employeeId, { roleIds: nextRoleIds });
+          state.drawerUserGroupsBusy = false;
+          renderOverviewFromState();
+          const feedbackNode = drawerOverview?.querySelector('#drawerUserGroupsFeedback');
+          if (feedbackNode) showMessage(feedbackNode, 'User group added.', 'success');
+        } catch (error) {
+          payload.assignedRoles = previousAssigned;
+          state.drawerUserGroupsBusy = false;
+          drawerCache.set(employeeId, payload);
+          renderOverviewFromState();
+          const feedbackNode = drawerOverview?.querySelector('#drawerUserGroupsFeedback');
+          if (feedbackNode) showMessage(feedbackNode, error.message || 'Unable to add user group.', 'error');
+        }
+      })();
+      return;
+    }
+
+    const removeRoleButton = target.closest('[data-remove-employee-group]');
+    if (removeRoleButton) {
+      if (!state.selectedEmployeeId || !state.drawerPayload || state.drawerUserGroupsBusy) return;
+      const employeeId = state.selectedEmployeeId;
+      const roleId = Number(removeRoleButton.getAttribute('data-remove-employee-group'));
+      if (!Number.isInteger(roleId) || roleId <= 0) return;
+
+      const payload = state.drawerPayload;
+      const previousAssigned = [...(payload.assignedRoles || [])];
+      const nextAssigned = previousAssigned.filter((row) => Number(row.id) !== roleId);
+      const nextRoleIds = nextAssigned.map((row) => Number(row.id)).filter((id) => Number.isInteger(id) && id > 0);
+
+      payload.assignedRoles = nextAssigned;
+      state.drawerUserGroupsBusy = true;
+      drawerCache.set(employeeId, payload);
+      renderOverviewFromState();
+
+      void (async () => {
+        try {
+          await updateEmployee(employeeId, { roleIds: nextRoleIds });
+          state.drawerUserGroupsBusy = false;
+          renderOverviewFromState();
+          const feedbackNode = drawerOverview?.querySelector('#drawerUserGroupsFeedback');
+          if (feedbackNode) showMessage(feedbackNode, 'User group removed.', 'success');
+        } catch (error) {
+          payload.assignedRoles = previousAssigned;
+          state.drawerUserGroupsBusy = false;
+          drawerCache.set(employeeId, payload);
+          renderOverviewFromState();
+          const feedbackNode = drawerOverview?.querySelector('#drawerUserGroupsFeedback');
+          if (feedbackNode) showMessage(feedbackNode, error.message || 'Unable to remove user group.', 'error');
         }
       })();
       return;
