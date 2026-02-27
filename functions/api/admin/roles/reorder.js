@@ -1,5 +1,6 @@
 import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
+import { canManageRoleRowByHierarchy, getActorAccessScope } from '../_lib/access-scope.js';
 
 function normalizeDirection(value) {
   const direction = String(value || '').trim().toLowerCase();
@@ -19,8 +20,9 @@ async function listRoles(env) {
 
 export async function onRequestPost(context) {
   const { env } = context;
-  const { errorResponse } = await requirePermission(context, ['user_groups.manage']);
+  const { errorResponse, session } = await requirePermission(context, ['user_groups.manage']);
   if (errorResponse) return errorResponse;
+  const scope = await getActorAccessScope(env, session);
 
   let payload;
   try {
@@ -45,6 +47,9 @@ export async function onRequestPost(context) {
 
   const current = roles[index];
   const neighbor = roles[neighborIndex];
+  if (!canManageRoleRowByHierarchy(scope, current) || !canManageRoleRowByHierarchy(scope, neighbor)) {
+    return json({ error: 'You can only reorder roles beneath your hierarchy.' }, 403);
+  }
 
   await env.DB.batch([
     env.DB.prepare('UPDATE app_roles SET sort_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(

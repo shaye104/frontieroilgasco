@@ -1,8 +1,15 @@
 import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
-import { canEditEmployeeByRank, getEmployeeByDiscordUserId, writeAdminActivityEvent } from '../../_lib/db.js';
+import { canEditEmployeeByRank, writeAdminActivityEvent } from '../../_lib/db.js';
 import { sendRankSyncWebhook } from '../../_lib/rank-sync.js';
+import {
+  canManageRoleRowByHierarchy,
+  canViewEmployeeByHierarchy,
+  getActorAccessScope,
+  hasHierarchyBypass,
+  validateRoleSetManageable
+} from '../_lib/access-scope.js';
 
 function valueText(value) {
   const text = String(value ?? '').trim();
@@ -68,11 +75,15 @@ export async function onRequestGet(context) {
 
   const employee = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
   if (!employee) return json({ error: 'Employee not found.' }, 404);
-  const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
-  const canEditByRank = hasPermission(session, 'admin.override')
+  const scope = await getActorAccessScope(env, session);
+  const canViewByRank = await canViewEmployeeByHierarchy(env, scope, employee, { allowSelf: true, allowEqual: false });
+  if (!canViewByRank) {
+    return json({ error: 'You can only view profiles beneath your hierarchy.' }, 403);
+  }
+  const canEditByRank = hasHierarchyBypass(env, session)
     ? true
-    : actorEmployee
-    ? await canEditEmployeeByRank(env, actorEmployee, employee)
+    : scope.actorEmployee
+    ? await canEditEmployeeByRank(env, scope.actorEmployee, employee, { allowSelf: false, allowEqual: false })
     : false;
 
   const disciplinaries = await env.DB.prepare(
@@ -107,13 +118,16 @@ export async function onRequestGet(context) {
   const availableRoles = await env.DB
     .prepare('SELECT id, name, description, sort_order, is_system FROM app_roles ORDER BY sort_order ASC, id ASC')
     .all();
+  const availableRoleRows = hasHierarchyBypass(env, session)
+    ? availableRoles?.results || []
+    : (availableRoles?.results || []).filter((row) => canManageRoleRowByHierarchy(scope, row));
 
   return json({
     employee,
     disciplinaries: disciplinaries?.results || [],
     notes: notes?.results || [],
     assignedRoles: roleAssignments?.results || [],
-    availableRoles: availableRoles?.results || [],
+    availableRoles: availableRoleRows,
     capabilities: {
       canEditByRank,
       canAssignUserGroups: hasPermission(session, 'user_groups.assign') && canEditByRank
@@ -138,12 +152,13 @@ export async function onRequestPut(context) {
 
   const existing = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
   if (!existing) return json({ error: 'Employee not found.' }, 404);
-  const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
+  const scope = await getActorAccessScope(env, session);
+  const actorEmployee = scope.actorEmployee;
   const canEditByRank = actorEmployee
-    ? await canEditEmployeeByRank(env, actorEmployee, existing)
+    ? await canEditEmployeeByRank(env, actorEmployee, existing, { allowSelf: false, allowEqual: false })
     : false;
-  if (!hasPermission(session, 'admin.override') && !canEditByRank) {
-    return json({ error: 'You cannot edit employees with a higher rank than yours.' }, 403);
+  if (!hasHierarchyBypass(env, session) && !canEditByRank) {
+    return json({ error: 'You can only edit profiles beneath your hierarchy.' }, 403);
   }
   const duplicate = await findDuplicateEmployee(
     env,
@@ -184,6 +199,16 @@ export async function onRequestPut(context) {
     ? String(payload?.activationStatus || '').trim().toUpperCase() || 'PENDING'
     : String(existing.activation_status || '').trim().toUpperCase() || 'PENDING';
   const nextHireDate = hasOwn(payload, 'hireDate') ? String(payload?.hireDate || '').trim() : String(existing.hire_date || '').trim();
+  if (!hasHierarchyBypass(env, session)) {
+    const nextTargetRank = await env.DB
+      .prepare('SELECT level FROM config_ranks WHERE LOWER(value) = LOWER(?) LIMIT 1')
+      .bind(nextRank)
+      .first();
+    const nextRankLevel = Number(nextTargetRank?.level || 0);
+    if (!(Number(scope.actorRankLevel || 0) > nextRankLevel)) {
+      return json({ error: 'You cannot set rank equal to or above your own hierarchy.' }, 403);
+    }
+  }
 
   await env.DB.prepare(
     `UPDATE employees
@@ -217,6 +242,12 @@ export async function onRequestPut(context) {
   if (roleIds) {
     if (!hasPermission(session, 'user_groups.assign')) {
       return json({ error: 'Forbidden. Missing required permission.' }, 403);
+    }
+    if (!hasHierarchyBypass(env, session)) {
+      const roleValidation = await validateRoleSetManageable(env, scope, roleIds);
+      if (!roleValidation.ok) {
+        return json({ error: roleValidation.error || 'One or more selected roles are outside your hierarchy.' }, 403);
+      }
     }
     await env.DB.batch([
       env.DB.prepare('DELETE FROM employee_role_assignments WHERE employee_id = ?').bind(employeeId),

@@ -1,7 +1,8 @@
 import { json } from '../auth/_lib/auth.js';
 import { requirePermission } from './_lib/admin-auth.js';
 import { hasPermission } from '../_lib/permissions.js';
-import { getEmployeeByDiscordUserId, normalizeDiscordUserId, writeAdminActivityEvent } from '../_lib/db.js';
+import { normalizeDiscordUserId, writeAdminActivityEvent } from '../_lib/db.js';
+import { getActorAccessScope, hasHierarchyBypass, validateRoleSetManageable } from './_lib/access-scope.js';
 
 function normalizeText(value) {
   return String(value || '').trim();
@@ -68,6 +69,18 @@ export async function onRequestGet(context) {
   ]);
   const sortBySql = sortableColumns.get(sortByInput) || 'e.id';
 
+  const actorScope = await getActorAccessScope(env, session);
+  const visibilityWhereParts = [];
+  const visibilityBindings = [];
+  if (!actorScope.bypassHierarchy) {
+    if (!actorScope.actorEmployee?.id) {
+      visibilityWhereParts.push('1 = 0');
+    } else {
+      visibilityWhereParts.push('(e.id = ? OR COALESCE(cr.level, 0) < ?)');
+      visibilityBindings.push(Number(actorScope.actorEmployee.id), Number(actorScope.actorRankLevel || 0));
+    }
+  }
+
   const whereParts = [];
   const whereBindings = [];
   if (query) {
@@ -100,7 +113,9 @@ export async function onRequestGet(context) {
     whereParts.push(`DATE(COALESCE(e.hire_date, '')) <= DATE(?)`);
     whereBindings.push(hireDateTo);
   }
-  const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+  const allWhereParts = [...visibilityWhereParts, ...whereParts];
+  const allWhereBindings = [...visibilityBindings, ...whereBindings];
+  const whereSql = allWhereParts.length ? `WHERE ${allWhereParts.join(' AND ')}` : '';
 
   const dbStartedAt = Date.now();
   const [result, totalRow, statsRow] = await Promise.all([
@@ -114,9 +129,9 @@ export async function onRequestGet(context) {
          ORDER BY ${sortBySql} ${sortDir}, e.id DESC
          LIMIT ? OFFSET ?`
       )
-      .bind(...whereBindings, pageSize, offset)
-      .all(),
-    env.DB.prepare(`SELECT COUNT(*) AS total FROM employees e ${whereSql}`).bind(...whereBindings).first(),
+        .bind(...allWhereBindings, pageSize, offset)
+        .all(),
+    env.DB.prepare(`SELECT COUNT(*) AS total FROM employees e LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, '')) ${whereSql}`).bind(...allWhereBindings).first(),
     env.DB
       .prepare(
         `SELECT
@@ -125,18 +140,14 @@ export async function onRequestGet(context) {
            SUM(CASE WHEN LOWER(COALESCE(employee_status, '')) IN ('suspended', 'inactive', 'terminated', 'on leave') THEN 1 ELSE 0 END) AS inactive_employees,
            SUM(CASE WHEN DATE(COALESCE(hire_date, '')) >= DATE('now', '-30 day') THEN 1 ELSE 0 END) AS new_hires_30d,
            SUM(CASE WHEN UPPER(COALESCE(activation_status, '')) = 'PENDING' THEN 1 ELSE 0 END) AS pending_activation
-         FROM employees`
+         FROM employees e
+         LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))
+         ${visibilityWhereParts.length ? `WHERE ${visibilityWhereParts.join(' AND ')}` : ''}`
       )
+      .bind(...visibilityBindings)
       .first()
   ]);
-  const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
-  const actorRankLevelRow = actorEmployee?.rank
-    ? await env.DB
-        .prepare('SELECT level FROM config_ranks WHERE LOWER(value) = LOWER(?) LIMIT 1')
-        .bind(actorEmployee.rank)
-        .first()
-    : null;
-  const actorRankLevel = Number(actorRankLevelRow?.level || 0);
+  const actorRankLevel = Number(actorScope.actorRankLevel || 0);
   const dbMs = Date.now() - dbStartedAt;
   const total = Number(totalRow?.total || 0);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -227,7 +238,40 @@ export async function onRequestPost(context) {
     return json({ error: 'Roblox Username/User ID must be unique.' }, 400);
   }
 
-  const actorEmployee = await getEmployeeByDiscordUserId(env, session.userId);
+  const actorScope = await getActorAccessScope(env, session);
+  const actorEmployee = actorScope.actorEmployee;
+
+  if (!hasHierarchyBypass(env, session)) {
+    if (!actorEmployee?.id) return json({ error: 'You do not have an employee profile to manage users.' }, 403);
+    const proposedRankLevel = await env.DB
+      .prepare(`SELECT level FROM config_ranks WHERE LOWER(value) = LOWER(?) LIMIT 1`)
+      .bind(String(payload?.rank || '').trim())
+      .first();
+    const nextRankLevel = Number(proposedRankLevel?.level || 0);
+    if (!(Number(actorScope.actorRankLevel) > nextRankLevel)) {
+      return json({ error: 'You can only create employees beneath your rank hierarchy.' }, 403);
+    }
+  }
+
+  const rolesToAssign = [];
+  if (providedRoleIds.length) {
+    if (!hasHierarchyBypass(env, session)) {
+      const roleValidation = await validateRoleSetManageable(env, actorScope, providedRoleIds);
+      if (!roleValidation.ok) {
+        return json({ error: roleValidation.error || 'One or more selected roles are outside your hierarchy.' }, 403);
+      }
+    }
+    rolesToAssign.push(...providedRoleIds);
+  } else {
+    const employeeRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'employee'`).first();
+    if (employeeRole?.id) {
+      if (!hasHierarchyBypass(env, session)) {
+        const roleValidation = await validateRoleSetManageable(env, actorScope, [Number(employeeRole.id)]);
+        if (!roleValidation.ok) return json({ error: 'Default employee role is outside your hierarchy.' }, 403);
+      }
+      rolesToAssign.push(Number(employeeRole.id));
+    }
+  }
 
   try {
     const insert = await env.DB.prepare(
@@ -250,14 +294,6 @@ export async function onRequestPost(context) {
 
     const employeeId = Number(insert?.meta?.last_row_id);
     if (employeeId > 0) {
-      const rolesToAssign = [];
-      if (providedRoleIds.length) {
-        rolesToAssign.push(...providedRoleIds);
-      } else {
-        const employeeRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'employee'`).first();
-        if (employeeRole?.id) rolesToAssign.push(Number(employeeRole.id));
-      }
-
       if (rolesToAssign.length) {
         await env.DB.batch(
           rolesToAssign.map((roleId) =>

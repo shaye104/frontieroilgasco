@@ -7,6 +7,13 @@ import {
   normalizePermissionKeys,
   hasPermission
 } from '../_lib/permissions.js';
+import {
+  canGrantPermissionKey,
+  canManageRoleRowByHierarchy,
+  getActorAccessScope,
+  hasHierarchyBypass,
+  isOwnerSession
+} from './_lib/access-scope.js';
 
 function toInt(value) {
   const n = Number(value);
@@ -109,18 +116,13 @@ async function userCanManageViaRole(env, userId, targetRoleId, nextPermissionKey
   return manages.size > 0;
 }
 
-function canManageAdminOverride(env, session) {
-  const ownerId = String(env.OWNER_DISCORD_ID || env.ADMIN_DISCORD_USER_ID || '').trim();
-  return Boolean(ownerId) && String(session?.userId || '') === ownerId;
-}
-
 export async function onRequestGet(context) {
   const { env } = context;
   const { errorResponse, session } = await requirePermission(context, ['user_groups.read']);
   if (errorResponse) return errorResponse;
 
   const roles = await getRolesWithPermissions(env);
-  const isOwner = canManageAdminOverride(env, session);
+  const isOwner = isOwnerSession(env, session);
   return json({
     roles,
     permissionCatalog: getPermissionCatalog().filter((permission) => isOwner || permission.key !== ADMIN_OVERRIDE_PERMISSION)
@@ -129,8 +131,12 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { env } = context;
-  const { errorResponse } = await requirePermission(context, ['user_groups.manage']);
+  const { errorResponse, session } = await requirePermission(context, ['user_groups.manage']);
   if (errorResponse) return errorResponse;
+  const scope = await getActorAccessScope(env, session);
+  if (!scope.bypassHierarchy && !Number.isFinite(scope.actorTopRoleSort)) {
+    return json({ error: 'You do not have a manageable role scope.' }, 403);
+  }
 
   let payload;
   try {
@@ -183,8 +189,12 @@ export async function onRequestPut(context) {
   const roleId = toInt(payload?.id);
   if (!roleId) return json({ error: 'Role id is required.' }, 400);
 
-  const role = await env.DB.prepare('SELECT id, is_system FROM app_roles WHERE id = ?').bind(roleId).first();
+  const scope = await getActorAccessScope(env, session);
+  const role = await env.DB.prepare('SELECT id, is_system, sort_order FROM app_roles WHERE id = ?').bind(roleId).first();
   if (!role) return json({ error: 'Role not found.' }, 404);
+  if (!canManageRoleRowByHierarchy(scope, role)) {
+    return json({ error: 'You can only manage roles beneath your hierarchy.' }, 403);
+  }
 
   const name = String(payload?.name || '').trim();
   const description = String(payload?.description || '').trim();
@@ -198,7 +208,7 @@ export async function onRequestPut(context) {
     permissionKeys.includes('user_groups.manage') ||
     permissionKeys.includes('roles.manage') ||
     permissionKeys.includes(SUPER_ADMIN_PERMISSION);
-  const isOwner = canManageAdminOverride(env, session);
+  const isOwner = isOwnerSession(env, session);
   const existingPermissionRows = await env.DB
     .prepare('SELECT permission_key FROM app_role_permissions WHERE role_id = ?')
     .bind(roleId)
@@ -208,6 +218,12 @@ export async function onRequestPut(context) {
   const nextHasAdminOverride = permissionKeys.includes(ADMIN_OVERRIDE_PERMISSION);
   if (!isOwner && (existingHasAdminOverride || nextHasAdminOverride)) {
     return json({ error: 'Only OWNER_DISCORD_ID can grant or revoke admin.override.' }, 403);
+  }
+  if (!hasHierarchyBypass(env, session)) {
+    const disallowedPermission = permissionKeys.find((permissionKey) => !canGrantPermissionKey(env, session, permissionKey));
+    if (disallowedPermission) {
+      return json({ error: `You cannot grant permission \`${disallowedPermission}\`.` }, 403);
+    }
   }
 
   if (!includesManage) {
@@ -264,13 +280,17 @@ export async function onRequestDelete(context) {
   const roleId = toInt(new URL(request.url).searchParams.get('id'));
   if (!roleId) return json({ error: 'Role id is required.' }, 400);
 
+  const scope = await getActorAccessScope(env, session);
   const role = await env.DB
-    .prepare('SELECT id, is_system, name FROM app_roles WHERE id = ?')
+    .prepare('SELECT id, is_system, name, sort_order FROM app_roles WHERE id = ?')
     .bind(roleId)
     .first();
   if (!role) return json({ error: 'Role not found.' }, 404);
+  if (!canManageRoleRowByHierarchy(scope, role)) {
+    return json({ error: 'You can only manage roles beneath your hierarchy.' }, 403);
+  }
   if (Number(role.is_system) === 1) return json({ error: 'System roles cannot be deleted.' }, 400);
-  const isOwner = canManageAdminOverride(env, session);
+  const isOwner = isOwnerSession(env, session);
   const permissionRows = await env.DB
     .prepare('SELECT permission_key FROM app_role_permissions WHERE role_id = ?')
     .bind(roleId)

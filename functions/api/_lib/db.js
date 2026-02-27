@@ -818,10 +818,16 @@ export async function getRankLevelByValue(env, rankValue) {
   return Number.isFinite(level) ? level : 0;
 }
 
-export async function canEditEmployeeByRank(env, actorEmployee, targetEmployee) {
+export async function canEditEmployeeByRank(env, actorEmployee, targetEmployee, options = {}) {
+  const allowEqual = Boolean(options?.allowEqual);
+  const allowSelf = options?.allowSelf !== false;
+  const actorId = Number(actorEmployee?.id || 0);
+  const targetId = Number(targetEmployee?.id || 0);
+  if (allowSelf && actorId > 0 && targetId > 0 && actorId === targetId) return true;
+
   const actorRankLevel = await getRankLevelByValue(env, actorEmployee?.rank);
   const targetRankLevel = await getRankLevelByValue(env, targetEmployee?.rank);
-  return actorRankLevel >= targetRankLevel;
+  return allowEqual ? actorRankLevel >= targetRankLevel : actorRankLevel > targetRankLevel;
 }
 
 export async function writeAdminActivityEvent(env, event) {

@@ -1,6 +1,8 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { requirePermission } from '../../_lib/admin-auth.js';
 import { hasPermission } from '../../../_lib/permissions.js';
+import { canViewEmployeeByHierarchy, getActorAccessScope, hasHierarchyBypass } from '../../_lib/access-scope.js';
+import { canEditEmployeeByRank } from '../../../_lib/db.js';
 
 export async function onRequestGet(context) {
   const { env, params, request } = context;
@@ -88,6 +90,14 @@ export async function onRequestGet(context) {
       .all()
   ]);
   if (!employee) return json({ error: 'Employee not found.' }, 404);
+  const scope = await getActorAccessScope(env, session);
+  const canViewByHierarchy = await canViewEmployeeByHierarchy(env, scope, employee, { allowSelf: true, allowEqual: false });
+  if (!canViewByHierarchy) return json({ error: 'You can only view profiles beneath your hierarchy.' }, 403);
+  const canEditByHierarchy = hasHierarchyBypass(env, session)
+    ? true
+    : scope.actorEmployee
+    ? await canEditEmployeeByRank(env, scope.actorEmployee, employee, { allowSelf: false, allowEqual: false })
+    : false;
 
   const dbMs = Date.now() - dbStartedAt;
   let activity = (activityRows?.results || []).map((row) => ({
@@ -148,9 +158,9 @@ export async function onRequestGet(context) {
     notes: notesRows?.results || [],
     disciplinaries: disciplinariesRows?.results || [],
     capabilities: {
-      canAddNotes: hasPermission(session, 'employees.notes'),
-      canAddDisciplinary: hasPermission(session, 'employees.discipline'),
-      canActivate: hasPermission(session, 'employees.edit')
+      canAddNotes: hasPermission(session, 'employees.notes') && canEditByHierarchy,
+      canAddDisciplinary: hasPermission(session, 'employees.discipline') && canEditByHierarchy,
+      canActivate: hasPermission(session, 'employees.edit') && canEditByHierarchy
     },
     timing: { dbMs, totalMs: Date.now() - startedAt }
   });

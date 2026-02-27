@@ -1,6 +1,7 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { requirePermission } from '../../_lib/admin-auth.js';
-import { getEmployeeByDiscordUserId, writeAdminActivityEvent } from '../../../_lib/db.js';
+import { canEditEmployeeByRank, getEmployeeByDiscordUserId, writeAdminActivityEvent } from '../../../_lib/db.js';
+import { hasHierarchyBypass } from '../../_lib/access-scope.js';
 
 export async function onRequestPost(context) {
   const { env, params } = context;
@@ -18,6 +19,10 @@ export async function onRequestPost(context) {
   }
 
   const actor = await getEmployeeByDiscordUserId(env, session.userId);
+  const canEditByRank = actor ? await canEditEmployeeByRank(env, actor, target, { allowSelf: false, allowEqual: false }) : false;
+  if (!hasHierarchyBypass(env, session) && !canEditByRank) {
+    return json({ error: 'You can only activate profiles beneath your hierarchy.' }, 403);
+  }
 
   await env.DB
     .prepare(
