@@ -2,6 +2,7 @@ import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
 import { canEditEmployeeByRank, getEmployeeByDiscordUserId, writeAdminActivityEvent } from '../../_lib/db.js';
+import { sendRankSyncWebhook } from '../../_lib/rank-sync.js';
 
 function valueText(value) {
   const text = String(value ?? '').trim();
@@ -229,6 +230,7 @@ export async function onRequestPut(context) {
   if (!employee) return json({ error: 'Employee not found.' }, 404);
 
   const actor = session.displayName || session.userId;
+  const rankChanged = String(existing?.rank || '').trim() !== String(employee?.rank || '').trim();
   const changes = buildChangeEntries(existing, employee);
   if (changes.length) {
     await env.DB.batch(
@@ -247,6 +249,52 @@ export async function onRequestPut(context) {
       summary: `Updated employee ${employee.roblox_username || `#${employeeId}`}.`,
       metadata: {
         changes
+      }
+    });
+  }
+
+  if (rankChanged) {
+    const syncPayload = {
+      event: 'employee.rank.changed',
+      changeId: `rank-${employeeId}-${Date.now()}`,
+      occurredAt: new Date().toISOString(),
+      actor: {
+        employeeId: Number(actorEmployee?.id || 0) || null,
+        discordUserId: String(session.userId || '').trim() || null,
+        name: String(session.displayName || session.userId || '').trim() || null
+      },
+      employee: {
+        id: Number(employeeId),
+        discordUserId: String(employee.discord_user_id || '').trim() || null,
+        robloxUserId: String(employee.roblox_user_id || '').trim() || null,
+        robloxUsername: String(employee.roblox_username || '').trim() || null
+      },
+      rank: {
+        old: String(existing.rank || '').trim() || null,
+        next: String(employee.rank || '').trim() || null,
+        grade: String(employee.grade || '').trim() || null
+      }
+    };
+    const syncResult = await sendRankSyncWebhook(env, syncPayload);
+    await writeAdminActivityEvent(env, {
+      actorEmployeeId: actorEmployee?.id || null,
+      actorName: session.displayName || session.userId,
+      actorDiscordUserId: session.userId,
+      actionType: syncResult.ok ? 'RANK_SYNC_SUCCESS' : syncResult.skipped ? 'RANK_SYNC_SKIPPED' : 'RANK_SYNC_FAILED',
+      targetEmployeeId: employeeId,
+      summary: syncResult.ok
+        ? `Rank sync succeeded for ${employee.roblox_username || `#${employeeId}`}.`
+        : syncResult.skipped
+        ? `Rank sync skipped for ${employee.roblox_username || `#${employeeId}`}: webhook not configured.`
+        : `Rank sync failed for ${employee.roblox_username || `#${employeeId}`}.`,
+      metadata: {
+        syncPayload: {
+          event: syncPayload.event,
+          changeId: syncPayload.changeId,
+          employee: syncPayload.employee,
+          rank: syncPayload.rank
+        },
+        syncResult
       }
     });
   }
