@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-27T00:18:56.230Z
+Generated: 2026-02-27T00:23:32.149Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -27,7 +27,7 @@ SITE STRUCTURE
 
 JAVASCRIPT MODULES
 - assets/js/modules/activity-tracker.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: activateEmployee, addDisciplinary, addEmployeeNote, addUserRankDiscordRoleLink, addUserRankGroupLink, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMeBootstrap, getMyDetails, getOnboardingMe, getRankPermissions, getSession, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, resolveRobloxIdentity, saveRankPermissions, saveUserRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus
+- assets/js/modules/admin-api.js | exports: activateEmployee, addDisciplinary, addEmployeeNote, addUserRankDiscordRoleLink, addUserRankGroupLink, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMeBootstrap, getMyDetails, getOnboardingBootstrap, getOnboardingMe, getRankPermissions, getSession, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, resolveRobloxIdentity, saveRankPermissions, saveUserRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus, verifyOnboardingRoblox
 - assets/js/modules/app-mode.js | exports: isCoreAllowedPagePath, isCoreOnlyMode, normalizeAppMode
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/finances.js | exports: No public exports

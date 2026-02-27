@@ -1110,6 +1110,20 @@
   gap: 0.75rem;
 }
 
+.page-onboarding .onboarding-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.page-onboarding .onboarding-primary-col,
+.page-onboarding .onboarding-secondary-col {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .page-onboarding .onboarding-card {
   min-width: 0;
 }
@@ -1166,12 +1180,46 @@
   flex-wrap: wrap;
 }
 
+.page-onboarding .onboarding-form-actions-inline .btn {
+  min-width: 180px;
+}
+
 .page-onboarding .onboarding-verify-result {
   font-size: 0.82rem;
   color: #334155;
 }
 
+.page-onboarding .onboarding-verify-result.is-success {
+  color: #166534;
+  font-weight: 600;
+}
+
+.page-onboarding .onboarding-verify-result.is-error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.page-onboarding .onboarding-help-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.35rem;
+  color: #475569;
+}
+
 @media (max-width: 960px) {
+  .page-onboarding .onboarding-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-onboarding .onboarding-secondary-col {
+    order: 1;
+  }
+
+  .page-onboarding .onboarding-primary-col {
+    order: 2;
+  }
+
   .page-onboarding .onboarding-grid {
     grid-template-columns: 1fr;
   }

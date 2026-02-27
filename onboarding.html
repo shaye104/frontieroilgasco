@@ -20,7 +20,10 @@
           <span class="brand-mark" aria-hidden="true">FOG</span>
           <span class="brand-text">Frontier Oil & Gas Company</span>
         </a>
-        <nav class="site-nav" aria-label="Primary"></nav>
+        <nav class="site-nav" aria-label="Primary">
+          <span class="nav-spacer"></span>
+          <a id="onboardingAuthAction" class="btn btn-primary" href="/login">Login</a>
+        </nav>
       </div>
     </header>
 
@@ -36,67 +39,82 @@
 
         <section id="onboardingFeedback" class="feedback" role="status" aria-live="polite"></section>
 
-        <section class="onboarding-grid">
-          <article class="panel onboarding-card">
-            <h2>Discord Account</h2>
-            <dl class="onboarding-meta">
-              <div>
-                <dt>Display name</dt>
-                <dd id="onboardingDiscordName" class="skeleton-line">Loading...</dd>
-              </div>
-              <div>
-                <dt>User ID</dt>
-                <dd id="onboardingDiscordId" class="skeleton-line">Loading...</dd>
-              </div>
-            </dl>
-          </article>
-
-          <article class="panel onboarding-card">
-            <h2>Access Status</h2>
-            <p id="onboardingStatusText" class="onboarding-status-copy">Loading status...</p>
-            <ul class="onboarding-checklist">
-              <li id="checkDiscordRole">Discord employee role detected</li>
-              <li id="checkRobloxProfile">Roblox profile completed</li>
-              <li id="checkSubmitted">Submitted for manager review</li>
-            </ul>
-          </article>
+        <section id="onboardingNotPermitted" class="panel onboarding-card hidden" aria-live="polite">
+          <h2>Access not permitted</h2>
+          <p>You are not listed as an employee in Discord.</p>
+          <p class="finance-inline-caption">If this is incorrect, contact staff and include your Discord User ID.</p>
+          <div class="button-row">
+            <a class="btn btn-secondary" href="/login">Return to Login</a>
+            <button id="onboardingSwitchAccountBtn" class="btn btn-primary" type="button">Switch Discord Account</button>
+          </div>
         </section>
 
-        <section class="onboarding-grid">
-          <article class="panel onboarding-card">
-            <h2>Roblox Details</h2>
-            <form id="onboardingForm" class="onboarding-form">
-              <div>
-                <label for="onboardingRobloxUserId">Roblox User ID</label>
-                <input id="onboardingRobloxUserId" name="robloxUserId" type="text" inputmode="numeric" required />
-              </div>
-              <div>
-                <label for="onboardingRobloxUsername">Roblox Username</label>
-                <input id="onboardingRobloxUsername" name="robloxUsername" type="text" required />
-              </div>
-              <div class="onboarding-form-actions">
-                <button id="verifyRobloxBtn" class="btn btn-secondary" type="button">Verify Roblox Account</button>
-                <span id="verifyRobloxResult" class="onboarding-verify-result" aria-live="polite"></span>
-              </div>
-              <div class="onboarding-form-actions">
-                <button id="submitOnboardingBtn" class="btn btn-primary" type="submit">Submit for Review</button>
-              </div>
-            </form>
-          </article>
+        <section id="onboardingMainGrid" class="onboarding-main-grid hidden">
+          <div class="onboarding-primary-col">
+            <article class="panel onboarding-card">
+              <h2>Discord Account</h2>
+              <dl class="onboarding-meta">
+                <div>
+                  <dt>Display name</dt>
+                  <dd id="onboardingDiscordName" class="skeleton-line">Loading...</dd>
+                </div>
+                <div>
+                  <dt>User ID</dt>
+                  <dd id="onboardingDiscordId" class="skeleton-line">Loading...</dd>
+                </div>
+                <div>
+                  <dt>Roles detected</dt>
+                  <dd id="onboardingDiscordRoleCount">0</dd>
+                </div>
+              </dl>
+            </article>
 
-          <article class="panel onboarding-card">
-            <h2>Need help?</h2>
-            <p class="finance-inline-caption">
-              Enter your exact Roblox ID and username. If verification fails, check spelling/casing and try again.
-            </p>
-            <p class="finance-inline-caption">
-              After submission, your account remains pending until activated by an employee manager.
-            </p>
-          </article>
+            <article class="panel onboarding-card">
+              <h2>Roblox Details</h2>
+              <form id="onboardingForm" class="onboarding-form">
+                <div>
+                  <label for="onboardingRobloxUserId">Roblox User ID</label>
+                  <input id="onboardingRobloxUserId" name="robloxUserId" type="text" inputmode="numeric" required />
+                  <p class="finance-inline-caption">Numbers only.</p>
+                </div>
+                <div>
+                  <label for="onboardingRobloxUsername">Roblox Username</label>
+                  <input id="onboardingRobloxUsername" name="robloxUsername" type="text" required />
+                </div>
+                <div class="onboarding-form-actions onboarding-form-actions-inline">
+                  <button id="verifyRobloxBtn" class="btn btn-secondary" type="button">Verify Roblox Account</button>
+                  <button id="submitOnboardingBtn" class="btn btn-primary" type="submit" disabled>Submit for Review</button>
+                </div>
+                <span id="verifyRobloxResult" class="onboarding-verify-result" aria-live="polite"></span>
+              </form>
+            </article>
+          </div>
+
+          <div class="onboarding-secondary-col">
+            <article class="panel onboarding-card">
+              <h2>Access Status</h2>
+              <p id="onboardingStatusText" class="onboarding-status-copy">Loading status...</p>
+              <ul class="onboarding-checklist">
+                <li id="checkDiscordRole">Discord employee role detected</li>
+                <li id="checkRobloxProfile">Roblox profile verified</li>
+                <li id="checkSubmitted">Submitted for manager review</li>
+                <li id="checkActivated">Activated by staff</li>
+              </ul>
+            </article>
+
+            <article class="panel onboarding-card">
+              <h2>Need help?</h2>
+              <ul class="onboarding-help-list">
+                <li>Use your exact Roblox ID and username.</li>
+                <li>If verification fails, check spelling/casing.</li>
+                <li>Activation is completed by an employee manager.</li>
+              </ul>
+            </article>
+          </div>
         </section>
       </div>
     </main>
 
-    <script type="module" src="/assets/js/pages/onboarding-page.js?v=20260227a"></script>
+    <script type="module" src="/assets/js/pages/onboarding-page.js?v=20260227b"></script>
   </body>
 </html>

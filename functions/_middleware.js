@@ -81,6 +81,8 @@ function isOnboardingPath(pathname) {
 function isOnboardingAllowedApiPath(pathname) {
   const path = normalizePath(pathname);
   return (
+    path === '/api/onboarding/bootstrap' ||
+    path === '/api/onboarding/verify' ||
     path === '/api/onboarding/me' ||
     path === '/api/onboarding/roblox-profile' ||
     path === '/api/onboarding/submit' ||

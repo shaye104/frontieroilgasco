@@ -113,6 +113,15 @@ export function getMeBootstrap() {
   });
 }
 
+export function getOnboardingBootstrap() {
+  return requestJson('/api/onboarding/bootstrap', {
+    method: 'GET',
+    timeoutMs: 8000,
+    cacheTtlMs: 20000,
+    cacheKey: 'GET:/api/onboarding/bootstrap'
+  });
+}
+
 export function submitOnboardingRobloxProfile(payload) {
   return requestJson('/api/onboarding/roblox-profile', {
     method: 'POST',
@@ -138,6 +147,14 @@ export function resolveRobloxIdentity(params = {}) {
     timeoutMs: 8000,
     cacheTtlMs: 30000,
     cacheKey: `GET:/api/roblox/resolve:${suffix}`
+  });
+}
+
+export function verifyOnboardingRoblox(payload) {
+  return requestJson('/api/onboarding/verify', {
+    method: 'POST',
+    timeoutMs: 8000,
+    body: JSON.stringify(payload)
   });
 }
 
