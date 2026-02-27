@@ -112,7 +112,9 @@ function renderMain(bootstrap) {
   const robloxUsernameInput = document.querySelector('#onboardingRobloxUsername');
 
   if (discordName) discordName.textContent = text(bootstrap?.discord?.displayName) || 'Unknown';
+  if (discordName) discordName.classList.remove('skeleton-line');
   if (discordId) discordId.textContent = text(bootstrap?.discord?.userId) || 'Unknown';
+  if (discordId) discordId.classList.remove('skeleton-line');
   if (discordRoleCount) discordRoleCount.textContent = String(Number(bootstrap?.discord?.roleCount || 0));
   setStatusPill(statusPill, state);
 

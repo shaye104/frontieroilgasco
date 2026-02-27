@@ -305,13 +305,6 @@ export async function onRequestPut(context) {
   const rankChanged = String(existing?.rank || '').trim() !== String(employee?.rank || '').trim();
   const changes = buildChangeEntries(existing, employee);
   if (changes.length) {
-    await env.DB.batch(
-      changes.map((entry) =>
-        env.DB
-          .prepare('INSERT INTO employee_notes (employee_id, note, authored_by) VALUES (?, ?, ?)')
-          .bind(employeeId, `[Activity] ${entry.actionType}: ${entry.details}`, actor)
-      )
-    );
     await writeAdminActivityEvent(env, {
       actorEmployeeId: actorEmployee?.id || null,
       actorName: session.displayName || session.userId,

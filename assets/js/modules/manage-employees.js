@@ -356,7 +356,9 @@ function isSystemNote(noteText) {
 
 function renderDrawerNotes(target, payload, showSystem, notesFeedback, selectedEmployeeId, refreshDrawerData, setShowSystem) {
   if (!target) return;
-  const rawNotes = Array.isArray(payload?.notes) ? payload.notes : [];
+  const rawNotes = (Array.isArray(payload?.notes) ? payload.notes : []).filter(
+    (entry) => !String(entry?.note || '').trim().toLowerCase().startsWith('[activity]')
+  );
   const systemActivity = Array.isArray(payload?.activity) ? payload.activity : [];
   const allNotes = [
     ...rawNotes.map((entry) => ({
@@ -1037,8 +1039,8 @@ export async function initManageEmployees(config) {
     }, 360);
   };
 
-  [filterQuery, filterRank, filterGrade, filterStatus, filterActivation, filterHireDateFrom, filterHireDateTo].forEach((input) => {
-    input?.addEventListener('input', scheduleReload);
+  filterQuery?.addEventListener('input', scheduleReload);
+  [filterRank, filterGrade, filterStatus, filterActivation, filterHireDateFrom, filterHireDateTo].forEach((input) => {
     input?.addEventListener('change', scheduleReload);
   });
 

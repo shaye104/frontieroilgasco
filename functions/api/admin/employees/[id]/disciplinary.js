@@ -50,13 +50,6 @@ export async function onRequestPost(context) {
     .run();
 
   const actor = session.displayName || session.userId;
-  await env.DB.prepare('INSERT INTO employee_notes (employee_id, note, authored_by) VALUES (?, ?, ?)')
-    .bind(
-      employeeId,
-      `[Activity] Disciplinary action recorded: ${recordType} (${recordStatus}) on ${recordDate}${reason ? ` | Reason: ${reason}` : ''}`,
-      actor
-    )
-    .run();
   await writeAdminActivityEvent(env, {
     actorEmployeeId: actorEmployee?.id || null,
     actorName: actor,
