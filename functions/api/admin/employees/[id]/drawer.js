@@ -105,11 +105,19 @@ export async function onRequestGet(context) {
          FROM employee_role_assignments era
          INNER JOIN app_roles ar ON ar.id = era.role_id
          WHERE era.employee_id = ?
+           AND COALESCE(ar.role_key, '') NOT IN ('owner', 'employee')
          ORDER BY ar.sort_order ASC, ar.id ASC`
       )
       .bind(employeeId)
       .all(),
-    env.DB.prepare('SELECT id, name, description, sort_order, is_system FROM app_roles ORDER BY sort_order ASC, id ASC').all()
+    env.DB
+      .prepare(
+        `SELECT id, name, description, sort_order, is_system
+         FROM app_roles
+         WHERE COALESCE(role_key, '') NOT IN ('owner', 'employee')
+         ORDER BY sort_order ASC, id ASC`
+      )
+      .all()
   ]);
   const availableRoleRows = hasHierarchyBypass(env, session)
     ? availableRolesRows?.results || []

@@ -34,6 +34,19 @@ async function findDuplicateEmployee(env, { robloxUsername, robloxUserId }, excl
   return env.DB.prepare(sql).bind(...binds).first();
 }
 
+async function findDuplicateSerial(env, serialNumber, excludeEmployeeId = null) {
+  const serial = normalizeText(serialNumber);
+  if (!serial) return null;
+  let sql = `SELECT id, serial_number FROM employees WHERE TRIM(COALESCE(serial_number, '')) = ?`;
+  const binds = [serial];
+  if (Number.isInteger(excludeEmployeeId) && excludeEmployeeId > 0) {
+    sql += ' AND id != ?';
+    binds.push(excludeEmployeeId);
+  }
+  sql += ' LIMIT 1';
+  return env.DB.prepare(sql).bind(...binds).first();
+}
+
 export async function onRequestGet(context) {
   const { env, request } = context;
   const { errorResponse, session } = await requirePermission(context, ['employees.read']);
@@ -240,6 +253,21 @@ export async function onRequestPost(context) {
   if (providedRoleIds.length && !hasPermission(session, 'user_groups.assign')) {
     return json({ error: 'Forbidden. Missing required permission.' }, 403);
   }
+  if (providedRoleIds.length) {
+    const forbiddenRoles = await env.DB
+      .prepare(
+        `SELECT id
+         FROM app_roles
+         WHERE id IN (${providedRoleIds.map(() => '?').join(', ')})
+           AND role_key IN ('owner', 'employee')
+         LIMIT 1`
+      )
+      .bind(...providedRoleIds)
+      .first();
+    if (forbiddenRoles?.id) {
+      return json({ error: 'System roles cannot be assigned through user groups.' }, 400);
+    }
+  }
   const duplicate = await findDuplicateEmployee(env, {
     robloxUsername: payload?.robloxUsername,
     robloxUserId: payload?.robloxUserId
@@ -252,6 +280,10 @@ export async function onRequestPost(context) {
       return json({ error: 'Roblox User ID already exists for another employee.' }, 400);
     }
     return json({ error: 'Roblox Username/User ID must be unique.' }, 400);
+  }
+  const duplicateSerial = await findDuplicateSerial(env, payload?.serialNumber);
+  if (duplicateSerial) {
+    return json({ error: 'Serial number already exists for another employee.' }, 400);
   }
 
   const actorScope = await getActorAccessScope(env, session);
@@ -278,15 +310,6 @@ export async function onRequestPost(context) {
       }
     }
     rolesToAssign.push(...providedRoleIds);
-  } else {
-    const employeeRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'employee'`).first();
-    if (employeeRole?.id) {
-      if (!hasHierarchyBypass(env, session)) {
-        const roleValidation = await validateRoleSetManageable(env, actorScope, [Number(employeeRole.id)]);
-        if (!roleValidation.ok) return json({ error: 'Default employee role is outside your hierarchy.' }, 403);
-      }
-      rolesToAssign.push(Number(employeeRole.id));
-    }
   }
 
   try {

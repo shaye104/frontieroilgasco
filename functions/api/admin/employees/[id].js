@@ -106,6 +106,19 @@ async function findDuplicateEmployee(env, { robloxUsername, robloxUserId }, excl
   return env.DB.prepare(sql).bind(...binds).first();
 }
 
+async function findDuplicateSerial(env, serialNumber, excludeEmployeeId) {
+  const serial = normalizeText(serialNumber);
+  if (!serial) return null;
+  let sql = `SELECT id, serial_number FROM employees WHERE TRIM(COALESCE(serial_number, '')) = ?`;
+  const binds = [serial];
+  if (Number.isInteger(excludeEmployeeId) && excludeEmployeeId > 0) {
+    sql += ' AND id != ?';
+    binds.push(excludeEmployeeId);
+  }
+  sql += ' LIMIT 1';
+  return env.DB.prepare(sql).bind(...binds).first();
+}
+
 export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse, session } = await requirePermission(context, ['employees.read']);
@@ -151,13 +164,19 @@ export async function onRequestGet(context) {
        FROM employee_role_assignments era
        INNER JOIN app_roles ar ON ar.id = era.role_id
        WHERE era.employee_id = ?
+         AND COALESCE(ar.role_key, '') NOT IN ('owner', 'employee')
        ORDER BY ar.sort_order ASC, ar.id ASC`
     )
     .bind(employeeId)
     .all();
 
   const availableRoles = await env.DB
-    .prepare('SELECT id, name, description, sort_order, is_system FROM app_roles ORDER BY sort_order ASC, id ASC')
+    .prepare(
+      `SELECT id, name, description, sort_order, is_system
+       FROM app_roles
+       WHERE COALESCE(role_key, '') NOT IN ('owner', 'employee')
+       ORDER BY sort_order ASC, id ASC`
+    )
     .all();
   const availableRoleRows = hasHierarchyBypass(env, session)
     ? availableRoles?.results || []
@@ -221,6 +240,10 @@ export async function onRequestPut(context) {
     }
     return json({ error: 'Roblox Username/User ID must be unique.' }, 400);
   }
+  const duplicateSerial = await findDuplicateSerial(env, payload?.serialNumber, employeeId);
+  if (duplicateSerial) {
+    return json({ error: 'Serial number already exists for another employee.' }, 400);
+  }
 
   const nextRobloxUsername = hasOwn(payload, 'robloxUsername')
     ? String(payload?.robloxUsername || '').trim()
@@ -280,9 +303,23 @@ export async function onRequestPut(context) {
   const roleIds = Array.isArray(payload?.roleIds)
     ? [...new Set(payload.roleIds.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0))]
     : null;
-  if (roleIds) {
+  if (Array.isArray(roleIds)) {
     if (!hasPermission(session, 'user_groups.assign')) {
       return json({ error: 'Forbidden. Missing required permission.' }, 403);
+    }
+    if (roleIds.length) {
+      const forbiddenRoleRows = await env.DB
+        .prepare(
+          `SELECT id, role_key
+           FROM app_roles
+           WHERE id IN (${roleIds.map(() => '?').join(', ')})
+             AND role_key IN ('owner', 'employee')`
+        )
+        .bind(...roleIds)
+        .all();
+      if ((forbiddenRoleRows?.results || []).length) {
+        return json({ error: 'System roles cannot be assigned through user groups.' }, 400);
+      }
     }
     if (!hasHierarchyBypass(env, session)) {
       const roleValidation = await validateRoleSetManageable(env, scope, roleIds);

@@ -314,6 +314,21 @@ export function createEmployee(employee) {
   });
 }
 
+export function checkEmployeeSerial(serial, options = {}) {
+  const params = new URLSearchParams();
+  if (serial) params.set('serial', String(serial).trim());
+  if (options.employeeId) params.set('employeeId', String(options.employeeId));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/admin/employees/serial${suffix}`, { method: 'GET', timeoutMs: 8000 });
+}
+
+export function suggestEmployeeSerial(options = {}) {
+  const params = new URLSearchParams();
+  params.set('random', '1');
+  if (options.employeeId) params.set('employeeId', String(options.employeeId));
+  return requestJson(`/api/admin/employees/serial?${params.toString()}`, { method: 'GET', timeoutMs: 8000 });
+}
+
 export function getEmployee(employeeId) {
   return requestJson(`/api/admin/employees/${employeeId}`, { method: 'GET', cacheTtlMs: 10000 });
 }

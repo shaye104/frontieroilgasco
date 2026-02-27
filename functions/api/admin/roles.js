@@ -33,6 +33,7 @@ async function getRolesWithPermissions(env) {
       `SELECT id, role_key, name, description, sort_order, is_system, created_at, updated_at
        ,discord_role_id
        FROM app_roles
+       WHERE COALESCE(role_key, '') NOT IN ('owner', 'employee')
        ORDER BY sort_order ASC, id ASC`
     )
     .all();

@@ -2,6 +2,7 @@ import {
   activateEmployee,
   addDisciplinary,
   addEmployeeNote,
+  checkEmployeeSerial,
   createEmployee,
   deleteEmployee,
   getEmployeeConfigBootstrap,
@@ -9,6 +10,7 @@ import {
   getEmployeeDrawer,
   listEmployees,
   purgeUserByDiscord,
+  suggestEmployeeSerial,
   updateEmployee
 } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
@@ -34,7 +36,13 @@ function formatDate(value, withTime = false) {
   if (!raw) return 'N/A';
   const date = new Date(raw);
   if (Number.isNaN(date.getTime())) return raw;
-  return withTime ? date.toLocaleString() : date.toLocaleDateString();
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  if (!withTime) return `${dd}/${mm}/${yyyy}`;
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${yyyy}, ${hh}:${min}`;
 }
 
 function statusClass(status) {
@@ -325,7 +333,10 @@ function renderDrawerOverview(target, payload, options = {}) {
       </div>
       <div>
         <label for="drawerEditSerialNumber">Serial</label>
-        <input id="drawerEditSerialNumber" name="serialNumber" type="text" value="${escapeHtml(text(draft.serialNumber))}" />
+        <div class="drawer-user-groups-actions">
+          <input id="drawerEditSerialNumber" name="serialNumber" type="text" value="${escapeHtml(text(draft.serialNumber))}" />
+          <button id="drawerRandomizeSerialBtn" class="btn btn-secondary btn-compact" type="button">Randomise</button>
+        </div>
       </div>
       <div>
         <label for="drawerEditEmployeeStatus">Status</label>
@@ -997,6 +1008,31 @@ export async function initManageEmployees(config) {
       return;
     }
 
+    if (target.closest('#drawerRandomizeSerialBtn')) {
+      if (!state.selectedEmployeeId) return;
+      const serialInput = drawerOverview?.querySelector('#drawerEditSerialNumber');
+      if (!(serialInput instanceof HTMLInputElement)) return;
+      const btn = target.closest('#drawerRandomizeSerialBtn');
+      if (!(btn instanceof HTMLButtonElement)) return;
+      btn.disabled = true;
+      const previousLabel = btn.textContent;
+      btn.textContent = 'Generating...';
+      void (async () => {
+        try {
+          const payload = await suggestEmployeeSerial({ employeeId: state.selectedEmployeeId });
+          serialInput.value = String(payload?.serial || '').trim();
+          serialInput.dispatchEvent(new Event('input', { bubbles: true }));
+        } catch (error) {
+          const feedbackNode = drawerOverview?.querySelector('#drawerOverviewFeedback');
+          if (feedbackNode) showMessage(feedbackNode, error.message || 'Unable to generate serial.', 'error');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = previousLabel;
+        }
+      })();
+      return;
+    }
+
     if (target.closest('#drawerActivateEmployeeBtn')) {
       if (!state.selectedEmployeeId || !state.drawerPayload) return;
       const employeeId = state.selectedEmployeeId;
@@ -1166,6 +1202,51 @@ export async function initManageEmployees(config) {
       return;
     }
 
+    if (Object.prototype.hasOwnProperty.call(changedPayload, 'serialNumber')) {
+      void (async () => {
+        try {
+          const serialCheck = await checkEmployeeSerial(changedPayload.serialNumber, { employeeId });
+          if (!serialCheck?.available) {
+            if (overviewFeedback) showMessage(overviewFeedback, 'Serial number already exists for another employee.', 'error');
+            return;
+          }
+        } catch (error) {
+          if (overviewFeedback) showMessage(overviewFeedback, error.message || 'Unable to validate serial number.', 'error');
+          return;
+        }
+        const previous = { ...payload.employee };
+        payload.employee = {
+          ...payload.employee,
+          roblox_username: nextDraft.robloxUsername,
+          roblox_user_id: nextDraft.robloxUserId,
+          rank: nextDraft.rank,
+          grade: nextDraft.grade,
+          serial_number: nextDraft.serialNumber,
+          employee_status: nextDraft.employeeStatus,
+          activation_status: nextDraft.activationStatus,
+          hire_date: nextDraft.hireDate
+        };
+        state.drawerOverviewEditMode = false;
+        state.drawerOverviewDraft = null;
+        drawerCache.set(employeeId, payload);
+        renderOverviewFromState();
+        if (drawerMeta) drawerMeta.textContent = `${nextDraft.serialNumber || 'No serial'} • ${nextDraft.rank || 'Unset rank'} • ${nextDraft.employeeStatus || 'Unknown status'}`;
+        if (overviewFeedback) showMessage(overviewFeedback, 'Saved.', 'success');
+
+        try {
+          await updateEmployee(employeeId, changedPayload);
+          void loadEmployees();
+        } catch (error) {
+          payload.employee = previous;
+          drawerCache.set(employeeId, payload);
+          renderOverviewFromState();
+          const nextFeedback = drawerOverview?.querySelector('#drawerOverviewFeedback');
+          if (nextFeedback) showMessage(nextFeedback, error.message || 'Unable to save employee.', 'error');
+        }
+      })();
+      return;
+    }
+
     const previous = { ...payload.employee };
     payload.employee = {
       ...payload.employee,
@@ -1272,14 +1353,22 @@ export async function initManageEmployees(config) {
     event.preventDefault();
     clearMessage(feedback);
     const data = new FormData(createForm);
+    const serialNumber = String(data.get('serialNumber') || '').trim();
     try {
+      if (serialNumber) {
+        const serialCheck = await checkEmployeeSerial(serialNumber);
+        if (!serialCheck?.available) {
+          showMessage(feedback, 'Serial number already exists for another employee.', 'error');
+          return;
+        }
+      }
       await createEmployee({
         discordUserId: String(data.get('discordUserId') || '').trim(),
         robloxUsername: String(data.get('robloxUsername') || '').trim(),
         robloxUserId: String(data.get('robloxUserId') || '').trim(),
         rank: String(data.get('rank') || '').trim(),
         grade: String(data.get('grade') || '').trim(),
-        serialNumber: String(data.get('serialNumber') || '').trim(),
+        serialNumber,
         employeeStatus: String(data.get('employeeStatus') || '').trim(),
         activationStatus: String(data.get('activationStatus') || '').trim(),
         hireDate: String(data.get('hireDate') || '').trim()

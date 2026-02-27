@@ -13,7 +13,7 @@ function text(value) {
 
 async function getRoleRow(env, roleId) {
   return env.DB
-    .prepare('SELECT id, name, sort_order FROM app_roles WHERE id = ?')
+    .prepare("SELECT id, name, sort_order FROM app_roles WHERE id = ? AND COALESCE(role_key, '') NOT IN ('owner', 'employee')")
     .bind(roleId)
     .first();
 }
