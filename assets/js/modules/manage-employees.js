@@ -1,4 +1,15 @@
-import { activateEmployee, addDisciplinary, addEmployeeNote, createEmployee, getConfig, getEmployeeDrawer, listEmployees, updateEmployee } from './admin-api.js';
+import {
+  activateEmployee,
+  addDisciplinary,
+  addEmployeeNote,
+  createEmployee,
+  deleteEmployee,
+  getConfig,
+  getEmployeeDrawer,
+  listEmployees,
+  purgeUserByDiscord,
+  updateEmployee
+} from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
 
 const VISIBLE_COLUMNS_STORAGE_KEY = 'manageEmployees_visibleColumns';
@@ -200,7 +211,14 @@ function renderDrawerOverview(target, payload, options = {}) {
     target.innerHTML = `
       <div class="admin-employees-table-header">
         <h3>Overview</h3>
-        ${canEdit ? '<button id="drawerEditEmployeeBtn" class="btn btn-secondary btn-compact" type="button">Edit details</button>' : ''}
+        ${
+          canEdit
+            ? `<div class="button-row">
+                 <button id="drawerEditEmployeeBtn" class="btn btn-secondary btn-compact" type="button">Edit details</button>
+                 ${payload?.capabilities?.canDelete ? '<button id="drawerDeleteEmployeeBtn" class="btn btn-danger btn-compact" type="button">Delete user</button>' : ''}
+               </div>`
+            : ''
+        }
       </div>
       <div class="profile-kv-grid">
         <dt>Discord User ID</dt><dd>${escapeHtml(text(employee.discord_user_id))}</dd>
@@ -558,6 +576,8 @@ export async function initManageEmployees(config) {
 
   const openCreateEmployeeBtn = document.querySelector(config.openCreateEmployeeBtnSelector);
   const createForm = document.querySelector(config.createFormSelector);
+  const openDeleteUserBtn = document.querySelector('#openDeleteUserBtn');
+  const deleteUserForm = document.querySelector('#deleteUserForm');
 
   const drawer = document.querySelector(config.drawerSelector);
   const drawerName = document.querySelector(config.drawerNameSelector);
@@ -842,6 +862,7 @@ export async function initManageEmployees(config) {
   }
 
   openCreateEmployeeBtn?.addEventListener('click', () => openModal('createEmployeeModal'));
+  openDeleteUserBtn?.addEventListener('click', () => openModal('deleteUserModal'));
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
       const target = button.getAttribute('data-close-modal');
@@ -893,6 +914,33 @@ export async function initManageEmployees(config) {
           showMessage(feedback, 'Employee activated.', 'success');
         } catch (error) {
           showMessage(feedback, error.message || 'Unable to activate employee.', 'error');
+        }
+      })();
+      return;
+    }
+
+    if (target.closest('#drawerDeleteEmployeeBtn')) {
+      if (!state.selectedEmployeeId || !state.drawerPayload) return;
+      const employeeId = state.selectedEmployeeId;
+      const targetName = String(state.drawerPayload?.employee?.roblox_username || `#${employeeId}`);
+      const confirmation = window.prompt(`Type DELETE to remove ${targetName}.`);
+      if (confirmation !== 'DELETE') return;
+      const reason = window.prompt('Delete reason (required):') || '';
+      if (!String(reason || '').trim()) {
+        showMessage(feedback, 'Delete reason is required.', 'error');
+        return;
+      }
+      void (async () => {
+        try {
+          await deleteEmployee(employeeId, { reason: String(reason).trim() });
+          drawerCache.delete(employeeId);
+          drawer?.classList.add('hidden');
+          drawer?.setAttribute('aria-hidden', 'true');
+          state.selectedEmployeeId = null;
+          await loadEmployees();
+          showMessage(feedback, 'User deleted from employee records.', 'success');
+        } catch (error) {
+          showMessage(feedback, error.message || 'Unable to delete employee.', 'error');
         }
       })();
       return;
@@ -1066,6 +1114,30 @@ export async function initManageEmployees(config) {
       showMessage(feedback, 'Employee created.', 'success');
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to create employee.', 'error');
+    }
+  });
+
+  deleteUserForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    clearMessage(feedback);
+    const data = new FormData(deleteUserForm);
+    const discordUserId = String(data.get('discordUserId') || '').trim();
+    const reason = String(data.get('reason') || '').trim();
+    if (!discordUserId || !reason) {
+      showMessage(feedback, 'Discord User ID and reason are required.', 'error');
+      return;
+    }
+    try {
+      const result = await purgeUserByDiscord({ discordUserId, reason });
+      deleteUserForm.reset();
+      closeModal('deleteUserModal');
+      await loadEmployees();
+      const message = result?.removedEmployee
+        ? 'User deleted (employee + related access request records).'
+        : 'User deleted from unauthorised/pending access records.';
+      showMessage(feedback, message, 'success');
+    } catch (error) {
+      showMessage(feedback, error.message || 'Unable to delete user.', 'error');
     }
   });
 

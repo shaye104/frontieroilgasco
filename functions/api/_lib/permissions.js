@@ -29,6 +29,7 @@ export const PERMISSION_GROUPS = [
       { key: 'employees.read', label: 'View Employees', description: 'View employee lists and employee profiles.' },
       { key: 'employees.create', label: 'Create Employees', description: 'Create employee records.' },
       { key: 'employees.edit', label: 'Edit Employees', description: 'Edit employee profile fields.' },
+      { key: 'employees.delete', label: 'Delete Employees', description: 'Delete employee records and related onboarding data.' },
       { key: 'employees.discipline', label: 'Manage Discipline', description: 'Create and update disciplinary records.' },
       { key: 'employees.notes', label: 'Manage Notes', description: 'Add employee notes and activity log entries.' },
       {

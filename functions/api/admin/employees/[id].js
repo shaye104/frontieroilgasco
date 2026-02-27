@@ -42,6 +42,47 @@ function hasOwn(payload, key) {
   return Object.prototype.hasOwnProperty.call(payload || {}, key);
 }
 
+async function getBlockingReferenceSummary(env, employeeId) {
+  const [
+    voyageOwner,
+    voyageOfficer,
+    voyageCrew,
+    voyageParticipants,
+    voyageLogs,
+    ledgerCreated,
+    ledgerDeleted,
+    settlementBy,
+    settlementOow,
+    cashflowAudit
+  ] = await Promise.all([
+    env.DB.prepare('SELECT COUNT(*) AS count FROM voyages WHERE owner_employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM voyages WHERE officer_of_watch_employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM voyage_crew_members WHERE employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM voyage_participants WHERE employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM voyage_logs WHERE author_employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM finance_cash_ledger_entries WHERE created_by_employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM finance_cash_ledger_entries WHERE deleted_by_employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM finance_settlement_audit WHERE settled_by_employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM finance_settlement_audit WHERE oow_employee_id = ?').bind(employeeId).first(),
+    env.DB.prepare('SELECT COUNT(*) AS count FROM finance_cashflow_audit WHERE performed_by_employee_id = ?').bind(employeeId).first()
+  ]);
+
+  const references = {
+    voyages_owner: Number(voyageOwner?.count || 0),
+    voyages_officer_of_watch: Number(voyageOfficer?.count || 0),
+    voyage_crew_rows: Number(voyageCrew?.count || 0),
+    voyage_participant_rows: Number(voyageParticipants?.count || 0),
+    voyage_logs: Number(voyageLogs?.count || 0),
+    finance_ledger_created_rows: Number(ledgerCreated?.count || 0),
+    finance_ledger_deleted_rows: Number(ledgerDeleted?.count || 0),
+    finance_settlement_settled_rows: Number(settlementBy?.count || 0),
+    finance_settlement_oow_rows: Number(settlementOow?.count || 0),
+    finance_cashflow_audit_rows: Number(cashflowAudit?.count || 0)
+  };
+  const total = Object.values(references).reduce((sum, value) => sum + Number(value || 0), 0);
+  return { total, references };
+}
+
 async function findDuplicateEmployee(env, { robloxUsername, robloxUserId }, excludeEmployeeId) {
   const username = normalizeText(robloxUsername);
   const userId = normalizeText(robloxUserId);
@@ -352,4 +393,83 @@ export async function onRequestPut(context) {
   }
 
   return json({ employee, rankSync: rankSyncDebug });
+}
+
+export async function onRequestDelete(context) {
+  const { env, params, request } = context;
+  const { errorResponse, session } = await requirePermission(context, ['employees.delete']);
+  if (errorResponse) return errorResponse;
+
+  const employeeId = Number(params.id);
+  if (!Number.isInteger(employeeId) || employeeId <= 0) return json({ error: 'Invalid employee id.' }, 400);
+
+  const actorScope = await getActorAccessScope(env, session);
+  const actorEmployee = actorScope.actorEmployee;
+  const existing = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
+  if (!existing) return json({ error: 'Employee not found.' }, 404);
+
+  if (actorEmployee?.id && Number(actorEmployee.id) === employeeId) {
+    return json({ error: 'You cannot delete your own account.' }, 403);
+  }
+
+  const canDeleteByHierarchy = hasHierarchyBypass(env, session)
+    ? true
+    : actorEmployee
+    ? await canEditEmployeeByRank(env, actorEmployee, existing, { allowSelf: false, allowEqual: false })
+    : false;
+  if (!canDeleteByHierarchy) {
+    return json({ error: 'You can only delete profiles beneath your hierarchy.' }, 403);
+  }
+
+  let payload = {};
+  try {
+    payload = await request.json();
+  } catch {
+    payload = {};
+  }
+  const reason = normalizeText(payload?.reason).slice(0, 500);
+  if (!reason) {
+    return json({ error: 'Delete reason is required.' }, 400);
+  }
+
+  const refs = await getBlockingReferenceSummary(env, employeeId);
+  if (refs.total > 0) {
+    return json(
+      {
+        error: 'Cannot delete employee with voyage/finance history. Remove dependent records first.',
+        references: refs.references
+      },
+      409
+    );
+  }
+
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM employee_role_assignments WHERE employee_id = ?').bind(employeeId),
+    env.DB.prepare('DELETE FROM employee_notes WHERE employee_id = ?').bind(employeeId),
+    env.DB.prepare('DELETE FROM disciplinary_records WHERE employee_id = ?').bind(employeeId),
+    env.DB.prepare('DELETE FROM admin_activity_events WHERE target_employee_id = ? OR actor_employee_id = ?').bind(employeeId, employeeId),
+    env.DB.prepare('DELETE FROM access_requests WHERE discord_user_id = ?').bind(String(existing.discord_user_id || '').trim()),
+    env.DB.prepare('DELETE FROM employees WHERE id = ?').bind(employeeId)
+  ]);
+
+  await writeAdminActivityEvent(env, {
+    actorEmployeeId: actorEmployee?.id || null,
+    actorName: session.displayName || session.userId,
+    actorDiscordUserId: session.userId,
+    actionType: 'EMPLOYEE_DELETED',
+    targetEmployeeId: null,
+    summary: `Deleted employee ${existing.roblox_username || `#${employeeId}`}.`,
+    metadata: {
+      deletedEmployee: {
+        id: Number(employeeId),
+        discordUserId: String(existing.discord_user_id || '').trim() || null,
+        robloxUserId: String(existing.roblox_user_id || '').trim() || null,
+        robloxUsername: String(existing.roblox_username || '').trim() || null,
+        rank: String(existing.rank || '').trim() || null
+      },
+      reason
+    }
+  });
+
+  return json({ ok: true });
 }

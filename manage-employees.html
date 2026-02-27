@@ -35,6 +35,7 @@
           <div class="button-row">
             <a class="btn btn-secondary" href="/admin/activity">Activity Tracker</a>
             <a class="btn btn-secondary" href="/admin/audit">Audit Log</a>
+            <button id="openDeleteUserBtn" class="btn btn-danger" type="button">Delete User</button>
             <button id="openCreateEmployeeBtn" class="btn btn-primary" type="button">New Employee</button>
           </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
@@ -328,6 +329,26 @@
       </div>
     </section>
 
-    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260227d"></script>
+    <section id="deleteUserModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Delete User</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="deleteUserModal">Close</button>
+        </div>
+        <form id="deleteUserForm">
+          <label>Discord User ID</label>
+          <input name="discordUserId" type="text" required />
+          <label>Reason</label>
+          <textarea name="reason" rows="3" required></textarea>
+          <p class="finance-inline-caption">Deletes pending/unauthorised records by Discord ID. If an employee exists without voyage/finance history, that account is also removed.</p>
+          <div class="modal-actions">
+            <button class="btn btn-danger" type="submit">Delete User</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="deleteUserModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260227e"></script>
   </body>
 </html>

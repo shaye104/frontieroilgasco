@@ -1,5 +1,5 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
-import { ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
+import { normalizeDiscordUserId } from '../_lib/db.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -25,8 +25,11 @@ export async function onRequestPost(context) {
   const session = await readSessionFromRequest(env, request);
   if (!session) return json({ error: 'Authentication required.' }, 401);
 
-  await ensureCoreSchema(env);
-  const employee = await getEmployeeByDiscordUserId(env, session.userId);
+  const normalizedDiscordUserId = normalizeDiscordUserId(session.userId);
+  const employee = await env.DB
+    .prepare(`SELECT id, activation_status FROM employees WHERE discord_user_id = ? LIMIT 1`)
+    .bind(normalizedDiscordUserId)
+    .first();
   const activation = text(employee?.activation_status).toUpperCase();
   if (!employee || (activation && activation !== 'PENDING')) {
     return json({ error: 'Verification is only available for pending accounts.' }, 403);
@@ -44,9 +47,14 @@ export async function onRequestPost(context) {
   if (!userId || !username) return json({ error: 'Roblox User ID and Username are required.' }, 400);
   if (!/^\d{1,30}$/.test(userId)) return json({ error: 'Roblox User ID must be digits only.' }, 400);
 
-  const [byIdResult, byUsernameResult] = await Promise.allSettled([
-    fetchWithTimeout(`https://users.roblox.com/v1/users/${encodeURIComponent(userId)}`, {}, 4500),
-    fetchWithTimeout(
+  let byId = null;
+  let byUsername = null;
+  let byIdError = null;
+  let byUsernameError = null;
+
+  try {
+    // Primary fast-path: resolve username -> ID and compare with provided userId.
+    const byUsernameResponse = await fetchWithTimeout(
       'https://users.roblox.com/v1/usernames/users',
       {
         method: 'POST',
@@ -56,33 +64,10 @@ export async function onRequestPost(context) {
           excludeBannedUsers: false
         })
       },
-      4500
-    )
-  ]);
-
-  let byId = null;
-  let byUsername = null;
-  let byIdError = null;
-  let byUsernameError = null;
-
-  if (byIdResult.status === 'fulfilled') {
-    if (byIdResult.value.ok) {
-      const parsed = await byIdResult.value.json().catch(() => ({}));
-      byId = {
-        id: text(parsed?.id),
-        username: text(parsed?.name),
-        displayName: text(parsed?.displayName)
-      };
-    } else {
-      byIdError = `id_lookup_http_${Number(byIdResult.value.status || 0)}`;
-    }
-  } else {
-    byIdError = byIdResult.reason?.name === 'AbortError' ? 'id_lookup_timeout' : 'id_lookup_failed';
-  }
-
-  if (byUsernameResult.status === 'fulfilled') {
-    if (byUsernameResult.value.ok) {
-      const parsed = await byUsernameResult.value.json().catch(() => ({}));
+      3500
+    );
+    if (byUsernameResponse.ok) {
+      const parsed = await byUsernameResponse.json().catch(() => ({}));
       const first = parsed?.data?.[0];
       if (first) {
         byUsername = {
@@ -94,19 +79,40 @@ export async function onRequestPost(context) {
         byUsernameError = 'username_not_found';
       }
     } else {
-      byUsernameError = `username_lookup_http_${Number(byUsernameResult.value.status || 0)}`;
+      byUsernameError = `username_lookup_http_${Number(byUsernameResponse.status || 0)}`;
     }
-  } else {
-    byUsernameError = byUsernameResult.reason?.name === 'AbortError' ? 'username_lookup_timeout' : 'username_lookup_failed';
+  } catch (error) {
+    byUsernameError = error?.name === 'AbortError' ? 'username_lookup_timeout' : 'username_lookup_failed';
+  }
+
+  // Optional secondary lookup only when needed for better mismatch messaging.
+  const needIdLookup = !byUsername || text(byUsername.id) !== userId;
+  if (needIdLookup) {
+    try {
+      const byIdResponse = await fetchWithTimeout(`https://users.roblox.com/v1/users/${encodeURIComponent(userId)}`, {}, 3000);
+      if (byIdResponse.ok) {
+        const parsed = await byIdResponse.json().catch(() => ({}));
+        byId = {
+          id: text(parsed?.id),
+          username: text(parsed?.name),
+          displayName: text(parsed?.displayName)
+        };
+      } else {
+        byIdError = `id_lookup_http_${Number(byIdResponse.status || 0)}`;
+      }
+    } catch (error) {
+      byIdError = error?.name === 'AbortError' ? 'id_lookup_timeout' : 'id_lookup_failed';
+    }
   }
 
   if (!byId && !byUsername) {
-    return json({ error: 'Roblox verification service is unavailable right now. Please try again.' }, 502);
+    return json({ error: 'Roblox verification is temporarily unavailable. Please retry.' }, 502);
   }
 
-  const byIdMatchesInput = Boolean(byId && normalizeUsername(byId.username) === normalizeUsername(username) && text(byId.id) === userId);
-  const byUsernameMatchesInput = Boolean(byUsername && text(byUsername.id) === userId);
-  const verified = byIdMatchesInput || byUsernameMatchesInput;
+  const verified = Boolean(
+    (byUsername && text(byUsername.id) === userId) ||
+      (byId && normalizeUsername(byId.username) === normalizeUsername(username) && text(byId.id) === userId)
+  );
 
   const normalized = {
     userId: text(byId?.id || byUsername?.id || userId),

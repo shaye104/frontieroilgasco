@@ -160,7 +160,8 @@ export async function onRequestGet(context) {
     capabilities: {
       canAddNotes: hasPermission(session, 'employees.notes') && canEditByHierarchy,
       canAddDisciplinary: hasPermission(session, 'employees.discipline') && canEditByHierarchy,
-      canActivate: hasPermission(session, 'employees.edit') && canEditByHierarchy
+      canActivate: hasPermission(session, 'employees.edit') && canEditByHierarchy,
+      canDelete: hasPermission(session, 'employees.delete') && canEditByHierarchy
     },
     timing: { dbMs, totalMs: Date.now() - startedAt }
   });

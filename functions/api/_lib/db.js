@@ -16,6 +16,7 @@ export async function ensureCoreSchema(env) {
     ['employees.read', 'employees', 'View Employees', 'View employee lists and employee profiles.'],
     ['employees.create', 'employees', 'Create Employees', 'Create employee records.'],
     ['employees.edit', 'employees', 'Edit Employees', 'Edit employee profile fields.'],
+    ['employees.delete', 'employees', 'Delete Employees', 'Delete employee records and related onboarding data.'],
     ['employees.discipline', 'employees', 'Manage Discipline', 'Create and update disciplinary records.'],
     ['employees.notes', 'employees', 'Manage Notes', 'Add employee notes and activity log entries.'],
     ['employees.access_requests.review', 'employees', 'Review Access Requests', 'Approve or deny access requests.'],

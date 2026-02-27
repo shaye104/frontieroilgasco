@@ -175,7 +175,7 @@ export function resolveRobloxIdentity(params = {}) {
 export function verifyOnboardingRoblox(payload) {
   return requestJson('/api/onboarding/verify', {
     method: 'POST',
-    timeoutMs: 8000,
+    timeoutMs: 15000,
     body: JSON.stringify(payload)
   });
 }
@@ -317,6 +317,20 @@ export function addEmployeeNote(employeeId, entry) {
   return requestJson(`/api/admin/employees/${employeeId}/notes`, {
     method: 'POST',
     body: JSON.stringify(entry)
+  });
+}
+
+export function deleteEmployee(employeeId, payload = {}) {
+  return requestJson(`/api/admin/employees/${employeeId}`, {
+    method: 'DELETE',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function purgeUserByDiscord(payload = {}) {
+  return requestJson('/api/admin/employees/purge', {
+    method: 'POST',
+    body: JSON.stringify(payload)
   });
 }
 
