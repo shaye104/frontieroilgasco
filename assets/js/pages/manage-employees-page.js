@@ -1,4 +1,4 @@
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260227f';
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260227g';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({
@@ -9,7 +9,7 @@ initIntranetPageGuard({
 }).then((session) => {
   if (!session) return;
 
-  import('../modules/manage-employees.js?v=20260227f').then(({ initManageEmployees }) =>
+  import('../modules/manage-employees.js?v=20260227g').then(({ initManageEmployees }) =>
     initManageEmployees(
     {
       feedbackSelector: '#manageEmployeesFeedback',

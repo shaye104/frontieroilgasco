@@ -215,6 +215,14 @@ export function getConfig(type) {
   return requestJson(`/api/admin/config/${type}`, { method: 'GET' });
 }
 
+export function getEmployeeConfigBootstrap() {
+  return requestJson('/api/admin/config/bootstrap', {
+    method: 'GET',
+    cacheTtlMs: 30000,
+    cacheKey: 'GET:/api/admin/config/bootstrap'
+  });
+}
+
 export function createConfigValue(type, value) {
   return requestJson(`/api/admin/config/${type}`, {
     method: 'POST',

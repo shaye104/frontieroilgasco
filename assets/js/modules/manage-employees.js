@@ -4,6 +4,7 @@ import {
   addEmployeeNote,
   createEmployee,
   deleteEmployee,
+  getEmployeeConfigBootstrap,
   getConfig,
   getEmployeeDrawer,
   listEmployees,
@@ -729,16 +730,31 @@ export async function initManageEmployees(config) {
   }
 
   async function refreshConfig() {
-    const [statuses, ranks, grades] = await Promise.all([getConfig('statuses'), getConfig('ranks'), getConfig('grades')]);
-    state.configOptions.statuses = statuses.items || [];
-    state.configOptions.ranks = ranks.items || [];
-    state.configOptions.grades = grades.items || [];
-    fillOptions(filterRank, ranks.items || [], 'All Ranks');
-    fillOptions(filterGrade, grades.items || [], 'All Grades');
-    fillOptions(filterStatus, statuses.items || [], 'All Statuses');
-    fillOptions(createForm.querySelector('[name="employeeStatus"]'), statuses.items || [], 'Select');
-    fillOptions(createForm.querySelector('[name="rank"]'), ranks.items || [], 'Select');
-    fillOptions(createForm.querySelector('[name="grade"]'), grades.items || [], 'Select');
+    let statusesItems = [];
+    let ranksItems = [];
+    let gradesItems = [];
+    try {
+      const bootstrap = await getEmployeeConfigBootstrap();
+      statusesItems = Array.isArray(bootstrap?.statuses) ? bootstrap.statuses : [];
+      ranksItems = Array.isArray(bootstrap?.ranks) ? bootstrap.ranks : [];
+      gradesItems = Array.isArray(bootstrap?.grades) ? bootstrap.grades : [];
+    } catch {
+      // Fallback for legacy deployments.
+      const [statuses, ranks, grades] = await Promise.all([getConfig('statuses'), getConfig('ranks'), getConfig('grades')]);
+      statusesItems = statuses.items || [];
+      ranksItems = ranks.items || [];
+      gradesItems = grades.items || [];
+    }
+
+    state.configOptions.statuses = statusesItems;
+    state.configOptions.ranks = ranksItems;
+    state.configOptions.grades = gradesItems;
+    fillOptions(filterRank, ranksItems, 'All Ranks');
+    fillOptions(filterGrade, gradesItems, 'All Grades');
+    fillOptions(filterStatus, statusesItems, 'All Statuses');
+    fillOptions(createForm.querySelector('[name="employeeStatus"]'), statusesItems, 'Select');
+    fillOptions(createForm.querySelector('[name="rank"]'), ranksItems, 'Select');
+    fillOptions(createForm.querySelector('[name="grade"]'), gradesItems, 'Select');
   }
 
   function setDrawerTab(tab) {
