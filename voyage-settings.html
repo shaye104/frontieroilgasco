@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier intranet admin panel." />
-    <title>Frontier Oil & Gas Company | Admin Panel</title>
+    <meta name="description" content="Frontier voyage settings management." />
+    <title>Frontier Oil & Gas Company | Voyage Settings</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -27,22 +27,21 @@
     <main class="section">
       <div class="container intranet-layout">
         <section class="panel">
-          <h1>Admin Panel</h1>
+          <div class="modal-header">
+            <h1>Voyage Settings</h1>
+            <a class="btn btn-secondary" href="/admin">Back to Admin Panel</a>
+          </div>
+          <p class="lead">Configure voyage ports and vessel metadata used by voyage creation forms.</p>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="voyageSettingsFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
         <section id="protectedContent" class="panel hidden">
-          <h2>Administration</h2>
-          <ul class="link-list">
-            <li><a id="adminLinkEmployees" class="hidden" href="/admin/employees">Manage Employees</a></li>
-            <li><a id="adminLinkVoyageSettings" class="hidden" href="/admin/voyages">Voyage Settings</a></li>
-            <li><a id="adminLinkRoles" class="hidden" href="/admin/user-groups">User Groups</a></li>
-            <li><a id="adminLinkUserRanks" class="hidden" href="/admin/user-ranks">User Ranks</a></li>
-            <li><a id="adminLinkActivityTracker" class="hidden" href="/admin/activity">Activity Tracker</a></li>
-          </ul>
+          <div id="voyageSettingsGrid" class="card-grid"></div>
         </section>
       </div>
     </main>
-    <script type="module" src="/assets/js/pages/admin-panel-page.js?v=20260227a"></script>
+
+    <script type="module" src="/assets/js/pages/voyage-settings-page.js?v=20260227a"></script>
   </body>
 </html>

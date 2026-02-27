@@ -37,5 +37,7 @@
 /admin/user-ranks/ /user-ranks 200
 /admin/activity /activity-tracker 200
 /admin/activity/ /activity-tracker 200
+/admin/voyages /voyage-settings 200
+/admin/voyages/ /voyage-settings 200
 /admin/employees /manage-employees 200
 /admin/employees/ /manage-employees 200
