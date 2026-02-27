@@ -6,8 +6,6 @@
 /intranet/ /login 302
 /access-setup /onboarding 302
 /access-setup/ /onboarding 302
-/not-permitted /not-permitted.html 200
-/not-permitted/ /not-permitted.html 200
 /onboarding/status /onboarding 302
 /onboarding/status/ /onboarding 302
 

@@ -241,6 +241,12 @@ export async function onRequest(context) {
       return Response.redirect(new URL('/login', url.origin).toString(), 302);
     }
 
+    // Avoid Cloudflare extension canonicalization loops on auth-facing pages.
+    if (pathname === '/login.html') return Response.redirect(new URL('/login', url.origin).toString(), 302);
+    if (pathname === '/onboarding.html') return Response.redirect(new URL('/onboarding', url.origin).toString(), 302);
+    if (pathname === '/not-permitted.html') return Response.redirect(new URL('/not-permitted', url.origin).toString(), 302);
+    if (pathname === '/access-denied.html') return Response.redirect(new URL('/access-denied', url.origin).toString(), 302);
+
     const corePublicAllowedPaths = new Set([
       '/login',
       '/login.html',
