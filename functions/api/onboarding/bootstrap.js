@@ -1,5 +1,5 @@
 import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
-import { ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
+import { normalizeDiscordUserId } from '../_lib/db.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -14,6 +14,36 @@ function deriveOnboardingState(employee) {
   const hasSubmitted = Boolean(text(employee?.onboarding_submitted_at));
   if (hasSubmitted || hasRobloxProfile) return 'PENDING_REVIEW';
   return 'PENDING_PROFILE';
+}
+
+async function getEmployeeByDiscordUserIdFast(env, discordUserId) {
+  const normalized = normalizeDiscordUserId(discordUserId);
+  if (!/^\d{6,30}$/.test(normalized)) return null;
+  try {
+    const row = await env.DB
+      .prepare(
+        `SELECT
+           id,
+           discord_user_id,
+           discord_display_name,
+           discord_username,
+           discord_avatar_url,
+           roblox_user_id,
+           roblox_username,
+           onboarding_submitted_at,
+           onboarding_review_note,
+           activation_status,
+           activated_at
+         FROM employees
+         WHERE discord_user_id = ?
+         LIMIT 1`
+      )
+      .bind(normalized)
+      .first();
+    return row || null;
+  } catch {
+    return null;
+  }
 }
 
 async function hasQualifyingDiscordRole(env, roleIds = []) {
@@ -46,17 +76,11 @@ export async function onRequestGet(context) {
   if (!session) return json({ loggedIn: false }, 401);
 
   let schemaError = null;
-  try {
-    await ensureCoreSchema(env);
-  } catch (error) {
-    schemaError = error;
-  }
-
   let employee = null;
   let qualifiesByRole = false;
   try {
     const [employeeResult, roleResult] = await Promise.all([
-      getEmployeeByDiscordUserId(env, session.userId),
+      getEmployeeByDiscordUserIdFast(env, session.userId),
       hasQualifyingDiscordRole(env, Array.isArray(session.discordRoles) ? session.discordRoles : Array.isArray(session.roles) ? session.roles : [])
     ]);
     employee = employeeResult;
