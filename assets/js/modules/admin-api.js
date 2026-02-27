@@ -78,6 +78,24 @@ async function requestJson(url, options = {}) {
       cacheSet(cacheKey, cached.payload);
       return cached.payload;
     }
+    // If browser/proxy returned 304 but in-memory cache is empty, retry once bypassing validators.
+    const bust = url.includes('?') ? `&_rt=${Date.now()}` : `?_rt=${Date.now()}`;
+    const retryResponse = await fetch(`${url}${bust}`, {
+      credentials: 'include',
+      headers: {
+        'content-type': 'application/json',
+        'cache-control': 'no-cache',
+        pragma: 'no-cache',
+        ...(fetchOptions.headers || {})
+      },
+      keepalive: method !== 'GET'
+    });
+    const retryPayload = await retryResponse.json().catch(() => ({}));
+    if (!retryResponse.ok) throw new Error(retryPayload.error || `Request failed: ${retryResponse.status}`);
+    if (method === 'GET' && cacheTtlMs > 0) {
+      cacheSet(cacheKey, retryPayload);
+    }
+    return retryPayload;
   }
 
   const payload = await response.json().catch(() => ({}));
@@ -117,8 +135,12 @@ export function getOnboardingBootstrap() {
   return requestJson('/api/onboarding/bootstrap', {
     method: 'GET',
     timeoutMs: 8000,
-    cacheTtlMs: 20000,
-    cacheKey: 'GET:/api/onboarding/bootstrap'
+    cacheTtlMs: 0,
+    cacheKey: 'GET:/api/onboarding/bootstrap',
+    headers: {
+      'cache-control': 'no-cache',
+      pragma: 'no-cache'
+    }
   });
 }
 
