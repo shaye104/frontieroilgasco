@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Manage branding and Open Graph settings for shared links." />
+    <title>Frontier Oil & Gas Company | Site Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css" />
+    <link rel="stylesheet" href="/assets/css/base.css" />
+    <link rel="stylesheet" href="/assets/css/components.css" />
+    <link rel="stylesheet" href="/assets/css/pages.css" />
+  </head>
+  <body class="page page-intranet">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark" aria-hidden="true">FOG</span>
+          <span class="brand-text">Frontier Oil & Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel">
+          <div class="button-row align-between">
+            <div>
+              <h1>Site Settings</h1>
+              <p class="my-details-subtitle">Configure favicon, Open Graph preview, and branding meta tags.</p>
+            </div>
+            <a class="btn btn-secondary" href="/admin">Back to Admin Panel</a>
+          </div>
+          <div id="siteSettingsFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="siteSettingsContent" class="panel hidden">
+          <form id="siteSettingsForm" class="finance-cashflow-entry-form">
+            <div>
+              <label for="settingsBrandName">Brand Name</label>
+              <input id="settingsBrandName" name="brandName" type="text" maxlength="120" required />
+            </div>
+            <div>
+              <label for="settingsSiteTagline">Tagline</label>
+              <input id="settingsSiteTagline" name="siteTagline" type="text" maxlength="160" />
+            </div>
+            <div>
+              <label for="settingsThemeColor">Theme Color</label>
+              <input id="settingsThemeColor" name="themeColor" type="text" placeholder="#112d72" maxlength="7" />
+            </div>
+            <div>
+              <label for="settingsTwitterCard">Twitter Card</label>
+              <select id="settingsTwitterCard" name="twitterCard">
+                <option value="summary_large_image">summary_large_image</option>
+                <option value="summary">summary</option>
+              </select>
+            </div>
+            <div>
+              <label for="settingsFaviconUrl">Favicon URL</label>
+              <input id="settingsFaviconUrl" name="faviconUrl" type="text" placeholder="/assets/brand/favicon.svg" required />
+            </div>
+            <div>
+              <label for="settingsAppleTouchIconUrl">Apple Touch Icon URL</label>
+              <input id="settingsAppleTouchIconUrl" name="appleTouchIconUrl" type="text" placeholder="/assets/brand/favicon.svg" required />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsOgTitle">Open Graph Title</label>
+              <input id="settingsOgTitle" name="ogTitle" type="text" maxlength="120" required />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsOgDescription">Open Graph Description</label>
+              <textarea id="settingsOgDescription" name="ogDescription" rows="3" maxlength="300" required></textarea>
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsOgImageUrl">Open Graph Image URL</label>
+              <input id="settingsOgImageUrl" name="ogImageUrl" type="text" placeholder="/assets/brand/og-default.svg" required />
+            </div>
+            <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+              <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
+              <button id="siteSettingsResetBtn" class="btn btn-secondary" type="button">Reset Form</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="siteSettingsPreview" class="panel hidden">
+          <h2>Preview</h2>
+          <div class="table-wrap">
+            <table class="data-table">
+              <tbody>
+                <tr><th>Title</th><td id="previewTitle">-</td></tr>
+                <tr><th>Description</th><td id="previewDescription">-</td></tr>
+                <tr><th>Image</th><td id="previewImage">-</td></tr>
+                <tr><th>Favicon</th><td id="previewFavicon">-</td></tr>
+                <tr><th>Theme Color</th><td id="previewTheme">-</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="finance-inline-caption">Changes apply to all HTML pages immediately after save.</p>
+        </section>
+      </div>
+    </main>
+    <script type="module" src="/assets/js/pages/site-settings-page.js?v=20260227a"></script>
+  </body>
+</html>

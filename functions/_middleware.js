@@ -1,6 +1,7 @@
 import { readSessionFromRequest } from './api/auth/_lib/auth.js';
 import { ensureCoreSchema, getEmployeeByDiscordUserId } from './api/_lib/db.js';
 import { isCoreAllowedApiPath, isCoreAllowedPagePath, isCoreOnly } from './api/_lib/app-mode.js';
+import { readSiteSettings, toAbsoluteUrl } from './api/_lib/site-settings.js';
 
 function normalizePath(pathname) {
   if (!pathname || pathname === '/') return '/';
@@ -39,6 +40,8 @@ function isProtectedPath(pathname) {
     '/roles.html',
     '/user-ranks',
     '/user-ranks.html',
+    '/site-settings',
+    '/site-settings.html',
     '/manage-employees',
     '/manage-employees.html',
     '/activity-tracker',
@@ -132,6 +135,82 @@ function shouldAuditRequest(pathname, method, isApiPath) {
   if (pathname.startsWith('/api/auth/discord/')) return false;
   if (isApiPath) return true;
   return normalizedMethod === 'GET' || normalizedMethod === 'HEAD';
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function stripExistingBrandMeta(html) {
+  if (!html) return html;
+  return html
+    .replace(/<meta\s+name=["']theme-color["'][^>]*>\s*/gi, '')
+    .replace(/<meta\s+property=["']og:[^"']+["'][^>]*>\s*/gi, '')
+    .replace(/<meta\s+name=["']twitter:[^"']+["'][^>]*>\s*/gi, '')
+    .replace(/<link\s+rel=["']canonical["'][^>]*>\s*/gi, '')
+    .replace(/<link\s+rel=["']icon["'][^>]*>\s*/gi, '')
+    .replace(/<link\s+rel=["']shortcut icon["'][^>]*>\s*/gi, '')
+    .replace(/<link\s+rel=["']apple-touch-icon["'][^>]*>\s*/gi, '');
+}
+
+function buildBrandMetaTags({ settings, requestUrl, title, description }) {
+  const canonicalUrl = requestUrl.toString();
+  const ogTitle = title || settings.ogTitle || settings.brandName;
+  const ogDescription = description || settings.ogDescription;
+  const faviconUrl = toAbsoluteUrl(requestUrl.origin, settings.faviconUrl);
+  const appleTouchIconUrl = toAbsoluteUrl(requestUrl.origin, settings.appleTouchIconUrl || settings.faviconUrl);
+  const ogImageUrl = toAbsoluteUrl(requestUrl.origin, settings.ogImageUrl);
+  const twitterCard = settings.twitterCard || 'summary_large_image';
+  const themeColor = settings.themeColor || '#112d72';
+  return [
+    `<meta name="theme-color" content="${escapeHtml(themeColor)}" />`,
+    `<link rel="icon" type="image/svg+xml" href="${escapeHtml(faviconUrl)}" />`,
+    `<link rel="shortcut icon" href="${escapeHtml(faviconUrl)}" />`,
+    `<link rel="apple-touch-icon" href="${escapeHtml(appleTouchIconUrl)}" />`,
+    `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
+    `<meta property="og:site_name" content="${escapeHtml(settings.brandName)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:title" content="${escapeHtml(ogTitle)}" />`,
+    `<meta property="og:description" content="${escapeHtml(ogDescription)}" />`,
+    `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
+    `<meta property="og:image" content="${escapeHtml(ogImageUrl)}" />`,
+    `<meta property="og:image:alt" content="${escapeHtml(settings.brandName)} preview" />`,
+    `<meta name="twitter:card" content="${escapeHtml(twitterCard)}" />`,
+    `<meta name="twitter:title" content="${escapeHtml(ogTitle)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(ogDescription)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(ogImageUrl)}" />`
+  ].join('\n');
+}
+
+async function applySiteBranding(env, request, response) {
+  if (!response) return response;
+  if (response.status < 200 || response.status >= 300) return response;
+  const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+  if (!contentType.includes('text/html')) return response;
+
+  const requestUrl = new URL(request.url);
+  const settings = await readSiteSettings(env);
+  const source = await response.text();
+  const titleMatch = source.match(/<title>([^<]*)<\/title>/i);
+  const descriptionMatch = source.match(/<meta\s+name=["']description["']\s+content=["']([^"']*)["'][^>]*>/i);
+  const title = titleMatch ? String(titleMatch[1] || '').trim() : settings.ogTitle;
+  const description = descriptionMatch ? String(descriptionMatch[1] || '').trim() : settings.ogDescription;
+
+  const stripped = stripExistingBrandMeta(source);
+  const metaBlock = buildBrandMetaTags({ settings, requestUrl, title, description });
+  const updated = stripped.replace(/<head(\s[^>]*)?>/i, (match) => `${match}\n${metaBlock}\n`);
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  return new Response(updated, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
 }
 
 async function logWebsiteAction(env, { session, pathname, method, responseStatus, isApiPath, metadata }) {
@@ -305,16 +384,17 @@ export async function onRequest(context) {
     }
 
     const pageResponse = await context.next();
+    const brandedPageResponse = await applySiteBranding(context.env, context.request, pageResponse);
     if (isLoggedIn) {
       await logWebsiteAction(context.env, {
         session,
         pathname,
         method: requestMethod,
-        responseStatus: pageResponse.status,
+        responseStatus: brandedPageResponse.status,
         isApiPath: false
       });
     }
-    return pageResponse;
+    return brandedPageResponse;
   } catch {
     return context.next();
   }

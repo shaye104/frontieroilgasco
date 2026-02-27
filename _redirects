@@ -35,6 +35,8 @@
 /admin/user-groups/ /roles 200
 /admin/user-ranks /user-ranks 200
 /admin/user-ranks/ /user-ranks 200
+/admin/site-settings /site-settings 200
+/admin/site-settings/ /site-settings 200
 /admin/activity /activity-tracker 200
 /admin/activity/ /activity-tracker 200
 /admin/audit /audit-log 200

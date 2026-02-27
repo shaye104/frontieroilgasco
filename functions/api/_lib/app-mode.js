@@ -19,10 +19,13 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/admin/voyages',
   '/admin/user-groups',
   '/admin/user-ranks',
+  '/admin/site-settings',
   '/roles',
   '/roles.html',
   '/user-ranks',
   '/user-ranks.html',
+  '/site-settings',
+  '/site-settings.html',
   '/activity-tracker',
   '/activity-tracker.html',
   '/audit-log',
@@ -47,10 +50,12 @@ const CORE_ALLOWED_PAGE_PREFIXES = [
   '/admin/voyages/',
   '/admin/user-groups/',
   '/admin/user-ranks/',
+  '/admin/site-settings/',
   '/activity-tracker/',
   '/audit-log/',
   '/access-setup/',
-  '/onboarding/'
+  '/onboarding/',
+  '/site-settings/'
 ];
 
 const CORE_ALLOWED_API_PREFIXES = [
@@ -69,6 +74,7 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/admin/employees',
   '/api/admin/roles',
   '/api/admin/user-ranks',
+  '/api/admin/site-settings',
   '/api/admin/rank-permissions',
   '/api/admin/config',
   '/api/admin/activity',

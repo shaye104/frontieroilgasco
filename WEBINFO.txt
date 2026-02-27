@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-27T11:01:42.335Z
+Generated: 2026-02-27T11:14:02.156Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -20,6 +20,7 @@ SITE STRUCTURE
 - not-permitted.html | title: Frontier Oil &amp; Gas Company | Not Permitted | primary heading: Not permitted
 - onboarding.html | title: Frontier Oil & Gas Company | Employee Setup | primary heading: Employee Setup
 - roles.html | title: Frontier Oil & Gas Company | User Groups | primary heading: User Groups
+- site-settings.html | title: Frontier Oil & Gas Company | Site Settings | primary heading: Site Settings
 - user-ranks.html | title: Frontier Oil & Gas Company | User Ranks | primary heading: User Ranks
 - voyage-archive.html | title: Frontier Oil & Gas Company | Archived Voyages | primary heading: Archived Voyages
 - voyage-details.html | title: Frontier Oil & Gas Company | Voyage Details | primary heading: Voyage Details
@@ -28,7 +29,7 @@ SITE STRUCTURE
 
 JAVASCRIPT MODULES
 - assets/js/modules/activity-tracker.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: activateEmployee, addDisciplinary, addEmployeeNote, addUserRankDiscordRoleLink, addUserRankGroupLink, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyage, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getAuditLogCsvUrl, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMeBootstrap, getMyDetails, getOnboardingBootstrap, getOnboardingMe, getRankPermissions, getSession, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listAuditLog, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, resolveRobloxIdentity, saveRankPermissions, saveUserRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus, verifyOnboardingRoblox
+- assets/js/modules/admin-api.js | exports: activateEmployee, addDisciplinary, addEmployeeNote, addUserRankDiscordRoleLink, addUserRankGroupLink, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyage, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getAuditLogCsvUrl, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMeBootstrap, getMyDetails, getOnboardingBootstrap, getOnboardingMe, getRankPermissions, getSession, getSiteSettings, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listAuditLog, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, resolveRobloxIdentity, saveRankPermissions, saveSiteSettings, saveUserRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus, verifyOnboardingRoblox
 - assets/js/modules/app-mode.js | exports: isCoreAllowedPagePath, isCoreOnlyMode, normalizeAppMode
 - assets/js/modules/audit-log.js | exports: No public exports
 - assets/js/modules/company-data.js | exports: companyProfile
@@ -60,6 +61,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/not-permitted-page.js | exports: No public exports
 - assets/js/pages/onboarding-page.js | exports: No public exports
 - assets/js/pages/roles-page.js | exports: No public exports
+- assets/js/pages/site-settings-page.js | exports: No public exports
 - assets/js/pages/user-ranks-page.js | exports: No public exports
 - assets/js/pages/voyage-archive-page.js | exports: No public exports
 - assets/js/pages/voyage-details-page.js | exports: No public exports
