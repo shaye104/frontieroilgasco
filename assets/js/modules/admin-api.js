@@ -625,7 +625,11 @@ export function updateVoyageShipStatus(voyageId, shipStatus) {
 }
 
 export function cancelVoyage(voyageId) {
-  return requestJson(`/api/voyages/${voyageId}/cancel`, { method: 'DELETE' });
+  return requestJson(`/api/voyages/${voyageId}/cancel`, { method: 'DELETE' }).catch(async (error) => {
+    const message = String(error?.message || '');
+    if (!message.includes('405')) throw error;
+    return requestJson(`/api/voyages/${voyageId}/cancel`, { method: 'POST' });
+  });
 }
 
 export function deleteVoyage(voyageId, payload) {
