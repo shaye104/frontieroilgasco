@@ -2,7 +2,7 @@ import { json } from '../../auth/_lib/auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
 import { getVoyageBase, requireVoyagePermission } from '../../_lib/voyages.js';
 
-export async function onRequestDelete(context) {
+async function handleCancel(context) {
   const { env, params } = context;
   const { errorResponse, employee, session } = await requireVoyagePermission(context, 'voyages.end');
   if (errorResponse) return errorResponse;
@@ -25,4 +25,12 @@ export async function onRequestDelete(context) {
   ]);
 
   return json({ ok: true });
+}
+
+export async function onRequestDelete(context) {
+  return handleCancel(context);
+}
+
+export async function onRequestPost(context) {
+  return handleCancel(context);
 }
