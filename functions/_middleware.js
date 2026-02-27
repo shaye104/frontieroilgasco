@@ -133,8 +133,11 @@ function shouldAuditRequest(pathname, method, isApiPath) {
   if (pathname.startsWith('/assets/') || pathname === '/favicon.ico') return false;
   if (pathname === '/api/auth/session' || pathname === '/api/auth/logout') return false;
   if (pathname.startsWith('/api/auth/discord/')) return false;
-  if (isApiPath) return true;
-  return normalizedMethod === 'GET' || normalizedMethod === 'HEAD';
+  if (isApiPath) {
+    return normalizedMethod !== 'GET' && normalizedMethod !== 'HEAD' && normalizedMethod !== 'OPTIONS';
+  }
+  // Disable page-view DB writes in middleware to avoid adding latency to every navigation.
+  return false;
 }
 
 function escapeHtml(value) {
@@ -281,14 +284,16 @@ export async function onRequest(context) {
           headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
         });
         if (isLoggedIn) {
-          await logWebsiteAction(context.env, {
-            session,
-            pathname,
-            method: requestMethod,
-            responseStatus: blockedResponse.status,
-            isApiPath,
-            metadata: { reason: 'core_api_blocked' }
-          });
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: blockedResponse.status,
+              isApiPath,
+              metadata: { reason: 'core_api_blocked' }
+            })
+          );
         }
         return blockedResponse;
       }
@@ -303,13 +308,15 @@ export async function onRequest(context) {
       }
       const apiResponse = await context.next();
       if (isLoggedIn) {
-        await logWebsiteAction(context.env, {
-          session,
-          pathname,
-          method: requestMethod,
-          responseStatus: apiResponse.status,
-          isApiPath
-        });
+        context.waitUntil(
+          logWebsiteAction(context.env, {
+            session,
+            pathname,
+            method: requestMethod,
+            responseStatus: apiResponse.status,
+            isApiPath
+          })
+        );
       }
       return apiResponse;
     }
@@ -385,15 +392,6 @@ export async function onRequest(context) {
 
     const pageResponse = await context.next();
     const brandedPageResponse = await applySiteBranding(context.env, context.request, pageResponse);
-    if (isLoggedIn) {
-      await logWebsiteAction(context.env, {
-        session,
-        pathname,
-        method: requestMethod,
-        responseStatus: brandedPageResponse.status,
-        isApiPath: false
-      });
-    }
     return brandedPageResponse;
   } catch {
     return context.next();

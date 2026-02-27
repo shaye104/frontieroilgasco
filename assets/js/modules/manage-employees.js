@@ -733,6 +733,8 @@ export async function initManageEmployees(config) {
           Array.isArray(payload.config.grades) ? payload.config.grades : []
         );
         state.configBootstrapped = true;
+      } else if (!state.configBootstrapped) {
+        await refreshConfig();
       }
       renderStatCards(payload);
       renderTable(tableBody, payload.employees || [], state.visibleColumns);
@@ -1177,7 +1179,7 @@ export async function initManageEmployees(config) {
 
   try {
     renderColumnMenu();
-    await Promise.all([refreshConfig(), loadEmployees()]);
+    await loadEmployees();
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to initialize Manage Employees.', 'error');
   }
