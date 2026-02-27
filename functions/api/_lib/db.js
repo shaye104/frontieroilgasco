@@ -6,7 +6,8 @@ function parseStartingBalance(value) {
 
 let schemaBootstrapPromise = null;
 let schemaCheckedAtMs = 0;
-const SCHEMA_CHECK_TTL_MS = 5 * 60 * 1000;
+const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
+const CORE_DATA_SEED_VERSION = '2026-02-27-core-v2';
 
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
@@ -362,6 +363,11 @@ export async function ensureCoreSchema(env) {
       metadata_json TEXT,
       FOREIGN KEY(actor_employee_id) REFERENCES employees(id),
       FOREIGN KEY(target_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS app_runtime_meta (
+      meta_key TEXT PRIMARY KEY,
+      meta_value TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`
   ];
 
@@ -524,127 +530,144 @@ export async function ensureCoreSchema(env) {
     }
   }
 
-  const startingBalanceSeed = parseStartingBalance(env.FINANCE_STARTING_BALANCE);
-  await env.DB
-    .prepare(
-      `INSERT OR IGNORE INTO finance_cash_settings (id, starting_balance, updated_at)
-       VALUES (1, ?, CURRENT_TIMESTAMP)`
-    )
-    .bind(startingBalanceSeed)
-    .run();
+  const markerRow = await env.DB
+    .prepare(`SELECT meta_value FROM app_runtime_meta WHERE meta_key = 'core_data_seed_version'`)
+    .first();
+  const dataBootstrapRequired = String(markerRow?.meta_value || '') !== CORE_DATA_SEED_VERSION;
 
-  await env.DB.batch(
-    permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>
+  if (dataBootstrapRequired) {
+    const startingBalanceSeed = parseStartingBalance(env.FINANCE_STARTING_BALANCE);
+    await env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO finance_cash_settings (id, starting_balance, updated_at)
+         VALUES (1, ?, CURRENT_TIMESTAMP)`
+      )
+      .bind(startingBalanceSeed)
+      .run();
+
+    await env.DB.batch(
+      permissionSeed.map(([permissionKey, permissionGroup, label, description]) =>
+        env.DB
+          .prepare(
+            `INSERT OR IGNORE INTO app_permissions (permission_key, permission_group, label, description)
+             VALUES (?, ?, ?, ?)`
+          )
+          .bind(permissionKey, permissionGroup, label, description)
+      )
+    );
+
+    await env.DB.batch([
+      env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Active'),
+      env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('On Leave'),
+      env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Suspended'),
+      env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Terminated'),
+      env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Warning'),
+      env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Final Warning'),
+      env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Suspension')
+    ]);
+
+    await env.DB.batch([
       env.DB
         .prepare(
-          `INSERT OR IGNORE INTO app_permissions (permission_key, permission_group, label, description)
-           VALUES (?, ?, ?, ?)`
-        )
-        .bind(permissionKey, permissionGroup, label, description)
-    )
-  );
-
-  await env.DB.batch([
-    env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Active'),
-    env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('On Leave'),
-    env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Suspended'),
-    env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Terminated'),
-    env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Warning'),
-    env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Final Warning'),
-    env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Suspension')
-  ]);
-
-  await env.DB.batch([
-    env.DB
-      .prepare(
-        `INSERT OR IGNORE INTO app_roles (role_key, name, description, sort_order, is_system)
-         VALUES ('owner', 'Owner', 'System owner role with full access.', 1, 1)`
-      ),
-    env.DB
-      .prepare(
-        `INSERT OR IGNORE INTO app_roles (role_key, name, description, sort_order, is_system)
-         VALUES ('employee', 'Employee', 'Default employee intranet access.', 100, 1)`
-      )
-  ]);
-
-  const ownerRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'owner'`).first();
-  const employeeRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'employee'`).first();
-
-  if (ownerRole?.id) {
-    await env.DB.batch([
+          `INSERT OR IGNORE INTO app_roles (role_key, name, description, sort_order, is_system)
+           VALUES ('owner', 'Owner', 'System owner role with full access.', 1, 1)`
+        ),
       env.DB
+        .prepare(
+          `INSERT OR IGNORE INTO app_roles (role_key, name, description, sort_order, is_system)
+           VALUES ('employee', 'Employee', 'Default employee intranet access.', 100, 1)`
+        )
+    ]);
+
+    const ownerRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'owner'`).first();
+    const employeeRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'employee'`).first();
+
+    if (ownerRole?.id) {
+      await env.DB
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'super.admin')`)
         .bind(ownerRole.id)
-    ]);
-  }
+        .run();
+    }
 
-  if (employeeRole?.id) {
+    if (employeeRole?.id) {
+      await env.DB.batch([
+        env.DB
+          .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'voyages.read')`)
+          .bind(employeeRole.id),
+        env.DB
+          .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'finances.view')`)
+          .bind(employeeRole.id)
+      ]);
+
+      await env.DB
+        .prepare(
+          `INSERT OR IGNORE INTO employee_role_assignments (employee_id, role_id)
+           SELECT e.id, ?
+           FROM employees e`
+        )
+        .bind(employeeRole.id)
+        .run();
+    }
+
     await env.DB.batch([
       env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'voyages.read')`)
-        .bind(employeeRole.id),
+        .prepare(
+          `DELETE FROM app_role_permissions
+           WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
+        ),
       env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'finances.view')`)
-        .bind(employeeRole.id)
+        .prepare(
+          `DELETE FROM rank_permission_mappings
+           WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
+        ),
+      env.DB
+        .prepare(
+          `DELETE FROM app_permissions
+           WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
+        )
     ]);
 
+    await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
+    await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();
     await env.DB
       .prepare(
-        `INSERT OR IGNORE INTO employee_role_assignments (employee_id, role_id)
-         SELECT e.id, ?
-         FROM employees e`
+        `UPDATE employees
+         SET activation_status = CASE
+           WHEN UPPER(COALESCE(activation_status, '')) IN ('ACTIVE','PENDING','REJECTED','DISABLED') THEN UPPER(activation_status)
+           ELSE CASE WHEN id > 0 THEN 'ACTIVE' ELSE 'PENDING' END
+         END`
       )
-      .bind(employeeRole.id)
       .run();
-  }
-
-  await env.DB.batch([
-    env.DB
-      .prepare(
-        `DELETE FROM app_role_permissions
-         WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
-      ),
-    env.DB
-      .prepare(
-        `DELETE FROM rank_permission_mappings
-         WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
-      ),
-    env.DB
-      .prepare(
-        `DELETE FROM app_permissions
-         WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
-      )
-  ]);
-
-  await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
-  await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();
-  await env.DB
-    .prepare(
-      `UPDATE employees
-       SET activation_status = CASE
-         WHEN UPPER(COALESCE(activation_status, '')) IN ('ACTIVE','PENDING','REJECTED','DISABLED') THEN UPPER(activation_status)
-         ELSE CASE WHEN id > 0 THEN 'ACTIVE' ELSE 'PENDING' END
-       END`
-    )
-    .run();
-  await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
-  await env.DB
-    .prepare(
-      `UPDATE voyages
-       SET company_share_status = COALESCE(NULLIF(company_share_status, ''), 'UNSETTLED')`
-    )
-    .run();
-
-  try {
+    await env.DB.prepare(`UPDATE voyages SET company_share_amount = COALESCE(company_share_amount, ROUND(COALESCE(company_share, 0)))`).run();
     await env.DB
       .prepare(
-        `CREATE UNIQUE INDEX IF NOT EXISTS ux_app_roles_discord_role_id
-         ON app_roles(discord_role_id)
-         WHERE discord_role_id IS NOT NULL AND TRIM(discord_role_id) != ''`
+        `UPDATE voyages
+         SET company_share_status = COALESCE(NULLIF(company_share_status, ''), 'UNSETTLED')`
       )
       .run();
-  } catch {
-    // Keep bootstrap non-fatal.
+
+    try {
+      await env.DB
+        .prepare(
+          `CREATE UNIQUE INDEX IF NOT EXISTS ux_app_roles_discord_role_id
+           ON app_roles(discord_role_id)
+           WHERE discord_role_id IS NOT NULL AND TRIM(discord_role_id) != ''`
+        )
+        .run();
+    } catch {
+      // Keep bootstrap non-fatal.
+    }
+
+    await env.DB
+      .prepare(
+        `INSERT INTO app_runtime_meta (meta_key, meta_value, updated_at)
+         VALUES ('core_data_seed_version', ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(meta_key) DO UPDATE SET
+           meta_value = excluded.meta_value,
+           updated_at = excluded.updated_at`
+      )
+      .bind(CORE_DATA_SEED_VERSION)
+      .run();
   }
   schemaCheckedAtMs = Date.now();
   })();
