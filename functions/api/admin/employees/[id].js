@@ -30,6 +30,10 @@ function normalizeText(value) {
   return String(value || '').trim();
 }
 
+function hasOwn(payload, key) {
+  return Object.prototype.hasOwnProperty.call(payload || {}, key);
+}
+
 async function findDuplicateEmployee(env, { robloxUsername, robloxUserId }, excludeEmployeeId) {
   const username = normalizeText(robloxUsername);
   const userId = normalizeText(robloxUserId);
@@ -161,6 +165,25 @@ export async function onRequestPut(context) {
     return json({ error: 'Roblox Username/User ID must be unique.' }, 400);
   }
 
+  const nextRobloxUsername = hasOwn(payload, 'robloxUsername')
+    ? String(payload?.robloxUsername || '').trim()
+    : String(existing.roblox_username || '').trim();
+  const nextRobloxUserId = hasOwn(payload, 'robloxUserId')
+    ? String(payload?.robloxUserId || '').trim()
+    : String(existing.roblox_user_id || '').trim();
+  const nextRank = hasOwn(payload, 'rank') ? String(payload?.rank || '').trim() : String(existing.rank || '').trim();
+  const nextGrade = hasOwn(payload, 'grade') ? String(payload?.grade || '').trim() : String(existing.grade || '').trim();
+  const nextSerialNumber = hasOwn(payload, 'serialNumber')
+    ? String(payload?.serialNumber || '').trim()
+    : String(existing.serial_number || '').trim();
+  const nextEmployeeStatus = hasOwn(payload, 'employeeStatus')
+    ? String(payload?.employeeStatus || '').trim()
+    : String(existing.employee_status || '').trim();
+  const nextActivationStatus = hasOwn(payload, 'activationStatus')
+    ? String(payload?.activationStatus || '').trim().toUpperCase() || 'PENDING'
+    : String(existing.activation_status || '').trim().toUpperCase() || 'PENDING';
+  const nextHireDate = hasOwn(payload, 'hireDate') ? String(payload?.hireDate || '').trim() : String(existing.hire_date || '').trim();
+
   await env.DB.prepare(
     `UPDATE employees
      SET roblox_username = ?,
@@ -175,14 +198,14 @@ export async function onRequestPut(context) {
      WHERE id = ?`
   )
     .bind(
-      String(payload?.robloxUsername || '').trim(),
-      String(payload?.robloxUserId || '').trim(),
-      String(payload?.rank || '').trim(),
-      String(payload?.grade || '').trim(),
-      String(payload?.serialNumber || '').trim(),
-      String(payload?.employeeStatus || '').trim(),
-      String(payload?.activationStatus || existing.activation_status || '').trim().toUpperCase() || 'PENDING',
-      String(payload?.hireDate || '').trim(),
+      nextRobloxUsername,
+      nextRobloxUserId,
+      nextRank,
+      nextGrade,
+      nextSerialNumber,
+      nextEmployeeStatus,
+      nextActivationStatus,
+      nextHireDate,
       employeeId
     )
     .run();
