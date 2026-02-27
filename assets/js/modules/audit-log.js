@@ -1,19 +1,10 @@
-import { getActivityTrackerCsvUrl, listActivityTracker } from './admin-api.js';
+import { getAuditLogCsvUrl, listAuditLog } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {
   const s = String(value ?? '').trim();
   return s || 'N/A';
 }
-
-const numberFormatter = new Intl.NumberFormat('nl-NL');
-const dateTimeFormatter = new Intl.DateTimeFormat('nl-NL', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit'
-});
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -23,6 +14,15 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 }
+
+const dateTimeFormatter = new Intl.DateTimeFormat('nl-NL', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit'
+});
+const numberFormatter = new Intl.NumberFormat('nl-NL');
 
 function formatDate(value) {
   const raw = String(value || '').trim();
@@ -35,7 +35,7 @@ function formatDate(value) {
 function renderRows(target, rows) {
   if (!target) return;
   if (!rows.length) {
-    target.innerHTML = '<tr><td colspan="8">Geen activiteit gevonden voor de geselecteerde filters.</td></tr>';
+    target.innerHTML = '<tr><td colspan="6">Geen auditregels gevonden voor de geselecteerde filters.</td></tr>';
     return;
   }
 
@@ -43,14 +43,12 @@ function renderRows(target, rows) {
     .map(
       (row) => `
       <tr>
-        <td>${Number(row.employeeId || 0)}</td>
-        <td>${escapeHtml(text(row.robloxUsername))}</td>
-        <td>${escapeHtml(text(row.serialNumber))}</td>
-        <td>${escapeHtml(text(row.rank))}</td>
-        <td>${numberFormatter.format(Number(row.totalVoyages || 0))}</td>
-        <td>${numberFormatter.format(Number(row.oowVoyages || 0))}</td>
-        <td>${numberFormatter.format(Number(row.crewVoyages || 0))}</td>
-        <td>${escapeHtml(formatDate(row.lastVoyageAt))}</td>
+        <td>${Number(row.id || 0)}</td>
+        <td>${escapeHtml(formatDate(row.createdAt))}</td>
+        <td>${escapeHtml(text(row.actionType))}</td>
+        <td>${escapeHtml(text(row.actorName || row.actorDiscordId))}</td>
+        <td>${row.targetEmployeeId ? Number(row.targetEmployeeId) : 'N/A'}</td>
+        <td>${escapeHtml(text(row.summary))}</td>
       </tr>`
     )
     .join('');
@@ -67,14 +65,15 @@ function skeletonRows(count = 8) {
   </tr>`).join('');
 }
 
-export async function initActivityTracker(config) {
+export async function initAuditLog(config) {
   const feedback = document.querySelector(config.feedbackSelector);
   const tableBody = document.querySelector(config.tableBodySelector);
   const searchInput = document.querySelector(config.searchSelector);
+  const actionTypeInput = document.querySelector(config.actionTypeSelector);
+  const actorInput = document.querySelector(config.actorSelector);
+  const targetEmployeeInput = document.querySelector(config.targetEmployeeSelector);
   const dateFromInput = document.querySelector(config.dateFromSelector);
   const dateToInput = document.querySelector(config.dateToSelector);
-  const minVoyagesInput = document.querySelector(config.minVoyagesSelector);
-  const quotaFilterInput = document.querySelector(config.quotaFilterSelector);
   const exportCsvBtn = document.querySelector(config.exportCsvBtnSelector);
   const prevPageBtn = document.querySelector(config.prevPageBtnSelector);
   const nextPageBtn = document.querySelector(config.nextPageBtnSelector);
@@ -92,10 +91,11 @@ export async function initActivityTracker(config) {
   function collectFilters() {
     return {
       search: searchInput?.value || '',
+      actionType: actionTypeInput?.value || '',
+      actor: actorInput?.value || '',
+      targetEmployeeId: targetEmployeeInput?.value || '',
       dateFrom: dateFromInput?.value || '',
       dateTo: dateToInput?.value || '',
-      minVoyages: minVoyagesInput?.value || '',
-      quotaFilter: quotaFilterInput?.value || '',
       page: state.page,
       pageSize: state.pageSize
     };
@@ -104,20 +104,18 @@ export async function initActivityTracker(config) {
   const refresh = async () => {
     tableBody.innerHTML = skeletonRows();
     try {
-      const payload = await listActivityTracker(collectFilters());
-      renderRows(tableBody, payload.rows || []);
+      const payload = await listAuditLog(collectFilters());
+      renderRows(tableBody, payload.events || []);
       const pagination = payload.pagination || {};
       state.totalPages = Math.max(1, Number(pagination.totalPages || 1));
       state.page = Math.min(state.totalPages, Math.max(1, Number(pagination.page || 1)));
-      if (pageInfo) {
-        pageInfo.textContent = `Pagina ${state.page} van ${state.totalPages} • ${numberFormatter.format(Number(pagination.total || 0))} totaal`;
-      }
+      if (pageInfo) pageInfo.textContent = `Pagina ${state.page} van ${state.totalPages} • ${numberFormatter.format(Number(pagination.total || 0))} totaal`;
       if (prevPageBtn) prevPageBtn.disabled = state.page <= 1;
       if (nextPageBtn) nextPageBtn.disabled = state.page >= state.totalPages;
       clearMessage(feedback);
     } catch (error) {
-      showMessage(feedback, error.message || 'Unable to load activity tracker.', 'error');
-      tableBody.innerHTML = '<tr><td colspan="6">Unable to load activity data.</td></tr>';
+      showMessage(feedback, error.message || 'Auditlog kon niet worden geladen.', 'error');
+      tableBody.innerHTML = '<tr><td colspan="6">Auditlog kon niet worden geladen.</td></tr>';
     }
   };
 
@@ -129,7 +127,7 @@ export async function initActivityTracker(config) {
     }, 250);
   };
 
-  [searchInput, dateFromInput, dateToInput, minVoyagesInput, quotaFilterInput].forEach((input) => {
+  [searchInput, actionTypeInput, actorInput, targetEmployeeInput, dateFromInput, dateToInput].forEach((input) => {
     input?.addEventListener('input', scheduleRefresh);
     input?.addEventListener('change', scheduleRefresh);
   });
@@ -146,9 +144,10 @@ export async function initActivityTracker(config) {
   });
 
   exportCsvBtn?.addEventListener('click', () => {
-    const url = getActivityTrackerCsvUrl(collectFilters());
+    const url = getAuditLogCsvUrl(collectFilters());
     window.location.href = url;
   });
 
   await refresh();
 }
+

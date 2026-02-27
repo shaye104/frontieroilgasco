@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-02-27T00:51:35.570Z
+Generated: 2026-02-27T01:03:08.946Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -10,6 +10,7 @@ SITE STRUCTURE
 - access-denied.html | title: Frontier Oil & Gas Company | Access Denied | primary heading: You cannot access this page
 - activity-tracker.html | title: Frontier Oil & Gas Company | Activity Tracker | primary heading: Activity Tracker
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
+- audit-log.html | title: Frontier Oil & Gas Company | Audit Log | primary heading: Audit Log
 - finances.html | title: Frontier Oil & Gas Company | Finances | primary heading: Finances
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
 - intranet.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
@@ -27,8 +28,9 @@ SITE STRUCTURE
 
 JAVASCRIPT MODULES
 - assets/js/modules/activity-tracker.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: activateEmployee, addDisciplinary, addEmployeeNote, addUserRankDiscordRoleLink, addUserRankGroupLink, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyage, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMeBootstrap, getMyDetails, getOnboardingBootstrap, getOnboardingMe, getRankPermissions, getSession, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, resolveRobloxIdentity, saveRankPermissions, saveUserRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus, verifyOnboardingRoblox
+- assets/js/modules/admin-api.js | exports: activateEmployee, addDisciplinary, addEmployeeNote, addUserRankDiscordRoleLink, addUserRankGroupLink, cancelVoyage, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteUserRank, deleteVoyage, deleteVoyageConfigValue, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getAuditLogCsvUrl, getConfig, getEmployee, getEmployeeDrawer, getFinancesOverview, getMeBootstrap, getMyDetails, getOnboardingBootstrap, getOnboardingMe, getRankPermissions, getSession, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listAuditLog, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, resolveRobloxIdentity, saveRankPermissions, saveUserRankPermissions, searchEmployees, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, updateAdminRole, updateConfigValue, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus, verifyOnboardingRoblox
 - assets/js/modules/app-mode.js | exports: isCoreAllowedPagePath, isCoreOnlyMode, normalizeAppMode
+- assets/js/modules/audit-log.js | exports: No public exports
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/finances.js | exports: No public exports
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
@@ -49,6 +51,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/access-denied-page.js | exports: No public exports
 - assets/js/pages/activity-tracker-page.js | exports: No public exports
 - assets/js/pages/admin-panel-page.js | exports: No public exports
+- assets/js/pages/audit-log-page.js | exports: No public exports
 - assets/js/pages/finances-page.js | exports: No public exports
 - assets/js/pages/home.js | exports: No public exports
 - assets/js/pages/intranet-page.js | exports: No public exports

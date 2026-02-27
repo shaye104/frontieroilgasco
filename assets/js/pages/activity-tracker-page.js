@@ -8,16 +8,15 @@ initIntranetPageGuard({
 }).then((session) => {
   if (!session) return;
 
-  import('../modules/activity-tracker.js?v=20260225a').then(({ initActivityTracker }) =>
+  import('../modules/activity-tracker.js?v=20260227d').then(({ initActivityTracker }) =>
     initActivityTracker({
     feedbackSelector: '#activityTrackerFeedback',
     tableBodySelector: '#activityTrackerBody',
     searchSelector: '#activitySearch',
-    actionTypeSelector: '#activityActionType',
-    actorSelector: '#activityActor',
-    targetEmployeeSelector: '#activityTargetEmployeeId',
     dateFromSelector: '#activityDateFrom',
     dateToSelector: '#activityDateTo',
+    minVoyagesSelector: '#activityMinVoyages',
+    quotaFilterSelector: '#activityQuotaFilter',
     exportCsvBtnSelector: '#activityExportCsvBtn',
     prevPageBtnSelector: '#activityPrevPageBtn',
     nextPageBtnSelector: '#activityNextPageBtn',

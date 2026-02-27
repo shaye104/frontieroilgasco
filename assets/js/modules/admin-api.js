@@ -337,11 +337,12 @@ export function listFinanceAudit(options = {}) {
 export function listActivityTracker(options = {}) {
   const params = new URLSearchParams();
   if (options.search) params.set('search', String(options.search));
-  if (options.actionType) params.set('actionType', String(options.actionType));
-  if (options.actor) params.set('actor', String(options.actor));
-  if (options.targetEmployeeId) params.set('targetEmployeeId', String(options.targetEmployeeId));
   if (options.dateFrom) params.set('dateFrom', String(options.dateFrom));
   if (options.dateTo) params.set('dateTo', String(options.dateTo));
+  if (options.minVoyages !== undefined && options.minVoyages !== null && String(options.minVoyages).trim() !== '') {
+    params.set('minVoyages', String(options.minVoyages));
+  }
+  if (options.quotaFilter) params.set('quotaFilter', String(options.quotaFilter));
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
   const suffix = params.toString() ? `?${params.toString()}` : '';
@@ -355,13 +356,44 @@ export function listActivityTracker(options = {}) {
 export function getActivityTrackerCsvUrl(options = {}) {
   const params = new URLSearchParams();
   if (options.search) params.set('search', String(options.search));
+  if (options.dateFrom) params.set('dateFrom', String(options.dateFrom));
+  if (options.dateTo) params.set('dateTo', String(options.dateTo));
+  if (options.minVoyages !== undefined && options.minVoyages !== null && String(options.minVoyages).trim() !== '') {
+    params.set('minVoyages', String(options.minVoyages));
+  }
+  if (options.quotaFilter) params.set('quotaFilter', String(options.quotaFilter));
+  params.set('format', 'csv');
+  return `/api/admin/activity-tracker?${params.toString()}`;
+}
+
+export function listAuditLog(options = {}) {
+  const params = new URLSearchParams();
+  if (options.search) params.set('search', String(options.search));
+  if (options.actionType) params.set('actionType', String(options.actionType));
+  if (options.actor) params.set('actor', String(options.actor));
+  if (options.targetEmployeeId) params.set('targetEmployeeId', String(options.targetEmployeeId));
+  if (options.dateFrom) params.set('dateFrom', String(options.dateFrom));
+  if (options.dateTo) params.set('dateTo', String(options.dateTo));
+  if (options.page) params.set('page', String(options.page));
+  if (options.pageSize) params.set('pageSize', String(options.pageSize));
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/admin/activity${suffix}`, {
+    method: 'GET',
+    cacheTtlMs: 10000,
+    cacheKey: `GET:/api/admin/activity:${suffix}`
+  });
+}
+
+export function getAuditLogCsvUrl(options = {}) {
+  const params = new URLSearchParams();
+  if (options.search) params.set('search', String(options.search));
   if (options.actionType) params.set('actionType', String(options.actionType));
   if (options.actor) params.set('actor', String(options.actor));
   if (options.targetEmployeeId) params.set('targetEmployeeId', String(options.targetEmployeeId));
   if (options.dateFrom) params.set('dateFrom', String(options.dateFrom));
   if (options.dateTo) params.set('dateTo', String(options.dateTo));
   params.set('format', 'csv');
-  return `/api/admin/activity-tracker?${params.toString()}`;
+  return `/api/admin/activity?${params.toString()}`;
 }
 
 export function getRankPermissions() {
@@ -615,6 +647,9 @@ export function prefetchRouteData(pathname, session) {
   }
   if (route === '/admin/activity') {
     return prefetchJson('/api/admin/activity-tracker?page=1&pageSize=25');
+  }
+  if (route === '/admin/audit') {
+    return prefetchJson('/api/admin/activity?page=1&pageSize=25');
   }
   return Promise.resolve(null);
 }

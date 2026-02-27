@@ -92,6 +92,7 @@ function isAdminLikePath(pathname) {
     '/admin',
     '/admin-panel',
     '/activity-tracker',
+    '/audit-log',
     '/roles',
     '/user-ranks',
     '/manage-employees'

@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier admin activity tracker." />
-    <title>Frontier Oil & Gas Company | Activity Tracker</title>
+    <meta name="description" content="Frontier admin audit log." />
+    <title>Frontier Oil & Gas Company | Audit Log</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -28,43 +28,43 @@
       <div class="container intranet-layout intranet-page-shell">
         <section class="panel my-details-page-header">
           <div>
-            <h1>Activity Tracker</h1>
-            <p class="my-details-subtitle">Employee voyage activity and quota tracking.</p>
+            <h1>Audit Log</h1>
+            <p class="my-details-subtitle">Website and API audit trail for admin actions.</p>
           </div>
           <div class="button-row">
-            <a class="btn btn-secondary" href="/admin/employees">Back to Employees</a>
-            <button id="activityExportCsvBtn" class="btn btn-primary" type="button">Export CSV</button>
+            <a class="btn btn-secondary" href="/admin">Back to Admin</a>
+            <button id="auditExportCsvBtn" class="btn btn-primary" type="button">Export CSV</button>
           </div>
           <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
-          <div id="activityTrackerFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="auditLogFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
         <section id="protectedContent" class="hidden admin-employees-stack">
           <article class="panel">
             <div class="admin-employees-filter-main">
               <div>
-                <label for="activitySearch">Search</label>
-                <input id="activitySearch" type="text" placeholder="Username, Roblox ID, serial" />
+                <label for="auditSearch">Search</label>
+                <input id="auditSearch" type="text" placeholder="Summary, actor, target employee" />
               </div>
               <div>
-                <label for="activityMinVoyages">Minimum Voyages</label>
-                <input id="activityMinVoyages" type="number" min="0" step="1" placeholder="e.g. 4" />
+                <label for="auditActionType">Action Type</label>
+                <input id="auditActionType" type="text" placeholder="EMPLOYEE_UPDATED" />
               </div>
               <div>
-                <label for="activityQuotaFilter">Quota Filter</label>
-                <select id="activityQuotaFilter">
-                  <option value="">All</option>
-                  <option value="met">Met quota</option>
-                  <option value="not_met">Not met</option>
-                </select>
+                <label for="auditActor">Actor</label>
+                <input id="auditActor" type="text" placeholder="Name or Discord ID" />
               </div>
               <div>
-                <label for="activityDateFrom">Date From</label>
-                <input id="activityDateFrom" type="date" />
+                <label for="auditTargetEmployeeId">Target Employee ID</label>
+                <input id="auditTargetEmployeeId" type="number" min="1" step="1" />
               </div>
               <div>
-                <label for="activityDateTo">Date To</label>
-                <input id="activityDateTo" type="date" />
+                <label for="auditDateFrom">Date From</label>
+                <input id="auditDateFrom" type="date" />
+              </div>
+              <div>
+                <label for="auditDateTo">Date To</label>
+                <input id="auditDateTo" type="date" />
               </div>
             </div>
           </article>
@@ -74,30 +74,29 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Employee ID</th>
-                    <th>Username</th>
-                    <th>Serial</th>
-                    <th>Rank</th>
-                    <th>Total Voyages</th>
-                    <th>OOW</th>
-                    <th>Crew</th>
-                    <th>Last Ended Voyage</th>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Actor</th>
+                    <th>Target Employee</th>
+                    <th>Summary</th>
                   </tr>
                 </thead>
-                <tbody id="activityTrackerBody"></tbody>
+                <tbody id="auditLogBody"></tbody>
               </table>
             </div>
             <div class="pagination-row">
               <div class="button-row">
-                <button id="activityPrevPageBtn" class="btn btn-secondary" type="button">Previous</button>
-                <button id="activityNextPageBtn" class="btn btn-secondary" type="button">Next</button>
+                <button id="auditPrevPageBtn" class="btn btn-secondary" type="button">Previous</button>
+                <button id="auditNextPageBtn" class="btn btn-secondary" type="button">Next</button>
               </div>
-              <span id="activityPaginationInfo" class="pagination-info">Page 1 of 1</span>
+              <span id="auditPaginationInfo" class="pagination-info">Page 1 of 1</span>
             </div>
           </article>
         </section>
       </div>
     </main>
-    <script type="module" src="/assets/js/pages/activity-tracker-page.js?v=20260227d"></script>
+    <script type="module" src="/assets/js/pages/audit-log-page.js?v=20260227a"></script>
   </body>
 </html>
+

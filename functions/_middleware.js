@@ -43,6 +43,8 @@ function isProtectedPath(pathname) {
     '/manage-employees.html',
     '/activity-tracker',
     '/activity-tracker.html',
+    '/audit-log',
+    '/audit-log.html',
     '/onboarding',
     '/onboarding.html',
     '/onboarding/status'
@@ -111,6 +113,8 @@ function isAdminLikePath(pathname) {
     '/admin-panel.html',
     '/activity-tracker',
     '/activity-tracker.html',
+    '/audit-log',
+    '/audit-log.html',
     '/roles',
     '/roles.html',
     '/user-ranks',

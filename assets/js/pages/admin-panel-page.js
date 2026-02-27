@@ -15,12 +15,14 @@ initIntranetPageGuard({
   const rolesLink = document.querySelector('#adminLinkRoles');
   const userRanksLink = document.querySelector('#adminLinkUserRanks');
   const activityTrackerLink = document.querySelector('#adminLinkActivityTracker');
+  const auditLogLink = document.querySelector('#adminLinkAuditLog');
 
   if (employeesLink && hasPermission(session, 'employees.read')) employeesLink.classList.remove('hidden');
   if (voyageSettingsLink && hasPermission(session, 'voyages.config.manage')) voyageSettingsLink.classList.remove('hidden');
   if (rolesLink && hasPermission(session, 'user_groups.manage')) rolesLink.classList.remove('hidden');
   if (userRanksLink && hasPermission(session, 'user_ranks.manage')) userRanksLink.classList.remove('hidden');
   if (activityTrackerLink && hasPermission(session, 'activity_tracker.view')) activityTrackerLink.classList.remove('hidden');
+  if (auditLogLink && hasPermission(session, 'activity_tracker.view')) auditLogLink.classList.remove('hidden');
 });
 
 initializeYear();
