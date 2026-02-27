@@ -15,6 +15,10 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
   }
 }
 
+function normalizeUsername(value) {
+  return text(value).toLowerCase();
+}
+
 export async function onRequestPost(context) {
   const startedAt = Date.now();
   const { env, request } = context;
@@ -40,21 +44,9 @@ export async function onRequestPost(context) {
   if (!userId || !username) return json({ error: 'Roblox User ID and Username are required.' }, 400);
   if (!/^\d{1,30}$/.test(userId)) return json({ error: 'Roblox User ID must be digits only.' }, 400);
 
-  let byId = null;
-  let byUsername = null;
-
-  try {
-    const byIdResponse = await fetchWithTimeout(`https://users.roblox.com/v1/users/${encodeURIComponent(userId)}`, {}, 5000);
-    if (byIdResponse.ok) {
-      const parsed = await byIdResponse.json().catch(() => ({}));
-      byId = {
-        id: text(parsed?.id),
-        username: text(parsed?.name),
-        displayName: text(parsed?.displayName)
-      };
-    }
-
-    const byUsernameResponse = await fetchWithTimeout(
+  const [byIdResult, byUsernameResult] = await Promise.allSettled([
+    fetchWithTimeout(`https://users.roblox.com/v1/users/${encodeURIComponent(userId)}`, {}, 4500),
+    fetchWithTimeout(
       'https://users.roblox.com/v1/usernames/users',
       {
         method: 'POST',
@@ -64,10 +56,33 @@ export async function onRequestPost(context) {
           excludeBannedUsers: false
         })
       },
-      5000
-    );
-    if (byUsernameResponse.ok) {
-      const parsed = await byUsernameResponse.json().catch(() => ({}));
+      4500
+    )
+  ]);
+
+  let byId = null;
+  let byUsername = null;
+  let byIdError = null;
+  let byUsernameError = null;
+
+  if (byIdResult.status === 'fulfilled') {
+    if (byIdResult.value.ok) {
+      const parsed = await byIdResult.value.json().catch(() => ({}));
+      byId = {
+        id: text(parsed?.id),
+        username: text(parsed?.name),
+        displayName: text(parsed?.displayName)
+      };
+    } else {
+      byIdError = `id_lookup_http_${Number(byIdResult.value.status || 0)}`;
+    }
+  } else {
+    byIdError = byIdResult.reason?.name === 'AbortError' ? 'id_lookup_timeout' : 'id_lookup_failed';
+  }
+
+  if (byUsernameResult.status === 'fulfilled') {
+    if (byUsernameResult.value.ok) {
+      const parsed = await byUsernameResult.value.json().catch(() => ({}));
       const first = parsed?.data?.[0];
       if (first) {
         byUsername = {
@@ -75,19 +90,23 @@ export async function onRequestPost(context) {
           username: text(first?.name),
           displayName: text(first?.displayName)
         };
+      } else {
+        byUsernameError = 'username_not_found';
       }
+    } else {
+      byUsernameError = `username_lookup_http_${Number(byUsernameResult.value.status || 0)}`;
     }
-  } catch (error) {
-    return json({ error: error?.name === 'AbortError' ? 'Roblox lookup timed out.' : 'Roblox lookup failed.' }, 502);
+  } else {
+    byUsernameError = byUsernameResult.reason?.name === 'AbortError' ? 'username_lookup_timeout' : 'username_lookup_failed';
   }
 
-  const verified = Boolean(
-    byId &&
-      byUsername &&
-      text(byId.id) === userId &&
-      text(byUsername.username).toLowerCase() === username.toLowerCase() &&
-      text(byId.id) === text(byUsername.id)
-  );
+  if (!byId && !byUsername) {
+    return json({ error: 'Roblox verification service is unavailable right now. Please try again.' }, 502);
+  }
+
+  const byIdMatchesInput = Boolean(byId && normalizeUsername(byId.username) === normalizeUsername(username) && text(byId.id) === userId);
+  const byUsernameMatchesInput = Boolean(byUsername && text(byUsername.id) === userId);
+  const verified = byIdMatchesInput || byUsernameMatchesInput;
 
   const normalized = {
     userId: text(byId?.id || byUsername?.id || userId),
@@ -95,12 +114,23 @@ export async function onRequestPost(context) {
     displayName: text(byUsername?.displayName || byId?.displayName)
   };
 
+  const expectedUsername = text(byId?.username || byUsername?.username);
+  const message = verified
+    ? 'Roblox account matched.'
+    : expectedUsername && normalizeUsername(expectedUsername) !== normalizeUsername(username)
+    ? `Verification failed: username does not match this ID. Expected "${expectedUsername}".`
+    : 'Verification failed: username/id mismatch.';
+
   const durationMs = Date.now() - startedAt;
   return new Response(
     JSON.stringify({
       verified,
       normalized,
-      message: verified ? 'Roblox account matched.' : 'Verification failed: username/id mismatch.'
+      message,
+      diagnostics: {
+        byIdError,
+        byUsernameError
+      }
     }),
     {
       status: 200,
