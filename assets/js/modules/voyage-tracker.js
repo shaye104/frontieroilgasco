@@ -195,6 +195,7 @@ export async function initVoyageTracker(config, session) {
   let archivedTotal = 0;
   let ongoingKeys = new Set();
   let selectedCrewIds = new Set();
+  const selectedCrewById = new Map();
   const searchCache = new Map();
 
   async function lookupEmployees(queryKind, queryValue) {
@@ -322,20 +323,25 @@ export async function initVoyageTracker(config, session) {
 
     crewSelected.innerHTML = [...selectedCrewIds]
       .map((employeeId) => {
-        const employee = employees.find((item) => Number(item.id) === Number(employeeId));
-        if (!employee) return '';
+        const employee =
+          selectedCrewById.get(Number(employeeId)) ||
+          employees.find((item) => Number(item.id) === Number(employeeId)) ||
+          null;
+        const label = text(employee?.roblox_username || `Employee #${employeeId}`);
         return `<span class="pill">
-            ${text(employee.roblox_username)}
-            <button type="button" class="pill-close" data-remove-crew="${employee.id}" aria-label="Remove crew member">x</button>
-            <input type="hidden" name="crewComplementIds" value="${employee.id}" />
+            ${label}
+            <button type="button" class="pill-close" data-remove-crew="${Number(employeeId)}" aria-label="Remove crew member">x</button>
+            <input type="hidden" name="crewComplementIds" value="${Number(employeeId)}" />
           </span>`;
       })
+      .filter(Boolean)
       .join('');
 
     crewSelected.querySelectorAll('[data-remove-crew]').forEach((button) => {
       button.addEventListener('click', () => {
         const id = Number(button.getAttribute('data-remove-crew'));
         selectedCrewIds.delete(id);
+        selectedCrewById.delete(id);
         renderCrewSelected();
       });
     });
@@ -355,6 +361,7 @@ export async function initVoyageTracker(config, session) {
     crewResults.innerHTML = '';
     crewResults.classList.remove('is-open');
     selectedCrewIds = new Set();
+    selectedCrewById.clear();
     renderCrewSelected();
   }
 
@@ -408,6 +415,7 @@ export async function initVoyageTracker(config, session) {
       setInlineMessage(oowError, '');
       if (selectedCrewIds.has(selectedId)) {
         selectedCrewIds.delete(selectedId);
+        selectedCrewById.delete(selectedId);
         renderCrewSelected();
         setInlineMessage(crewInfo, `Removed ${text(employee.roblox_username)} from crew because they are OOW.`, 'success');
       }
@@ -430,6 +438,7 @@ export async function initVoyageTracker(config, session) {
         return;
       }
       selectedCrewIds.add(selectedId);
+      selectedCrewById.set(selectedId, employee);
       crewSearch.value = '';
       setInlineMessage(crewError, '');
       setInlineMessage(crewInfo, '');
