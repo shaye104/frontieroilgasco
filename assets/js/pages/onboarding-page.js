@@ -1,4 +1,4 @@
-import { getOnboardingBootstrap, submitOnboarding, verifyOnboardingRoblox } from '../modules/admin-api.js?v=20260227b';
+import { getOnboardingBootstrap, submitOnboarding, verifyOnboardingRoblox } from '../modules/admin-api.js?v=20260227c';
 import { performLogout } from '../modules/nav.js?v=20260227a';
 import { clearMessage, showMessage } from '../modules/notice.js?v=20260227a';
 

@@ -1117,6 +1117,10 @@
   align-items: start;
 }
 
+.page-onboarding .onboarding-main-grid.hidden {
+  display: none;
+}
+
 .page-onboarding .onboarding-primary-col,
 .page-onboarding .onboarding-secondary-col {
   display: grid;
