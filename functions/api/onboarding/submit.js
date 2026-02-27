@@ -1,5 +1,5 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
-import { ensureCoreSchema, getEmployeeByDiscordUserId, writeAdminActivityEvent } from '../_lib/db.js';
+import { normalizeDiscordUserId, writeAdminActivityEvent } from '../_lib/db.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -11,8 +11,11 @@ export async function onRequestPost(context) {
   const session = await readSessionFromRequest(env, request);
   if (!session) return json({ error: 'Authentication required.' }, 401);
 
-  await ensureCoreSchema(env);
-  const employee = await getEmployeeByDiscordUserId(env, session.userId);
+  const normalizedDiscordUserId = normalizeDiscordUserId(session.userId);
+  const employee = await env.DB
+    .prepare(`SELECT id, activation_status, activated_at FROM employees WHERE discord_user_id = ? LIMIT 1`)
+    .bind(normalizedDiscordUserId)
+    .first();
   if (!employee) return json({ error: 'Employee profile not found.' }, 404);
 
   const activationStatus = text(employee.activation_status).toUpperCase() || 'PENDING';

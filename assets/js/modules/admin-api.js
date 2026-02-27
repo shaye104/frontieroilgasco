@@ -154,7 +154,7 @@ export function submitOnboardingRobloxProfile(payload) {
 export function submitOnboarding(payload) {
   return requestJson('/api/onboarding/submit', {
     method: 'POST',
-    timeoutMs: 8000,
+    timeoutMs: 15000,
     body: JSON.stringify(payload)
   });
 }
