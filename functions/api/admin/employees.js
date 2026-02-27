@@ -53,6 +53,7 @@ export async function onRequestGet(context) {
   const hireDateTo = normalizeText(url.searchParams.get('hireTo') || url.searchParams.get('hireDateTo'));
   const sortByInput = normalizeText(url.searchParams.get('sortBy')).toLowerCase();
   const sortDirInput = normalizeText(url.searchParams.get('sortDir')).toLowerCase();
+  const includeConfig = url.searchParams.get('includeConfig') === '1';
   const sortDir = sortDirInput === 'asc' ? 'ASC' : 'DESC';
   const sortableColumns = new Map([
     ['id', 'e.id'],
@@ -118,7 +119,7 @@ export async function onRequestGet(context) {
   const whereSql = allWhereParts.length ? `WHERE ${allWhereParts.join(' AND ')}` : '';
 
   const dbStartedAt = Date.now();
-  const [result, totalRow, statsRow] = await Promise.all([
+  const [result, totalRow, statsRow, configBootstrap] = await Promise.all([
     env.DB
       .prepare(
         `SELECT e.id, e.discord_user_id, e.discord_display_name, e.roblox_username, e.roblox_user_id, e.rank, e.grade, e.serial_number, e.employee_status, e.activation_status, e.hire_date, e.updated_at,
@@ -145,7 +146,20 @@ export async function onRequestGet(context) {
          ${visibilityWhereParts.length ? `WHERE ${visibilityWhereParts.join(' AND ')}` : ''}`
       )
       .bind(...visibilityBindings)
-      .first()
+      .first(),
+    includeConfig
+      ? Promise.all([
+          env.DB.prepare('SELECT id, value, created_at FROM config_employee_statuses ORDER BY value ASC').all(),
+          env.DB
+            .prepare('SELECT id, value, level, description, updated_at, created_at FROM config_ranks ORDER BY level DESC, value ASC, id ASC')
+            .all(),
+          env.DB.prepare('SELECT id, value, created_at FROM config_grades ORDER BY value ASC').all()
+        ]).then(([statuses, ranks, grades]) => ({
+          statuses: statuses?.results || [],
+          ranks: ranks?.results || [],
+          grades: grades?.results || []
+        }))
+      : null
   ]);
   const actorRankLevel = Number(actorScope.actorRankLevel || 0);
   const dbMs = Date.now() - dbStartedAt;
@@ -198,7 +212,8 @@ export async function onRequestGet(context) {
     timing: {
       dbMs,
       totalMs: Date.now() - startedAt
-    }
+    },
+    config: configBootstrap || undefined
   });
 }
 

@@ -4,6 +4,10 @@
   "private": true,
   "description": "Static modular website for Frontier Oil & Gas Company",
   "scripts": {
-    "webinfo": "node scripts/update-webinfo.mjs"
+    "build:assets": "node scripts/build-assets.mjs",
+    "webinfo": "node scripts/build-assets.mjs && node scripts/update-webinfo.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.10"
   }
 }

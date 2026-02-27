@@ -606,6 +606,7 @@ export async function initManageEmployees(config) {
     drawerOverviewEditMode: false,
     drawerOverviewDraft: null,
     drawerPayload: null,
+    configBootstrapped: false,
     configOptions: {
       ranks: [],
       grades: [],
@@ -698,11 +699,24 @@ export async function initManageEmployees(config) {
       activationStatus: filterActivation?.value || '',
       hireFrom: filterHireDateFrom?.value || '',
       hireTo: filterHireDateTo?.value || '',
+      includeConfig: !state.configBootstrapped,
       page: state.page,
       pageSize: state.pageSize,
       sortBy: state.sortBy,
       sortDir: state.sortDir
     };
+  }
+
+  function applyConfigOptions(statusesItems = [], ranksItems = [], gradesItems = []) {
+    state.configOptions.statuses = statusesItems;
+    state.configOptions.ranks = ranksItems;
+    state.configOptions.grades = gradesItems;
+    fillOptions(filterRank, ranksItems, 'All Ranks');
+    fillOptions(filterGrade, gradesItems, 'All Grades');
+    fillOptions(filterStatus, statusesItems, 'All Statuses');
+    fillOptions(createForm.querySelector('[name="employeeStatus"]'), statusesItems, 'Select');
+    fillOptions(createForm.querySelector('[name="rank"]'), ranksItems, 'Select');
+    fillOptions(createForm.querySelector('[name="grade"]'), gradesItems, 'Select');
   }
 
   async function loadEmployees() {
@@ -712,6 +726,14 @@ export async function initManageEmployees(config) {
     try {
       const rawPayload = await listEmployees(collectFilters());
       const payload = normalizeEmployeesPayload(rawPayload);
+      if (!state.configBootstrapped && payload?.config) {
+        applyConfigOptions(
+          Array.isArray(payload.config.statuses) ? payload.config.statuses : [],
+          Array.isArray(payload.config.ranks) ? payload.config.ranks : [],
+          Array.isArray(payload.config.grades) ? payload.config.grades : []
+        );
+        state.configBootstrapped = true;
+      }
       renderStatCards(payload);
       renderTable(tableBody, payload.employees || [], state.visibleColumns);
       const pagination = payload.pagination || {};
@@ -730,6 +752,7 @@ export async function initManageEmployees(config) {
   }
 
   async function refreshConfig() {
+    if (state.configBootstrapped) return;
     let statusesItems = [];
     let ranksItems = [];
     let gradesItems = [];
@@ -746,15 +769,8 @@ export async function initManageEmployees(config) {
       gradesItems = grades.items || [];
     }
 
-    state.configOptions.statuses = statusesItems;
-    state.configOptions.ranks = ranksItems;
-    state.configOptions.grades = gradesItems;
-    fillOptions(filterRank, ranksItems, 'All Ranks');
-    fillOptions(filterGrade, gradesItems, 'All Grades');
-    fillOptions(filterStatus, statusesItems, 'All Statuses');
-    fillOptions(createForm.querySelector('[name="employeeStatus"]'), statusesItems, 'Select');
-    fillOptions(createForm.querySelector('[name="rank"]'), ranksItems, 'Select');
-    fillOptions(createForm.querySelector('[name="grade"]'), gradesItems, 'Select');
+    applyConfigOptions(statusesItems, ranksItems, gradesItems);
+    state.configBootstrapped = true;
   }
 
   function setDrawerTab(tab) {
