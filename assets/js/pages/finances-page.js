@@ -945,7 +945,8 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
     emissions.textContent = formatKilograms(kpis.emissionsKg || 0);
     const crudeSold = formatInteger(kpis.crudeSold || 0);
     const gasSold = formatInteger(kpis.gasSold || 0);
-    emissions.title = `Crude: ${crudeSold} x 430 | Gasoline: ${gasSold} x 373`;
+    const completedVoyages = formatInteger(kpis.completedVoyages || 0);
+    emissions.title = `Crude: ${crudeSold} x 430 | Gasoline: ${gasSold} x 373 | Ship: ${completedVoyages} x 46`;
   }
 
   const avgDays = $('#kpiAvgDaysToSettle');

@@ -323,7 +323,12 @@ export async function onRequestGet(context) {
   const avgDaysToSettle = settledAgesDays.length
     ? toMoney(settledAgesDays.reduce((sum, days) => sum + days, 0) / settledAgesDays.length)
     : null;
-  const emissionsKg = toMoney(Math.max(0, crudeSoldTotal) * 430 + Math.max(0, gasolineSoldTotal) * 373);
+  const completedVoyagesCount = Number(endedInRange.length || 0);
+  const emissionsKg = toMoney(
+    Math.max(0, crudeSoldTotal) * 430 +
+      Math.max(0, gasolineSoldTotal) * 373 +
+      Math.max(0, completedVoyagesCount) * 46
+  );
 
   const unsettledBindings = [];
   let unsettledWhere = `v.deleted_at IS NULL AND v.status = 'ENDED' AND COALESCE(v.company_share_status, 'UNSETTLED') = 'UNSETTLED'
@@ -482,7 +487,7 @@ export async function onRequestGet(context) {
         crewShare: toMoney(crewShareTotal),
         freightLossesValue: Math.max(0, toMoney(freightLossesValueTotal)),
         unsettledCompanyShareOutstanding: unsettledTotal,
-        completedVoyages: Number(endedInRange.length || 0),
+        completedVoyages: completedVoyagesCount,
         settlementRatePct: Math.max(0, Math.min(100, toMoney(settlementRatePct))),
         avgDaysToSettle,
         emissionsKg,
