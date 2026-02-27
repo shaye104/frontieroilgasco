@@ -1267,12 +1267,12 @@
   gap: 0.75rem;
 }
 
-.voyage-settings-card {
+#voyageSettingsGrid .voyage-settings-card {
   position: relative;
   overflow-x: hidden;
 }
 
-.voyage-settings-add-row {
+#voyageSettingsGrid .voyage-settings-add-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.5rem;
@@ -1280,31 +1280,38 @@
   margin-bottom: 0.55rem;
 }
 
-.voyage-settings-add-row input {
+#voyageSettingsGrid .voyage-settings-add-row input {
   margin-bottom: 0;
+  min-width: 0;
 }
 
-.voyage-settings-add-actions {
+#voyageSettingsGrid .voyage-settings-add-actions {
   display: inline-flex;
   align-items: center;
 }
 
-.voyage-settings-list {
+#voyageSettingsGrid .voyage-settings-list {
   display: grid;
   gap: 0.35rem;
   overflow-x: hidden;
 }
 
-.voyage-settings-row {
-  display: grid;
+#voyageSettingsGrid .voyage-settings-row {
+  display: grid !important;
   grid-template-columns: minmax(0, 1fr) minmax(110px, 0.4fr) auto;
   gap: 0.45rem;
   align-items: center;
   padding: 0.45rem 0.25rem;
   border-top: 1px solid #e5ecf7;
+  min-width: 0;
 }
 
-.voyage-settings-row-header {
+#voyageSettingsGrid .voyage-settings-row > span {
+  min-width: 0;
+  display: block;
+}
+
+#voyageSettingsGrid .voyage-settings-row-header {
   border-top: none;
   padding-top: 0;
   color: #64748b;
@@ -1312,31 +1319,33 @@
   font-weight: 700;
 }
 
-.voyage-settings-value,
-.voyage-settings-updated {
+#voyageSettingsGrid .voyage-settings-value,
+#voyageSettingsGrid .voyage-settings-updated {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.voyage-settings-updated {
+#voyageSettingsGrid .voyage-settings-updated {
   color: #64748b;
   font-size: 0.84rem;
 }
 
-.voyage-settings-actions {
+#voyageSettingsGrid .voyage-settings-actions {
   display: inline-flex;
+  flex-wrap: nowrap;
   gap: 0.35rem;
   justify-self: end;
+  white-space: nowrap;
 }
 
-.voyage-settings-actions .btn {
+#voyageSettingsGrid .voyage-settings-actions .btn {
   min-height: 34px;
   padding: 0.35rem 0.62rem;
 }
 
-.voyage-settings-feedback {
+#voyageSettingsGrid .voyage-settings-feedback {
   position: absolute;
   top: 0.35rem;
   right: 0.35rem;
@@ -1346,7 +1355,7 @@
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
 }
 
-.voyage-settings-empty {
+#voyageSettingsGrid .voyage-settings-empty {
   color: #64748b;
 }
 
@@ -1361,27 +1370,27 @@
     grid-template-columns: 1fr;
   }
 
-  .voyage-settings-row {
+  #voyageSettingsGrid .voyage-settings-row {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       'value actions'
       'updated actions';
   }
 
-  .voyage-settings-row-header {
+  #voyageSettingsGrid .voyage-settings-row-header {
     display: none;
   }
 
-  .voyage-settings-value {
+  #voyageSettingsGrid .voyage-settings-value {
     grid-area: value;
   }
 
-  .voyage-settings-updated {
+  #voyageSettingsGrid .voyage-settings-updated {
     grid-area: updated;
     font-size: 0.78rem;
   }
 
-  .voyage-settings-actions {
+  #voyageSettingsGrid .voyage-settings-actions {
     grid-area: actions;
     align-self: center;
   }
