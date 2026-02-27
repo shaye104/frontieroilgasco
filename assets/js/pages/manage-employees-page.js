@@ -1,7 +1,6 @@
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260227g';
-import { initializeYear } from '../modules/year.js';
+import { initIntranetLayout } from '../modules/intranet-layout.js?v=20260227h';
 
-initIntranetPageGuard({
+initIntranetLayout({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
@@ -9,7 +8,7 @@ initIntranetPageGuard({
 }).then((session) => {
   if (!session) return;
 
-  import('../modules/manage-employees.js?v=20260227g').then(({ initManageEmployees }) =>
+  import('../modules/manage-employees.js?v=20260227h').then(({ initManageEmployees }) =>
     initManageEmployees(
     {
       feedbackSelector: '#manageEmployeesFeedback',
@@ -42,5 +41,3 @@ initIntranetPageGuard({
     })
   );
 });
-
-initializeYear();

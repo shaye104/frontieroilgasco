@@ -1,6 +1,87 @@
 import { showMessage } from './notice.js';
 import { getPreferredUserLabel, hasPermission, renderIntranetNavbar } from './nav.js?v=20260222a';
-import { isCoreAllowedPagePath, isCoreOnlyMode } from './app-mode.js?v=20260222a';
+
+function normalizePath(pathname) {
+  if (!pathname || pathname === '/') return '/';
+  return String(pathname).replace(/\/+$/, '') || '/';
+}
+
+function normalizeAppMode(value) {
+  const mode = String(value || '').trim().toLowerCase();
+  return mode === 'core' ? 'core' : 'full';
+}
+
+function isCoreOnlyMode(session) {
+  return normalizeAppMode(session?.appMode) === 'core' || Boolean(session?.isCoreMode);
+}
+
+const CORE_ALLOWED_PAGE_EXACT = new Set([
+  '/my-details',
+  '/my-details.html',
+  '/voyages',
+  '/voyage-tracker',
+  '/voyage-tracker.html',
+  '/voyage-archive',
+  '/voyage-archive.html',
+  '/voyage-details',
+  '/voyage-details.html',
+  '/finances',
+  '/finances.html',
+  '/admin',
+  '/admin-panel',
+  '/admin-panel.html',
+  '/admin/employees',
+  '/admin/activity',
+  '/admin/audit',
+  '/admin/voyages',
+  '/admin/user-groups',
+  '/admin/user-ranks',
+  '/admin/site-settings',
+  '/roles',
+  '/roles.html',
+  '/user-ranks',
+  '/user-ranks.html',
+  '/site-settings',
+  '/site-settings.html',
+  '/activity-tracker',
+  '/activity-tracker.html',
+  '/audit-log',
+  '/audit-log.html',
+  '/voyage-settings',
+  '/voyage-settings.html',
+  '/access-setup',
+  '/access-setup.html',
+  '/not-permitted',
+  '/not-permitted.html',
+  '/onboarding',
+  '/onboarding.html',
+  '/onboarding/status'
+]);
+
+const CORE_ALLOWED_PAGE_PREFIXES = [
+  '/voyages/',
+  '/finances/',
+  '/admin/employees/',
+  '/admin/activity/',
+  '/admin/audit/',
+  '/admin/voyages/',
+  '/admin/user-groups/',
+  '/admin/user-ranks/',
+  '/admin/site-settings/',
+  '/activity-tracker/',
+  '/audit-log/',
+  '/roles/',
+  '/user-ranks/',
+  '/site-settings/',
+  '/access-setup/',
+  '/onboarding/'
+];
+
+function isCoreAllowedPagePath(pathname) {
+  const path = normalizePath(pathname);
+  if (CORE_ALLOWED_PAGE_EXACT.has(path)) return true;
+  return CORE_ALLOWED_PAGE_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
 
 async function fetchSession() {
   const response = await fetch('/api/auth/session', {
