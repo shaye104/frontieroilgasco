@@ -32,6 +32,10 @@ function formatDate(value) {
   return dateTimeFormatter.format(date);
 }
 
+function actorDisplay(row) {
+  return text(row?.actorRobloxUsername || row?.actorName || row?.actorDiscordId || 'System');
+}
+
 function renderRows(target, rows) {
   if (!target) return;
   if (!rows.length) {
@@ -46,7 +50,7 @@ function renderRows(target, rows) {
         <td>${Number(row.id || 0)}</td>
         <td>${escapeHtml(formatDate(row.createdAt))}</td>
         <td>${escapeHtml(text(row.actionType))}</td>
-        <td>${escapeHtml(text(row.actorName || row.actorDiscordId))}</td>
+        <td>${escapeHtml(actorDisplay(row))}</td>
         <td>${row.targetEmployeeId ? Number(row.targetEmployeeId) : 'N/A'}</td>
         <td>${escapeHtml(text(row.summary))}</td>
       </tr>`
@@ -150,4 +154,3 @@ export async function initAuditLog(config) {
 
   await refresh();
 }
-

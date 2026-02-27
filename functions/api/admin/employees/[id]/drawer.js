@@ -47,18 +47,21 @@ export async function onRequestGet(context) {
     env.DB
       .prepare(
         `SELECT
-           id,
-           created_at,
-           actor_name,
-           actor_discord_user_id,
-           actor_employee_id,
-           action_type,
-           target_employee_id,
-           summary,
-           metadata_json
-         FROM admin_activity_events
-         WHERE target_employee_id = ?
-         ORDER BY created_at DESC, id DESC
+           ev.id,
+           ev.created_at,
+           ev.actor_name,
+           ev.actor_discord_user_id,
+           ev.actor_employee_id,
+           ev.action_type,
+           ev.target_employee_id,
+           ev.summary,
+           ev.metadata_json,
+           COALESCE(actor_by_id.roblox_username, actor_by_discord.roblox_username) AS actor_roblox_username
+         FROM admin_activity_events ev
+         LEFT JOIN employees actor_by_id ON actor_by_id.id = ev.actor_employee_id
+         LEFT JOIN employees actor_by_discord ON actor_by_discord.discord_user_id = ev.actor_discord_user_id
+         WHERE ev.target_employee_id = ?
+         ORDER BY ev.created_at DESC, ev.id DESC
          LIMIT ?`
       )
       .bind(employeeId, activityPageSize)
@@ -90,6 +93,7 @@ export async function onRequestGet(context) {
   let activity = (activityRows?.results || []).map((row) => ({
     id: row.id,
     createdAt: row.created_at,
+    actorRobloxUsername: row.actor_roblox_username || null,
     actorName: row.actor_name || null,
     actorDiscordId: row.actor_discord_user_id || null,
     actorEmployeeId: row.actor_employee_id || null,

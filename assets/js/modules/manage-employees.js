@@ -323,7 +323,7 @@ function renderDrawerActivity(target, payload) {
             <p class="finance-inline-caption">${escapeHtml(text(entry.summary))}</p>
             <p class="finance-inline-caption">${escapeHtml(formatDate(entry.createdAt, true))}</p>
           </div>
-          <span class="role-id">${escapeHtml(text(entry.actorName || entry.actorDiscordId || 'System'))}</span>
+          <span class="role-id">${escapeHtml(text(entry.actorRobloxUsername || entry.actorName || entry.actorDiscordId || 'System'))}</span>
         </li>
       `
         )
@@ -351,7 +351,7 @@ function renderDrawerNotes(target, payload, showSystem, notesFeedback, selectedE
     ...systemActivity.map((entry) => ({
       id: `activity-${entry.id}`,
       note: `${text(entry.actionType)}: ${text(entry.summary)}`,
-      authored_by: entry.actorName || entry.actorDiscordId || 'System',
+      authored_by: entry.actorRobloxUsername || entry.actorName || entry.actorDiscordId || 'System',
       created_at: entry.createdAt,
       isSystem: true
     }))

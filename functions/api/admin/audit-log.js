@@ -6,12 +6,23 @@ function normalize(value) {
 }
 
 function toCsv(rows) {
-  const header = ['id', 'createdAt', 'actorName', 'actorDiscordId', 'actorEmployeeId', 'actionType', 'targetEmployeeId', 'summary'];
+  const header = [
+    'id',
+    'createdAt',
+    'actorRobloxUsername',
+    'actorName',
+    'actorDiscordId',
+    'actorEmployeeId',
+    'actionType',
+    'targetEmployeeId',
+    'summary'
+  ];
   const lines = [header.join(',')];
   for (const row of rows) {
     const values = [
       row.id,
       row.createdAt,
+      row.actorRobloxUsername || '',
       row.actorName || '',
       row.actorDiscordId || '',
       row.actorEmployeeId || '',
@@ -45,52 +56,68 @@ export async function onRequestGet(context) {
   const whereParts = [];
   const whereBindings = [];
   if (search) {
-    whereParts.push('(LOWER(COALESCE(summary, \'\')) LIKE ? OR LOWER(COALESCE(actor_name, \'\')) LIKE ? OR CAST(COALESCE(target_employee_id, 0) AS TEXT) LIKE ?)');
-    whereBindings.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    whereParts.push(`(
+      LOWER(COALESCE(ev.summary, '')) LIKE ?
+      OR LOWER(COALESCE(ev.actor_name, '')) LIKE ?
+      OR LOWER(COALESCE(actor_by_id.roblox_username, actor_by_discord.roblox_username, '')) LIKE ?
+      OR CAST(COALESCE(ev.target_employee_id, 0) AS TEXT) LIKE ?
+    )`);
+    whereBindings.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
   }
   if (actionType) {
-    whereParts.push('action_type = ?');
+    whereParts.push('ev.action_type = ?');
     whereBindings.push(actionType);
   }
   if (actor) {
-    whereParts.push('(LOWER(COALESCE(actor_name, \'\')) LIKE ? OR LOWER(COALESCE(actor_discord_user_id, \'\')) LIKE ?)');
-    whereBindings.push(`%${actor}%`, `%${actor}%`);
+    whereParts.push(`(
+      LOWER(COALESCE(ev.actor_name, '')) LIKE ?
+      OR LOWER(COALESCE(ev.actor_discord_user_id, '')) LIKE ?
+      OR LOWER(COALESCE(actor_by_id.roblox_username, actor_by_discord.roblox_username, '')) LIKE ?
+    )`);
+    whereBindings.push(`%${actor}%`, `%${actor}%`, `%${actor}%`);
   }
   if (Number.isInteger(targetEmployeeId) && targetEmployeeId > 0) {
-    whereParts.push('target_employee_id = ?');
+    whereParts.push('ev.target_employee_id = ?');
     whereBindings.push(targetEmployeeId);
   }
   if (dateFrom) {
-    whereParts.push("DATE(created_at) >= DATE(?)");
+    whereParts.push("DATE(ev.created_at) >= DATE(?)");
     whereBindings.push(dateFrom);
   }
   if (dateTo) {
-    whereParts.push("DATE(created_at) <= DATE(?)");
+    whereParts.push("DATE(ev.created_at) <= DATE(?)");
     whereBindings.push(dateTo);
   }
   const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+  const fromSql = `
+    FROM admin_activity_events ev
+    LEFT JOIN employees actor_by_id ON actor_by_id.id = ev.actor_employee_id
+    LEFT JOIN employees actor_by_discord ON actor_by_discord.discord_user_id = ev.actor_discord_user_id
+  `;
   const dbStartedAt = Date.now();
 
   const baseSelectSql = `
     SELECT
-      id,
-      created_at,
-      actor_name,
-      actor_discord_user_id,
-      actor_employee_id,
-      action_type,
-      target_employee_id,
-      summary,
-      metadata_json
-    FROM admin_activity_events
+      ev.id,
+      ev.created_at,
+      ev.actor_name,
+      ev.actor_discord_user_id,
+      ev.actor_employee_id,
+      ev.action_type,
+      ev.target_employee_id,
+      ev.summary,
+      ev.metadata_json,
+      COALESCE(actor_by_id.roblox_username, actor_by_discord.roblox_username) AS actor_roblox_username
+    ${fromSql}
     ${whereSql}
-    ORDER BY created_at DESC, id DESC`;
+    ORDER BY ev.created_at DESC, ev.id DESC`;
 
   if (format === 'csv') {
     const exportRows = await env.DB.prepare(`${baseSelectSql} LIMIT 1000`).bind(...whereBindings).all();
     const normalizedRows = (exportRows?.results || []).map((row) => ({
       id: row.id,
       createdAt: row.created_at,
+      actorRobloxUsername: row.actor_roblox_username || null,
       actorName: row.actor_name || null,
       actorDiscordId: row.actor_discord_user_id || null,
       actorEmployeeId: row.actor_employee_id || null,
@@ -110,7 +137,7 @@ export async function onRequestGet(context) {
 
   const [rows, totalRow] = await Promise.all([
     env.DB.prepare(`${baseSelectSql} LIMIT ? OFFSET ?`).bind(...whereBindings, pageSize, offset).all(),
-    env.DB.prepare(`SELECT COUNT(*) AS total FROM admin_activity_events ${whereSql}`).bind(...whereBindings).first()
+    env.DB.prepare(`SELECT COUNT(*) AS total ${fromSql} ${whereSql}`).bind(...whereBindings).first()
   ]);
 
   const total = Number(totalRow?.total || 0);
@@ -122,6 +149,7 @@ export async function onRequestGet(context) {
     events: (rows?.results || []).map((row) => ({
       id: row.id,
       createdAt: row.created_at,
+      actorRobloxUsername: row.actor_roblox_username || null,
       actorName: row.actor_name || null,
       actorDiscordId: row.actor_discord_user_id || null,
       actorEmployeeId: row.actor_employee_id || null,
@@ -145,4 +173,3 @@ export async function onRequestGet(context) {
     timing: { dbMs, totalMs }
   });
 }
-
