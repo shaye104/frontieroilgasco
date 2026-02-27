@@ -536,6 +536,13 @@ export function cancelVoyage(voyageId) {
   return requestJson(`/api/voyages/${voyageId}/cancel`, { method: 'DELETE' });
 }
 
+export function deleteVoyage(voyageId, payload) {
+  return requestJson(`/api/voyages/${voyageId}/delete`, {
+    method: 'POST',
+    body: JSON.stringify(payload || {})
+  });
+}
+
 export function searchEmployees(options = {}) {
   const params = new URLSearchParams();
   if (options.username) params.set('username', String(options.username));

@@ -92,9 +92,9 @@ export async function onRequestPut(context) {
 
   const duplicateOngoing = await env.DB
     .prepare(
-      `SELECT id
+       `SELECT id
        FROM voyages
-       WHERE status = 'ONGOING' AND id != ? AND LOWER(vessel_name) = LOWER(?) AND LOWER(vessel_callsign) = LOWER(?)
+       WHERE deleted_at IS NULL AND status = 'ONGOING' AND id != ? AND LOWER(vessel_name) = LOWER(?) AND LOWER(vessel_callsign) = LOWER(?)
        LIMIT 1`
     )
     .bind(voyageId, vesselName, vesselCallsign)

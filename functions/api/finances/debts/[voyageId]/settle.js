@@ -26,7 +26,7 @@ export async function onRequestPost(context) {
          COALESCE(v.company_share_status, 'UNSETTLED') AS company_share_status,
          v.officer_of_watch_employee_id
        FROM voyages v
-       WHERE v.id = ?`
+       WHERE v.id = ? AND v.deleted_at IS NULL`
     )
     .bind(voyageId)
     .first();

@@ -42,20 +42,20 @@ export async function onRequestGet(context) {
       env.DB
         .prepare(
           `${baseSelect}
-           WHERE v.status = 'ONGOING'
+           WHERE v.deleted_at IS NULL AND v.status = 'ONGOING'
            ORDER BY COALESCE(v.started_at, v.created_at) DESC, v.id DESC`
         )
         .all(),
       env.DB
         .prepare(
           `${baseSelect}
-           WHERE v.status = 'ENDED'
+           WHERE v.deleted_at IS NULL AND v.status = 'ENDED'
            ORDER BY COALESCE(v.ended_at, v.started_at, v.created_at) DESC, v.id DESC
            LIMIT ?`
         )
         .bind(archivedLimit)
         .all(),
-      env.DB.prepare(`SELECT status, COUNT(*) AS total FROM voyages GROUP BY status`).all()
+      env.DB.prepare(`SELECT status, COUNT(*) AS total FROM voyages WHERE deleted_at IS NULL GROUP BY status`).all()
     ]);
 
     const toView = (voyage) => ({
@@ -107,7 +107,8 @@ export async function onRequestGet(context) {
         permissions: {
           canCreate: hasPermission(session, 'voyages.create'),
           canEdit: hasPermission(session, 'voyages.edit'),
-          canEnd: hasPermission(session, 'voyages.end')
+          canEnd: hasPermission(session, 'voyages.end'),
+          canDelete: hasPermission(session, 'voyages.delete')
         }
       },
       { cacheControl: 'private, max-age=20, stale-while-revalidate=40' }
@@ -121,10 +122,10 @@ export async function onRequestGet(context) {
   const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize')) || 20));
   const offset = (page - 1) * pageSize;
 
-  let whereSql = '';
+  let whereSql = 'WHERE v.deleted_at IS NULL';
   const whereBindings = [];
   if (statusFilter) {
-    whereSql = 'WHERE v.status = ?';
+    whereSql += ' AND v.status = ?';
     whereBindings.push(statusFilter);
   }
   const orderSql =
@@ -202,7 +203,8 @@ export async function onRequestGet(context) {
     permissions: {
       canCreate: hasPermission(session, 'voyages.create'),
       canEdit: hasPermission(session, 'voyages.edit'),
-      canEnd: hasPermission(session, 'voyages.end')
+      canEnd: hasPermission(session, 'voyages.end'),
+      canDelete: hasPermission(session, 'voyages.delete')
     }
     },
     { cacheControl: 'private, max-age=20, stale-while-revalidate=40' }
@@ -267,7 +269,7 @@ export async function onRequestPost(context) {
     .prepare(
       `SELECT id
        FROM voyages
-       WHERE status = 'ONGOING' AND LOWER(vessel_name) = LOWER(?) AND LOWER(vessel_callsign) = LOWER(?)
+       WHERE deleted_at IS NULL AND status = 'ONGOING' AND LOWER(vessel_name) = LOWER(?) AND LOWER(vessel_callsign) = LOWER(?)
        LIMIT 1`
     )
     .bind(vesselName, vesselCallsign)

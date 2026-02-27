@@ -128,7 +128,7 @@ export async function onRequestGet(context) {
            v.departure_port,
            v.destination_port
          FROM voyages v
-         WHERE v.status IN ('ONGOING', 'ENDED')
+         WHERE v.deleted_at IS NULL AND v.status IN ('ONGOING', 'ENDED')
          ORDER BY CASE WHEN v.status = 'ONGOING' THEN 0 ELSE 1 END, v.ended_at DESC, v.id DESC
          LIMIT 120`
       )
@@ -232,7 +232,7 @@ export async function onRequestPost(context) {
   if (!category) return json({ error: 'Category is required.' }, 400);
 
   if (voyageId) {
-    const voyage = await env.DB.prepare(`SELECT id FROM voyages WHERE id = ?`).bind(voyageId).first();
+    const voyage = await env.DB.prepare(`SELECT id FROM voyages WHERE id = ? AND deleted_at IS NULL`).bind(voyageId).first();
     if (!voyage) return json({ error: 'Related voyage not found.' }, 400);
   }
 

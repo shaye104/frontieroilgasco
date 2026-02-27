@@ -38,7 +38,7 @@ export async function onRequestGet(context) {
            ROUND(COALESCE(v.profit, 0)) AS net_profit
          FROM voyage_participants vp
          INNER JOIN voyages v ON v.id = vp.voyage_id
-         WHERE vp.employee_id = ?
+         WHERE vp.employee_id = ? AND v.deleted_at IS NULL
          ORDER BY COALESCE(v.ended_at, v.started_at) DESC, v.id DESC
          LIMIT 8`
       )

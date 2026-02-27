@@ -90,7 +90,7 @@ export async function onRequestGet(context) {
         ) AS monthly_voyages
        FROM voyage_participants vp
        INNER JOIN voyages v ON v.id = vp.voyage_id
-       WHERE vp.employee_id = ? AND v.status = 'ENDED'`
+       WHERE vp.employee_id = ? AND v.deleted_at IS NULL AND v.status = 'ENDED'`
     )
     .bind(employee.id)
     .first();

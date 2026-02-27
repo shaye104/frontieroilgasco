@@ -209,7 +209,7 @@ export async function onRequestGet(context) {
          e.roblox_username AS officer_name
        FROM voyages v
        LEFT JOIN employees e ON e.id = v.officer_of_watch_employee_id
-       WHERE v.status = 'ENDED' AND v.ended_at IS NOT NULL
+       WHERE v.deleted_at IS NULL AND v.status = 'ENDED' AND v.ended_at IS NOT NULL
          AND v.ended_at >= ? AND v.ended_at <= ?
        ORDER BY v.ended_at ASC, v.id ASC`
     )
@@ -326,7 +326,7 @@ export async function onRequestGet(context) {
   const emissionsKg = toMoney(Math.max(0, crudeSoldTotal) * 430 + Math.max(0, gasolineSoldTotal) * 373);
 
   const unsettledBindings = [];
-  let unsettledWhere = `v.status = 'ENDED' AND COALESCE(v.company_share_status, 'UNSETTLED') = 'UNSETTLED'
+  let unsettledWhere = `v.deleted_at IS NULL AND v.status = 'ENDED' AND COALESCE(v.company_share_status, 'UNSETTLED') = 'UNSETTLED'
     AND ROUND(COALESCE(v.company_share_amount, v.company_share, 0)) > 0`;
 
   if (unsettledScope === 'range') {
@@ -389,7 +389,7 @@ export async function onRequestGet(context) {
          v.company_share_settled_at,
          ROUND(COALESCE(v.company_share_amount, v.company_share, 0)) AS company_share_amount
        FROM voyages v
-       WHERE v.status = 'ENDED'
+       WHERE v.deleted_at IS NULL AND v.status = 'ENDED'
          AND v.ended_at IS NOT NULL
          AND v.ended_at <= ?
          AND ROUND(COALESCE(v.company_share_amount, v.company_share, 0)) > 0

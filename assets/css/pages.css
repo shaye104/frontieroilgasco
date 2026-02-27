@@ -1262,6 +1262,131 @@
   font-weight: 700;
 }
 
+#voyageSettingsGrid.card-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.voyage-settings-card {
+  position: relative;
+  overflow-x: hidden;
+}
+
+.voyage-settings-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: start;
+  margin-bottom: 0.55rem;
+}
+
+.voyage-settings-add-row input {
+  margin-bottom: 0;
+}
+
+.voyage-settings-add-actions {
+  display: inline-flex;
+  align-items: center;
+}
+
+.voyage-settings-list {
+  display: grid;
+  gap: 0.35rem;
+  overflow-x: hidden;
+}
+
+.voyage-settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 0.4fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+  padding: 0.45rem 0.25rem;
+  border-top: 1px solid #e5ecf7;
+}
+
+.voyage-settings-row-header {
+  border-top: none;
+  padding-top: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.voyage-settings-value,
+.voyage-settings-updated {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voyage-settings-updated {
+  color: #64748b;
+  font-size: 0.84rem;
+}
+
+.voyage-settings-actions {
+  display: inline-flex;
+  gap: 0.35rem;
+  justify-self: end;
+}
+
+.voyage-settings-actions .btn {
+  min-height: 34px;
+  padding: 0.35rem 0.62rem;
+}
+
+.voyage-settings-feedback {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  margin-top: 0;
+  z-index: 2;
+  max-width: min(360px, calc(100% - 0.7rem));
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+}
+
+.voyage-settings-empty {
+  color: #64748b;
+}
+
+@media (max-width: 1380px) {
+  #voyageSettingsGrid.card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  #voyageSettingsGrid.card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .voyage-settings-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'value actions'
+      'updated actions';
+  }
+
+  .voyage-settings-row-header {
+    display: none;
+  }
+
+  .voyage-settings-value {
+    grid-area: value;
+  }
+
+  .voyage-settings-updated {
+    grid-area: updated;
+    font-size: 0.78rem;
+  }
+
+  .voyage-settings-actions {
+    grid-area: actions;
+    align-self: center;
+  }
+}
+
 .voyage-console-sections {
   display: grid;
   gap: 1.25rem;

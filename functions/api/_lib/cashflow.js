@@ -43,6 +43,7 @@ export async function getCashStartingBalance(env) {
 
 export async function getSettledCompanyShareTotal(env, options = {}) {
   const where = [
+    `v.deleted_at IS NULL`,
     `v.status = 'ENDED'`,
     `COALESCE(v.company_share_status, 'UNSETTLED') = 'SETTLED'`,
     `ROUND(COALESCE(v.company_share_amount, v.company_share, 0)) > 0`

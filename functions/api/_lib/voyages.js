@@ -45,7 +45,7 @@ export async function getVoyageBase(env, voyageId) {
        FROM voyages v
        LEFT JOIN employees ow ON ow.id = v.officer_of_watch_employee_id
        LEFT JOIN employees owner ON owner.id = v.owner_employee_id
-       WHERE v.id = ?`
+       WHERE v.id = ? AND v.deleted_at IS NULL`
     )
     .bind(voyageId)
     .first();

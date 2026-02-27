@@ -52,6 +52,33 @@
         </section>
       </div>
     </main>
-    <script type="module" src="/assets/js/pages/voyage-archive-page.js?v=20260221d"></script>
+
+    <section id="deleteVoyageModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Delete Voyage</h2>
+          <button class="btn btn-secondary" type="button" data-close-voyage-delete-modal>Close</button>
+        </div>
+        <div id="deleteVoyageSummary" class="finance-inline-caption"></div>
+        <form id="deleteVoyageForm">
+          <input id="deleteVoyageId" type="hidden" />
+          <label for="deleteVoyageReason">Reason (required)</label>
+          <textarea id="deleteVoyageReason" rows="3" required></textarea>
+          <label for="deleteVoyageConfirm">Type DELETE to confirm</label>
+          <input id="deleteVoyageConfirm" type="text" required />
+          <label class="finance-toggle-wrap">
+            <input id="deleteVoyageAcknowledge" type="checkbox" />
+            I understand this action cannot be undone.
+          </label>
+          <div id="deleteVoyageModalFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div class="modal-actions">
+            <button id="deleteVoyageConfirmBtn" class="btn btn-danger" type="submit" disabled>Delete Voyage</button>
+            <button class="btn btn-secondary" type="button" data-close-voyage-delete-modal>Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <script type="module" src="/assets/js/pages/voyage-archive-page.js?v=20260227a"></script>
   </body>
 </html>

@@ -34,6 +34,7 @@ export async function ensureCoreSchema(env) {
     ['voyages.create', 'voyages', 'Create Voyages', 'Create voyage entries.'],
     ['voyages.edit', 'voyages', 'Edit Voyages', 'Edit voyage entries.'],
     ['voyages.end', 'voyages', 'End Voyages', 'End voyages and finalize voyage accounting.'],
+    ['voyages.delete', 'voyages', 'Delete Voyages', 'Delete archived voyages with financial reversal and audit trail.'],
     ['voyages.config.manage', 'voyages', 'Manage Voyage Config', 'Manage voyage config lists for ports and vessels.'],
     ['cargo.manage', 'voyages', 'Manage Cargo', 'Manage cargo type definitions for manifests.'],
     ['finances.view', 'finances', 'View Finances', 'View the finance dashboard and debt summaries.'],
@@ -245,10 +246,14 @@ export async function ensureCoreSchema(env) {
       company_share_amount REAL,
       cargo_lost_json TEXT,
       settlement_lines_json TEXT,
+      deleted_at TEXT,
+      deleted_by_employee_id INTEGER,
+      deleted_reason TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(owner_employee_id) REFERENCES employees(id),
-      FOREIGN KEY(officer_of_watch_employee_id) REFERENCES employees(id)
+      FOREIGN KEY(officer_of_watch_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(deleted_by_employee_id) REFERENCES employees(id)
     )`,
     `CREATE TABLE IF NOT EXISTS voyage_crew_members (
       voyage_id INTEGER NOT NULL,
@@ -454,6 +459,15 @@ export async function ensureCoreSchema(env) {
   if (!voyageColumnNames.has('company_share_amount')) {
     await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN company_share_amount REAL`).run();
   }
+  if (!voyageColumnNames.has('deleted_at')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN deleted_at TEXT`).run();
+  }
+  if (!voyageColumnNames.has('deleted_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN deleted_by_employee_id INTEGER`).run();
+  }
+  if (!voyageColumnNames.has('deleted_reason')) {
+    await env.DB.prepare(`ALTER TABLE voyages ADD COLUMN deleted_reason TEXT`).run();
+  }
 
   const voyageLogColumns = await env.DB.prepare(`PRAGMA table_info(voyage_logs)`).all();
   const voyageLogColumnNames = new Set((voyageLogColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
@@ -475,7 +489,10 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_rank_group_links_rank_id ON rank_group_links(rank_id)`,
     `CREATE INDEX IF NOT EXISTS idx_rank_group_links_group_key ON rank_group_links(group_key)`,
     `CREATE INDEX IF NOT EXISTS idx_voyages_status ON voyages(status)`,
+    `CREATE INDEX IF NOT EXISTS idx_voyages_deleted_at ON voyages(deleted_at)`,
     `CREATE INDEX IF NOT EXISTS idx_voyages_ended_at ON voyages(ended_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_settlement_audit_voyage ON finance_settlement_audit(voyage_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_finance_cash_ledger_voyage ON finance_cash_ledger_entries(voyage_id)`,
     `CREATE INDEX IF NOT EXISTS idx_voyages_company_share_status ON voyages(company_share_status)`,
     `CREATE UNIQUE INDEX IF NOT EXISTS ux_voyages_active_vessel_callsign
       ON voyages (LOWER(vessel_name), LOWER(vessel_callsign))

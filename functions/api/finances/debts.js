@@ -49,6 +49,7 @@ export async function onRequestGet(context) {
   const offset = (page - 1) * pageSize;
 
   const whereClauses = [
+    `v.deleted_at IS NULL`,
     `v.status = 'ENDED'`,
     `ROUND(COALESCE(v.company_share_amount, v.company_share, 0)) > 0`
   ];
