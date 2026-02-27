@@ -1,5 +1,5 @@
 import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
-import { calculateTenureDays, createOrRefreshAccessRequest, ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
+import { calculateTenureDays, ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { enrichSessionWithPermissions } from '../_lib/permissions.js';
 
 export async function onRequestGet(context) {
@@ -30,11 +30,6 @@ export async function onRequestGet(context) {
         disciplinaryHistory: []
       });
     }
-
-    await createOrRefreshAccessRequest(env, {
-      discordUserId: session.userId,
-      displayName: session.displayName
-    });
 
     return cachedJson(request, {
       loggedIn: true,

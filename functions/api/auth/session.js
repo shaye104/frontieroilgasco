@@ -1,5 +1,4 @@
 import { json, readSessionFromRequest } from './_lib/auth.js';
-import { createOrRefreshAccessRequest, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { ADMIN_PANEL_ENTRY_PERMISSIONS, buildPermissionContext, hasAnyPermission, hasPermission } from '../_lib/permissions.js';
 import { normalizeAppMode } from '../_lib/app-mode.js';
 
@@ -24,12 +23,6 @@ export async function onRequest(context) {
       isSuperAdmin: Boolean(payload.isAdmin)
     });
     employee = permissionContext.employee;
-    if (!payload.isAdmin && !employee) {
-      await createOrRefreshAccessRequest(env, {
-        discordUserId: payload.userId,
-        displayName: payload.displayName
-      });
-    }
   } catch (error) {
     return json({ loggedIn: false, error: error.message || 'Database error.' }, 500);
   }

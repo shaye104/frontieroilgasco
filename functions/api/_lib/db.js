@@ -8,6 +8,7 @@ let schemaBootstrapPromise = null;
 let schemaCheckedAtMs = 0;
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
 const CORE_DATA_SEED_VERSION = '2026-02-27-core-v2';
+const SCHEMA_BOOTSTRAP_VERSION = '2026-02-27-schema-v1';
 
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
@@ -16,6 +17,18 @@ export async function ensureCoreSchema(env) {
   if (schemaBootstrapPromise) return schemaBootstrapPromise;
 
   schemaBootstrapPromise = (async () => {
+  // Fast-path for warm schemas on cold isolates: avoid full bootstrap probes.
+  try {
+    const schemaMarker = await env.DB
+      .prepare(`SELECT meta_value FROM app_runtime_meta WHERE meta_key = 'schema_bootstrap_version'`)
+      .first();
+    if (String(schemaMarker?.meta_value || '') === SCHEMA_BOOTSTRAP_VERSION) {
+      schemaCheckedAtMs = Date.now();
+      return;
+    }
+  } catch {
+    // Table may not exist yet; continue to full bootstrap.
+  }
 
   const permissionSeed = [
     ['super.admin', 'roles', 'Super Admin', 'Global bypass permission.'],
@@ -669,6 +682,16 @@ export async function ensureCoreSchema(env) {
       .bind(CORE_DATA_SEED_VERSION)
       .run();
   }
+  await env.DB
+    .prepare(
+      `INSERT INTO app_runtime_meta (meta_key, meta_value, updated_at)
+       VALUES ('schema_bootstrap_version', ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(meta_key) DO UPDATE SET
+         meta_value = excluded.meta_value,
+         updated_at = excluded.updated_at`
+    )
+    .bind(SCHEMA_BOOTSTRAP_VERSION)
+    .run();
   schemaCheckedAtMs = Date.now();
   })();
 
