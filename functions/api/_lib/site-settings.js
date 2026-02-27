@@ -2,6 +2,7 @@ const DEFAULT_SITE_SETTINGS = {
   brandName: 'Frontier Oil & Gas Company',
   siteTagline: 'Internal Operations Portal',
   themeColor: '#112d72',
+  headerLogoUrl: '',
   faviconUrl: '/assets/brand/favicon.svg',
   appleTouchIconUrl: '/assets/brand/favicon.svg',
   ogTitle: 'Frontier Oil & Gas Company',
@@ -30,6 +31,14 @@ function normalizeUrlValue(value, fallback) {
   if (normalized.startsWith('/')) return normalized;
   if (/^https?:\/\//i.test(normalized)) return normalized;
   return fallback;
+}
+
+function normalizeOptionalUrlValue(value) {
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return '';
+  if (normalized.startsWith('/')) return normalized;
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  return '';
 }
 
 export function getDefaultSiteSettings() {
@@ -67,6 +76,7 @@ export async function readSiteSettings(env, { bypassCache = false } = {}) {
     brandName: normalizeSettingValue(map.brandName, DEFAULT_SITE_SETTINGS.brandName),
     siteTagline: normalizeSettingValue(map.siteTagline, DEFAULT_SITE_SETTINGS.siteTagline),
     themeColor: normalizeThemeColor(map.themeColor),
+    headerLogoUrl: normalizeOptionalUrlValue(map.headerLogoUrl),
     faviconUrl: normalizeUrlValue(map.faviconUrl, DEFAULT_SITE_SETTINGS.faviconUrl),
     appleTouchIconUrl: normalizeUrlValue(map.appleTouchIconUrl, DEFAULT_SITE_SETTINGS.appleTouchIconUrl),
     ogTitle: normalizeSettingValue(map.ogTitle, DEFAULT_SITE_SETTINGS.ogTitle),
@@ -91,6 +101,7 @@ export async function writeSiteSettings(env, updates, updatedBy = '') {
     brandName: normalizeSettingValue(merged.brandName, DEFAULT_SITE_SETTINGS.brandName),
     siteTagline: normalizeSettingValue(merged.siteTagline, DEFAULT_SITE_SETTINGS.siteTagline),
     themeColor: normalizeThemeColor(merged.themeColor),
+    headerLogoUrl: normalizeOptionalUrlValue(merged.headerLogoUrl),
     faviconUrl: normalizeUrlValue(merged.faviconUrl, DEFAULT_SITE_SETTINGS.faviconUrl),
     appleTouchIconUrl: normalizeUrlValue(merged.appleTouchIconUrl, DEFAULT_SITE_SETTINGS.appleTouchIconUrl),
     ogTitle: normalizeSettingValue(merged.ogTitle, DEFAULT_SITE_SETTINGS.ogTitle),

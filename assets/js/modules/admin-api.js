@@ -204,6 +204,31 @@ export function deleteAdminRole(roleId) {
   });
 }
 
+export function listRoleMembers(roleId, query = '') {
+  const params = new URLSearchParams();
+  const q = String(query || '').trim();
+  if (q) params.set('query', q);
+  params.set('limit', '12');
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/admin/roles/${encodeURIComponent(String(roleId))}/members${suffix}`, { method: 'GET' });
+}
+
+export function addRoleMember(roleId, employeeId) {
+  return requestJson(`/api/admin/roles/${encodeURIComponent(String(roleId))}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ employeeId })
+  });
+}
+
+export function removeRoleMember(roleId, employeeId) {
+  return requestJson(
+    `/api/admin/roles/${encodeURIComponent(String(roleId))}/members?employeeId=${encodeURIComponent(String(employeeId))}`,
+    {
+      method: 'DELETE'
+    }
+  );
+}
+
 export function reorderAdminRole(payload) {
   return requestJson('/api/admin/roles/reorder', {
     method: 'POST',
@@ -625,9 +650,27 @@ export function updateVoyageShipStatus(voyageId, shipStatus) {
 }
 
 export function cancelVoyage(voyageId) {
-  return requestJson(`/api/voyages/${voyageId}/cancel`, { method: 'DELETE' }).catch(async (error) => {
-    const message = String(error?.message || '');
-    if (!message.includes('405')) throw error;
+  return requestJson(`/api/voyages/${voyageId}`, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'cancel' })
+  }).catch(async (error) => {
+    const status = Number(error?.status || 0);
+    if (status && status !== 404 && status !== 405) throw error;
+
+    try {
+      return await requestJson(`/api/voyages/${voyageId}`, { method: 'DELETE' });
+    } catch (deleteError) {
+      const deleteStatus = Number(deleteError?.status || 0);
+      if (deleteStatus && deleteStatus !== 404 && deleteStatus !== 405) throw deleteError;
+    }
+
+    try {
+      return await requestJson(`/api/voyages/${voyageId}/cancel`, { method: 'DELETE' });
+    } catch (legacyDeleteError) {
+      const legacyStatus = Number(legacyDeleteError?.status || 0);
+      if (legacyStatus && legacyStatus !== 405) throw legacyDeleteError;
+    }
+
     return requestJson(`/api/voyages/${voyageId}/cancel`, { method: 'POST' });
   });
 }
@@ -705,7 +748,18 @@ export function prefetchRouteData(pathname, session) {
     return prefetchJson('/api/finances/audit?page=1&pageSize=25');
   }
   if (route === '/admin') {
-    const isAdmin = Boolean(session?.permissions?.includes?.('admin.access') || session?.isAdmin);
+    const permissions = Array.isArray(session?.permissions) ? session.permissions : [];
+    const isAdmin = Boolean(
+      session?.isAdmin ||
+        permissions.includes('super.admin') ||
+        permissions.includes('admin.override') ||
+        permissions.includes('employees.read') ||
+        permissions.includes('voyages.config.manage') ||
+        permissions.includes('user_groups.manage') ||
+        permissions.includes('user_ranks.manage') ||
+        permissions.includes('config.manage') ||
+        permissions.includes('activity_tracker.view')
+    );
     if (!isAdmin) return Promise.resolve(null);
     return prefetchJson('/api/admin/employees?page=1&pageSize=20');
   }

@@ -10,7 +10,8 @@ const CONFIG_TYPES = [
   { key: 'ports', label: 'Ports', placeholder: 'Add port name' },
   { key: 'vessel_names', label: 'Vessel Names', placeholder: 'Add vessel name' },
   { key: 'vessel_classes', label: 'Vessel Classes', placeholder: 'Add vessel class' },
-  { key: 'vessel_callsigns', label: 'Vessel Callsigns', placeholder: 'Add vessel callsign' }
+  { key: 'vessel_callsigns', label: 'Vessel Callsigns', placeholder: 'Add vessel callsign' },
+  { key: 'cargo_types', label: 'Cargo Types', placeholder: 'Add cargo type name' }
 ];
 
 function text(value) {

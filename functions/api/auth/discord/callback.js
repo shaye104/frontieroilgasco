@@ -12,7 +12,7 @@ import {
   getMappedRoleIdsForRankIds,
   upsertPendingEmployeeFromDiscordRoles
 } from '../../_lib/db.js';
-import { buildPermissionContext, hasPermission } from '../../_lib/permissions.js';
+import { buildPermissionContext } from '../../_lib/permissions.js';
 
 function toAccessDeniedUrl(requestUrl, params = {}) {
   const source = new URL(requestUrl);
@@ -197,25 +197,6 @@ export async function onRequest(context) {
 
   const userStatus = String(employee?.user_status || '').trim().toUpperCase() || 'ACTIVE_STAFF';
   const activationStatus = String(employee?.activation_status || '').trim().toUpperCase() || (employee ? 'PENDING' : 'NONE');
-  const hasEntryPermission = hasPermission({ permissions: permissionContext.permissions }, 'my_details.view');
-  if (!isAdminUser && !hasEntryPermission && activationStatus === 'ACTIVE') {
-    const clearStateCookie = serializeCookie('fog_oauth_state', '', {
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Lax',
-      maxAge: 0
-    });
-    const clearSessionCookie = serializeCookie('fog_session', '', {
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Lax',
-      maxAge: 0
-    });
-    return redirect(toAccessDeniedUrl(request.url, { reason: 'missing_permission' }), [clearStateCookie, clearSessionCookie]);
-  }
-
   if (!isAdminUser && !employee) {
     try {
       await createOrRefreshAccessRequest(env, {

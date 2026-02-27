@@ -41,14 +41,30 @@ export function getPreferredUserLabel(session) {
   return userId || '';
 }
 
+export const ADMIN_PANEL_ENTRY_PERMISSIONS = [
+  'employees.read',
+  'voyages.config.manage',
+  'user_groups.manage',
+  'user_ranks.manage',
+  'config.manage',
+  'activity_tracker.view'
+];
+
+export function canAccessAdminPanel(session) {
+  return ADMIN_PANEL_ENTRY_PERMISSIONS.some((permissionKey) => hasPermission(session, permissionKey));
+}
+
 const INTRANET_NAV_ITEMS = [
   { href: '/my-details', label: 'My Details' },
   { href: '/voyages/my', label: 'Voyages' },
   { href: '/finances', label: 'Finances', anyPermissions: ['finances.view'] },
-  { href: '/admin', label: 'Admin Panel', anyPermissions: ['admin.access'] }
+  { href: '/admin', label: 'Admin Panel', customVisible: (session) => canAccessAdminPanel(session) }
 ];
 
 function canRenderNavItem(session, item) {
+  if (typeof item?.customVisible === 'function') {
+    return Boolean(item.customVisible(session));
+  }
   const sessionFlag = String(item?.sessionFlag || '').trim();
   if (sessionFlag && !session?.[sessionFlag]) return false;
   const anyPermissions = Array.isArray(item?.anyPermissions) ? item.anyPermissions : [];

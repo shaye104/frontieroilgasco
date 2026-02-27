@@ -1,6 +1,6 @@
 import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { calculateTenureDays, createOrRefreshAccessRequest, ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
-import { enrichSessionWithPermissions, hasPermission } from '../_lib/permissions.js';
+import { enrichSessionWithPermissions } from '../_lib/permissions.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -9,10 +9,6 @@ export async function onRequestGet(context) {
 
   if (!session) {
     return json({ loggedIn: false }, 401);
-  }
-
-  if (!hasPermission(session, 'my_details.view')) {
-    return json({ error: 'Forbidden. Missing required permission.' }, 403);
   }
 
   try {

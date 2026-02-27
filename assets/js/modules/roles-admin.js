@@ -1,7 +1,10 @@
 import {
+  addRoleMember,
   createAdminRole,
   deleteAdminRole,
   getAdminRoles,
+  listRoleMembers,
+  removeRoleMember,
   reorderAdminRole,
   updateAdminRole
 } from './admin-api.js';
@@ -10,6 +13,15 @@ import { clearMessage, showMessage } from './notice.js';
 function text(value) {
   const output = String(value ?? '').trim();
   return output || '';
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function openModal(id) {
@@ -36,6 +48,10 @@ export async function initRolesAdmin(config) {
   const createRoleForm = document.querySelector(config.createRoleFormSelector);
   const cloneRoleBtn = document.querySelector(config.cloneRoleBtnSelector);
   const deleteRoleBtn = document.querySelector(config.deleteRoleBtnSelector);
+  const roleMemberSearchInput = document.querySelector(config.roleMemberSearchInputSelector);
+  const roleMemberSearchBtn = document.querySelector(config.roleMemberSearchBtnSelector);
+  const roleMemberCandidates = document.querySelector(config.roleMemberCandidatesSelector);
+  const roleMembersList = document.querySelector(config.roleMembersListSelector);
 
   if (!feedback || !list || !form || !hint || !permissionsEditor || !createRoleForm) return;
 
@@ -43,6 +59,7 @@ export async function initRolesAdmin(config) {
   let permissionCatalog = [];
   let selectedRoleId = null;
   const pendingMoves = new Set();
+  let currentMemberQuery = '';
 
   function selectedRole() {
     return roles.find((role) => Number(role.id) === Number(selectedRoleId)) || null;
@@ -79,6 +96,118 @@ export async function initRolesAdmin(config) {
         `
       )
       .join('');
+  }
+
+  function employeeLabel(employee) {
+    const roblox = text(employee?.roblox_username);
+    const serial = text(employee?.serial_number);
+    const primary = roblox || serial || `Employee #${Number(employee?.id || 0)}`;
+    const meta = [serial ? `Serial ${serial}` : '', employee?.rank ? `Rank ${text(employee.rank)}` : '']
+      .filter(Boolean)
+      .join(' • ');
+    return { primary, meta };
+  }
+
+  function renderRoleMembersPayload(roleId, payload) {
+    if (Number(roleId) !== Number(selectedRoleId)) return;
+    if (!roleMemberCandidates || !roleMembersList) return;
+    const members = Array.isArray(payload?.members) ? payload.members : [];
+    const candidates = Array.isArray(payload?.candidates) ? payload.candidates : [];
+
+    if (!members.length) {
+      roleMembersList.innerHTML = '<p class="rank-link-empty">No members assigned to this group.</p>';
+    } else {
+      roleMembersList.innerHTML = members
+        .map((member) => {
+          const label = employeeLabel(member);
+          return `
+            <div class="roles-member-row">
+              <div>
+                <strong>${escapeHtml(label.primary)}</strong>
+                <small>${escapeHtml(label.meta || `ID ${Number(member.id)}`)}</small>
+              </div>
+              <button class="btn btn-secondary btn-compact" type="button" data-remove-role-member="${Number(member.id)}">Remove</button>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    if (!currentMemberQuery) {
+      roleMemberCandidates.innerHTML = '<p class="rank-link-empty">Search employees to add to this group.</p>';
+    } else if (!candidates.length) {
+      roleMemberCandidates.innerHTML = '<p class="rank-link-empty">No matching employees found.</p>';
+    } else {
+      roleMemberCandidates.innerHTML = candidates
+        .map((candidate) => {
+          const label = employeeLabel(candidate);
+          return `
+            <div class="roles-member-row">
+              <div>
+                <strong>${escapeHtml(label.primary)}</strong>
+                <small>${escapeHtml(label.meta || `ID ${Number(candidate.id)}`)}</small>
+              </div>
+              <button class="btn btn-primary btn-compact" type="button" data-add-role-member="${Number(candidate.id)}">Add</button>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    roleMembersList.querySelectorAll('[data-remove-role-member]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const employeeId = Number(button.getAttribute('data-remove-role-member'));
+        if (!employeeId) return;
+        const selected = selectedRole();
+        if (!selected) return;
+        button.disabled = true;
+        try {
+          const nextPayload = await removeRoleMember(selected.id, employeeId);
+          renderRoleMembersPayload(selected.id, nextPayload);
+          showMessage(feedback, 'Group member removed.', 'success');
+        } catch (error) {
+          button.disabled = false;
+          showMessage(feedback, error.message || 'Unable to remove group member.', 'error');
+        }
+      });
+    });
+
+    roleMemberCandidates.querySelectorAll('[data-add-role-member]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const employeeId = Number(button.getAttribute('data-add-role-member'));
+        if (!employeeId) return;
+        const selected = selectedRole();
+        if (!selected) return;
+        button.disabled = true;
+        try {
+          const nextPayload = await addRoleMember(selected.id, employeeId);
+          if (currentMemberQuery) {
+            const refreshed = await listRoleMembers(selected.id, currentMemberQuery);
+            renderRoleMembersPayload(selected.id, {
+              members: nextPayload?.members || [],
+              candidates: refreshed?.candidates || []
+            });
+          } else {
+            renderRoleMembersPayload(selected.id, { members: nextPayload?.members || [], candidates: [] });
+          }
+          showMessage(feedback, 'Group member added.', 'success');
+        } catch (error) {
+          button.disabled = false;
+          showMessage(feedback, error.message || 'Unable to add group member.', 'error');
+        }
+      });
+    });
+  }
+
+  async function loadRoleMembers(roleId, query = '') {
+    if (!roleMemberCandidates || !roleMembersList) return;
+    currentMemberQuery = text(query).toLowerCase();
+    try {
+      const payload = await listRoleMembers(roleId, currentMemberQuery);
+      renderRoleMembersPayload(roleId, payload);
+    } catch (error) {
+      showMessage(feedback, error.message || 'Unable to load group members.', 'error');
+    }
   }
 
   function renderRoleList() {
@@ -167,6 +296,8 @@ export async function initRolesAdmin(config) {
     form.querySelector('[name="description"]').value = role.description || '';
     form.querySelector('[name="discordRoleId"]').value = role.discord_role_id || '';
     renderPermissions(role);
+    if (roleMemberSearchInput) roleMemberSearchInput.value = '';
+    void loadRoleMembers(role.id, '');
   }
 
   async function refreshRoles() {
@@ -272,6 +403,20 @@ export async function initRolesAdmin(config) {
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to delete user group.', 'error');
     }
+  });
+
+  roleMemberSearchBtn?.addEventListener('click', () => {
+    const role = selectedRole();
+    if (!role) return;
+    void loadRoleMembers(role.id, roleMemberSearchInput?.value || '');
+  });
+
+  roleMemberSearchInput?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    const role = selectedRole();
+    if (!role) return;
+    void loadRoleMembers(role.id, roleMemberSearchInput.value || '');
   });
 
   try {

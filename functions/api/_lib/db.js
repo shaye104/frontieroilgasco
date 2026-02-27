@@ -19,9 +19,6 @@ export async function ensureCoreSchema(env) {
   const permissionSeed = [
     ['super.admin', 'roles', 'Super Admin', 'Global bypass permission.'],
     ['admin.override', 'admin', 'Admin Override', 'Grant all permissions across the application.'],
-    ['admin.access', 'general', 'Admin Panel Access', 'View the admin panel entry points.'],
-    ['dashboard.view', 'general', 'Dashboard View', 'Access the intranet dashboard.'],
-    ['my_details.view', 'general', 'My Details View', 'View employee self-service details.'],
     ['employees.read', 'employees', 'View Employees', 'View employee lists and employee profiles.'],
     ['employees.create', 'employees', 'Create Employees', 'Create employee records.'],
     ['employees.edit', 'employees', 'Edit Employees', 'Edit employee profile fields.'],
@@ -30,9 +27,6 @@ export async function ensureCoreSchema(env) {
     ['employees.notes', 'employees', 'Manage Notes', 'Add employee notes and activity log entries.'],
     ['employees.access_requests.review', 'employees', 'Review Access Requests', 'Approve or deny access requests.'],
     ['config.manage', 'config', 'Manage Config', 'Manage statuses, ranks, grades, and disciplinary types.'],
-    ['roles.read', 'user_groups', 'View User Groups', 'View role definitions and permissions.'],
-    ['roles.manage', 'user_groups', 'Manage User Groups', 'Create, edit, delete, and reorder user groups.'],
-    ['roles.assign', 'user_groups', 'Assign User Groups', 'Assign and unassign user groups for employees.'],
     ['user_groups.read', 'user_groups', 'View User Groups', 'View user group definitions and permissions.'],
     ['user_groups.manage', 'user_groups', 'Manage User Groups', 'Create, edit, delete, and reorder user groups.'],
     ['user_groups.assign', 'user_groups', 'Assign User Groups', 'Assign and unassign user groups for employees.'],
@@ -587,12 +581,6 @@ export async function ensureCoreSchema(env) {
   if (employeeRole?.id) {
     await env.DB.batch([
       env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'dashboard.view')`)
-        .bind(employeeRole.id),
-      env.DB
-        .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'my_details.view')`)
-        .bind(employeeRole.id),
-      env.DB
         .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'voyages.read')`)
         .bind(employeeRole.id),
       env.DB
@@ -609,6 +597,24 @@ export async function ensureCoreSchema(env) {
       .bind(employeeRole.id)
       .run();
   }
+
+  await env.DB.batch([
+    env.DB
+      .prepare(
+        `DELETE FROM app_role_permissions
+         WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
+      ),
+    env.DB
+      .prepare(
+        `DELETE FROM rank_permission_mappings
+         WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
+      ),
+    env.DB
+      .prepare(
+        `DELETE FROM app_permissions
+         WHERE permission_key IN ('admin.access', 'dashboard.view', 'my_details.view', 'roles.read', 'roles.manage', 'roles.assign')`
+      )
+  ]);
 
   await env.DB.prepare(`UPDATE config_ranks SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
   await env.DB.prepare(`UPDATE employees SET user_status = COALESCE(NULLIF(user_status, ''), 'ACTIVE_STAFF')`).run();

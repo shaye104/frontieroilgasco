@@ -15,9 +15,7 @@ async function initHomePage() {
         window.location.href = '/onboarding';
         return;
       }
-      const permissions = Array.isArray(session.permissions) ? session.permissions : [];
-      const hasMyDetails = permissions.includes('my_details.view') || permissions.includes('admin.override') || Boolean(session.isAdmin);
-      window.location.href = hasMyDetails ? '/my-details' : '/voyages/my';
+      window.location.href = '/my-details';
       return;
     }
   } catch {

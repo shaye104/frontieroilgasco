@@ -17,6 +17,7 @@ function applyForm(settings) {
   setValue('#settingsBrandName', settings.brandName);
   setValue('#settingsSiteTagline', settings.siteTagline);
   setValue('#settingsThemeColor', settings.themeColor);
+  setValue('#settingsHeaderLogoUrl', settings.headerLogoUrl);
   setValue('#settingsTwitterCard', settings.twitterCard);
   setValue('#settingsFaviconUrl', settings.faviconUrl);
   setValue('#settingsAppleTouchIconUrl', settings.appleTouchIconUrl);
@@ -30,6 +31,7 @@ function collectForm() {
     brandName: readValue('#settingsBrandName'),
     siteTagline: readValue('#settingsSiteTagline'),
     themeColor: readValue('#settingsThemeColor'),
+    headerLogoUrl: readValue('#settingsHeaderLogoUrl'),
     twitterCard: readValue('#settingsTwitterCard'),
     faviconUrl: readValue('#settingsFaviconUrl'),
     appleTouchIconUrl: readValue('#settingsAppleTouchIconUrl'),
@@ -43,11 +45,13 @@ function updatePreview(settings) {
   const title = document.querySelector('#previewTitle');
   const description = document.querySelector('#previewDescription');
   const image = document.querySelector('#previewImage');
+  const headerLogo = document.querySelector('#previewHeaderLogo');
   const favicon = document.querySelector('#previewFavicon');
   const theme = document.querySelector('#previewTheme');
   if (title) title.textContent = settings.ogTitle || '-';
   if (description) description.textContent = settings.ogDescription || '-';
   if (image) image.textContent = settings.ogImageUrl || '-';
+  if (headerLogo) headerLogo.textContent = settings.headerLogoUrl || '(default FOG badge)';
   if (favicon) favicon.textContent = settings.faviconUrl || '-';
   if (theme) theme.textContent = settings.themeColor || '-';
 }

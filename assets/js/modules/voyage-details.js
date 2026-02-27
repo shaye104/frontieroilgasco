@@ -9,7 +9,7 @@ import {
   updateVoyageDetails,
   updateVoyageManifest,
   updateVoyageShipStatus
-} from './admin-api.js';
+} from './admin-api.js?v=20260227g';
 import { clearMessage, showMessage } from './notice.js';
 
 function text(value) {

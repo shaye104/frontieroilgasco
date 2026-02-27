@@ -4,7 +4,7 @@ initIntranetLayout({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
-  requiredPermissions: ['admin.access', 'employees.read']
+  requiredPermissions: ['employees.read']
 }).then((session) => {
   if (!session) return;
 

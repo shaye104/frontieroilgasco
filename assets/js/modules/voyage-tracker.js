@@ -453,11 +453,6 @@ export async function initVoyageTracker(config, session) {
 
     const vesselName = text(data.get('vesselName'));
     const vesselCallsign = text(data.get('vesselCallsign'));
-    const duplicateKey = `${normalize(vesselName)}::${normalize(vesselCallsign)}`;
-    if (ongoingKeys.has(duplicateKey)) {
-      showMessage(feedback, 'That vessel and callsign are already underway on another ongoing voyage.', 'error');
-      return;
-    }
 
     const officerOfWatchEmployeeId = Number(data.get('officerOfWatchEmployeeId'));
     const crewComplementIds = data

@@ -5,8 +5,7 @@ import { initializeYear } from '../modules/year.js';
 initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
-  adminNavLinkSelector: '#adminNavLink',
-  requiredPermissions: ['my_details.view']
+  adminNavLinkSelector: '#adminNavLink'
 }).then((session) => {
   if (!session) return;
   initMyDetailsPanel({

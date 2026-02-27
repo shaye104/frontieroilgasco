@@ -73,11 +73,11 @@ function defaultPermissionTemplate(templateKey, permissionCatalog) {
   if (!key || !allKeys.length) return [];
 
   const byPrefix = (prefix) => allKeys.filter((permissionKey) => permissionKey.startsWith(prefix));
-  const always = ['dashboard.view', 'my_details.view', 'voyages.read'];
+  const always = ['voyages.read'];
   if (key === 'viewer') return [...new Set(always)];
   if (key === 'staff') return [...new Set([...always, 'voyages.create', 'finances.view'])];
   if (key === 'manager') {
-    return [...new Set([...always, ...byPrefix('employees.'), ...byPrefix('voyages.'), 'finances.view', 'admin.access'])];
+    return [...new Set([...always, ...byPrefix('employees.'), ...byPrefix('voyages.'), 'finances.view'])];
   }
   if (key === 'admin') return [...new Set(allKeys)];
   return [];

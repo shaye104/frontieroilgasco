@@ -2,6 +2,14 @@ import { ensureCoreSchema, getEmployeeByDiscordUserId } from './db.js';
 
 export const SUPER_ADMIN_PERMISSION = 'super.admin';
 export const ADMIN_OVERRIDE_PERMISSION = 'admin.override';
+export const ADMIN_PANEL_ENTRY_PERMISSIONS = [
+  'employees.read',
+  'voyages.config.manage',
+  'user_groups.manage',
+  'user_ranks.manage',
+  'config.manage',
+  'activity_tracker.view'
+];
 
 const PERMISSION_ALIASES = {
   'roles.read': 'user_groups.read',
@@ -13,15 +21,6 @@ const PERMISSION_ALIASES = {
 };
 
 export const PERMISSION_GROUPS = [
-  {
-    key: 'general',
-    label: 'General',
-    permissions: [
-      { key: 'admin.access', label: 'Admin Panel Access', description: 'View the admin panel entry points.' },
-      { key: 'dashboard.view', label: 'Dashboard View', description: 'Access the intranet dashboard.' },
-      { key: 'my_details.view', label: 'My Details View', description: 'View employee self-service details.' }
-    ]
-  },
   {
     key: 'employees',
     label: 'Employees',

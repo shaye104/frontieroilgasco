@@ -782,6 +782,12 @@ textarea:focus {
   gap: var(--space-2);
 }
 
+.permissions-grid-scroll {
+  max-height: min(52vh, 560px);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
 .permissions-group {
   padding: 0.8rem;
   border: 1px solid var(--color-border);
@@ -809,6 +815,54 @@ textarea:focus {
 
 .rank-permissions-actions {
   margin-top: 1.65rem;
+}
+
+.roles-members-panel {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.roles-members-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.roles-members-candidates,
+.roles-members-list {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0.55rem;
+  background: #fbfdff;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.roles-member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid #dce5f2;
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  background: #fff;
+}
+
+.roles-member-row > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.roles-member-row strong,
+.roles-member-row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .voyage-card {

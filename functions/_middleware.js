@@ -190,6 +190,31 @@ function buildBrandMetaTags({ settings, requestUrl, title, description }) {
   ].join('\n');
 }
 
+function buildHeaderBrandMark(settings) {
+  const headerLogoUrl = toAbsoluteUrl('', settings.headerLogoUrl, '');
+  if (headerLogoUrl) {
+    return `<span class="brand-mark brand-mark-image" aria-hidden="true"><img src="${escapeHtml(headerLogoUrl)}" alt="" loading="eager" decoding="async" /></span>`;
+  }
+  return `<span class="brand-mark" aria-hidden="true">FOG</span>`;
+}
+
+function applyHeaderBranding(html, settings) {
+  if (!html) return html;
+  const brandName = escapeHtml(settings.brandName || 'Frontier Oil & Gas Company');
+  const brandMark = buildHeaderBrandMark(settings);
+
+  let next = html.replace(
+    /<span([^>]*class=["'][^"']*\bbrand-mark\b[^"']*["'][^>]*)>[\s\S]*?<\/span>/gi,
+    brandMark
+  );
+
+  next = next.replace(
+    /<span([^>]*class=["'][^"']*\bbrand-text\b[^"']*["'][^>]*)>[\s\S]*?<\/span>/gi,
+    `<span$1>${brandName}</span>`
+  );
+  return next;
+}
+
 async function applySiteBranding(env, request, response) {
   if (!response) return response;
   if (response.status < 200 || response.status >= 300) return response;
@@ -206,7 +231,8 @@ async function applySiteBranding(env, request, response) {
 
   const stripped = stripExistingBrandMeta(source);
   const metaBlock = buildBrandMetaTags({ settings, requestUrl, title, description });
-  const updated = stripped.replace(/<head(\s[^>]*)?>/i, (match) => `${match}\n${metaBlock}\n`);
+  const withMeta = stripped.replace(/<head(\s[^>]*)?>/i, (match) => `${match}\n${metaBlock}\n`);
+  const updated = applyHeaderBranding(withMeta, settings);
   const headers = new Headers(response.headers);
   headers.delete('content-length');
   return new Response(updated, {

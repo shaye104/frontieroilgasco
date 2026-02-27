@@ -1,5 +1,5 @@
 import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260222b';
-import { initVoyageTracker } from '../modules/voyage-tracker.js?v=20260227c';
+import { initVoyageTracker } from '../modules/voyage-tracker.js?v=20260227d';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({

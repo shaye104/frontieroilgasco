@@ -1,5 +1,5 @@
 import { showMessage } from './notice.js';
-import { getPreferredUserLabel, hasPermission, renderIntranetNavbar } from './nav.js?v=20260222a';
+import { canAccessAdminPanel, getPreferredUserLabel, hasPermission, renderIntranetNavbar } from './nav.js?v=20260227b';
 
 function normalizePath(pathname) {
   if (!pathname || pathname === '/') return '/';
@@ -132,12 +132,12 @@ function ensureNavbarFallback(session) {
     nav.append(buildLink('/my-details', 'My Details'));
     nav.append(buildLink('/voyages/my', 'Voyages'));
     if (hasPermission(session, 'finances.view')) nav.append(buildLink('/finances', 'Finances'));
-    if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
+    if (canAccessAdminPanel(session)) nav.append(buildLink('/admin', 'Admin Panel'));
   } else {
     nav.append(buildLink('/my-details', 'My Details'));
     nav.append(buildLink('/voyages/my', 'Voyages'));
     if (hasPermission(session, 'finances.view')) nav.append(buildLink('/finances', 'Finances'));
-    if (hasPermission(session, 'admin.access')) nav.append(buildLink('/admin', 'Admin Panel'));
+    if (canAccessAdminPanel(session)) nav.append(buildLink('/admin', 'Admin Panel'));
   }
 
   const spacer = document.createElement('span');
@@ -211,7 +211,7 @@ export async function initIntranetLayout(config) {
     renderIntranetNavbar(session);
     ensureNavbarFallback(session);
 
-    if (requireAdmin && !hasPermission(session, 'admin.access')) {
+    if (requireAdmin && !canAccessAdminPanel(session)) {
       window.location.href = toAccessDeniedUrl('admin_required');
       return null;
     }

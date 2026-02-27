@@ -71,9 +71,11 @@ export async function onRequestGet(context) {
   const sortBySql = sortableColumns.get(sortByInput) || 'e.id';
 
   const actorScope = await getActorAccessScope(env, session);
+  const requiresRankJoin = !actorScope.bypassHierarchy;
+  const rankJoinSql = requiresRankJoin ? `LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))` : '';
   const visibilityWhereParts = [];
   const visibilityBindings = [];
-  if (!actorScope.bypassHierarchy) {
+  if (requiresRankJoin) {
     if (!actorScope.actorEmployee?.id) {
       visibilityWhereParts.push('1 = 0');
     } else {
@@ -122,17 +124,16 @@ export async function onRequestGet(context) {
   const [result, totalRow, statsRow, configBootstrap] = await Promise.all([
     env.DB
       .prepare(
-        `SELECT e.id, e.discord_user_id, e.discord_display_name, e.roblox_username, e.roblox_user_id, e.rank, e.grade, e.serial_number, e.employee_status, e.activation_status, e.hire_date, e.updated_at,
-                COALESCE(cr.level, 0) AS rank_level
+        `SELECT e.id, e.discord_user_id, e.discord_display_name, e.roblox_username, e.roblox_user_id, e.rank, e.grade, e.serial_number, e.employee_status, e.activation_status, e.hire_date, e.updated_at
          FROM employees e
-         LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))
+         ${rankJoinSql}
          ${whereSql}
          ORDER BY ${sortBySql} ${sortDir}, e.id DESC
          LIMIT ? OFFSET ?`
       )
         .bind(...allWhereBindings, pageSize, offset)
         .all(),
-    env.DB.prepare(`SELECT COUNT(*) AS total FROM employees e LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, '')) ${whereSql}`).bind(...allWhereBindings).first(),
+    env.DB.prepare(`SELECT COUNT(*) AS total FROM employees e ${rankJoinSql} ${whereSql}`).bind(...allWhereBindings).first(),
     env.DB
       .prepare(
         `SELECT
@@ -142,7 +143,7 @@ export async function onRequestGet(context) {
            SUM(CASE WHEN DATE(COALESCE(hire_date, '')) >= DATE('now', '-30 day') THEN 1 ELSE 0 END) AS new_hires_30d,
            SUM(CASE WHEN UPPER(COALESCE(activation_status, '')) = 'PENDING' THEN 1 ELSE 0 END) AS pending_activation
          FROM employees e
-         LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))
+         ${rankJoinSql}
          ${visibilityWhereParts.length ? `WHERE ${visibilityWhereParts.join(' AND ')}` : ''}`
       )
       .bind(...visibilityBindings)

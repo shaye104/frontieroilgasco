@@ -58,7 +58,17 @@
                 <input name="discordRoleId" type="text" inputmode="numeric" placeholder="e.g. 123456789012345678" />
 
                 <h3>Permissions</h3>
-                <div id="permissionsEditor" class="permissions-grid"></div>
+                <div id="permissionsEditor" class="permissions-grid permissions-grid-scroll"></div>
+
+                <h3>Group Members</h3>
+                <div class="roles-members-panel">
+                  <div class="roles-members-add">
+                    <input id="roleMemberSearchInput" type="search" placeholder="Search employee username/serial..." />
+                    <button id="roleMemberSearchBtn" class="btn btn-secondary" type="button">Search</button>
+                  </div>
+                  <div id="roleMemberCandidates" class="roles-members-candidates"></div>
+                  <div id="roleMembersList" class="roles-members-list"></div>
+                </div>
 
                 <div class="modal-actions">
                   <button class="btn btn-primary" type="submit">Save Changes</button>
@@ -92,6 +102,6 @@
         </form>
       </div>
     </section>
-    <script type="module" src="/assets/js/pages/roles-page.js?v=20260221d"></script>
+    <script type="module" src="/assets/js/pages/roles-page.js?v=20260227f"></script>
   </body>
 </html>

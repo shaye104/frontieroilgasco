@@ -7,7 +7,7 @@
     "build:assets": "node scripts/build-assets.mjs",
     "webinfo": "node scripts/build-assets.mjs && node scripts/update-webinfo.mjs"
   },
-  "devDependencies": {
+  "dependencies": {
     "esbuild": "^0.25.10"
   }
 }

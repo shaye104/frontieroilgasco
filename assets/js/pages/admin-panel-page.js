@@ -1,12 +1,19 @@
 import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260222b';
-import { hasPermission } from '../modules/nav.js';
+import { canAccessAdminPanel, hasPermission } from '../modules/nav.js';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({
   feedbackSelector: '#guardFeedback',
   protectedContentSelector: '#protectedContent',
   adminNavLinkSelector: '#adminNavLink',
-  requiredPermissions: ['admin.access']
+  requiredAnyPermissions: [
+    'employees.read',
+    'voyages.config.manage',
+    'user_groups.manage',
+    'user_ranks.manage',
+    'config.manage',
+    'activity_tracker.view'
+  ]
 }).then((session) => {
   if (!session) return;
 
@@ -25,6 +32,10 @@ initIntranetPageGuard({
   if (siteSettingsLink && hasPermission(session, 'config.manage')) siteSettingsLink.classList.remove('hidden');
   if (activityTrackerLink && hasPermission(session, 'activity_tracker.view')) activityTrackerLink.classList.remove('hidden');
   if (auditLogLink && hasPermission(session, 'activity_tracker.view')) auditLogLink.classList.remove('hidden');
+
+  if (!canAccessAdminPanel(session)) {
+    window.location.href = '/access-denied?reason=missing_permissions';
+  }
 });
 
 initializeYear();

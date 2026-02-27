@@ -1,6 +1,6 @@
 import { json, readSessionFromRequest } from './_lib/auth.js';
 import { createOrRefreshAccessRequest, getEmployeeByDiscordUserId } from '../_lib/db.js';
-import { buildPermissionContext, hasPermission } from '../_lib/permissions.js';
+import { ADMIN_PANEL_ENTRY_PERMISSIONS, buildPermissionContext, hasAnyPermission, hasPermission } from '../_lib/permissions.js';
 import { normalizeAppMode } from '../_lib/app-mode.js';
 
 export async function onRequest(context) {
@@ -56,7 +56,7 @@ export async function onRequest(context) {
     accessPending: payload.isAdmin ? false : !employee || isActivationPending,
     userStatus: String(employee?.user_status || payload.userStatus || '').trim() || 'ACTIVE_STAFF',
     activationStatus,
-    canAccessAdminPanel: hasPermission({ permissions: permissionContext?.permissions || [] }, 'admin.access'),
+    canAccessAdminPanel: hasAnyPermission({ permissions: permissionContext?.permissions || [] }, ADMIN_PANEL_ENTRY_PERMISSIONS),
     canManageRoles: hasPermission({ permissions: permissionContext?.permissions || [] }, 'user_groups.manage'),
     canManageConfig: hasPermission({ permissions: permissionContext?.permissions || [] }, 'config.manage')
   });
