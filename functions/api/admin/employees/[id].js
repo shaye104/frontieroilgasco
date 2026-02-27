@@ -253,6 +253,7 @@ export async function onRequestPut(context) {
     });
   }
 
+  let rankSyncDebug = null;
   if (rankChanged) {
     const syncPayload = {
       event: 'employee.rank.changed',
@@ -276,6 +277,18 @@ export async function onRequestPut(context) {
       }
     };
     const syncResult = await sendRankSyncWebhook(env, syncPayload);
+    const syncReason = syncResult.ok
+      ? 'ok'
+      : syncResult.skipped
+      ? syncResult.error || 'webhook_not_configured'
+      : syncResult.error || syncResult.responseText || `http_${Number(syncResult.status || 0)}`;
+    rankSyncDebug = {
+      ok: Boolean(syncResult.ok),
+      skipped: Boolean(syncResult.skipped),
+      status: Number(syncResult.status || 0) || null,
+      reason: String(syncReason || 'unknown_error'),
+      responseText: String(syncResult.responseText || '').slice(0, 500) || null
+    };
     await writeAdminActivityEvent(env, {
       actorEmployeeId: actorEmployee?.id || null,
       actorName: session.displayName || session.userId,
@@ -285,8 +298,8 @@ export async function onRequestPut(context) {
       summary: syncResult.ok
         ? `Rank sync succeeded for ${employee.roblox_username || `#${employeeId}`}.`
         : syncResult.skipped
-        ? `Rank sync skipped for ${employee.roblox_username || `#${employeeId}`}: webhook not configured.`
-        : `Rank sync failed for ${employee.roblox_username || `#${employeeId}`}.`,
+        ? `Rank sync skipped for ${employee.roblox_username || `#${employeeId}`}: ${syncReason}.`
+        : `Rank sync failed for ${employee.roblox_username || `#${employeeId}`}: ${syncReason}.`,
       metadata: {
         syncPayload: {
           event: syncPayload.event,
@@ -299,5 +312,5 @@ export async function onRequestPut(context) {
     });
   }
 
-  return json({ employee });
+  return json({ employee, rankSync: rankSyncDebug });
 }
