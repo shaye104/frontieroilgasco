@@ -592,6 +592,29 @@ export async function initManageEmployees(config) {
   const drawerCache = new Map();
   let debounceTimer = null;
 
+  function buildOverviewDraft(employee = {}) {
+    return {
+      robloxUsername: employee?.roblox_username || '',
+      robloxUserId: employee?.roblox_user_id || '',
+      rank: employee?.rank || '',
+      grade: employee?.grade || '',
+      serialNumber: employee?.serial_number || '',
+      employeeStatus: employee?.employee_status || '',
+      activationStatus: employee?.activation_status || 'PENDING',
+      hireDate: employee?.hire_date || ''
+    };
+  }
+
+  function renderOverviewFromState() {
+    if (!drawerOverview || !state.drawerPayload) return;
+    renderDrawerOverview(drawerOverview, state.drawerPayload, {
+      canEdit: Boolean(state.drawerPayload?.capabilities?.canActivate),
+      isEditing: state.drawerOverviewEditMode,
+      draft: state.drawerOverviewDraft,
+      configOptions: state.configOptions
+    });
+  }
+
   function applyColumnVisibility() {
     document.querySelectorAll('[data-col]').forEach((node) => {
       const col = String(node.getAttribute('data-col') || '');
@@ -788,150 +811,11 @@ export async function initManageEmployees(config) {
       drawerMeta.textContent = `${serial} • ${rank} • ${status}`;
     }
 
-    if (!state.drawerOverviewDraft) {
-      state.drawerOverviewDraft = {
-        robloxUsername: payload.employee?.roblox_username || '',
-        robloxUserId: payload.employee?.roblox_user_id || '',
-        rank: payload.employee?.rank || '',
-        grade: payload.employee?.grade || '',
-        serialNumber: payload.employee?.serial_number || '',
-        employeeStatus: payload.employee?.employee_status || '',
-        activationStatus: payload.employee?.activation_status || 'PENDING',
-        hireDate: payload.employee?.hire_date || ''
-      };
-    }
+    if (!state.drawerOverviewDraft) state.drawerOverviewDraft = buildOverviewDraft(payload.employee);
 
     state.drawerPayload = payload;
     if (options.tab) setDrawerTab(options.tab);
     renderActiveDrawerTab(payload, employeeId, options);
-    const overviewFeedback = drawerOverview?.querySelector('#drawerOverviewFeedback');
-    const editBtn = drawerOverview?.querySelector('#drawerEditEmployeeBtn');
-    editBtn?.addEventListener('click', () => {
-      state.drawerOverviewEditMode = true;
-      state.drawerOverviewDraft = {
-        robloxUsername: payload.employee?.roblox_username || '',
-        robloxUserId: payload.employee?.roblox_user_id || '',
-        rank: payload.employee?.rank || '',
-        grade: payload.employee?.grade || '',
-        serialNumber: payload.employee?.serial_number || '',
-        employeeStatus: payload.employee?.employee_status || '',
-        activationStatus: payload.employee?.activation_status || 'PENDING',
-        hireDate: payload.employee?.hire_date || ''
-      };
-      renderDrawerOverview(drawerOverview, payload, {
-        canEdit: Boolean(payload?.capabilities?.canActivate),
-        isEditing: true,
-        draft: state.drawerOverviewDraft,
-        configOptions: state.configOptions
-      });
-    });
-
-    const cancelOverviewBtn = drawerOverview?.querySelector('#drawerCancelOverviewBtn');
-    cancelOverviewBtn?.addEventListener('click', () => {
-      state.drawerOverviewEditMode = false;
-      state.drawerOverviewDraft = null;
-      void refreshDrawerData(employeeId, { force: false, tab: 'overview' });
-    });
-
-    const overviewForm = drawerOverview?.querySelector('#drawerOverviewEditForm');
-    overviewForm?.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const formData = new FormData(overviewForm);
-      const nextDraft = {
-        robloxUsername: String(formData.get('robloxUsername') || '').trim(),
-        robloxUserId: String(formData.get('robloxUserId') || '').trim(),
-        rank: String(formData.get('rank') || '').trim(),
-        grade: String(formData.get('grade') || '').trim(),
-        serialNumber: String(formData.get('serialNumber') || '').trim(),
-        employeeStatus: String(formData.get('employeeStatus') || '').trim(),
-        activationStatus: String(formData.get('activationStatus') || '').trim().toUpperCase() || 'PENDING',
-        hireDate: String(formData.get('hireDate') || '').trim()
-      };
-      const changedPayload = {};
-      if (nextDraft.robloxUsername !== String(payload.employee?.roblox_username || '')) changedPayload.robloxUsername = nextDraft.robloxUsername;
-      if (nextDraft.robloxUserId !== String(payload.employee?.roblox_user_id || '')) changedPayload.robloxUserId = nextDraft.robloxUserId;
-      if (nextDraft.rank !== String(payload.employee?.rank || '')) changedPayload.rank = nextDraft.rank;
-      if (nextDraft.grade !== String(payload.employee?.grade || '')) changedPayload.grade = nextDraft.grade;
-      if (nextDraft.serialNumber !== String(payload.employee?.serial_number || '')) changedPayload.serialNumber = nextDraft.serialNumber;
-      if (nextDraft.employeeStatus !== String(payload.employee?.employee_status || '')) changedPayload.employeeStatus = nextDraft.employeeStatus;
-      if (nextDraft.activationStatus !== String(payload.employee?.activation_status || 'PENDING').toUpperCase()) {
-        changedPayload.activationStatus = nextDraft.activationStatus;
-      }
-      if (nextDraft.hireDate !== String(payload.employee?.hire_date || '')) changedPayload.hireDate = nextDraft.hireDate;
-      if (!Object.keys(changedPayload).length) {
-        state.drawerOverviewEditMode = false;
-        state.drawerOverviewDraft = null;
-        renderDrawerOverview(drawerOverview, payload, {
-          canEdit: Boolean(payload?.capabilities?.canActivate),
-          isEditing: false,
-          draft: null,
-          configOptions: state.configOptions
-        });
-        if (overviewFeedback) showMessage(overviewFeedback, 'No changes to save.', 'info');
-        return;
-      }
-      const previous = {
-        ...payload.employee
-      };
-      payload.employee = {
-        ...payload.employee,
-        roblox_username: nextDraft.robloxUsername,
-        roblox_user_id: nextDraft.robloxUserId,
-        rank: nextDraft.rank,
-        grade: nextDraft.grade,
-        serial_number: nextDraft.serialNumber,
-        employee_status: nextDraft.employeeStatus,
-        activation_status: nextDraft.activationStatus,
-        hire_date: nextDraft.hireDate
-      };
-      state.drawerOverviewEditMode = false;
-      state.drawerOverviewDraft = null;
-      drawerCache.set(employeeId, payload);
-      renderDrawerOverview(drawerOverview, payload, {
-        canEdit: Boolean(payload?.capabilities?.canActivate),
-        isEditing: false,
-        draft: null,
-        configOptions: state.configOptions
-      });
-      if (drawerMeta) drawerMeta.textContent = `${nextDraft.serialNumber || 'No serial'} • ${nextDraft.rank || 'Unset rank'} • ${nextDraft.employeeStatus || 'Unknown status'}`;
-      if (overviewFeedback) showMessage(overviewFeedback, 'Saved.', 'success');
-
-      try {
-        await updateEmployee(employeeId, changedPayload);
-        void loadEmployees();
-      } catch (error) {
-        payload.employee = previous;
-        drawerCache.set(employeeId, payload);
-        renderDrawerOverview(drawerOverview, payload, {
-          canEdit: Boolean(payload?.capabilities?.canActivate),
-          isEditing: false,
-          draft: null,
-          configOptions: state.configOptions
-        });
-        if (overviewFeedback) showMessage(overviewFeedback, error.message || 'Unable to save employee.', 'error');
-      }
-    });
-
-    const activateBtn = drawerOverview?.querySelector('#drawerActivateEmployeeBtn');
-    activateBtn?.addEventListener('click', async () => {
-      try {
-        payload.employee.activation_status = 'ACTIVE';
-        drawerCache.set(employeeId, payload);
-        renderDrawerOverview(drawerOverview, payload, {
-          canEdit: Boolean(payload?.capabilities?.canActivate),
-          isEditing: false,
-          draft: null,
-          configOptions: state.configOptions
-        });
-        await activateEmployee(employeeId);
-        drawerCache.delete(employeeId);
-        void loadEmployees();
-        await refreshDrawerData(employeeId, { force: true, tab: 'overview' });
-        showMessage(feedback, 'Employee activated.', 'success');
-      } catch (error) {
-        showMessage(feedback, error.message || 'Unable to activate employee.', 'error');
-      }
-    });
   }
 
   async function openDrawer(employeeId) {
@@ -976,9 +860,118 @@ export async function initManageEmployees(config) {
   drawer?.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
+
+    if (target.closest('#drawerEditEmployeeBtn')) {
+      if (!state.drawerPayload) return;
+      state.drawerOverviewEditMode = true;
+      state.drawerOverviewDraft = buildOverviewDraft(state.drawerPayload.employee);
+      renderOverviewFromState();
+      return;
+    }
+
+    if (target.closest('#drawerCancelOverviewBtn')) {
+      state.drawerOverviewEditMode = false;
+      state.drawerOverviewDraft = null;
+      renderOverviewFromState();
+      return;
+    }
+
+    if (target.closest('#drawerActivateEmployeeBtn')) {
+      if (!state.selectedEmployeeId || !state.drawerPayload) return;
+      const employeeId = state.selectedEmployeeId;
+      void (async () => {
+        try {
+          state.drawerPayload.employee.activation_status = 'ACTIVE';
+          drawerCache.set(employeeId, state.drawerPayload);
+          state.drawerOverviewEditMode = false;
+          state.drawerOverviewDraft = null;
+          renderOverviewFromState();
+          await activateEmployee(employeeId);
+          drawerCache.delete(employeeId);
+          void loadEmployees();
+          await refreshDrawerData(employeeId, { force: true, tab: 'overview' });
+          showMessage(feedback, 'Employee activated.', 'success');
+        } catch (error) {
+          showMessage(feedback, error.message || 'Unable to activate employee.', 'error');
+        }
+      })();
+      return;
+    }
+
     const tabButton = target.closest('[data-drawer-tab], [data-employee-tab]');
     if (!tabButton) return;
     setDrawerTab(String(tabButton.getAttribute('data-drawer-tab') || tabButton.getAttribute('data-employee-tab') || 'overview'));
+  });
+
+  drawer?.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    if (form.id !== 'drawerOverviewEditForm') return;
+    event.preventDefault();
+    if (!state.selectedEmployeeId || !state.drawerPayload) return;
+    const employeeId = state.selectedEmployeeId;
+    const payload = state.drawerPayload;
+    const formData = new FormData(form);
+    const nextDraft = {
+      robloxUsername: String(formData.get('robloxUsername') || '').trim(),
+      robloxUserId: String(formData.get('robloxUserId') || '').trim(),
+      rank: String(formData.get('rank') || '').trim(),
+      grade: String(formData.get('grade') || '').trim(),
+      serialNumber: String(formData.get('serialNumber') || '').trim(),
+      employeeStatus: String(formData.get('employeeStatus') || '').trim(),
+      activationStatus: String(formData.get('activationStatus') || '').trim().toUpperCase() || 'PENDING',
+      hireDate: String(formData.get('hireDate') || '').trim()
+    };
+    const changedPayload = {};
+    if (nextDraft.robloxUsername !== String(payload.employee?.roblox_username || '')) changedPayload.robloxUsername = nextDraft.robloxUsername;
+    if (nextDraft.robloxUserId !== String(payload.employee?.roblox_user_id || '')) changedPayload.robloxUserId = nextDraft.robloxUserId;
+    if (nextDraft.rank !== String(payload.employee?.rank || '')) changedPayload.rank = nextDraft.rank;
+    if (nextDraft.grade !== String(payload.employee?.grade || '')) changedPayload.grade = nextDraft.grade;
+    if (nextDraft.serialNumber !== String(payload.employee?.serial_number || '')) changedPayload.serialNumber = nextDraft.serialNumber;
+    if (nextDraft.employeeStatus !== String(payload.employee?.employee_status || '')) changedPayload.employeeStatus = nextDraft.employeeStatus;
+    if (nextDraft.activationStatus !== String(payload.employee?.activation_status || 'PENDING').toUpperCase()) changedPayload.activationStatus = nextDraft.activationStatus;
+    if (nextDraft.hireDate !== String(payload.employee?.hire_date || '')) changedPayload.hireDate = nextDraft.hireDate;
+
+    const overviewFeedback = drawerOverview?.querySelector('#drawerOverviewFeedback');
+    if (!Object.keys(changedPayload).length) {
+      state.drawerOverviewEditMode = false;
+      state.drawerOverviewDraft = null;
+      renderOverviewFromState();
+      if (overviewFeedback) showMessage(overviewFeedback, 'No changes to save.', 'info');
+      return;
+    }
+
+    const previous = { ...payload.employee };
+    payload.employee = {
+      ...payload.employee,
+      roblox_username: nextDraft.robloxUsername,
+      roblox_user_id: nextDraft.robloxUserId,
+      rank: nextDraft.rank,
+      grade: nextDraft.grade,
+      serial_number: nextDraft.serialNumber,
+      employee_status: nextDraft.employeeStatus,
+      activation_status: nextDraft.activationStatus,
+      hire_date: nextDraft.hireDate
+    };
+    state.drawerOverviewEditMode = false;
+    state.drawerOverviewDraft = null;
+    drawerCache.set(employeeId, payload);
+    renderOverviewFromState();
+    if (drawerMeta) drawerMeta.textContent = `${nextDraft.serialNumber || 'No serial'} • ${nextDraft.rank || 'Unset rank'} • ${nextDraft.employeeStatus || 'Unknown status'}`;
+    if (overviewFeedback) showMessage(overviewFeedback, 'Saved.', 'success');
+
+    void (async () => {
+      try {
+        await updateEmployee(employeeId, changedPayload);
+        void loadEmployees();
+      } catch (error) {
+        payload.employee = previous;
+        drawerCache.set(employeeId, payload);
+        renderOverviewFromState();
+        const nextFeedback = drawerOverview?.querySelector('#drawerOverviewFeedback');
+        if (nextFeedback) showMessage(nextFeedback, error.message || 'Unable to save employee.', 'error');
+      }
+    })();
   });
 
   tableBody.addEventListener('click', (event) => {
