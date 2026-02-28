@@ -11,6 +11,7 @@ import {
   listEmployees,
   purgeUserByDiscord,
   suggestEmployeeSerial,
+  updateDisciplinary,
   updateEmployee
 } from './admin-api.js';
 import { clearMessage, showMessage } from './notice.js';
@@ -50,6 +51,14 @@ function statusClass(status) {
   if (normalized === 'active' || normalized === 'on duty') return 'is-active';
   if (normalized === 'suspended') return 'is-suspended';
   if (normalized === 'inactive' || normalized === 'terminated' || normalized === 'on leave') return 'is-inactive';
+  return '';
+}
+
+function disciplinaryStatusClass(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (normalized === 'active' || normalized === 'open') return 'is-active';
+  if (normalized === 'closed' || normalized === 'resolved') return 'is-inactive';
+  if (normalized === 'revoked' || normalized === 'expired') return 'is-suspended';
   return '';
 }
 
@@ -273,6 +282,8 @@ function renderDrawerOverview(target, payload, options = {}) {
   const grades = options?.configOptions?.grades || [];
   const statuses = options?.configOptions?.statuses || [];
   const activationStatus = String(employee.activation_status || 'PENDING').trim().toUpperCase() || 'PENDING';
+  const isSuspended = Boolean(payload?.suspensionState?.isSuspended || employee?.suspension_active_record_id);
+  const suspendedUntil = String(payload?.suspensionState?.suspendedUntil || employee?.suspension_ends_at || '').trim();
 
   if (!isEditing) {
     target.innerHTML = `
@@ -296,6 +307,11 @@ function renderDrawerOverview(target, payload, options = {}) {
         <dt>Serial</dt><dd>${escapeHtml(text(employee.serial_number))}</dd>
         <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(text(employee.employee_status))}</span></dd>
         <dt>Activation</dt><dd><span class="badge badge-status ${activationClass(employee.activation_status)}">${escapeHtml(activationStatus)}</span></dd>
+        <dt>Disciplinary</dt><dd>${
+          isSuspended
+            ? `<span class="badge badge-status is-suspended">Suspended${suspendedUntil ? ` until ${escapeHtml(formatDate(suspendedUntil, true))}` : ''}</span> <button class="btn btn-secondary btn-compact" type="button" data-drawer-tab="disciplinary">View record</button>`
+            : '<span class="badge badge-status is-active">No active suspension</span>'
+        }</dd>
         <dt>Hire Date</dt><dd>${escapeHtml(formatDate(employee.hire_date))}</dd>
         <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at, true))}</dd>
       </div>
@@ -544,30 +560,58 @@ function renderDrawerNotes(target, payload, showSystem, notesFeedback, selectedE
 function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selectedEmployeeId, refreshDrawerData) {
   if (!target) return;
   const records = Array.isArray(payload?.disciplinaries) ? payload.disciplinaries : [];
+  const types = Array.isArray(payload?.disciplinaryTypes) ? payload.disciplinaryTypes : [];
   const canAddDisciplinary = Boolean(payload?.capabilities?.canAddDisciplinary);
+  const activeCount = records.filter((entry) => ['ACTIVE', 'OPEN'].includes(String(entry.status || entry.record_status || '').toUpperCase())).length;
+  const suspendedUntil = String(payload?.suspensionState?.suspendedUntil || '').trim();
 
   target.innerHTML = `
+    <div class="admin-employees-table-header">
+      <h3>Disciplinary</h3>
+      <span class="finance-inline-caption">Active: ${activeCount}${payload?.suspensionState?.isSuspended ? ` • Suspended${suspendedUntil ? ` until ${escapeHtml(formatDate(suspendedUntil, true))}` : ''}` : ''}</span>
+    </div>
     ${
       canAddDisciplinary
         ? `<form id="drawerAddDisciplinaryForm" class="finance-cashflow-entry-form">
       <div>
-        <label for="drawerRecordType">Action Type</label>
-        <input id="drawerRecordType" name="recordType" type="text" required placeholder="Warning, Suspension, Demotion" />
+        <label for="drawerTypeKey">Type</label>
+        <select id="drawerTypeKey" name="typeKey" required>
+          <option value="">Select disciplinary type</option>
+          ${types
+            .map(
+              (row) =>
+                `<option value="${escapeHtml(String(row.key || ''))}" data-requires-end="${Number(row.requires_end_date || 0)}">${escapeHtml(
+                  text(row.label || row.value || row.key)
+                )}</option>`
+            )
+            .join('')}
+        </select>
       </div>
       <div>
-        <label for="drawerRecordStatus">Status</label>
-        <select id="drawerRecordStatus" name="recordStatus"><option value="open">Open</option><option value="resolved">Resolved</option></select>
+        <label for="drawerDisciplinaryStatus">Status</label>
+        <select id="drawerDisciplinaryStatus" name="status">
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="OPEN">OPEN</option>
+        </select>
       </div>
       <div>
-        <label for="drawerRecordDate">Record Date</label>
-        <input id="drawerRecordDate" name="recordDate" type="date" />
+        <label for="drawerEffectiveAt">Effective</label>
+        <input id="drawerEffectiveAt" name="effectiveAt" type="datetime-local" />
+      </div>
+      <div>
+        <label for="drawerEndsAt">Ends At</label>
+        <input id="drawerEndsAt" name="endsAt" type="datetime-local" />
       </div>
       <div class="finance-cashflow-entry-wide">
-        <label for="drawerRecordReason">Reason / Notes</label>
-        <textarea id="drawerRecordReason" name="reason" rows="3" minlength="2"></textarea>
+        <label for="drawerReasonText">Reason</label>
+        <textarea id="drawerReasonText" name="reasonText" rows="3" minlength="2" required></textarea>
+      </div>
+      <div class="finance-cashflow-entry-wide">
+        <label for="drawerInternalNotes">Internal Notes (optional)</label>
+        <textarea id="drawerInternalNotes" name="internalNotes" rows="2"></textarea>
       </div>
       <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
-        <button class="btn btn-primary" type="submit">Add Disciplinary Record</button>
+        <button class="btn btn-primary" type="submit">Create Record</button>
       </div>
     </form>`
         : '<p class="finance-inline-caption">You do not have permission to add disciplinary records.</p>'
@@ -575,11 +619,34 @@ function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selecte
     <div id="drawerDisciplinaryFeedback" class="feedback" role="status" aria-live="polite"></div>
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>Date</th><th>Type</th><th>Status</th><th>Issued By</th><th>Notes</th></tr></thead>
+        <thead><tr><th>When</th><th>Type</th><th>Status</th><th>Issued By</th><th>Reason</th><th class="align-right">Actions</th></tr></thead>
         <tbody>
-          ${records.length ? records
-            .map((entry) => `<tr><td>${escapeHtml(formatDate(entry.record_date || entry.created_at))}</td><td>${escapeHtml(text(entry.record_type))}</td><td><span class="badge badge-status ${statusClass(entry.record_status)}">${escapeHtml(text(entry.record_status))}</span></td><td>${escapeHtml(text(entry.issued_by || 'System'))}</td><td>${escapeHtml(text(entry.notes))}</td></tr>`)
-            .join('') : '<tr><td colspan="5">No disciplinary records found.</td></tr>'}
+          ${
+            records.length
+              ? records
+                  .map((entry) => {
+                    const rowStatus = String(entry.status || entry.record_status || '').toUpperCase();
+                    const canModify = ['ACTIVE', 'OPEN'].includes(rowStatus) && canAddDisciplinary;
+                    return `<tr>
+                      <td>${escapeHtml(formatDate(entry.effective_at || entry.record_date || entry.created_at, true))}${entry.ends_at ? `<br><small>Ends: ${escapeHtml(formatDate(entry.ends_at, true))}</small>` : ''}</td>
+                      <td>${escapeHtml(text(entry.type_label || entry.record_type || entry.type_key))}</td>
+                      <td><span class="badge badge-status ${disciplinaryStatusClass(rowStatus)}">${escapeHtml(rowStatus || 'ACTIVE')}</span></td>
+                      <td>${escapeHtml(text(entry.issued_by_name || entry.issued_by || 'System'))}</td>
+                      <td>${escapeHtml(text(entry.reason_text || entry.notes))}</td>
+                      <td class="align-right">
+                        ${
+                          canModify
+                            ? `<button class="btn btn-secondary btn-compact" type="button" data-discipline-action="close" data-record-id="${Number(entry.id)}">Close</button>
+                               <button class="btn btn-warning btn-compact" type="button" data-discipline-action="revoke" data-record-id="${Number(entry.id)}">Revoke</button>
+                               <button class="btn btn-primary btn-compact" type="button" data-discipline-action="extend" data-record-id="${Number(entry.id)}">Extend</button>`
+                            : '<span class="finance-inline-caption">—</span>'
+                        }
+                      </td>
+                    </tr>`;
+                  })
+                  .join('')
+              : '<tr><td colspan="6">No disciplinary records found.</td></tr>'
+          }
         </tbody>
       </table>
     </div>
@@ -588,25 +655,59 @@ function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selecte
   const feedbackNode = target.querySelector('#drawerDisciplinaryFeedback');
   if (feedbackNode && disciplinaryFeedback?.message) showMessage(feedbackNode, disciplinaryFeedback.message, disciplinaryFeedback.type || 'info');
 
+  const typeSelect = target.querySelector('#drawerTypeKey');
+  const endsAtInput = target.querySelector('#drawerEndsAt');
+  typeSelect?.addEventListener('change', () => {
+    const selected = typeSelect.options[typeSelect.selectedIndex];
+    const requiresEnd = Number(selected?.getAttribute('data-requires-end') || 0) === 1;
+    if (endsAtInput) endsAtInput.required = requiresEnd;
+  });
+
   const form = target.querySelector('#drawerAddDisciplinaryForm');
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const fd = new FormData(form);
     try {
       await addDisciplinary(selectedEmployeeId, {
-        recordType: String(fd.get('recordType') || '').trim(),
-        recordStatus: String(fd.get('recordStatus') || '').trim(),
-        recordDate: String(fd.get('recordDate') || '').trim(),
-        reason: String(fd.get('reason') || '').trim()
+        typeKey: String(fd.get('typeKey') || '').trim(),
+        status: String(fd.get('status') || '').trim(),
+        effectiveAt: String(fd.get('effectiveAt') || '').trim(),
+        endsAt: String(fd.get('endsAt') || '').trim(),
+        reasonText: String(fd.get('reasonText') || '').trim(),
+        internalNotes: String(fd.get('internalNotes') || '').trim()
       });
       await refreshDrawerData(selectedEmployeeId, {
         force: true,
-        feedback: { message: 'Disciplinary record added.', type: 'success' },
+        feedback: { message: 'Disciplinary record created.', type: 'success' },
         tab: 'disciplinary'
       });
     } catch (error) {
-      renderDrawerDisciplinary(target, payload, { message: error.message || 'Unable to add disciplinary record.', type: 'error' }, selectedEmployeeId, refreshDrawerData);
+      renderDrawerDisciplinary(target, payload, { message: error.message || 'Unable to create disciplinary record.', type: 'error' }, selectedEmployeeId, refreshDrawerData);
     }
+  });
+
+  target.querySelectorAll('[data-discipline-action]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const action = String(button.getAttribute('data-discipline-action') || '').trim();
+      const recordId = Number(button.getAttribute('data-record-id'));
+      if (!action || !Number.isInteger(recordId) || recordId <= 0) return;
+      try {
+        let payloadData = { recordId, action };
+        if (action === 'extend') {
+          const nextEndsAt = window.prompt('Enter new end date/time (YYYY-MM-DDTHH:mm):', '');
+          if (!nextEndsAt) return;
+          payloadData = { ...payloadData, endsAt: nextEndsAt };
+        }
+        await updateDisciplinary(selectedEmployeeId, payloadData);
+        await refreshDrawerData(selectedEmployeeId, {
+          force: true,
+          feedback: { message: `Record ${action}d.`, type: 'success' },
+          tab: 'disciplinary'
+        });
+      } catch (error) {
+        renderDrawerDisciplinary(target, payload, { message: error.message || 'Unable to update disciplinary record.', type: 'error' }, selectedEmployeeId, refreshDrawerData);
+      }
+    });
   });
 }
 

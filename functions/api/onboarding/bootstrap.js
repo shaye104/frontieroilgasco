@@ -1,5 +1,6 @@
 import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { normalizeDiscordUserId } from '../_lib/db.js';
+import { expireDisciplinaryRecordsForEmployee, reconcileEmployeeSuspensionState } from '../_lib/disciplinary.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -85,6 +86,11 @@ export async function onRequestGet(context) {
     ]);
     employee = employeeResult;
     qualifiesByRole = roleResult;
+    if (employee?.id) {
+      await expireDisciplinaryRecordsForEmployee(env, Number(employee.id));
+      const suspensionState = await reconcileEmployeeSuspensionState(env, Number(employee.id));
+      if (suspensionState?.employee) employee = suspensionState.employee;
+    }
   } catch (error) {
     if (!schemaError) schemaError = error;
   }

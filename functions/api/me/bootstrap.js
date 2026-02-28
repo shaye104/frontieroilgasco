@@ -1,5 +1,6 @@
 import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
+import { expireDisciplinaryRecordsForEmployee, reconcileEmployeeSuspensionState } from '../_lib/disciplinary.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -46,6 +47,10 @@ export async function onRequestGet(context) {
     getEmployeeByDiscordUserId(env, session.userId),
     hasQualifyingDiscordRole(env, Array.isArray(session.discordRoles) ? session.discordRoles : Array.isArray(session.roles) ? session.roles : [])
   ]);
+  if (employee?.id) {
+    await expireDisciplinaryRecordsForEmployee(env, Number(employee.id));
+    await reconcileEmployeeSuspensionState(env, Number(employee.id));
+  }
 
   const status = onboardingStatus(employee);
   const response = cachedJson(

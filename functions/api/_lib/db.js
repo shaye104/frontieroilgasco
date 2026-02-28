@@ -7,8 +7,8 @@ function parseStartingBalance(value) {
 let schemaBootstrapPromise = null;
 let schemaCheckedAtMs = 0;
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
-const CORE_DATA_SEED_VERSION = '2026-02-27-core-v2';
-const SCHEMA_BOOTSTRAP_VERSION = '2026-02-27-schema-v1';
+const CORE_DATA_SEED_VERSION = '2026-02-28-core-v3';
+const SCHEMA_BOOTSTRAP_VERSION = '2026-02-28-schema-v2';
 
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
@@ -91,13 +91,27 @@ export async function ensureCoreSchema(env) {
     `CREATE TABLE IF NOT EXISTS disciplinary_records (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       employee_id INTEGER NOT NULL,
+      type_key TEXT,
+      status TEXT NOT NULL DEFAULT 'ACTIVE',
+      effective_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      ends_at TEXT,
+      reason_text TEXT,
+      internal_notes TEXT,
+      issued_by_employee_id INTEGER,
+      issued_by_name TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      closed_at TEXT,
+      closed_by_employee_id INTEGER,
+      close_note TEXT,
       record_type TEXT,
       record_date TEXT,
       record_status TEXT,
       notes TEXT,
       issued_by TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(employee_id) REFERENCES employees(id)
+      FOREIGN KEY(employee_id) REFERENCES employees(id),
+      FOREIGN KEY(issued_by_employee_id) REFERENCES employees(id),
+      FOREIGN KEY(closed_by_employee_id) REFERENCES employees(id)
     )`,
     `CREATE TABLE IF NOT EXISTS employee_notes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -124,8 +138,21 @@ export async function ensureCoreSchema(env) {
     )`,
     `CREATE TABLE IF NOT EXISTS config_disciplinary_types (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      value TEXT NOT NULL UNIQUE,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      key TEXT UNIQUE,
+      label TEXT,
+      value TEXT UNIQUE,
+      severity INTEGER NOT NULL DEFAULT 1,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      default_status TEXT NOT NULL DEFAULT 'ACTIVE',
+      requires_end_date INTEGER NOT NULL DEFAULT 0,
+      default_duration_days INTEGER,
+      apply_suspension_rank INTEGER NOT NULL DEFAULT 0,
+      set_employee_status TEXT,
+      restrict_intranet INTEGER NOT NULL DEFAULT 0,
+      restrict_voyages INTEGER NOT NULL DEFAULT 0,
+      restrict_finance INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS config_ranks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -381,6 +408,11 @@ export async function ensureCoreSchema(env) {
       meta_key TEXT PRIMARY KEY,
       meta_value TEXT,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS config_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`
   ];
 
@@ -415,6 +447,99 @@ export async function ensureCoreSchema(env) {
   }
   if (!employeeColumnNames.has('onboarding_review_note')) {
     await env.DB.prepare(`ALTER TABLE employees ADD COLUMN onboarding_review_note TEXT`).run();
+  }
+  if (!employeeColumnNames.has('suspension_rank_before')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN suspension_rank_before TEXT`).run();
+  }
+  if (!employeeColumnNames.has('suspension_active_record_id')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN suspension_active_record_id INTEGER`).run();
+  }
+  if (!employeeColumnNames.has('suspension_started_at')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN suspension_started_at TEXT`).run();
+  }
+  if (!employeeColumnNames.has('suspension_ends_at')) {
+    await env.DB.prepare(`ALTER TABLE employees ADD COLUMN suspension_ends_at TEXT`).run();
+  }
+
+  const disciplinaryTypeColumns = await env.DB.prepare(`PRAGMA table_info(config_disciplinary_types)`).all();
+  const disciplinaryTypeColumnNames = new Set((disciplinaryTypeColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!disciplinaryTypeColumnNames.has('key')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN key TEXT`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('label')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN label TEXT`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('severity')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN severity INTEGER NOT NULL DEFAULT 1`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('is_active')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('default_status')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN default_status TEXT NOT NULL DEFAULT 'ACTIVE'`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('requires_end_date')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN requires_end_date INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('default_duration_days')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN default_duration_days INTEGER`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('apply_suspension_rank')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN apply_suspension_rank INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('set_employee_status')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN set_employee_status TEXT`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('restrict_intranet')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN restrict_intranet INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('restrict_voyages')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN restrict_voyages INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('restrict_finance')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN restrict_finance INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!disciplinaryTypeColumnNames.has('updated_at')) {
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+  }
+
+  const disciplinaryColumns = await env.DB.prepare(`PRAGMA table_info(disciplinary_records)`).all();
+  const disciplinaryColumnNames = new Set((disciplinaryColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!disciplinaryColumnNames.has('type_key')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN type_key TEXT`).run();
+  }
+  if (!disciplinaryColumnNames.has('status')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE'`).run();
+  }
+  if (!disciplinaryColumnNames.has('effective_at')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN effective_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP`).run();
+  }
+  if (!disciplinaryColumnNames.has('ends_at')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN ends_at TEXT`).run();
+  }
+  if (!disciplinaryColumnNames.has('reason_text')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN reason_text TEXT`).run();
+  }
+  if (!disciplinaryColumnNames.has('internal_notes')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN internal_notes TEXT`).run();
+  }
+  if (!disciplinaryColumnNames.has('issued_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN issued_by_employee_id INTEGER`).run();
+  }
+  if (!disciplinaryColumnNames.has('issued_by_name')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN issued_by_name TEXT`).run();
+  }
+  if (!disciplinaryColumnNames.has('updated_at')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+  }
+  if (!disciplinaryColumnNames.has('closed_at')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN closed_at TEXT`).run();
+  }
+  if (!disciplinaryColumnNames.has('closed_by_employee_id')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN closed_by_employee_id INTEGER`).run();
+  }
+  if (!disciplinaryColumnNames.has('close_note')) {
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN close_note TEXT`).run();
   }
 
   const rankColumns = await env.DB.prepare(`PRAGMA table_info(config_ranks)`).all();
@@ -532,7 +657,9 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_created_at ON admin_activity_events(created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_action_type ON admin_activity_events(action_type)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_target_employee ON admin_activity_events(target_employee_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_admin_activity_actor_employee ON admin_activity_events(actor_employee_id)`
+    `CREATE INDEX IF NOT EXISTS idx_admin_activity_actor_employee ON admin_activity_events(actor_employee_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_disciplinary_employee_status ON disciplinary_records(employee_id, status)`,
+    `CREATE INDEX IF NOT EXISTS idx_disciplinary_ends_at ON disciplinary_records(ends_at)`
   ];
 
   for (const sql of optionalIndexes) {
@@ -670,6 +797,71 @@ export async function ensureCoreSchema(env) {
     } catch {
       // Keep bootstrap non-fatal.
     }
+
+    try {
+      await env.DB
+        .prepare(
+          `CREATE UNIQUE INDEX IF NOT EXISTS ux_config_disciplinary_types_key
+           ON config_disciplinary_types(key)
+           WHERE key IS NOT NULL AND TRIM(key) != ''`
+        )
+        .run();
+    } catch {
+      // Keep bootstrap non-fatal.
+    }
+
+    await env.DB
+      .prepare(
+        `INSERT INTO config_settings (key, value, updated_at)
+         VALUES ('SUSPENDED_RANK_VALUE', 'Suspended', CURRENT_TIMESTAMP)
+         ON CONFLICT(key) DO NOTHING`
+      )
+      .run();
+
+    await env.DB.prepare(`UPDATE config_disciplinary_types SET label = COALESCE(NULLIF(TRIM(label), ''), value)`).run();
+    await env.DB
+      .prepare(
+        `UPDATE config_disciplinary_types
+         SET key = COALESCE(
+           NULLIF(TRIM(key), ''),
+           UPPER(REPLACE(REPLACE(REPLACE(TRIM(COALESCE(label, value, '')), ' ', '_'), '-', '_'), '__', '_'))
+         )`
+      )
+      .run();
+    await env.DB.prepare(`UPDATE config_disciplinary_types SET updated_at = COALESCE(updated_at, CURRENT_TIMESTAMP)`).run();
+    await env.DB
+      .prepare(
+        `UPDATE config_disciplinary_types
+         SET
+           apply_suspension_rank = CASE WHEN UPPER(COALESCE(key, '')) = 'SUSPENSION' THEN 1 ELSE COALESCE(apply_suspension_rank, 0) END,
+           requires_end_date = CASE WHEN UPPER(COALESCE(key, '')) = 'SUSPENSION' THEN 1 ELSE COALESCE(requires_end_date, 0) END,
+           set_employee_status = CASE
+             WHEN UPPER(COALESCE(key, '')) = 'SUSPENSION' AND COALESCE(NULLIF(TRIM(set_employee_status), ''), '') = '' THEN 'Suspended'
+             ELSE set_employee_status
+           END
+         WHERE key IS NOT NULL`
+      )
+      .run();
+
+    await env.DB
+      .prepare(
+        `UPDATE disciplinary_records
+         SET
+           type_key = COALESCE(NULLIF(TRIM(type_key), ''), UPPER(REPLACE(REPLACE(REPLACE(TRIM(COALESCE(record_type, 'WARNING')), ' ', '_'), '-', '_'), '__', '_'))),
+           status = CASE
+             WHEN UPPER(COALESCE(status, '')) IN ('ACTIVE','OPEN','CLOSED','REVOKED','EXPIRED') THEN UPPER(status)
+             WHEN UPPER(COALESCE(record_status, '')) IN ('OPEN','ACTIVE') THEN 'ACTIVE'
+             WHEN UPPER(COALESCE(record_status, '')) IN ('RESOLVED','CLOSED') THEN 'CLOSED'
+             WHEN UPPER(COALESCE(record_status, '')) = 'REVOKED' THEN 'REVOKED'
+             WHEN UPPER(COALESCE(record_status, '')) = 'EXPIRED' THEN 'EXPIRED'
+             ELSE 'ACTIVE'
+           END,
+           effective_at = COALESCE(NULLIF(TRIM(effective_at), ''), NULLIF(TRIM(record_date), ''), created_at, CURRENT_TIMESTAMP),
+           reason_text = COALESCE(NULLIF(TRIM(reason_text), ''), NULLIF(TRIM(notes), ''), 'No reason provided.'),
+           issued_by_name = COALESCE(NULLIF(TRIM(issued_by_name), ''), NULLIF(TRIM(issued_by), ''), 'System'),
+           updated_at = CURRENT_TIMESTAMP`
+      )
+      .run();
 
     await env.DB
       .prepare(

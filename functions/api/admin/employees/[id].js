@@ -2,6 +2,11 @@ import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
 import { canEditEmployeeByRank, writeAdminActivityEvent } from '../../_lib/db.js';
+import {
+  expireDisciplinaryRecordsForEmployee,
+  listDisciplinaryRecordsForEmployee,
+  reconcileEmployeeSuspensionState
+} from '../../_lib/disciplinary.js';
 import { sendRankSyncWebhook } from '../../_lib/rank-sync.js';
 import {
   canManageRoleRowByHierarchy,
@@ -129,25 +134,21 @@ export async function onRequestGet(context) {
 
   const employee = await env.DB.prepare('SELECT * FROM employees WHERE id = ?').bind(employeeId).first();
   if (!employee) return json({ error: 'Employee not found.' }, 404);
+  await expireDisciplinaryRecordsForEmployee(env, employeeId);
+  const suspensionState = await reconcileEmployeeSuspensionState(env, employeeId);
+  const effectiveEmployee = suspensionState?.employee || employee;
   const scope = await getActorAccessScope(env, session);
-  const canViewByRank = await canViewEmployeeByHierarchy(env, scope, employee, { allowSelf: true, allowEqual: false });
+  const canViewByRank = await canViewEmployeeByHierarchy(env, scope, effectiveEmployee, { allowSelf: true, allowEqual: false });
   if (!canViewByRank) {
     return json({ error: 'You can only view profiles beneath your hierarchy.' }, 403);
   }
   const canEditByRank = hasHierarchyBypass(env, session)
     ? true
     : scope.actorEmployee
-    ? await canEditEmployeeByRank(env, scope.actorEmployee, employee, { allowSelf: false, allowEqual: false })
+    ? await canEditEmployeeByRank(env, scope.actorEmployee, effectiveEmployee, { allowSelf: false, allowEqual: false })
     : false;
 
-  const disciplinaries = await env.DB.prepare(
-    `SELECT id, record_type, record_date, record_status, notes, issued_by, created_at
-     FROM disciplinary_records
-     WHERE employee_id = ?
-     ORDER BY COALESCE(record_date, created_at) DESC`
-  )
-    .bind(employeeId)
-    .all();
+  const disciplinaries = await listDisciplinaryRecordsForEmployee(env, employeeId);
 
   const notes = await env.DB.prepare(
     `SELECT id, note, authored_by, created_at
@@ -183,8 +184,12 @@ export async function onRequestGet(context) {
     : (availableRoles?.results || []).filter((row) => canManageRoleRowByHierarchy(scope, row));
 
   return json({
-    employee,
-    disciplinaries: disciplinaries?.results || [],
+    employee: effectiveEmployee,
+    disciplinaries,
+    suspensionState: {
+      isSuspended: Boolean(suspensionState?.suspended),
+      suspendedUntil: suspensionState?.suspendedUntil || null
+    },
     notes: notes?.results || [],
     assignedRoles: roleAssignments?.results || [],
     availableRoles: availableRoleRows,

@@ -51,6 +51,7 @@ export async function onRequest(context) {
     activationStatus,
     canAccessAdminPanel: hasAnyPermission({ permissions: permissionContext?.permissions || [] }, ADMIN_PANEL_ENTRY_PERMISSIONS),
     canManageRoles: hasPermission({ permissions: permissionContext?.permissions || [] }, 'user_groups.manage'),
-    canManageConfig: hasPermission({ permissions: permissionContext?.permissions || [] }, 'config.manage')
+    canManageConfig: hasPermission({ permissions: permissionContext?.permissions || [] }, 'config.manage'),
+    restrictions: permissionContext?.restrictions || { restrictIntranet: false, restrictVoyages: false, restrictFinance: false }
   });
 }

@@ -251,20 +251,32 @@ export function getEmployeeConfigBootstrap() {
 export function createConfigValue(type, value) {
   return requestJson(`/api/admin/config/${type}`, {
     method: 'POST',
-    body: JSON.stringify({ value })
+    body: JSON.stringify(typeof value === 'object' && value !== null ? value : { value })
   });
 }
 
 export function updateConfigValue(type, id, value) {
   return requestJson(`/api/admin/config/${type}`, {
     method: 'PUT',
-    body: JSON.stringify({ id, value })
+    body: JSON.stringify(typeof value === 'object' && value !== null ? { id, ...value } : { id, value })
   });
 }
 
 export function deleteConfigValue(type, id) {
   return requestJson(`/api/admin/config/${type}?id=${encodeURIComponent(String(id))}`, {
     method: 'DELETE'
+  });
+}
+
+export function getConfigSettings(key = '') {
+  const suffix = key ? `?key=${encodeURIComponent(String(key))}` : '';
+  return requestJson(`/api/admin/config/settings${suffix}`, { method: 'GET', cacheTtlMs: 10000 });
+}
+
+export function setConfigSetting(key, value) {
+  return requestJson('/api/admin/config/settings', {
+    method: 'PATCH',
+    body: JSON.stringify({ key, value })
   });
 }
 
@@ -358,6 +370,13 @@ export function activateEmployee(employeeId) {
 export function addDisciplinary(employeeId, entry) {
   return requestJson(`/api/admin/employees/${employeeId}/disciplinary`, {
     method: 'POST',
+    body: JSON.stringify(entry)
+  });
+}
+
+export function updateDisciplinary(employeeId, entry) {
+  return requestJson(`/api/admin/employees/${employeeId}/disciplinary`, {
+    method: 'PATCH',
     body: JSON.stringify(entry)
   });
 }

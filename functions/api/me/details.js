@@ -1,6 +1,7 @@
 import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { calculateTenureDays, ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { enrichSessionWithPermissions } from '../_lib/permissions.js';
+import { expireDisciplinaryRecordsForEmployee, listDisciplinaryRecordsForEmployee, reconcileEmployeeSuspensionState } from '../_lib/disciplinary.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -53,18 +54,13 @@ export async function onRequestGet(context) {
     );
   }
 
-  const disciplinaryQuery = await env.DB.prepare(
-    `SELECT id, record_type, record_date, record_status, notes, issued_by, created_at
-     FROM disciplinary_records
-     WHERE employee_id = ?
-     ORDER BY COALESCE(record_date, created_at) DESC`
-  )
-    .bind(employee.id)
-    .all();
+  await expireDisciplinaryRecordsForEmployee(env, Number(employee.id));
+  const suspensionState = await reconcileEmployeeSuspensionState(env, Number(employee.id));
+  const effectiveEmployee = suspensionState?.employee || employee;
 
-  const disciplinaryHistory = disciplinaryQuery?.results || [];
+  const disciplinaryHistory = await listDisciplinaryRecordsForEmployee(env, Number(employee.id));
   const activeDisciplinaryRecords = disciplinaryHistory.filter((item) => {
-    const state = String(item.record_status || '').toLowerCase();
+    const state = String(item.status || item.record_status || '').toLowerCase();
     return state === 'open' || state === 'active';
   });
 
@@ -91,15 +87,15 @@ export async function onRequestGet(context) {
     isAdmin: Boolean(session.isAdmin),
     accessPending: false,
     employee: {
-      id: employee.id,
-      robloxUsername: employee.roblox_username || '',
-      robloxUserId: employee.roblox_user_id || '',
-      rank: employee.rank || '',
-      grade: employee.grade || '',
-      serialNumber: employee.serial_number || '',
-      employeeStatus: employee.employee_status || '',
-      hireDate: employee.hire_date || '',
-      tenureDays: calculateTenureDays(employee.hire_date)
+      id: effectiveEmployee.id,
+      robloxUsername: effectiveEmployee.roblox_username || '',
+      robloxUserId: effectiveEmployee.roblox_user_id || '',
+      rank: effectiveEmployee.rank || '',
+      grade: effectiveEmployee.grade || '',
+      serialNumber: effectiveEmployee.serial_number || '',
+      employeeStatus: effectiveEmployee.employee_status || '',
+      hireDate: effectiveEmployee.hire_date || '',
+      tenureDays: calculateTenureDays(effectiveEmployee.hire_date)
     },
     voyageActivity: {
       totalVoyages: Number(statsRow?.total_voyages || 0),

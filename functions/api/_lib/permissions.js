@@ -225,6 +225,30 @@ async function getRankPermissions(env, rankValue) {
   return normalizePermissionKeys((rows?.results || []).map((row) => row.permission_key));
 }
 
+async function getDisciplinaryRestrictionFlags(env, employeeId) {
+  if (!Number.isInteger(employeeId) || employeeId <= 0) {
+    return { restrictIntranet: false, restrictVoyages: false, restrictFinance: false };
+  }
+  const row = await env.DB
+    .prepare(
+      `SELECT
+         MAX(COALESCE(dt.restrict_intranet, 0)) AS restrict_intranet,
+         MAX(COALESCE(dt.restrict_voyages, 0)) AS restrict_voyages,
+         MAX(COALESCE(dt.restrict_finance, 0)) AS restrict_finance
+       FROM disciplinary_records dr
+       LEFT JOIN config_disciplinary_types dt ON UPPER(COALESCE(dt.key, '')) = UPPER(COALESCE(dr.type_key, ''))
+       WHERE dr.employee_id = ?
+         AND UPPER(COALESCE(dr.status, 'ACTIVE')) IN ('ACTIVE', 'OPEN')`
+    )
+    .bind(employeeId)
+    .first();
+  return {
+    restrictIntranet: Number(row?.restrict_intranet || 0) === 1,
+    restrictVoyages: Number(row?.restrict_voyages || 0) === 1,
+    restrictFinance: Number(row?.restrict_finance || 0) === 1
+  };
+}
+
 export async function buildPermissionContext(env, { discordUserId, discordRoleIds = [], isSuperAdmin = false } = {}) {
   await ensureCoreSchema(env);
 
@@ -236,18 +260,33 @@ export async function buildPermissionContext(env, { discordUserId, discordRoleId
   const { roles, permissions } = await getRolePermissions(env, appRoleIds);
   const rankPermissions = await getRankPermissions(env, employee?.rank);
 
-  const normalizedPermissions = expandPermissionAliases(
+  let normalizedPermissions = expandPermissionAliases(
     isSuperAdmin
       ? [...permissions, ...rankPermissions, SUPER_ADMIN_PERMISSION, ADMIN_OVERRIDE_PERMISSION, ...getPermissionKeys()]
       : [...permissions, ...rankPermissions]
   );
+
+  const restrictions = await getDisciplinaryRestrictionFlags(env, Number(employee?.id || 0));
+  if (!isSuperAdmin) {
+    if (restrictions.restrictIntranet) {
+      normalizedPermissions = [];
+    } else {
+      if (restrictions.restrictVoyages) {
+        normalizedPermissions = normalizedPermissions.filter((key) => !String(key || '').startsWith('voyages.'));
+      }
+      if (restrictions.restrictFinance) {
+        normalizedPermissions = normalizedPermissions.filter((key) => !String(key || '').startsWith('finances.'));
+      }
+    }
+  }
 
   return {
     employee,
     appRoleIds,
     appRoles: roles,
     permissions: normalizedPermissions,
-    isSuperAdmin: Boolean(isSuperAdmin)
+    isSuperAdmin: Boolean(isSuperAdmin),
+    restrictions
   };
 }
 
@@ -273,6 +312,7 @@ export async function enrichSessionWithPermissions(env, session) {
     appRoleIds: context.appRoleIds,
     appRoles: context.appRoles,
     permissions: context.permissions,
-    employee: context.employee
+    employee: context.employee,
+    restrictions: context.restrictions
   };
 }

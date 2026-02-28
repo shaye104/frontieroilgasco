@@ -3,6 +3,11 @@ import { requirePermission } from '../../_lib/admin-auth.js';
 import { hasPermission } from '../../../_lib/permissions.js';
 import { canManageRoleRowByHierarchy, canViewEmployeeByHierarchy, getActorAccessScope, hasHierarchyBypass } from '../../_lib/access-scope.js';
 import { canEditEmployeeByRank } from '../../../_lib/db.js';
+import {
+  expireDisciplinaryRecordsForEmployee,
+  listDisciplinaryRecordsForEmployee,
+  reconcileEmployeeSuspensionState
+} from '../../../_lib/disciplinary.js';
 
 export async function onRequestGet(context) {
   const { env, params, request } = context;
@@ -17,10 +22,11 @@ export async function onRequestGet(context) {
   const activityPageSize = Math.min(50, Math.max(5, Number(url.searchParams.get('activityPageSize')) || 15));
 
   const dbStartedAt = Date.now();
-  const [employee, recentVoyagesRows, activityRows, notesRows, disciplinariesRows] = await Promise.all([
+  const [employee, recentVoyagesRows, activityRows, notesRows, disciplinaryTypesRows] = await Promise.all([
     env.DB
       .prepare(
-        `SELECT id, discord_user_id, discord_display_name, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, activation_status, activated_at, hire_date, updated_at
+        `SELECT id, discord_user_id, discord_display_name, roblox_username, roblox_user_id, rank, grade, serial_number, employee_status, activation_status, activated_at, hire_date, updated_at,
+                suspension_rank_before, suspension_active_record_id, suspension_started_at, suspension_ends_at
          FROM employees
          WHERE id = ?`
       )
@@ -80,23 +86,27 @@ export async function onRequestGet(context) {
       .all(),
     env.DB
       .prepare(
-        `SELECT id, record_type, record_date, record_status, notes, issued_by, created_at
-         FROM disciplinary_records
-         WHERE employee_id = ?
-         ORDER BY COALESCE(record_date, created_at) DESC, id DESC
-         LIMIT 80`
+        `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
+                apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance
+         FROM config_disciplinary_types
+         WHERE COALESCE(is_active, 1) = 1
+         ORDER BY severity DESC, label ASC, id ASC`
       )
-      .bind(employeeId)
       .all()
   ]);
   if (!employee) return json({ error: 'Employee not found.' }, 404);
+  await expireDisciplinaryRecordsForEmployee(env, employeeId);
+  const suspensionState = await reconcileEmployeeSuspensionState(env, employeeId);
+  const employeeRow = suspensionState?.employee || employee;
+  const disciplinariesRows = await listDisciplinaryRecordsForEmployee(env, employeeId);
+
   const scope = await getActorAccessScope(env, session);
-  const canViewByHierarchy = await canViewEmployeeByHierarchy(env, scope, employee, { allowSelf: true, allowEqual: false });
+  const canViewByHierarchy = await canViewEmployeeByHierarchy(env, scope, employeeRow, { allowSelf: true, allowEqual: false });
   if (!canViewByHierarchy) return json({ error: 'You can only view profiles beneath your hierarchy.' }, 403);
   const canEditByHierarchy = hasHierarchyBypass(env, session)
     ? true
     : scope.actorEmployee
-    ? await canEditEmployeeByRank(env, scope.actorEmployee, employee, { allowSelf: false, allowEqual: false })
+    ? await canEditEmployeeByRank(env, scope.actorEmployee, employeeRow, { allowSelf: false, allowEqual: false })
     : false;
   const [assignedRolesRows, availableRolesRows] = await Promise.all([
     env.DB
@@ -176,11 +186,16 @@ export async function onRequestGet(context) {
   );
 
   return json({
-    employee,
+    employee: employeeRow,
     recentVoyages: recentVoyagesRows?.results || [],
     activity,
     notes: notesRows?.results || [],
-    disciplinaries: disciplinariesRows?.results || [],
+    disciplinaries: disciplinariesRows || [],
+    disciplinaryTypes: disciplinaryTypesRows?.results || [],
+    suspensionState: {
+      isSuspended: Boolean(suspensionState?.suspended),
+      suspendedUntil: suspensionState?.suspendedUntil || null
+    },
     assignedRoles: assignedRolesRows?.results || [],
     availableRoles: availableRoleRows,
     capabilities: {

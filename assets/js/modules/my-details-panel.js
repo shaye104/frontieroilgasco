@@ -30,11 +30,11 @@ function renderDisciplinaryList(target, items, emptyMessage) {
 
   target.innerHTML = items
     .map((item) => {
-      const status = safeText(item.record_status);
-      const type = safeText(item.record_type);
-      const date = safeText(item.record_date || item.created_at);
-      const notes = safeText(item.notes);
-      const issuedBy = safeText(item.issued_by);
+      const status = safeText(item.status || item.record_status);
+      const type = safeText(item.type_label || item.type_key || item.record_type);
+      const date = safeText(item.effective_at || item.record_date || item.created_at);
+      const notes = safeText(item.reason_text || item.notes);
+      const issuedBy = safeText(item.issued_by_name || item.issued_by);
       return `<li class="role-item"><span class="role-id">${type} | ${status} | ${date} | Issued By: ${issuedBy} | ${notes}</span></li>`;
     })
     .join('');
