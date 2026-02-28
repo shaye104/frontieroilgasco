@@ -500,7 +500,7 @@ export async function ensureCoreSchema(env) {
     await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN restrict_finance INTEGER NOT NULL DEFAULT 0`).run();
   }
   if (!disciplinaryTypeColumnNames.has('updated_at')) {
-    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+    await env.DB.prepare(`ALTER TABLE config_disciplinary_types ADD COLUMN updated_at TEXT`).run();
   }
 
   const disciplinaryColumns = await env.DB.prepare(`PRAGMA table_info(disciplinary_records)`).all();
@@ -512,7 +512,7 @@ export async function ensureCoreSchema(env) {
     await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN status TEXT NOT NULL DEFAULT 'ACTIVE'`).run();
   }
   if (!disciplinaryColumnNames.has('effective_at')) {
-    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN effective_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP`).run();
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN effective_at TEXT`).run();
   }
   if (!disciplinaryColumnNames.has('ends_at')) {
     await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN ends_at TEXT`).run();
@@ -530,7 +530,7 @@ export async function ensureCoreSchema(env) {
     await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN issued_by_name TEXT`).run();
   }
   if (!disciplinaryColumnNames.has('updated_at')) {
-    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP`).run();
+    await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN updated_at TEXT`).run();
   }
   if (!disciplinaryColumnNames.has('closed_at')) {
     await env.DB.prepare(`ALTER TABLE disciplinary_records ADD COLUMN closed_at TEXT`).run();
