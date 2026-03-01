@@ -87,3 +87,8 @@ export async function onRequestPut(context) {
     assignedPermissionKeys: permissionKeys
   });
 }
+
+// Backward compatibility for cached clients using PATCH.
+export async function onRequestPatch(context) {
+  return onRequestPut(context);
+}

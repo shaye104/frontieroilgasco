@@ -111,6 +111,11 @@ export async function onRequestPut(context) {
   return json({ ranks: await listRanks(env) });
 }
 
+// Backward compatibility: older clients may still PATCH this endpoint.
+export async function onRequestPatch(context) {
+  return onRequestPut(context);
+}
+
 export async function onRequestDelete(context) {
   const { env, request } = context;
   const { errorResponse } = await requirePermission(context, ['user_ranks.manage']);
