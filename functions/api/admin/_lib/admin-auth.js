@@ -2,6 +2,16 @@ import { json, readSessionFromRequest } from '../../auth/_lib/auth.js';
 import { ensureCoreSchema } from '../../_lib/db.js';
 import { enrichSessionWithPermissions, hasAnyPermission } from '../../_lib/permissions.js';
 
+function isReadOnlyRequest(request) {
+  const method = String(request?.method || '').toUpperCase();
+  return method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
+}
+
+function hasAdminReadOnly(session) {
+  const permissions = Array.isArray(session?.permissions) ? session.permissions : [];
+  return permissions.includes('admin.read_only');
+}
+
 export async function requirePermission(context, permissionKeys = []) {
   const { env, request } = context;
   const rawSession = await readSessionFromRequest(env, request);
@@ -12,7 +22,8 @@ export async function requirePermission(context, permissionKeys = []) {
   }
 
   const hasTargetPermission = permissionKeys.length ? hasAnyPermission(session, permissionKeys) : true;
-  if (!hasTargetPermission) {
+  const allowReadOnlyBypass = permissionKeys.length && hasAdminReadOnly(session) && isReadOnlyRequest(request);
+  if (!hasTargetPermission && !allowReadOnlyBypass) {
     return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null };
   }
   if (!session.isAdmin) {

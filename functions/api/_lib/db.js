@@ -32,6 +32,7 @@ export async function ensureCoreSchema(env) {
 
   const permissionSeed = [
     ['super.admin', 'roles', 'Super Admin', 'Global bypass permission.'],
+    ['admin.read_only', 'admin', 'Admin Read Only', 'Read-only access across all admin areas.'],
     ['admin.override', 'admin', 'Admin Override', 'Grant all permissions across the application.'],
     ['employees.read', 'employees', 'View Employees', 'View employee lists and employee profiles.'],
     ['employees.create', 'employees', 'Create Employees', 'Create employee records.'],
@@ -417,6 +418,29 @@ export async function ensureCoreSchema(env) {
   ];
 
   await env.DB.batch(tables.map((sql) => env.DB.prepare(sql)));
+
+  // Ensure core admin permission/role always exist, even on already-seeded databases.
+  await env.DB
+    .prepare(
+      `INSERT OR IGNORE INTO app_permissions (permission_key, permission_group, label, description)
+       VALUES ('admin.read_only', 'admin', 'Admin Read Only', 'Read-only access across all admin areas.')`
+    )
+    .run();
+
+  await env.DB
+    .prepare(
+      `INSERT OR IGNORE INTO app_roles (role_key, name, description, sort_order, is_system, updated_at)
+       VALUES ('admin_read_only', 'Admin Read Only', 'Read-only visibility across admin pages without write actions.', 10, 0, CURRENT_TIMESTAMP)`
+    )
+    .run();
+
+  const adminReadOnlyRole = await env.DB.prepare(`SELECT id FROM app_roles WHERE role_key = 'admin_read_only'`).first();
+  if (adminReadOnlyRole?.id) {
+    await env.DB
+      .prepare(`INSERT OR IGNORE INTO app_role_permissions (role_id, permission_key) VALUES (?, 'admin.read_only')`)
+      .bind(adminReadOnlyRole.id)
+      .run();
+  }
 
   // Backfill critical columns for legacy table variants so auth can always bootstrap.
   const employeeColumns = await env.DB.prepare(`PRAGMA table_info(employees)`).all();

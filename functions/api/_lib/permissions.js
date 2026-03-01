@@ -2,7 +2,9 @@ import { ensureCoreSchema, getEmployeeByDiscordUserId } from './db.js';
 
 export const SUPER_ADMIN_PERMISSION = 'super.admin';
 export const ADMIN_OVERRIDE_PERMISSION = 'admin.override';
+export const ADMIN_READ_ONLY_PERMISSION = 'admin.read_only';
 export const ADMIN_PANEL_ENTRY_PERMISSIONS = [
+  ADMIN_READ_ONLY_PERMISSION,
   'employees.read',
   'voyages.config.manage',
   'user_groups.manage',
@@ -70,6 +72,7 @@ export const PERMISSION_GROUPS = [
     key: 'admin',
     label: 'Admin',
     permissions: [
+      { key: ADMIN_READ_ONLY_PERMISSION, label: 'Admin Read Only', description: 'Read-only access across all admin areas.' },
       { key: ADMIN_OVERRIDE_PERMISSION, label: 'Admin Override', description: 'Grant all permissions across the application.' }
     ]
   },

@@ -12,9 +12,16 @@ export function hasPermission(session, permissionKey) {
   const permissions = Array.isArray(session.permissions) ? session.permissions : [];
   const requested = String(permissionKey || '').trim();
   const alias = PERMISSION_ALIASES[requested];
+  const isReadOnlyAdmin = permissions.includes('admin.read_only');
+  const readOnlyViewable =
+    isReadOnlyAdmin &&
+    (requested.endsWith('.read') ||
+      requested.endsWith('.view') ||
+      ['voyages.config.manage', 'user_groups.manage', 'user_ranks.manage', 'config.manage'].includes(requested));
   return (
     permissions.includes('super.admin') ||
     permissions.includes('admin.override') ||
+    readOnlyViewable ||
     permissions.includes(requested) ||
     (alias ? permissions.includes(alias) : false)
   );
@@ -42,6 +49,7 @@ export function getPreferredUserLabel(session) {
 }
 
 export const ADMIN_PANEL_ENTRY_PERMISSIONS = [
+  'admin.read_only',
   'employees.read',
   'voyages.config.manage',
   'user_groups.manage',
