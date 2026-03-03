@@ -762,10 +762,23 @@ export function deleteVoyageConfigValue(type, id) {
 }
 
 export function sendLiveNotification(payload) {
+  const publishLocalNotification = (responsePayload) => {
+    if (typeof window === 'undefined') return responsePayload;
+    if (responsePayload?.notification) {
+      window.dispatchEvent(
+        new CustomEvent('fog:live-notification-sent', {
+          detail: { notification: responsePayload.notification }
+        })
+      );
+    }
+    return responsePayload;
+  };
+
   return requestJson('/api/live-notify', {
     method: 'POST',
     body: JSON.stringify(payload || {})
   })
+    .then(publishLocalNotification)
     .catch(async (error) => {
       const statusMatch = /(\d{3})$/.exec(String(error?.message || ''));
       const status = Number(statusMatch?.[1] || 0);
@@ -773,7 +786,7 @@ export function sendLiveNotification(payload) {
       return requestJson('/api/notifications/send', {
         method: 'POST',
         body: JSON.stringify(payload || {})
-      });
+      }).then(publishLocalNotification);
     })
     .catch(async (error) => {
       const statusMatch = /(\d{3})$/.exec(String(error?.message || ''));
@@ -782,7 +795,7 @@ export function sendLiveNotification(payload) {
       return requestJson('/api/notifications', {
         method: 'POST',
         body: JSON.stringify(payload || {})
-      });
+      }).then(publishLocalNotification);
     });
 }
 

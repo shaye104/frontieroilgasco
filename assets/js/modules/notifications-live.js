@@ -7,6 +7,7 @@ let standardSoundUrl = '';
 let urgentSoundUrl = '';
 let muted = false;
 let audioBlockedHintShown = false;
+const seenNotificationIds = new Set();
 
 function text(value) {
   return String(value || '').trim();
@@ -84,6 +85,16 @@ function showToast(notification) {
   window.setTimeout(cleanup, toastDuration(severity));
 }
 
+function handleIncomingNotification(notification) {
+  const id = Number(notification?.id || 0);
+  if (id > 0) {
+    if (seenNotificationIds.has(id)) return;
+    seenNotificationIds.add(id);
+  }
+  showToast(notification);
+  playNotificationSound(text(notification.severity).toUpperCase());
+}
+
 async function pollOnce() {
   try {
     const payload = await getLiveNotifications(lastId);
@@ -92,10 +103,7 @@ async function pollOnce() {
     const notifications = Array.isArray(payload?.notifications) ? payload.notifications : [];
     if (Number(payload?.lastId) > lastId) lastId = Number(payload.lastId);
     if (!notifications.length) return;
-    notifications.forEach((notification) => {
-      showToast(notification);
-      playNotificationSound(text(notification.severity).toUpperCase());
-    });
+    notifications.forEach((notification) => handleIncomingNotification(notification));
   } catch {
     // Keep polling non-fatal.
   }
@@ -105,7 +113,7 @@ function schedule() {
   if (pollTimer) window.clearInterval(pollTimer);
   pollTimer = window.setInterval(() => {
     void pollOnce();
-  }, 15000);
+  }, 7000);
 }
 
 function initMuteToggle() {
@@ -128,6 +136,11 @@ export function initLiveNotifications() {
   if (initialized) return;
   initialized = true;
   initMuteToggle();
+  window.addEventListener('fog:live-notification-sent', (event) => {
+    const notification = event?.detail?.notification;
+    if (!notification) return;
+    handleIncomingNotification(notification);
+  });
   void pollOnce();
   schedule();
   document.addEventListener('visibilitychange', () => {
@@ -135,7 +148,7 @@ export function initLiveNotifications() {
       if (pollTimer) window.clearInterval(pollTimer);
       pollTimer = window.setInterval(() => {
         void pollOnce();
-      }, 30000);
+      }, 20000);
       return;
     }
     void pollOnce();

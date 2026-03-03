@@ -48,6 +48,48 @@ export async function onRequestGet(context) {
   const employeeId = Number(employee?.id || 0);
   if (!employeeId) return json({ notifications: [], lastId: sinceId });
 
+  if (sinceId <= 0) {
+    const [latestRow, recentRows, settings] = await Promise.all([
+      env.DB.prepare(`SELECT COALESCE(MAX(id), 0) AS max_id FROM live_notifications`).first(),
+      env.DB
+        .prepare(
+          `SELECT id, created_at, sender_employee_id, sender_name, severity, title, message, target_mode, target_json
+           FROM live_notifications
+           WHERE COALESCE(expires_at, created_at) >= datetime('now', '-3 minutes')
+           ORDER BY id ASC
+           LIMIT 20`
+        )
+        .all(),
+      readSiteSettings(env)
+    ]);
+
+    const notifications = (recentRows?.results || [])
+      .filter((row) => {
+        const mode = text(row.target_mode).toUpperCase();
+        if (mode === 'ALL') return true;
+        if (mode !== 'SPECIFIC') return false;
+        return parseTargetIds(row.target_json).includes(employeeId);
+      })
+      .map((row) => ({
+        id: Number(row.id),
+        createdAt: row.created_at,
+        senderEmployeeId: Number(row.sender_employee_id || 0) || null,
+        senderName: text(row.sender_name) || 'System',
+        severity: text(row.severity).toUpperCase() === 'URGENT' ? 'URGENT' : 'STANDARD',
+        title: text(row.title),
+        message: text(row.message)
+      }));
+
+    return json({
+      notifications,
+      lastId: Number(latestRow?.max_id || 0),
+      sounds: {
+        standard: text(settings.notificationSoundStandardUrl),
+        urgent: text(settings.notificationSoundUrgentUrl)
+      }
+    });
+  }
+
   const rows = await env.DB
     .prepare(
       `SELECT id, created_at, sender_employee_id, sender_name, severity, title, message, target_mode, target_json
@@ -58,19 +100,6 @@ export async function onRequestGet(context) {
     )
     .bind(sinceId, limit)
     .all();
-
-  if (sinceId <= 0) {
-    const bootstrapLastId = (rows?.results || []).reduce((max, row) => Math.max(max, Number(row.id || 0)), 0);
-    const settings = await readSiteSettings(env);
-    return json({
-      notifications: [],
-      lastId: bootstrapLastId,
-      sounds: {
-        standard: text(settings.notificationSoundStandardUrl),
-        urgent: text(settings.notificationSoundUrgentUrl)
-      }
-    });
-  }
 
   const notifications = (rows?.results || [])
     .filter((row) => {
