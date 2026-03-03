@@ -112,3 +112,12 @@ export async function onRequestPost(context) {
     }
   });
 }
+
+// Backward compatibility in case cached clients call PUT/PATCH.
+export async function onRequestPut(context) {
+  return onRequestPost(context);
+}
+
+export async function onRequestPatch(context) {
+  return onRequestPost(context);
+}
