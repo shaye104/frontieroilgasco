@@ -765,22 +765,6 @@ export function sendLiveNotification(payload) {
   return requestJson('/api/notifications', {
     method: 'POST',
     body: JSON.stringify(payload || {})
-  }).catch(async (error) => {
-    const status = Number(error?.status || 0);
-    if (status && status !== 404 && status !== 405) throw error;
-    try {
-      return await requestJson('/api/notifications/send', {
-        method: 'POST',
-        body: JSON.stringify(payload || {})
-      });
-    } catch (fallbackError) {
-      const fallbackStatus = Number(fallbackError?.status || 0);
-      if (fallbackStatus && fallbackStatus !== 405) throw fallbackError;
-      return requestJson('/api/notifications/send', {
-        method: 'PUT',
-        body: JSON.stringify(payload || {})
-      });
-    }
   });
 }
 

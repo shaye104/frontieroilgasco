@@ -1,8 +1,27 @@
-export { onRequestGet } from './notifications/live.js';
-export { onRequestPost, onRequestPut, onRequestPatch } from './notifications/send.js';
 import { json } from './auth/_lib/auth.js';
-import { onRequestGet, onRequestOptions as onLiveOptions } from './notifications/live.js';
-import { onRequestPatch, onRequestPost, onRequestPut, onRequestOptions as onSendOptions } from './notifications/send.js';
+import { onRequestGet as onLiveGet, onRequestOptions as onLiveOptions } from './notifications/live.js';
+import {
+  onRequestPatch as onSendPatch,
+  onRequestPost as onSendPost,
+  onRequestPut as onSendPut,
+  onRequestOptions as onSendOptions
+} from './notifications/send.js';
+
+export async function onRequestGet(context) {
+  return onLiveGet(context);
+}
+
+export async function onRequestPost(context) {
+  return onSendPost(context);
+}
+
+export async function onRequestPut(context) {
+  return onSendPut(context);
+}
+
+export async function onRequestPatch(context) {
+  return onSendPatch(context);
+}
 
 export async function onRequestOptions() {
   return new Response(null, {
@@ -15,10 +34,10 @@ export async function onRequestOptions() {
 
 export async function onRequest(context) {
   const method = String(context.request.method || '').toUpperCase();
-  if (method === 'GET') return onRequestGet(context);
-  if (method === 'POST') return onRequestPost(context);
-  if (method === 'PUT') return onRequestPut(context);
-  if (method === 'PATCH') return onRequestPatch(context);
+  if (method === 'GET') return onLiveGet(context);
+  if (method === 'POST') return onSendPost(context);
+  if (method === 'PUT') return onSendPut(context);
+  if (method === 'PATCH') return onSendPatch(context);
   if (method === 'OPTIONS') {
     // Keep behavior consistent with both child handlers.
     await onLiveOptions(context);
