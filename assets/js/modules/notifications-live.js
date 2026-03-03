@@ -5,13 +5,12 @@ let lastId = 0;
 let pollTimer = null;
 let standardSoundUrl = '';
 let urgentSoundUrl = '';
-let muted = false;
-let audioBlockedHintShown = false;
-let audioEnableBtn = null;
 const seenNotificationIds = new Set();
 const dismissedNotificationIds = new Set();
 const DISMISSED_STORAGE_KEY = 'fog_live_notifications_dismissed_ids_v1';
 const DEFAULT_SOUND_URL = '/MorseAlert.mp3';
+let pendingSoundSeverity = '';
+let retrySoundBound = false;
 
 function text(value) {
   return String(value || '').trim();
@@ -77,34 +76,21 @@ function getSoundSource(severity) {
   return text(preferred) || text(fallback) || DEFAULT_SOUND_URL;
 }
 
-function renderEnableSoundButton() {
-  const nav = document.querySelector('.site-nav');
-  if (!nav) return;
-  if (audioEnableBtn && audioEnableBtn.isConnected) return;
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'btn btn-secondary';
-  btn.textContent = 'Enable Sounds';
-  btn.addEventListener('click', async () => {
-    try {
-      const audio = new Audio(getSoundSource('STANDARD'));
-      audio.volume = 0.01;
-      await audio.play();
-      audio.pause();
-      audio.currentTime = 0;
-      if (audioEnableBtn?.isConnected) audioEnableBtn.remove();
-      audioEnableBtn = null;
-      audioBlockedHintShown = false;
-    } catch {
-      // Keep button visible if still blocked.
-    }
-  });
-  nav.prepend(btn);
-  audioEnableBtn = btn;
+function bindRetryAfterInteraction() {
+  if (retrySoundBound) return;
+  retrySoundBound = true;
+  const retry = () => {
+    const severity = pendingSoundSeverity;
+    if (!severity) return;
+    pendingSoundSeverity = '';
+    void playNotificationSound(severity);
+  };
+  document.addEventListener('pointerdown', retry, { passive: true });
+  document.addEventListener('keydown', retry, { passive: true });
+  document.addEventListener('touchstart', retry, { passive: true });
 }
 
 function playNotificationSound(severity) {
-  if (muted) return;
   const source = getSoundSource(severity);
   if (!source) return;
   try {
@@ -113,15 +99,8 @@ function playNotificationSound(severity) {
     const promise = audio.play();
     if (promise && typeof promise.catch === 'function') {
       promise.catch(() => {
-        if (audioBlockedHintShown) return;
-        audioBlockedHintShown = true;
-        renderEnableSoundButton();
-        showToast({
-          severity: 'STANDARD',
-          title: 'Notification sounds blocked',
-          message: 'Click Enable Sounds in the header to allow alert audio.',
-          senderName: 'System'
-        });
+        pendingSoundSeverity = severity;
+        bindRetryAfterInteraction();
       });
     }
   } catch {
@@ -194,27 +173,10 @@ function schedule() {
   }, 7000);
 }
 
-function initMuteToggle() {
-  muted = window.localStorage.getItem('fog_notifications_muted') === '1';
-  const nav = document.querySelector('.site-nav');
-  if (!nav) return;
-  const muteBtn = document.createElement('button');
-  muteBtn.type = 'button';
-  muteBtn.className = 'btn btn-secondary';
-  muteBtn.textContent = muted ? 'Unmute Alerts' : 'Mute Alerts';
-  muteBtn.addEventListener('click', () => {
-    muted = !muted;
-    window.localStorage.setItem('fog_notifications_muted', muted ? '1' : '0');
-    muteBtn.textContent = muted ? 'Unmute Alerts' : 'Mute Alerts';
-  });
-  nav.prepend(muteBtn);
-}
-
 export function initLiveNotifications() {
   if (initialized) return;
   initialized = true;
   loadDismissedNotificationIds();
-  initMuteToggle();
   window.addEventListener('fog:live-notification-sent', (event) => {
     const notification = event?.detail?.notification;
     if (!notification) return;
