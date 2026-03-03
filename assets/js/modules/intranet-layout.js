@@ -1,6 +1,6 @@
 import { showMessage } from './notice.js';
 import { canAccessAdminPanel, getPreferredUserLabel, hasPermission, renderIntranetNavbar } from './nav.js?v=20260227b';
-import { initLiveNotifications } from './notifications-live.js?v=20260303h';
+import { initLiveNotifications } from './notifications-live.js?v=20260303i';
 
 function normalizePath(pathname) {
   if (!pathname || pathname === '/') return '/';

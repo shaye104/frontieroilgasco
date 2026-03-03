@@ -11,6 +11,7 @@ const DISMISSED_STORAGE_KEY = 'fog_live_notifications_dismissed_ids_v1';
 const DEFAULT_SOUND_URL = '/MorseAlert.mp3';
 let pendingSoundSeverity = '';
 let retrySoundBound = false;
+let liveAudioContext = null;
 
 function text(value) {
   return String(value || '').trim();
@@ -90,21 +91,75 @@ function bindRetryAfterInteraction() {
   document.addEventListener('touchstart', retry, { passive: true });
 }
 
-function playNotificationSound(severity) {
+function getAudioContext() {
+  if (liveAudioContext) return liveAudioContext;
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+  liveAudioContext = new AudioCtx();
+  return liveAudioContext;
+}
+
+async function playFallbackBeep(severity) {
+  const context = getAudioContext();
+  if (!context) return false;
+  if (context.state === 'suspended') await context.resume();
+  const gain = context.createGain();
+  gain.connect(context.destination);
+  gain.gain.value = severity === 'URGENT' ? 0.12 : 0.08;
+
+  const now = context.currentTime;
+  const toneA = context.createOscillator();
+  toneA.type = 'sine';
+  toneA.frequency.value = severity === 'URGENT' ? 1050 : 780;
+  toneA.connect(gain);
+  toneA.start(now);
+  toneA.stop(now + 0.11);
+
+  if (severity === 'URGENT') {
+    const toneB = context.createOscillator();
+    toneB.type = 'square';
+    toneB.frequency.value = 1320;
+    toneB.connect(gain);
+    toneB.start(now + 0.14);
+    toneB.stop(now + 0.29);
+  }
+  return true;
+}
+
+async function playNotificationSound(severity) {
   const source = getSoundSource(severity);
-  if (!source) return;
+  if (!source) {
+    await playFallbackBeep(severity).catch(() => {});
+    return;
+  }
   try {
     const audio = new Audio(source);
     audio.volume = severity === 'URGENT' ? 0.9 : 0.75;
     const promise = audio.play();
+    audio.onerror = () => {
+      void playFallbackBeep(severity).catch(() => {});
+    };
     if (promise && typeof promise.catch === 'function') {
-      promise.catch(() => {
+      promise.catch(async () => {
+        try {
+          const playedFallback = await playFallbackBeep(severity);
+          if (playedFallback) return;
+        } catch {
+          // no-op
+        }
         pendingSoundSeverity = severity;
         bindRetryAfterInteraction();
       });
     }
   } catch {
-    // no-op
+    try {
+      const playedFallback = await playFallbackBeep(severity);
+      if (playedFallback) return;
+    } catch {
+      // no-op
+    }
+    pendingSoundSeverity = severity;
+    bindRetryAfterInteraction();
   }
 }
 
