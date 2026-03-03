@@ -105,7 +105,7 @@ function schedule() {
   if (pollTimer) window.clearInterval(pollTimer);
   pollTimer = window.setInterval(() => {
     void pollOnce();
-  }, 5000);
+  }, 15000);
 }
 
 function initMuteToggle() {
@@ -135,7 +135,7 @@ export function initLiveNotifications() {
       if (pollTimer) window.clearInterval(pollTimer);
       pollTimer = window.setInterval(() => {
         void pollOnce();
-      }, 15000);
+      }, 30000);
       return;
     }
     void pollOnce();
