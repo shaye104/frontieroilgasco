@@ -762,18 +762,28 @@ export function deleteVoyageConfigValue(type, id) {
 }
 
 export function sendLiveNotification(payload) {
-  return requestJson('/api/notifications/send', {
+  return requestJson('/api/live-notify', {
     method: 'POST',
     body: JSON.stringify(payload || {})
-  }).catch(async (error) => {
-    const statusMatch = /(\d{3})$/.exec(String(error?.message || ''));
-    const status = Number(statusMatch?.[1] || 0);
-    if (status && status !== 404 && status !== 405) throw error;
-    return requestJson('/api/notifications', {
-      method: 'POST',
-      body: JSON.stringify(payload || {})
+  })
+    .catch(async (error) => {
+      const statusMatch = /(\d{3})$/.exec(String(error?.message || ''));
+      const status = Number(statusMatch?.[1] || 0);
+      if (status && status !== 404 && status !== 405) throw error;
+      return requestJson('/api/notifications/send', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
+    })
+    .catch(async (error) => {
+      const statusMatch = /(\d{3})$/.exec(String(error?.message || ''));
+      const status = Number(statusMatch?.[1] || 0);
+      if (status && status !== 404 && status !== 405) throw error;
+      return requestJson('/api/notifications', {
+        method: 'POST',
+        body: JSON.stringify(payload || {})
+      });
     });
-  });
 }
 
 export function getLiveNotifications(sinceId = 0) {

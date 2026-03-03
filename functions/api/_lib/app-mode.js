@@ -74,6 +74,7 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/notifications',
   '/api/notifications/live',
   '/api/notifications/send',
+  '/api/live-notify',
   '/api/admin/employees',
   '/api/admin/roles',
   '/api/admin/user-ranks',
