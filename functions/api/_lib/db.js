@@ -414,6 +414,19 @@ export async function ensureCoreSchema(env) {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS live_notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      sender_employee_id INTEGER,
+      sender_name TEXT,
+      severity TEXT NOT NULL CHECK (severity IN ('STANDARD', 'URGENT')),
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      target_mode TEXT NOT NULL CHECK (target_mode IN ('ALL', 'SPECIFIC')),
+      target_json TEXT,
+      expires_at TEXT,
+      FOREIGN KEY(sender_employee_id) REFERENCES employees(id)
     )`
   ];
 
@@ -683,7 +696,9 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_target_employee ON admin_activity_events(target_employee_id)`,
     `CREATE INDEX IF NOT EXISTS idx_admin_activity_actor_employee ON admin_activity_events(actor_employee_id)`,
     `CREATE INDEX IF NOT EXISTS idx_disciplinary_employee_status ON disciplinary_records(employee_id, status)`,
-    `CREATE INDEX IF NOT EXISTS idx_disciplinary_ends_at ON disciplinary_records(ends_at)`
+    `CREATE INDEX IF NOT EXISTS idx_disciplinary_ends_at ON disciplinary_records(ends_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_live_notifications_created ON live_notifications(created_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_live_notifications_expires ON live_notifications(expires_at)`
   ];
 
   for (const sql of optionalIndexes) {

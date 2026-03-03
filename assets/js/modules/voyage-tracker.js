@@ -1,4 +1,4 @@
-import { getVoyageOverview, searchEmployees, startVoyage } from './admin-api.js';
+import { getVoyageOverview, searchEmployees, sendLiveNotification, startVoyage } from './admin-api.js';
 import { hasPermission } from './nav.js';
 import { clearMessage, showMessage } from './notice.js';
 
@@ -160,6 +160,15 @@ export async function initVoyageTracker(config, session) {
   const crewSelected = document.querySelector(config.crewSelectedSelector);
   const crewInfo = document.querySelector(config.crewInfoSelector);
   const crewError = document.querySelector(config.crewErrorSelector);
+  const notifyOpenButton = document.querySelector(config.notifyOpenSelector);
+  const notifyForm = document.querySelector(config.notifyFormSelector);
+  const notifyTargetMode = document.querySelector(config.notifyTargetModeSelector);
+  const notifySpecificPanel = document.querySelector(config.notifySpecificPanelSelector);
+  const notifyUserSearch = document.querySelector(config.notifyUserSearchSelector);
+  const notifyUserResults = document.querySelector(config.notifyUserResultsSelector);
+  const notifySelectedUsers = document.querySelector(config.notifySelectedUsersSelector);
+  const notifyFeedback = document.querySelector(config.notifyFeedbackSelector);
+  const notifySendButton = document.querySelector(config.notifySendButtonSelector);
 
   if (
     !feedback ||
@@ -184,7 +193,16 @@ export async function initVoyageTracker(config, session) {
     !crewResults ||
     !crewSelected ||
     !crewInfo ||
-    !crewError
+    !crewError ||
+    !notifyOpenButton ||
+    !notifyForm ||
+    !notifyTargetMode ||
+    !notifySpecificPanel ||
+    !notifyUserSearch ||
+    !notifyUserResults ||
+    !notifySelectedUsers ||
+    !notifyFeedback ||
+    !notifySendButton
   ) {
     return;
   }
@@ -196,6 +214,8 @@ export async function initVoyageTracker(config, session) {
   let ongoingKeys = new Set();
   let selectedCrewIds = new Set();
   const selectedCrewById = new Map();
+  let selectedNotifyUserIds = new Set();
+  const selectedNotifyUsersById = new Map();
   const searchCache = new Map();
 
   async function lookupEmployees(queryKind, queryValue) {
@@ -365,6 +385,46 @@ export async function initVoyageTracker(config, session) {
     renderCrewSelected();
   }
 
+  function renderNotifySelectedUsers() {
+    if (!selectedNotifyUserIds.size) {
+      notifySelectedUsers.innerHTML = '<span class="muted">No users selected.</span>';
+      return;
+    }
+    notifySelectedUsers.innerHTML = [...selectedNotifyUserIds]
+      .map((employeeId) => {
+        const employee =
+          selectedNotifyUsersById.get(Number(employeeId)) ||
+          employees.find((item) => Number(item.id) === Number(employeeId)) ||
+          null;
+        const label = text(employee?.roblox_username || `Employee #${employeeId}`);
+        return `<span class="pill">
+          ${label}
+          <button type="button" class="pill-close" data-remove-notify-user="${Number(employeeId)}" aria-label="Remove recipient">x</button>
+        </span>`;
+      })
+      .join('');
+    notifySelectedUsers.querySelectorAll('[data-remove-notify-user]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = Number(button.getAttribute('data-remove-notify-user'));
+        selectedNotifyUserIds.delete(id);
+        selectedNotifyUsersById.delete(id);
+        renderNotifySelectedUsers();
+      });
+    });
+  }
+
+  function clearNotifyForm() {
+    notifyForm.reset();
+    selectedNotifyUserIds = new Set();
+    selectedNotifyUsersById.clear();
+    notifyUserSearch.value = '';
+    notifyUserResults.innerHTML = '';
+    notifyUserResults.classList.remove('is-open');
+    notifySpecificPanel.classList.add('hidden');
+    setInlineMessage(notifyFeedback, '');
+    renderNotifySelectedUsers();
+  }
+
   async function refreshBoard() {
     const payload = await getVoyageOverview({ includeSetup: true, archivedLimit: 6 });
     employees = payload.employees || [];
@@ -395,11 +455,71 @@ export async function initVoyageTracker(config, session) {
   }
 
   startBtn.addEventListener('click', () => openModal('startVoyageModal'));
+  notifyOpenButton.addEventListener('click', () => {
+    clearNotifyForm();
+    openModal('notifyModal');
+  });
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
       const modalId = button.getAttribute('data-close-modal');
       if (modalId) closeModal(modalId);
     });
+  });
+
+  setupCombobox({
+    input: notifyUserSearch,
+    dropdown: notifyUserResults,
+    errorTarget: notifyFeedback,
+    onSearch: async (query) => (await lookupEmployees('username', query)).filter((employee) => !selectedNotifyUserIds.has(Number(employee.id))),
+    onSelect: (employee) => {
+      const selectedId = Number(employee.id);
+      selectedNotifyUserIds.add(selectedId);
+      selectedNotifyUsersById.set(selectedId, employee);
+      notifyUserSearch.value = '';
+      setInlineMessage(notifyFeedback, '');
+      renderNotifySelectedUsers();
+    }
+  });
+
+  notifyTargetMode.addEventListener('change', () => {
+    const isSpecific = normalize(notifyTargetMode.value) === 'specific';
+    notifySpecificPanel.classList.toggle('hidden', !isSpecific);
+    if (!isSpecific) {
+      selectedNotifyUserIds = new Set();
+      selectedNotifyUsersById.clear();
+      renderNotifySelectedUsers();
+    }
+  });
+
+  notifyForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setInlineMessage(notifyFeedback, '');
+    const data = new FormData(notifyForm);
+    const targetMode = normalize(data.get('targetMode')) === 'specific' ? 'SPECIFIC' : 'ALL';
+    const employeeIds = [...selectedNotifyUserIds];
+    if (targetMode === 'SPECIFIC' && !employeeIds.length) {
+      setInlineMessage(notifyFeedback, 'Select at least one user for specific delivery.');
+      return;
+    }
+    notifySendButton.disabled = true;
+    notifySendButton.textContent = 'Sending...';
+    try {
+      await sendLiveNotification({
+        severity: text(data.get('severity')).toUpperCase() === 'URGENT' ? 'URGENT' : 'STANDARD',
+        title: text(data.get('title')),
+        message: text(data.get('message')),
+        targetMode,
+        employeeIds
+      });
+      closeModal('notifyModal');
+      clearNotifyForm();
+      showMessage(feedback, 'Live notification sent.', 'success');
+    } catch (error) {
+      setInlineMessage(notifyFeedback, error.message || 'Unable to send notification.');
+    } finally {
+      notifySendButton.disabled = false;
+      notifySendButton.textContent = 'Send';
+    }
   });
 
   setupCombobox({
@@ -492,6 +612,7 @@ export async function initVoyageTracker(config, session) {
     renderVoyageSkeleton(ongoingRoot, 3);
     renderVoyageSkeleton(archivedRoot, 3);
     await refreshBoard();
+    renderNotifySelectedUsers();
     clearMessage(feedback);
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load voyages.', 'error');

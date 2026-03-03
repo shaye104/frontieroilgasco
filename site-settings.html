@@ -82,6 +82,16 @@
               <label for="settingsOgImageUrl">Open Graph Image URL</label>
               <input id="settingsOgImageUrl" name="ogImageUrl" type="text" placeholder="/assets/brand/og-default.svg" required />
             </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsNotificationSoundStandardUrl">Notification Sound (Standard) URL</label>
+              <input id="settingsNotificationSoundStandardUrl" name="notificationSoundStandardUrl" type="text" placeholder="https://..." />
+              <input id="settingsNotificationSoundStandardUpload" type="file" accept="audio/*" />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsNotificationSoundUrgentUrl">Notification Sound (Urgent) URL</label>
+              <input id="settingsNotificationSoundUrgentUrl" name="notificationSoundUrgentUrl" type="text" placeholder="https://..." />
+              <input id="settingsNotificationSoundUrgentUpload" type="file" accept="audio/*" />
+            </div>
             <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
               <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
               <button id="siteSettingsResetBtn" class="btn btn-secondary" type="button">Reset Form</button>
@@ -100,6 +110,8 @@
                 <tr><th>Header Logo</th><td id="previewHeaderLogo">-</td></tr>
                 <tr><th>Favicon</th><td id="previewFavicon">-</td></tr>
                 <tr><th>Theme Color</th><td id="previewTheme">-</td></tr>
+                <tr><th>Sound (Standard)</th><td id="previewSoundStandard">-</td></tr>
+                <tr><th>Sound (Urgent)</th><td id="previewSoundUrgent">-</td></tr>
               </tbody>
             </table>
           </div>
@@ -204,6 +216,6 @@
         </section>
       </div>
     </main>
-    <script type="module" src="/assets/js/pages/site-settings-page.js?v=20260228a"></script>
+    <script type="module" src="/assets/js/pages/site-settings-page.js?v=20260303a"></script>
   </body>
 </html>

@@ -71,6 +71,7 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/voyage-config',
   '/api/cargo-types',
   '/api/finances',
+  '/api/notifications',
   '/api/admin/employees',
   '/api/admin/roles',
   '/api/admin/user-ranks',

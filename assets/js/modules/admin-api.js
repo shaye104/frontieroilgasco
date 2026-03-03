@@ -761,6 +761,28 @@ export function deleteVoyageConfigValue(type, id) {
   });
 }
 
+export function sendLiveNotification(payload) {
+  return requestJson('/api/notifications/send', {
+    method: 'POST',
+    body: JSON.stringify(payload || {})
+  });
+}
+
+export function getLiveNotifications(sinceId = 0) {
+  const params = new URLSearchParams();
+  if (Number(sinceId) > 0) params.set('sinceId', String(Number(sinceId)));
+  params.set('limit', '30');
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return requestJson(`/api/notifications/live${suffix}`, {
+    method: 'GET',
+    cacheTtlMs: 0,
+    headers: {
+      'cache-control': 'no-cache',
+      pragma: 'no-cache'
+    }
+  });
+}
+
 export function prefetchRouteData(pathname, session) {
   const route = String(pathname || '').replace(/\/+$/, '') || '/';
   if (route === '/my-details') {

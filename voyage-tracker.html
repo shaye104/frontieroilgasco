@@ -37,6 +37,7 @@
                 <span class="voyage-count-chip">Ongoing: <strong id="ongoingCountChip">0</strong></span>
                 <span class="voyage-count-chip">Archived: <strong id="archivedCountChip">0</strong></span>
               </div>
+              <button id="openNotifyModalBtn" class="btn btn-secondary" type="button">Send Notification</button>
               <button id="openStartVoyageBtn" class="btn btn-primary hidden" type="button">Start Voyage</button>
             </div>
           </div>
@@ -99,6 +100,44 @@
         </form>
       </div>
     </section>
-    <script type="module" src="/assets/js/pages/voyage-tracker-page.js?v=20260227d"></script>
+
+    <section id="notifyModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Send Live Notification</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="notifyModal">Close</button>
+        </div>
+        <form id="notifyForm">
+          <label for="notifySeverity">Severity</label>
+          <select id="notifySeverity" name="severity">
+            <option value="STANDARD">Standard</option>
+            <option value="URGENT">Urgent</option>
+          </select>
+          <label for="notifyTitle">Title</label>
+          <input id="notifyTitle" name="title" type="text" maxlength="120" required />
+          <label for="notifyMessage">Message</label>
+          <textarea id="notifyMessage" name="message" rows="4" maxlength="1000" required></textarea>
+          <label for="notifyTargetMode">Target</label>
+          <select id="notifyTargetMode" name="targetMode">
+            <option value="ALL">All Online Users</option>
+            <option value="SPECIFIC">Specific Users</option>
+          </select>
+          <div id="notifySpecificPanel" class="hidden">
+            <label for="notifyUserSearch">Find user</label>
+            <div class="combobox-wrap combobox-wrap-multi">
+              <div id="notifySelectedUsers" class="pill-list"></div>
+              <input id="notifyUserSearch" type="text" placeholder="Search by Roblox username" autocomplete="off" />
+              <div id="notifyUserResults" class="autocomplete-list"></div>
+            </div>
+          </div>
+          <div id="notifyFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
+          <div class="modal-actions">
+            <button id="notifySendBtn" class="btn btn-primary" type="submit">Send</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="notifyModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+    <script type="module" src="/assets/js/pages/voyage-tracker-page.js?v=20260303a"></script>
   </body>
 </html>

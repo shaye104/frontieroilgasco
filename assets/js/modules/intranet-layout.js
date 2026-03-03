@@ -1,5 +1,6 @@
 import { showMessage } from './notice.js';
 import { canAccessAdminPanel, getPreferredUserLabel, hasPermission, renderIntranetNavbar } from './nav.js?v=20260227b';
+import { initLiveNotifications } from './notifications-live.js';
 
 function normalizePath(pathname) {
   if (!pathname || pathname === '/') return '/';
@@ -210,6 +211,7 @@ export async function initIntranetLayout(config) {
     // Shared intranet layout: single navbar rendered once per page.
     renderIntranetNavbar(session);
     ensureNavbarFallback(session);
+    initLiveNotifications();
 
     if (requireAdmin && !canAccessAdminPanel(session)) {
       window.location.href = toAccessDeniedUrl('admin_required');

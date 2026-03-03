@@ -1838,3 +1838,78 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+.live-notifications-root {
+  position: fixed;
+  top: 88px;
+  right: 16px;
+  z-index: 1200;
+  display: grid;
+  gap: 10px;
+  width: min(360px, calc(100vw - 24px));
+}
+
+.live-notification-toast {
+  border-radius: 12px;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 36px rgba(17, 24, 39, 0.18);
+  padding: 10px 12px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.live-notification-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.live-notification-toast.is-urgent {
+  border-color: rgba(220, 38, 38, 0.4);
+  box-shadow: 0 12px 36px rgba(220, 38, 38, 0.2);
+}
+
+.live-notification-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.live-notification-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(17, 45, 114, 0.14);
+  color: rgba(17, 45, 114, 0.95);
+}
+
+.live-notification-toast.is-urgent .live-notification-badge {
+  background: rgba(220, 38, 38, 0.14);
+  color: rgba(153, 27, 27, 1);
+}
+
+.live-notification-close {
+  border: 0;
+  background: transparent;
+  color: rgba(17, 24, 39, 0.65);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.live-notification-toast h4 {
+  margin: 8px 0 4px;
+  font-size: 15px;
+}
+
+.live-notification-toast p {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: rgba(17, 24, 39, 0.85);
+}
+
+.live-notification-toast small {
+  color: rgba(17, 24, 39, 0.62);
+}

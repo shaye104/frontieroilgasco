@@ -1,5 +1,5 @@
 import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260222b';
-import { initVoyageTracker } from '../modules/voyage-tracker.js?v=20260227d';
+import { initVoyageTracker } from '../modules/voyage-tracker.js?v=20260303a';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({
@@ -33,7 +33,16 @@ initIntranetPageGuard({
       crewResultsSelector: '#voyageCrewResults',
       crewSelectedSelector: '#voyageCrewSelected',
       crewInfoSelector: '#voyageCrewInfo',
-      crewErrorSelector: '#voyageCrewError'
+      crewErrorSelector: '#voyageCrewError',
+      notifyOpenSelector: '#openNotifyModalBtn',
+      notifyFormSelector: '#notifyForm',
+      notifyTargetModeSelector: '#notifyTargetMode',
+      notifySpecificPanelSelector: '#notifySpecificPanel',
+      notifyUserSearchSelector: '#notifyUserSearch',
+      notifyUserResultsSelector: '#notifyUserResults',
+      notifySelectedUsersSelector: '#notifySelectedUsers',
+      notifyFeedbackSelector: '#notifyFeedback',
+      notifySendButtonSelector: '#notifySendBtn'
     },
     session
   );

@@ -53,6 +53,8 @@ function applyForm(settings) {
   setValue('#settingsOgTitle', settings.ogTitle);
   setValue('#settingsOgDescription', settings.ogDescription);
   setValue('#settingsOgImageUrl', settings.ogImageUrl);
+  setValue('#settingsNotificationSoundStandardUrl', settings.notificationSoundStandardUrl);
+  setValue('#settingsNotificationSoundUrgentUrl', settings.notificationSoundUrgentUrl);
 }
 
 function collectForm() {
@@ -66,7 +68,9 @@ function collectForm() {
     appleTouchIconUrl: readValue('#settingsAppleTouchIconUrl'),
     ogTitle: readValue('#settingsOgTitle'),
     ogDescription: readValue('#settingsOgDescription'),
-    ogImageUrl: readValue('#settingsOgImageUrl')
+    ogImageUrl: readValue('#settingsOgImageUrl'),
+    notificationSoundStandardUrl: readValue('#settingsNotificationSoundStandardUrl'),
+    notificationSoundUrgentUrl: readValue('#settingsNotificationSoundUrgentUrl')
   };
 }
 
@@ -77,12 +81,32 @@ function updatePreview(settings) {
   const headerLogo = document.querySelector('#previewHeaderLogo');
   const favicon = document.querySelector('#previewFavicon');
   const theme = document.querySelector('#previewTheme');
+  const soundStandard = document.querySelector('#previewSoundStandard');
+  const soundUrgent = document.querySelector('#previewSoundUrgent');
   if (title) title.textContent = settings.ogTitle || '-';
   if (description) description.textContent = settings.ogDescription || '-';
   if (image) image.textContent = settings.ogImageUrl || '-';
   if (headerLogo) headerLogo.textContent = settings.headerLogoUrl || '(default FOG badge)';
   if (favicon) favicon.textContent = settings.faviconUrl || '-';
   if (theme) theme.textContent = settings.themeColor || '-';
+  if (soundStandard) soundStandard.textContent = settings.notificationSoundStandardUrl || '-';
+  if (soundUrgent) soundUrgent.textContent = settings.notificationSoundUrgentUrl || '-';
+}
+
+function wireAudioUpload(uploadSelector, targetSelector) {
+  const uploadInput = document.querySelector(uploadSelector);
+  const targetInput = document.querySelector(targetSelector);
+  if (!uploadInput || !targetInput) return;
+  uploadInput.addEventListener('change', () => {
+    const file = uploadInput.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      targetInput.value = String(reader.result || '');
+      targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 async function loadSettings(feedback) {
@@ -212,6 +236,8 @@ initIntranetPageGuard({
   };
 
   try {
+    wireAudioUpload('#settingsNotificationSoundStandardUpload', '#settingsNotificationSoundStandardUrl');
+    wireAudioUpload('#settingsNotificationSoundUrgentUpload', '#settingsNotificationSoundUrgentUrl');
     lastLoaded = await loadSettings(feedback);
     await loadGrades();
     await loadDisciplinaryConfig();

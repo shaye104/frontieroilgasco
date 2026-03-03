@@ -8,7 +8,9 @@ const DEFAULT_SITE_SETTINGS = {
   ogTitle: 'Frontier Oil & Gas Company',
   ogDescription: 'Internal operations portal for voyages, finances, and employee administration.',
   ogImageUrl: '/assets/brand/og-default.svg',
-  twitterCard: 'summary_large_image'
+  twitterCard: 'summary_large_image',
+  notificationSoundStandardUrl: '',
+  notificationSoundUrgentUrl: ''
 };
 
 let settingsCache = null;
@@ -82,7 +84,9 @@ export async function readSiteSettings(env, { bypassCache = false } = {}) {
     ogTitle: normalizeSettingValue(map.ogTitle, DEFAULT_SITE_SETTINGS.ogTitle),
     ogDescription: normalizeSettingValue(map.ogDescription, DEFAULT_SITE_SETTINGS.ogDescription),
     ogImageUrl: normalizeUrlValue(map.ogImageUrl, DEFAULT_SITE_SETTINGS.ogImageUrl),
-    twitterCard: normalizeSettingValue(map.twitterCard, DEFAULT_SITE_SETTINGS.twitterCard)
+    twitterCard: normalizeSettingValue(map.twitterCard, DEFAULT_SITE_SETTINGS.twitterCard),
+    notificationSoundStandardUrl: normalizeOptionalUrlValue(map.notificationSoundStandardUrl),
+    notificationSoundUrgentUrl: normalizeOptionalUrlValue(map.notificationSoundUrgentUrl)
   };
 
   settingsCache = { ...next };
@@ -107,7 +111,9 @@ export async function writeSiteSettings(env, updates, updatedBy = '') {
     ogTitle: normalizeSettingValue(merged.ogTitle, DEFAULT_SITE_SETTINGS.ogTitle),
     ogDescription: normalizeSettingValue(merged.ogDescription, DEFAULT_SITE_SETTINGS.ogDescription),
     ogImageUrl: normalizeUrlValue(merged.ogImageUrl, DEFAULT_SITE_SETTINGS.ogImageUrl),
-    twitterCard: normalizeSettingValue(merged.twitterCard, DEFAULT_SITE_SETTINGS.twitterCard)
+    twitterCard: normalizeSettingValue(merged.twitterCard, DEFAULT_SITE_SETTINGS.twitterCard),
+    notificationSoundStandardUrl: normalizeOptionalUrlValue(merged.notificationSoundStandardUrl),
+    notificationSoundUrgentUrl: normalizeOptionalUrlValue(merged.notificationSoundUrgentUrl)
   };
 
   const entries = Object.entries(normalized);
