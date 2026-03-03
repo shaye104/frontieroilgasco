@@ -332,6 +332,32 @@ export async function onRequest(context) {
           });
         }
       }
+
+      // Hard-route live notification writes here to avoid any Pages route-method ambiguity.
+      if (
+        (pathname === '/api/live-notify' || pathname === '/api/notifications/send' || pathname === '/api/notifications') &&
+        (requestMethod === 'POST' || requestMethod === 'PUT' || requestMethod === 'PATCH')
+      ) {
+        const { onRequestPatch, onRequestPost, onRequestPut } = await import('./api/notifications/send.js');
+        let apiResponse;
+        if (requestMethod === 'PUT') apiResponse = await onRequestPut(context);
+        else if (requestMethod === 'PATCH') apiResponse = await onRequestPatch(context);
+        else apiResponse = await onRequestPost(context);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_live_notifications' }
+            })
+          );
+        }
+        return apiResponse;
+      }
+
       const apiResponse = await context.next();
       if (isLoggedIn) {
         context.waitUntil(
