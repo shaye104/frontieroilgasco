@@ -7,9 +7,11 @@ let standardSoundUrl = '';
 let urgentSoundUrl = '';
 let muted = false;
 let audioBlockedHintShown = false;
+let audioEnableBtn = null;
 const seenNotificationIds = new Set();
 const dismissedNotificationIds = new Set();
 const DISMISSED_STORAGE_KEY = 'fog_live_notifications_dismissed_ids_v1';
+const DEFAULT_SOUND_URL = '/MorseAlert.mp3';
 
 function text(value) {
   return String(value || '').trim();
@@ -69,9 +71,41 @@ function toastDuration(severity) {
   return severity === 'URGENT' ? 9000 : 6000;
 }
 
+function getSoundSource(severity) {
+  const preferred = severity === 'URGENT' ? urgentSoundUrl : standardSoundUrl;
+  const fallback = severity === 'URGENT' ? standardSoundUrl : urgentSoundUrl;
+  return text(preferred) || text(fallback) || DEFAULT_SOUND_URL;
+}
+
+function renderEnableSoundButton() {
+  const nav = document.querySelector('.site-nav');
+  if (!nav) return;
+  if (audioEnableBtn && audioEnableBtn.isConnected) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn btn-secondary';
+  btn.textContent = 'Enable Sounds';
+  btn.addEventListener('click', async () => {
+    try {
+      const audio = new Audio(getSoundSource('STANDARD'));
+      audio.volume = 0.01;
+      await audio.play();
+      audio.pause();
+      audio.currentTime = 0;
+      if (audioEnableBtn?.isConnected) audioEnableBtn.remove();
+      audioEnableBtn = null;
+      audioBlockedHintShown = false;
+    } catch {
+      // Keep button visible if still blocked.
+    }
+  });
+  nav.prepend(btn);
+  audioEnableBtn = btn;
+}
+
 function playNotificationSound(severity) {
   if (muted) return;
-  const source = severity === 'URGENT' ? urgentSoundUrl : standardSoundUrl;
+  const source = getSoundSource(severity);
   if (!source) return;
   try {
     const audio = new Audio(source);
@@ -81,10 +115,11 @@ function playNotificationSound(severity) {
       promise.catch(() => {
         if (audioBlockedHintShown) return;
         audioBlockedHintShown = true;
+        renderEnableSoundButton();
         showToast({
           severity: 'STANDARD',
           title: 'Notification sounds blocked',
-          message: 'Click anywhere on the page once, then sounds will work.',
+          message: 'Click Enable Sounds in the header to allow alert audio.',
           senderName: 'System'
         });
       });

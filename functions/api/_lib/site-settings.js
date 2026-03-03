@@ -85,8 +85,11 @@ export async function readSiteSettings(env, { bypassCache = false } = {}) {
     ogDescription: normalizeSettingValue(map.ogDescription, DEFAULT_SITE_SETTINGS.ogDescription),
     ogImageUrl: normalizeUrlValue(map.ogImageUrl, DEFAULT_SITE_SETTINGS.ogImageUrl),
     twitterCard: normalizeSettingValue(map.twitterCard, DEFAULT_SITE_SETTINGS.twitterCard),
-    notificationSoundStandardUrl: normalizeOptionalUrlValue(map.notificationSoundStandardUrl),
-    notificationSoundUrgentUrl: normalizeOptionalUrlValue(map.notificationSoundUrgentUrl)
+    notificationSoundStandardUrl: normalizeUrlValue(
+      map.notificationSoundStandardUrl,
+      DEFAULT_SITE_SETTINGS.notificationSoundStandardUrl
+    ),
+    notificationSoundUrgentUrl: normalizeUrlValue(map.notificationSoundUrgentUrl, DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl)
   };
 
   settingsCache = { ...next };
@@ -112,8 +115,14 @@ export async function writeSiteSettings(env, updates, updatedBy = '') {
     ogDescription: normalizeSettingValue(merged.ogDescription, DEFAULT_SITE_SETTINGS.ogDescription),
     ogImageUrl: normalizeUrlValue(merged.ogImageUrl, DEFAULT_SITE_SETTINGS.ogImageUrl),
     twitterCard: normalizeSettingValue(merged.twitterCard, DEFAULT_SITE_SETTINGS.twitterCard),
-    notificationSoundStandardUrl: normalizeOptionalUrlValue(merged.notificationSoundStandardUrl),
-    notificationSoundUrgentUrl: normalizeOptionalUrlValue(merged.notificationSoundUrgentUrl)
+    notificationSoundStandardUrl: normalizeUrlValue(
+      merged.notificationSoundStandardUrl,
+      DEFAULT_SITE_SETTINGS.notificationSoundStandardUrl
+    ),
+    notificationSoundUrgentUrl: normalizeUrlValue(
+      merged.notificationSoundUrgentUrl,
+      DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl
+    )
   };
 
   const entries = Object.entries(normalized);
