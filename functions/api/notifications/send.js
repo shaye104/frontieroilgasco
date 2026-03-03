@@ -121,3 +121,21 @@ export async function onRequestPut(context) {
 export async function onRequestPatch(context) {
   return onRequestPost(context);
 }
+
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      allow: 'POST, PUT, PATCH, OPTIONS'
+    }
+  });
+}
+
+export async function onRequest(context) {
+  const method = String(context.request.method || '').toUpperCase();
+  if (method === 'POST') return onRequestPost(context);
+  if (method === 'PUT') return onRequestPut(context);
+  if (method === 'PATCH') return onRequestPatch(context);
+  if (method === 'OPTIONS') return onRequestOptions(context);
+  return json({ error: 'Method not allowed.' }, 405);
+}

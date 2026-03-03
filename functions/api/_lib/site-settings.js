@@ -9,8 +9,8 @@ const DEFAULT_SITE_SETTINGS = {
   ogDescription: 'Internal operations portal for voyages, finances, and employee administration.',
   ogImageUrl: '/assets/brand/og-default.svg',
   twitterCard: 'summary_large_image',
-  notificationSoundStandardUrl: '',
-  notificationSoundUrgentUrl: ''
+  notificationSoundStandardUrl: '/MorseAlert.mp3',
+  notificationSoundUrgentUrl: '/MorseAlert.mp3'
 };
 
 let settingsCache = null;
