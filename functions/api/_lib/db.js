@@ -8,7 +8,7 @@ let schemaBootstrapPromise = null;
 let schemaCheckedAtMs = 0;
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
 const CORE_DATA_SEED_VERSION = '2026-02-28-core-v3';
-const SCHEMA_BOOTSTRAP_VERSION = '2026-02-28-schema-v2';
+const SCHEMA_BOOTSTRAP_VERSION = '2026-03-03-schema-v3';
 
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
@@ -23,8 +23,13 @@ export async function ensureCoreSchema(env) {
       .prepare(`SELECT meta_value FROM app_runtime_meta WHERE meta_key = 'schema_bootstrap_version'`)
       .first();
     if (String(schemaMarker?.meta_value || '') === SCHEMA_BOOTSTRAP_VERSION) {
-      schemaCheckedAtMs = Date.now();
-      return;
+      const liveNotificationsTable = await env.DB
+        .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'live_notifications'`)
+        .first();
+      if (String(liveNotificationsTable?.name || '') === 'live_notifications') {
+        schemaCheckedAtMs = Date.now();
+        return;
+      }
     }
   } catch {
     // Table may not exist yet; continue to full bootstrap.
@@ -931,6 +936,29 @@ export async function ensureCoreSchema(env) {
   } finally {
     schemaBootstrapPromise = null;
   }
+}
+
+export async function ensureLiveNotificationsSchema(env) {
+  if (!env?.DB) throw new Error('D1 binding `DB` is not configured.');
+  await env.DB.batch([
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS live_notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        sender_employee_id INTEGER,
+        sender_name TEXT,
+        severity TEXT NOT NULL CHECK (severity IN ('STANDARD', 'URGENT')),
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        target_mode TEXT NOT NULL CHECK (target_mode IN ('ALL', 'SPECIFIC')),
+        target_json TEXT,
+        expires_at TEXT,
+        FOREIGN KEY(sender_employee_id) REFERENCES employees(id)
+      )`
+    ),
+    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_live_notifications_created ON live_notifications(created_at DESC)`),
+    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_live_notifications_expires ON live_notifications(expires_at)`)
+  ]);
 }
 
 export async function getEmployeeByDiscordUserId(env, discordUserId) {

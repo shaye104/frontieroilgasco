@@ -1,5 +1,5 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
-import { ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
+import { ensureCoreSchema, ensureLiveNotificationsSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { enrichSessionWithPermissions } from '../_lib/permissions.js';
 import { readSiteSettings } from '../_lib/site-settings.js';
 
@@ -34,6 +34,7 @@ export async function onRequestGet(context) {
   if (!session) return json({ error: 'Authentication required.' }, 401);
 
   await ensureCoreSchema(env);
+  await ensureLiveNotificationsSchema(env);
   await env.DB.prepare(`DELETE FROM live_notifications WHERE COALESCE(expires_at, created_at) < CURRENT_TIMESTAMP`).run();
 
   const url = new URL(request.url);

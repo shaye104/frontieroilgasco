@@ -1,5 +1,5 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
-import { ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
+import { ensureCoreSchema, ensureLiveNotificationsSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { enrichSessionWithPermissions, hasPermission } from '../_lib/permissions.js';
 
 function text(value) {
@@ -37,6 +37,7 @@ export async function onRequestPost(context) {
   if (!session) return json({ error: 'Authentication required.' }, 401);
 
   await ensureCoreSchema(env);
+  await ensureLiveNotificationsSchema(env);
 
   if (!hasPermission(session, 'voyages.read')) {
     return json({ error: 'Forbidden. Missing required permission.' }, 403);
