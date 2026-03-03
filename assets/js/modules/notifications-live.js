@@ -1,4 +1,4 @@
-import { getLiveNotifications } from './admin-api.js';
+import { dismissLiveNotification, getLiveNotifications } from './admin-api.js?v=20260303e';
 
 let initialized = false;
 let lastId = 0;
@@ -8,6 +8,8 @@ let urgentSoundUrl = '';
 let muted = false;
 let audioBlockedHintShown = false;
 const seenNotificationIds = new Set();
+const dismissedNotificationIds = new Set();
+const DISMISSED_STORAGE_KEY = 'fog_live_notifications_dismissed_ids_v1';
 
 function text(value) {
   return String(value || '').trim();
@@ -30,6 +32,37 @@ function ensureToastRoot() {
   root.className = 'live-notifications-root';
   document.body.append(root);
   return root;
+}
+
+function loadDismissedNotificationIds() {
+  try {
+    const raw = window.localStorage.getItem(DISMISSED_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return;
+    parsed
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0)
+      .forEach((value) => dismissedNotificationIds.add(value));
+  } catch {
+    // no-op
+  }
+}
+
+function persistDismissedNotificationIds() {
+  try {
+    const ids = [...dismissedNotificationIds].slice(-500);
+    window.localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // no-op
+  }
+}
+
+function markNotificationDismissed(notificationId) {
+  const id = Number(notificationId || 0);
+  if (!id) return;
+  dismissedNotificationIds.add(id);
+  persistDismissedNotificationIds();
 }
 
 function toastDuration(severity) {
@@ -81,13 +114,23 @@ function showToast(notification) {
     toast.classList.add('is-leaving');
     window.setTimeout(() => toast.remove(), 220);
   };
-  toast.querySelector('.live-notification-close')?.addEventListener('click', cleanup);
+  toast.querySelector('.live-notification-close')?.addEventListener('click', () => {
+    const notificationId = Number(notification?.id || 0);
+    if (notificationId > 0) {
+      markNotificationDismissed(notificationId);
+      void dismissLiveNotification(notificationId).catch(() => {
+        // Local dismissal is still honored as fallback.
+      });
+    }
+    cleanup();
+  });
   window.setTimeout(cleanup, toastDuration(severity));
 }
 
 function handleIncomingNotification(notification) {
   const id = Number(notification?.id || 0);
   if (id > 0) {
+    if (dismissedNotificationIds.has(id)) return;
     if (seenNotificationIds.has(id)) return;
     seenNotificationIds.add(id);
   }
@@ -135,6 +178,7 @@ function initMuteToggle() {
 export function initLiveNotifications() {
   if (initialized) return;
   initialized = true;
+  loadDismissedNotificationIds();
   initMuteToggle();
   window.addEventListener('fog:live-notification-sent', (event) => {
     const notification = event?.detail?.notification;

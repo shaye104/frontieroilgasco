@@ -357,6 +357,23 @@ export async function onRequest(context) {
         }
         return apiResponse;
       }
+      if (pathname === '/api/notifications/dismiss' && requestMethod === 'POST') {
+        const { onRequestPost } = await import('./api/notifications/dismiss.js');
+        const apiResponse = await onRequestPost(context);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_live_notifications_dismiss' }
+            })
+          );
+        }
+        return apiResponse;
+      }
 
       const apiResponse = await context.next();
       if (isLoggedIn) {

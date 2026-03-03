@@ -432,6 +432,14 @@ export async function ensureCoreSchema(env) {
       target_json TEXT,
       expires_at TEXT,
       FOREIGN KEY(sender_employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS live_notification_dismissals (
+      notification_id INTEGER NOT NULL,
+      employee_id INTEGER NOT NULL,
+      dismissed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (notification_id, employee_id),
+      FOREIGN KEY(notification_id) REFERENCES live_notifications(id),
+      FOREIGN KEY(employee_id) REFERENCES employees(id)
     )`
   ];
 
@@ -703,7 +711,8 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_disciplinary_employee_status ON disciplinary_records(employee_id, status)`,
     `CREATE INDEX IF NOT EXISTS idx_disciplinary_ends_at ON disciplinary_records(ends_at)`,
     `CREATE INDEX IF NOT EXISTS idx_live_notifications_created ON live_notifications(created_at DESC)`,
-    `CREATE INDEX IF NOT EXISTS idx_live_notifications_expires ON live_notifications(expires_at)`
+    `CREATE INDEX IF NOT EXISTS idx_live_notifications_expires ON live_notifications(expires_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_live_notification_dismissals_employee ON live_notification_dismissals(employee_id, dismissed_at DESC)`
   ];
 
   for (const sql of optionalIndexes) {
@@ -956,8 +965,21 @@ export async function ensureLiveNotificationsSchema(env) {
         FOREIGN KEY(sender_employee_id) REFERENCES employees(id)
       )`
     ),
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS live_notification_dismissals (
+        notification_id INTEGER NOT NULL,
+        employee_id INTEGER NOT NULL,
+        dismissed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (notification_id, employee_id),
+        FOREIGN KEY(notification_id) REFERENCES live_notifications(id),
+        FOREIGN KEY(employee_id) REFERENCES employees(id)
+      )`
+    ),
     env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_live_notifications_created ON live_notifications(created_at DESC)`),
-    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_live_notifications_expires ON live_notifications(expires_at)`)
+    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_live_notifications_expires ON live_notifications(expires_at)`),
+    env.DB.prepare(
+      `CREATE INDEX IF NOT EXISTS idx_live_notification_dismissals_employee ON live_notification_dismissals(employee_id, dismissed_at DESC)`
+    )
   ]);
 }
 

@@ -814,6 +814,13 @@ export function getLiveNotifications(sinceId = 0) {
   });
 }
 
+export function dismissLiveNotification(notificationId) {
+  return requestJson('/api/notifications/dismiss', {
+    method: 'POST',
+    body: JSON.stringify({ notificationId: Number(notificationId) || 0 })
+  });
+}
+
 export function prefetchRouteData(pathname, session) {
   const route = String(pathname || '').replace(/\/+$/, '') || '/';
   if (route === '/my-details') {

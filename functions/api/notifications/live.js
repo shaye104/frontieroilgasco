@@ -53,12 +53,17 @@ export async function onRequestGet(context) {
       env.DB.prepare(`SELECT COALESCE(MAX(id), 0) AS max_id FROM live_notifications`).first(),
       env.DB
         .prepare(
-          `SELECT id, created_at, sender_employee_id, sender_name, severity, title, message, target_mode, target_json
-           FROM live_notifications
-           WHERE COALESCE(expires_at, created_at) >= datetime('now', '-3 minutes')
-           ORDER BY id ASC
+          `SELECT ln.id, ln.created_at, ln.sender_employee_id, ln.sender_name, ln.severity, ln.title, ln.message, ln.target_mode, ln.target_json
+           FROM live_notifications ln
+           LEFT JOIN live_notification_dismissals lnd
+             ON lnd.notification_id = ln.id
+            AND lnd.employee_id = ?
+           WHERE COALESCE(ln.expires_at, ln.created_at) >= datetime('now', '-3 minutes')
+             AND lnd.notification_id IS NULL
+           ORDER BY ln.id ASC
            LIMIT 20`
         )
+        .bind(employeeId)
         .all(),
       readSiteSettings(env)
     ]);
@@ -90,16 +95,23 @@ export async function onRequestGet(context) {
     });
   }
 
-  const rows = await env.DB
-    .prepare(
-      `SELECT id, created_at, sender_employee_id, sender_name, severity, title, message, target_mode, target_json
-       FROM live_notifications
-       WHERE id > ?
-       ORDER BY id ASC
-       LIMIT ?`
-    )
-    .bind(sinceId, limit)
-    .all();
+  const [rows, latestSinceRow] = await Promise.all([
+    env.DB
+      .prepare(
+        `SELECT ln.id, ln.created_at, ln.sender_employee_id, ln.sender_name, ln.severity, ln.title, ln.message, ln.target_mode, ln.target_json
+         FROM live_notifications ln
+         LEFT JOIN live_notification_dismissals lnd
+           ON lnd.notification_id = ln.id
+          AND lnd.employee_id = ?
+         WHERE ln.id > ?
+           AND lnd.notification_id IS NULL
+         ORDER BY ln.id ASC
+         LIMIT ?`
+      )
+      .bind(employeeId, sinceId, limit)
+      .all(),
+    env.DB.prepare(`SELECT COALESCE(MAX(id), 0) AS max_id FROM live_notifications WHERE id > ?`).bind(sinceId).first()
+  ]);
 
   const notifications = (rows?.results || [])
     .filter((row) => {
@@ -118,7 +130,7 @@ export async function onRequestGet(context) {
       message: text(row.message)
     }));
 
-  const lastId = (rows?.results || []).reduce((max, row) => Math.max(max, Number(row.id || 0)), sinceId);
+  const lastId = Math.max(sinceId, Number(latestSinceRow?.max_id || 0));
   const settings = await readSiteSettings(env);
 
   return json({
