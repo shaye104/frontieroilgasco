@@ -1,11 +1,11 @@
-import { json } from './auth/_lib/auth.js';
-import { onRequestGet as onLiveGet, onRequestOptions as onLiveOptions } from './notifications/live.js';
+import { json } from '../auth/_lib/auth.js';
+import { onRequestGet as onLiveGet, onRequestOptions as onLiveOptions } from './live.js';
 import {
   onRequestPatch as onSendPatch,
   onRequestPost as onSendPost,
   onRequestPut as onSendPut,
   onRequestOptions as onSendOptions
-} from './notifications/send.js';
+} from './send.js';
 
 export async function onRequestGet(context) {
   return onLiveGet(context);
@@ -39,7 +39,6 @@ export async function onRequest(context) {
   if (method === 'PUT') return onSendPut(context);
   if (method === 'PATCH') return onSendPatch(context);
   if (method === 'OPTIONS') {
-    // Keep behavior consistent with both child handlers.
     await onLiveOptions(context);
     await onSendOptions(context);
     return onRequestOptions(context);
