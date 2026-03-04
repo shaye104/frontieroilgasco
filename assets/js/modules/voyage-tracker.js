@@ -1,4 +1,4 @@
-import { getVoyageOverview, searchEmployees, sendLiveNotification, startVoyage } from './admin-api.js?v=20260303d';
+import { getLiveNotificationPresence, getVoyageOverview, searchEmployees, sendLiveNotification, startVoyage } from './admin-api.js?v=20260304a';
 import { hasPermission } from './nav.js';
 import { clearMessage, showMessage } from './notice.js';
 
@@ -216,6 +216,7 @@ export async function initVoyageTracker(config, session) {
   const selectedCrewById = new Map();
   let selectedNotifyUserIds = new Set();
   const selectedNotifyUsersById = new Map();
+  let notifyPresenceUsers = [];
   const searchCache = new Map();
 
   async function lookupEmployees(queryKind, queryValue) {
@@ -415,6 +416,7 @@ export async function initVoyageTracker(config, session) {
 
   function clearNotifyForm() {
     notifyForm.reset();
+    notifyTargetMode.value = 'ONLINE_USERS';
     selectedNotifyUserIds = new Set();
     selectedNotifyUsersById.clear();
     notifyUserSearch.value = '';
@@ -422,6 +424,29 @@ export async function initVoyageTracker(config, session) {
     notifyUserResults.classList.remove('is-open');
     notifySpecificPanel.classList.add('hidden');
     setInlineMessage(notifyFeedback, '');
+    renderNotifySelectedUsers();
+  }
+
+  async function loadNotifyPresenceUsers() {
+    const payload = await getLiveNotificationPresence();
+    const rows = Array.isArray(payload?.users) ? payload.users : [];
+    notifyPresenceUsers = rows
+      .map((row) => ({
+        id: Number(row.id),
+        roblox_username: text(row.roblox_username),
+        serial_number: text(row.serial_number),
+        rank: text(row.rank),
+        current_path: text(row.current_path) || '/'
+      }))
+      .filter((row) => Number.isInteger(row.id) && row.id > 0);
+
+    const allowedIds = new Set(notifyPresenceUsers.map((row) => row.id));
+    selectedNotifyUserIds.forEach((id) => {
+      if (!allowedIds.has(id)) {
+        selectedNotifyUserIds.delete(id);
+        selectedNotifyUsersById.delete(id);
+      }
+    });
     renderNotifySelectedUsers();
   }
 
@@ -458,6 +483,9 @@ export async function initVoyageTracker(config, session) {
   notifyOpenButton.addEventListener('click', () => {
     clearNotifyForm();
     openModal('notifyModal');
+    void loadNotifyPresenceUsers().catch(() => {
+      setInlineMessage(notifyFeedback, 'Unable to load currently active users.');
+    });
   });
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -470,7 +498,11 @@ export async function initVoyageTracker(config, session) {
     input: notifyUserSearch,
     dropdown: notifyUserResults,
     errorTarget: notifyFeedback,
-    onSearch: async (query) => (await lookupEmployees('username', query)).filter((employee) => !selectedNotifyUserIds.has(Number(employee.id))),
+    onSearch: async (query) =>
+      notifyPresenceUsers
+        .filter((employee) => !selectedNotifyUserIds.has(Number(employee.id)))
+        .filter((employee) => normalize(employee.roblox_username).includes(normalize(query)))
+        .slice(0, 20),
     onSelect: (employee) => {
       const selectedId = Number(employee.id);
       selectedNotifyUserIds.add(selectedId);
@@ -482,9 +514,13 @@ export async function initVoyageTracker(config, session) {
   });
 
   notifyTargetMode.addEventListener('change', () => {
-    const isSpecific = normalize(notifyTargetMode.value) === 'specific';
+    const isSpecific = normalize(notifyTargetMode.value) === 'select_users';
     notifySpecificPanel.classList.toggle('hidden', !isSpecific);
-    if (!isSpecific) {
+    if (isSpecific) {
+      void loadNotifyPresenceUsers().catch(() => {
+        setInlineMessage(notifyFeedback, 'Unable to load currently active users.');
+      });
+    } else {
       selectedNotifyUserIds = new Set();
       selectedNotifyUsersById.clear();
       renderNotifySelectedUsers();
@@ -495,10 +531,11 @@ export async function initVoyageTracker(config, session) {
     event.preventDefault();
     setInlineMessage(notifyFeedback, '');
     const data = new FormData(notifyForm);
-    const targetMode = normalize(data.get('targetMode')) === 'specific' ? 'SPECIFIC' : 'ALL';
+    const targetModeRaw = normalize(data.get('targetMode'));
+    const targetMode = targetModeRaw === 'select_users' ? 'SELECT_USERS' : targetModeRaw === 'all_users' ? 'ALL_USERS' : 'ONLINE_USERS';
     const employeeIds = [...selectedNotifyUserIds];
-    if (targetMode === 'SPECIFIC' && !employeeIds.length) {
-      setInlineMessage(notifyFeedback, 'Select at least one user for specific delivery.');
+    if (targetMode === 'SELECT_USERS' && !employeeIds.length) {
+      setInlineMessage(notifyFeedback, 'Select at least one currently active user.');
       return;
     }
     notifySendButton.disabled = true;

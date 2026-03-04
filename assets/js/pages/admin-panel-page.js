@@ -1,4 +1,4 @@
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260304a';
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260304b';
 import { canAccessAdminPanel, hasPermission } from '../modules/nav.js';
 import { initializeYear } from '../modules/year.js';
 

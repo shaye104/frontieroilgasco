@@ -440,6 +440,14 @@ export async function ensureCoreSchema(env) {
       PRIMARY KEY (notification_id, employee_id),
       FOREIGN KEY(notification_id) REFERENCES live_notifications(id) ON DELETE CASCADE,
       FOREIGN KEY(employee_id) REFERENCES employees(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS live_notification_presence (
+      employee_id INTEGER PRIMARY KEY,
+      current_path TEXT,
+      is_visible INTEGER NOT NULL DEFAULT 1,
+      last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      user_agent TEXT,
+      FOREIGN KEY(employee_id) REFERENCES employees(id) ON DELETE CASCADE
     )`
   ];
 
@@ -712,7 +720,9 @@ export async function ensureCoreSchema(env) {
     `CREATE INDEX IF NOT EXISTS idx_disciplinary_ends_at ON disciplinary_records(ends_at)`,
     `CREATE INDEX IF NOT EXISTS idx_live_notifications_created ON live_notifications(created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS idx_live_notifications_expires ON live_notifications(expires_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_live_notification_dismissals_employee ON live_notification_dismissals(employee_id, dismissed_at DESC)`
+    `CREATE INDEX IF NOT EXISTS idx_live_notification_dismissals_employee ON live_notification_dismissals(employee_id, dismissed_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_live_notification_presence_last_seen ON live_notification_presence(last_seen_at DESC)`,
+    `CREATE INDEX IF NOT EXISTS idx_live_notification_presence_visible ON live_notification_presence(is_visible, last_seen_at DESC)`
   ];
 
   for (const sql of optionalIndexes) {
@@ -975,10 +985,26 @@ export async function ensureLiveNotificationsSchema(env) {
         FOREIGN KEY(employee_id) REFERENCES employees(id)
       )`
     ),
+    env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS live_notification_presence (
+        employee_id INTEGER PRIMARY KEY,
+        current_path TEXT,
+        is_visible INTEGER NOT NULL DEFAULT 1,
+        last_seen_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        user_agent TEXT,
+        FOREIGN KEY(employee_id) REFERENCES employees(id) ON DELETE CASCADE
+      )`
+    ),
     env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_live_notifications_created ON live_notifications(created_at DESC)`),
     env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_live_notifications_expires ON live_notifications(expires_at)`),
     env.DB.prepare(
       `CREATE INDEX IF NOT EXISTS idx_live_notification_dismissals_employee ON live_notification_dismissals(employee_id, dismissed_at DESC)`
+    ),
+    env.DB.prepare(
+      `CREATE INDEX IF NOT EXISTS idx_live_notification_presence_last_seen ON live_notification_presence(last_seen_at DESC)`
+    ),
+    env.DB.prepare(
+      `CREATE INDEX IF NOT EXISTS idx_live_notification_presence_visible ON live_notification_presence(is_visible, last_seen_at DESC)`
     )
   ]);
 }

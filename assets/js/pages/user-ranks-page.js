@@ -1,4 +1,4 @@
-import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260304a';
+import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260304b';
 import { initUserRanksAdmin } from '../modules/user-ranks-admin.js?v=20260227b';
 import { initializeYear } from '../modules/year.js';
 

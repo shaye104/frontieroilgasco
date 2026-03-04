@@ -799,12 +799,27 @@ export function sendLiveNotification(payload) {
     });
 }
 
-export function getLiveNotifications(sinceId = 0) {
+export function getLiveNotifications(sinceId = 0, options = {}) {
   const params = new URLSearchParams();
   if (Number(sinceId) > 0) params.set('sinceId', String(Number(sinceId)));
   params.set('limit', '30');
+  const currentPath = String(options.currentPath || '').trim();
+  if (currentPath) params.set('path', currentPath);
+  if (typeof options.visible === 'boolean') params.set('visible', options.visible ? '1' : '0');
+  if (typeof options.focused === 'boolean') params.set('focused', options.focused ? '1' : '0');
   const suffix = params.toString() ? `?${params.toString()}` : '';
   return requestJson(`/api/notifications/live${suffix}`, {
+    method: 'GET',
+    cacheTtlMs: 0,
+    headers: {
+      'cache-control': 'no-cache',
+      pragma: 'no-cache'
+    }
+  });
+}
+
+export function getLiveNotificationPresence() {
+  return requestJson('/api/notifications/presence', {
     method: 'GET',
     cacheTtlMs: 0,
     headers: {

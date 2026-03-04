@@ -119,16 +119,18 @@
           <textarea id="notifyMessage" name="message" rows="4" maxlength="1000" required></textarea>
           <label for="notifyTargetMode">Target</label>
           <select id="notifyTargetMode" name="targetMode">
-            <option value="ALL">All Online Users</option>
-            <option value="SPECIFIC">Specific Users</option>
+            <option value="ONLINE_USERS">Online Users (Open Page Now)</option>
+            <option value="SELECT_USERS">Select Users (Open Page Now)</option>
+            <option value="ALL_USERS">All Users (Visible for 30 mins)</option>
           </select>
           <div id="notifySpecificPanel" class="hidden">
-            <label for="notifyUserSearch">Find user</label>
+            <label for="notifyUserSearch">Find active user</label>
             <div class="combobox-wrap combobox-wrap-multi">
               <div id="notifySelectedUsers" class="pill-list"></div>
-              <input id="notifyUserSearch" type="text" placeholder="Search by Roblox username" autocomplete="off" />
+              <input id="notifyUserSearch" type="text" placeholder="Search active users by Roblox username" autocomplete="off" />
               <div id="notifyUserResults" class="autocomplete-list"></div>
             </div>
+            <p class="muted">Only users with an active open intranet page appear here.</p>
           </div>
           <div id="notifyFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
           <div class="modal-actions">
@@ -138,6 +140,6 @@
         </form>
       </div>
     </section>
-    <script type="module" src="/assets/js/pages/voyage-tracker-page.js?v=20260303d"></script>
+    <script type="module" src="/assets/js/pages/voyage-tracker-page.js?v=20260304a"></script>
   </body>
 </html>

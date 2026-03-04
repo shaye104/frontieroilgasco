@@ -1,4 +1,4 @@
-import { dismissLiveNotification, getLiveNotifications } from './admin-api.js?v=20260303e';
+import { dismissLiveNotification, getLiveNotifications } from './admin-api.js?v=20260304a';
 
 let initialized = false;
 let lastId = 0;
@@ -17,6 +17,8 @@ const liveSoundUrls = {
   urgent: DEFAULT_SOUND_URL
 };
 const NOTIFICATION_AUTO_EXPIRE_MS = 30 * 60 * 1000;
+const ACTIVE_POLL_INTERVAL_MS = 7000;
+const BACKGROUND_POLL_INTERVAL_MS = 15000;
 
 function text(value) {
   return String(value || '').trim();
@@ -180,14 +182,20 @@ async function playFallbackBeep(severity) {
   const now = context.currentTime;
   const pattern = severity === 'URGENT'
     ? [
-        { start: 0.00, end: 0.18, hzA: 1240, hzB: 890, gain: 0.22, type: 'square' },
-        { start: 0.24, end: 0.42, hzA: 1240, hzB: 890, gain: 0.22, type: 'square' },
-        { start: 0.48, end: 0.66, hzA: 1240, hzB: 890, gain: 0.23, type: 'square' },
-        { start: 0.72, end: 0.92, hzA: 1320, hzB: 920, gain: 0.25, type: 'square' }
+        { start: 0.00, end: 0.08, hzA: 1120, hzB: 980, gain: 0.28, type: 'square' },
+        { start: 0.11, end: 0.19, hzA: 1120, hzB: 980, gain: 0.28, type: 'square' },
+        { start: 0.22, end: 0.30, hzA: 1120, hzB: 980, gain: 0.28, type: 'square' },
+        { start: 0.38, end: 0.60, hzA: 1280, hzB: 1020, gain: 0.30, type: 'sawtooth' },
+        { start: 0.64, end: 0.86, hzA: 1280, hzB: 1020, gain: 0.30, type: 'sawtooth' },
+        { start: 0.90, end: 1.12, hzA: 1280, hzB: 1020, gain: 0.30, type: 'sawtooth' },
+        { start: 1.20, end: 1.28, hzA: 1120, hzB: 980, gain: 0.30, type: 'square' },
+        { start: 1.31, end: 1.39, hzA: 1120, hzB: 980, gain: 0.30, type: 'square' },
+        { start: 1.42, end: 1.50, hzA: 1120, hzB: 980, gain: 0.30, type: 'square' }
       ]
     : [
-        { start: 0.00, end: 0.12, hzA: 980, hzB: 880, gain: 0.14, type: 'triangle' },
-        { start: 0.18, end: 0.30, hzA: 1140, hzB: 980, gain: 0.15, type: 'triangle' }
+        { start: 0.00, end: 0.12, hzA: 960, hzB: 840, gain: 0.16, type: 'triangle' },
+        { start: 0.18, end: 0.30, hzA: 1180, hzB: 980, gain: 0.17, type: 'triangle' },
+        { start: 0.36, end: 0.48, hzA: 960, hzB: 840, gain: 0.16, type: 'triangle' }
       ];
 
   for (const pulse of pattern) {
@@ -212,7 +220,14 @@ async function playNotificationSound(severity) {
   const normalizedSeverity = String(severity || '').toUpperCase() === 'URGENT' ? 'URGENT' : 'STANDARD';
   try {
     const playedUrl = await playConfiguredSound(normalizedSeverity);
-    if (playedUrl) return;
+    if (playedUrl) {
+      if (normalizedSeverity === 'URGENT') {
+        void playFallbackBeep('URGENT').catch(() => {
+          // no-op
+        });
+      }
+      return;
+    }
   } catch {
     // no-op
   }
@@ -293,6 +308,7 @@ function showToast(notification) {
 }
 
 function handleIncomingNotification(notification) {
+  if (document.hidden || !document.hasFocus()) return;
   const id = Number(notification?.id || 0);
   if (id > 0) {
     if (dismissedNotificationIds.has(id)) return;
@@ -305,7 +321,11 @@ function handleIncomingNotification(notification) {
 
 async function pollOnce() {
   try {
-    const payload = await getLiveNotifications(lastId);
+    const payload = await getLiveNotifications(lastId, {
+      currentPath: window.location.pathname || '/',
+      visible: !document.hidden,
+      focused: document.hasFocus()
+    });
     applySoundConfig(payload);
     const notifications = Array.isArray(payload?.notifications) ? payload.notifications : [];
     if (Number(payload?.lastId) > lastId) lastId = Number(payload.lastId);
@@ -320,7 +340,7 @@ function schedule() {
   if (pollTimer) window.clearInterval(pollTimer);
   pollTimer = window.setInterval(() => {
     void pollOnce();
-  }, 7000);
+  }, document.hidden ? BACKGROUND_POLL_INTERVAL_MS : ACTIVE_POLL_INTERVAL_MS);
 }
 
 export function initLiveNotifications() {
@@ -336,14 +356,7 @@ export function initLiveNotifications() {
   void pollOnce();
   schedule();
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      if (pollTimer) window.clearInterval(pollTimer);
-      pollTimer = window.setInterval(() => {
-        void pollOnce();
-      }, 7000);
-      return;
-    }
-    flushPendingSounds();
+    if (!document.hidden) flushPendingSounds();
     void pollOnce();
     schedule();
   });

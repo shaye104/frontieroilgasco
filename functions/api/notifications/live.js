@@ -22,6 +22,20 @@ function parseTargetIds(targetJson) {
   }
 }
 
+function parseBit(value, fallback = 1) {
+  const raw = String(value ?? '').trim();
+  if (raw === '1') return 1;
+  if (raw === '0') return 0;
+  return fallback;
+}
+
+function normalizePath(value) {
+  const raw = String(value || '').trim();
+  if (!raw.startsWith('/')) return '/';
+  if (raw.length > 120) return raw.slice(0, 120);
+  return raw;
+}
+
 async function resolveSession(env, request) {
   const raw = await readSessionFromRequest(env, request);
   if (!raw) return null;
@@ -49,6 +63,10 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const sinceId = parseSinceId(url.searchParams.get('sinceId'));
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get('limit')) || 25));
+  const currentPath = normalizePath(url.searchParams.get('path'));
+  const isVisible = parseBit(url.searchParams.get('visible'), 1);
+  const isFocused = parseBit(url.searchParams.get('focused'), isVisible);
+  const isPageActive = isVisible && isFocused ? 1 : 0;
 
   const employee =
     session?.employee?.id
@@ -56,6 +74,20 @@ export async function onRequestGet(context) {
       : await getEmployeeByDiscordUserId(env, String(session.userId || '').trim());
   const employeeId = Number(employee?.id || 0);
   if (!employeeId) return json({ notifications: [], lastId: sinceId });
+
+  await env.DB
+    .prepare(
+      `INSERT INTO live_notification_presence (employee_id, current_path, is_visible, last_seen_at, user_agent)
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?)
+       ON CONFLICT(employee_id) DO UPDATE SET
+         current_path = excluded.current_path,
+         is_visible = excluded.is_visible,
+         last_seen_at = excluded.last_seen_at,
+         user_agent = excluded.user_agent`
+    )
+    .bind(employeeId, currentPath, isPageActive, String(request.headers.get('user-agent') || '').slice(0, 255))
+    .run();
+  await env.DB.prepare(`DELETE FROM live_notification_presence WHERE last_seen_at < datetime('now', '-120 seconds')`).run();
 
   if (sinceId <= 0) {
     const [latestRow, recentRows, settings] = await Promise.all([
@@ -67,7 +99,7 @@ export async function onRequestGet(context) {
            LEFT JOIN live_notification_dismissals lnd
              ON lnd.notification_id = ln.id
             AND lnd.employee_id = ?
-           WHERE COALESCE(ln.expires_at, ln.created_at) >= datetime('now', '-3 minutes')
+           WHERE COALESCE(ln.expires_at, ln.created_at) >= CURRENT_TIMESTAMP
              AND lnd.notification_id IS NULL
            ORDER BY ln.id ASC
            LIMIT 20`

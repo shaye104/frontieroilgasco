@@ -73,6 +73,7 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/finances',
   '/api/notifications',
   '/api/notifications/live',
+  '/api/notifications/presence',
   '/api/notifications/send',
   '/api/notifications/dismiss',
   '/api/live-notify',

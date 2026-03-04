@@ -13,7 +13,9 @@ function toSeverity(value) {
 
 function toTargetMode(value) {
   const normalized = text(value).toUpperCase();
-  return normalized === 'SPECIFIC' ? 'SPECIFIC' : 'ALL';
+  if (normalized === 'SPECIFIC' || normalized === 'SELECT_USERS' || normalized === 'SELECT') return 'SELECT_USERS';
+  if (normalized === 'ONLINE' || normalized === 'ONLINE_USERS') return 'ONLINE_USERS';
+  return 'ALL_USERS';
 }
 
 function parseEmployeeIds(values) {
@@ -29,6 +31,20 @@ async function resolveSession(env, request) {
   const raw = await readSessionFromRequest(env, request);
   if (!raw) return null;
   return enrichSessionWithPermissions(env, raw);
+}
+
+async function getActiveVisibleEmployeeIds(env) {
+  const rows = await env.DB
+    .prepare(
+      `SELECT employee_id
+       FROM live_notification_presence
+       WHERE last_seen_at >= datetime('now', '-45 seconds')
+         AND COALESCE(is_visible, 1) = 1`
+    )
+    .all();
+  return new Set(
+    (rows?.results || []).map((row) => Number(row.employee_id)).filter((value) => Number.isInteger(value) && value > 0)
+  );
 }
 
 export async function onRequestPost(context) {
@@ -58,12 +74,12 @@ export async function onRequestPost(context) {
 
   if (!title || title.length > 120) return json({ error: 'Title is required (max 120 chars).' }, 400);
   if (!message || message.length > 1000) return json({ error: 'Message is required (max 1000 chars).' }, 400);
-  if (targetMode === 'SPECIFIC' && !targetEmployeeIds.length) {
+  if (targetMode === 'SELECT_USERS' && !targetEmployeeIds.length) {
     return json({ error: 'Select at least one target employee.' }, 400);
   }
 
   let filteredTargetIds = targetEmployeeIds;
-  if (targetMode === 'SPECIFIC') {
+  if (targetMode === 'SELECT_USERS') {
     const placeholders = targetEmployeeIds.map(() => '?').join(', ');
     const rows = await env.DB
       .prepare(`SELECT id FROM employees WHERE id IN (${placeholders})`)
@@ -72,6 +88,24 @@ export async function onRequestPost(context) {
     const valid = new Set((rows?.results || []).map((row) => Number(row.id)).filter((value) => Number.isInteger(value) && value > 0));
     filteredTargetIds = targetEmployeeIds.filter((id) => valid.has(id));
     if (!filteredTargetIds.length) return json({ error: 'No valid target employees found.' }, 400);
+  }
+
+  await env.DB.prepare(`DELETE FROM live_notification_presence WHERE last_seen_at < datetime('now', '-120 seconds')`).run();
+  const activeVisibleEmployeeIds = await getActiveVisibleEmployeeIds(env);
+
+  let deliveryTargetMode = 'ALL';
+  if (targetMode === 'ONLINE_USERS') {
+    filteredTargetIds = [...activeVisibleEmployeeIds];
+    if (!filteredTargetIds.length) {
+      return json({ error: 'No online users currently have a page open.' }, 400);
+    }
+    deliveryTargetMode = 'SPECIFIC';
+  } else if (targetMode === 'SELECT_USERS') {
+    filteredTargetIds = filteredTargetIds.filter((employeeId) => activeVisibleEmployeeIds.has(employeeId));
+    if (!filteredTargetIds.length) {
+      return json({ error: 'Selected users must currently have a page open.' }, 400);
+    }
+    deliveryTargetMode = 'SPECIFIC';
   }
 
   const senderEmployee =
@@ -106,8 +140,8 @@ export async function onRequestPost(context) {
       severity,
       title,
       message,
-      targetMode,
-      targetMode === 'SPECIFIC' ? JSON.stringify(filteredTargetIds) : null,
+      deliveryTargetMode,
+      deliveryTargetMode === 'SPECIFIC' ? JSON.stringify(filteredTargetIds) : null,
       expiresAt
     )
     .run();
@@ -122,7 +156,8 @@ export async function onRequestPost(context) {
       severity,
       title,
       message,
-      targetMode
+      targetMode,
+      recipientCount: deliveryTargetMode === 'SPECIFIC' ? filteredTargetIds.length : null
     }
   });
 }
