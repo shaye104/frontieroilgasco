@@ -3,12 +3,9 @@ import { dismissLiveNotification, getLiveNotifications } from './admin-api.js?v=
 let initialized = false;
 let lastId = 0;
 let pollTimer = null;
-let standardSoundUrl = '';
-let urgentSoundUrl = '';
 const seenNotificationIds = new Set();
 const dismissedNotificationIds = new Set();
 const DISMISSED_STORAGE_KEY = 'fog_live_notifications_dismissed_ids_v1';
-const DEFAULT_SOUND_URL = '/MorseAlert.mp3';
 let pendingSoundSeverity = '';
 let retrySoundBound = false;
 let liveAudioContext = null;
@@ -71,12 +68,6 @@ function toastDuration(severity) {
   return severity === 'URGENT' ? 9000 : 6000;
 }
 
-function getSoundSource(severity) {
-  const preferred = severity === 'URGENT' ? urgentSoundUrl : standardSoundUrl;
-  const fallback = severity === 'URGENT' ? standardSoundUrl : urgentSoundUrl;
-  return text(preferred) || text(fallback) || DEFAULT_SOUND_URL;
-}
-
 function bindRetryAfterInteraction() {
   if (retrySoundBound) return;
   retrySoundBound = true;
@@ -103,63 +94,48 @@ async function playFallbackBeep(severity) {
   const context = getAudioContext();
   if (!context) return false;
   if (context.state === 'suspended') await context.resume();
-  const gain = context.createGain();
-  gain.connect(context.destination);
-  gain.gain.value = severity === 'URGENT' ? 0.12 : 0.08;
-
   const now = context.currentTime;
-  const toneA = context.createOscillator();
-  toneA.type = 'sine';
-  toneA.frequency.value = severity === 'URGENT' ? 1050 : 780;
-  toneA.connect(gain);
-  toneA.start(now);
-  toneA.stop(now + 0.11);
+  const pattern = severity === 'URGENT'
+    ? [
+        { start: 0.0, end: 0.09, fromHz: 1240, toHz: 980, gain: 0.18, type: 'square' },
+        { start: 0.14, end: 0.23, fromHz: 1380, toHz: 1080, gain: 0.18, type: 'square' },
+        { start: 0.28, end: 0.38, fromHz: 1520, toHz: 1180, gain: 0.2, type: 'sawtooth' }
+      ]
+    : [
+        { start: 0.0, end: 0.085, fromHz: 980, toHz: 760, gain: 0.12, type: 'sine' },
+        { start: 0.12, end: 0.205, fromHz: 1080, toHz: 820, gain: 0.12, type: 'sine' }
+      ];
 
-  if (severity === 'URGENT') {
-    const toneB = context.createOscillator();
-    toneB.type = 'square';
-    toneB.frequency.value = 1320;
-    toneB.connect(gain);
-    toneB.start(now + 0.14);
-    toneB.stop(now + 0.29);
+  for (const pulse of pattern) {
+    const gain = context.createGain();
+    gain.connect(context.destination);
+    gain.gain.setValueAtTime(0.0001, now + pulse.start);
+    gain.gain.exponentialRampToValueAtTime(pulse.gain, now + pulse.start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + pulse.end);
+
+    const osc = context.createOscillator();
+    osc.type = pulse.type;
+    osc.frequency.setValueAtTime(pulse.fromHz, now + pulse.start);
+    osc.frequency.linearRampToValueAtTime(pulse.toHz, now + pulse.end);
+    osc.connect(gain);
+    osc.start(now + pulse.start);
+    osc.stop(now + pulse.end + 0.01);
   }
   return true;
 }
 
 async function playNotificationSound(severity) {
-  const source = getSoundSource(severity);
-  if (!source) {
-    await playFallbackBeep(severity).catch(() => {});
-    return;
+  try {
+    const playedFallback = await playFallbackBeep(severity);
+    if (playedFallback) return;
+  } catch {
+    // no-op
   }
   try {
-    const audio = new Audio(source);
-    audio.volume = severity === 'URGENT' ? 0.9 : 0.75;
-    const promise = audio.play();
-    audio.onerror = () => {
-      void playFallbackBeep(severity).catch(() => {});
-    };
-    if (promise && typeof promise.catch === 'function') {
-      promise.catch(async () => {
-        try {
-          const playedFallback = await playFallbackBeep(severity);
-          if (playedFallback) return;
-        } catch {
-          // no-op
-        }
-        pendingSoundSeverity = severity;
-        bindRetryAfterInteraction();
-      });
-    }
-  } catch {
-    try {
-      const playedFallback = await playFallbackBeep(severity);
-      if (playedFallback) return;
-    } catch {
-      // no-op
-    }
     pendingSoundSeverity = severity;
     bindRetryAfterInteraction();
+  } catch {
+    // no-op
   }
 }
 
@@ -210,8 +186,6 @@ function handleIncomingNotification(notification) {
 async function pollOnce() {
   try {
     const payload = await getLiveNotifications(lastId);
-    standardSoundUrl = text(payload?.sounds?.standard);
-    urgentSoundUrl = text(payload?.sounds?.urgent);
     const notifications = Array.isArray(payload?.notifications) ? payload.notifications : [];
     if (Number(payload?.lastId) > lastId) lastId = Number(payload.lastId);
     if (!notifications.length) return;
