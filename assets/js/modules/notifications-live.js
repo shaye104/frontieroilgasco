@@ -83,9 +83,9 @@ function bindRetryAfterInteraction() {
     pendingSoundSeverity = '';
     void playNotificationSound(severity);
   };
-  document.addEventListener('pointerdown', retry, { passive: true });
-  document.addEventListener('keydown', retry, { passive: true });
-  document.addEventListener('touchstart', retry, { passive: true });
+  document.addEventListener('pointerdown', retry, { passive: true, capture: true });
+  document.addEventListener('keydown', retry, { passive: true, capture: true });
+  document.addEventListener('touchstart', retry, { passive: true, capture: true });
 }
 
 function getAudioContext() {
@@ -93,6 +93,11 @@ function getAudioContext() {
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   if (!AudioCtx) return null;
   liveAudioContext = new AudioCtx();
+  liveAudioContext.onstatechange = () => {
+    if (liveAudioContext?.state === 'running') {
+      flushPendingSounds();
+    }
+  };
   return liveAudioContext;
 }
 
@@ -120,26 +125,25 @@ async function playFallbackBeep(severity) {
   const now = context.currentTime;
   const pattern = severity === 'URGENT'
     ? [
-        { start: 0.0, end: 0.09, fromHz: 1240, toHz: 980, gain: 0.18, type: 'square' },
-        { start: 0.14, end: 0.23, fromHz: 1380, toHz: 1080, gain: 0.18, type: 'square' },
-        { start: 0.28, end: 0.38, fromHz: 1520, toHz: 1180, gain: 0.2, type: 'sawtooth' }
+        { start: 0.0, end: 0.10, hz: 920, gain: 0.16, type: 'triangle' },
+        { start: 0.16, end: 0.26, hz: 920, gain: 0.16, type: 'triangle' },
+        { start: 0.32, end: 0.44, hz: 920, gain: 0.18, type: 'triangle' }
       ]
     : [
-        { start: 0.0, end: 0.085, fromHz: 980, toHz: 760, gain: 0.12, type: 'sine' },
-        { start: 0.12, end: 0.205, fromHz: 1080, toHz: 820, gain: 0.12, type: 'sine' }
+        { start: 0.0, end: 0.09, hz: 880, gain: 0.10, type: 'sine' },
+        { start: 0.14, end: 0.23, hz: 1040, gain: 0.10, type: 'sine' }
       ];
 
   for (const pulse of pattern) {
     const gain = context.createGain();
     gain.connect(context.destination);
     gain.gain.setValueAtTime(0.0001, now + pulse.start);
-    gain.gain.exponentialRampToValueAtTime(pulse.gain, now + pulse.start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(pulse.gain, now + pulse.start + 0.008);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + pulse.end);
 
     const osc = context.createOscillator();
     osc.type = pulse.type;
-    osc.frequency.setValueAtTime(pulse.fromHz, now + pulse.start);
-    osc.frequency.linearRampToValueAtTime(pulse.toHz, now + pulse.end);
+    osc.frequency.setValueAtTime(pulse.hz, now + pulse.start);
     osc.connect(gain);
     osc.start(now + pulse.start);
     osc.stop(now + pulse.end + 0.01);
@@ -159,6 +163,7 @@ async function playNotificationSound(severity) {
     // no-op
   }
   try {
+    enqueuePendingSound(severity);
     pendingSoundSeverity = severity;
     bindRetryAfterInteraction();
   } catch {
