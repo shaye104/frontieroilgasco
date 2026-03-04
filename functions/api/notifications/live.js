@@ -35,6 +35,15 @@ export async function onRequestGet(context) {
 
   await ensureCoreSchema(env);
   await ensureLiveNotificationsSchema(env);
+  await env.DB
+    .prepare(
+      `DELETE FROM live_notification_dismissals
+       WHERE notification_id IN (
+         SELECT id FROM live_notifications
+         WHERE COALESCE(expires_at, created_at) < CURRENT_TIMESTAMP
+       )`
+    )
+    .run();
   await env.DB.prepare(`DELETE FROM live_notifications WHERE COALESCE(expires_at, created_at) < CURRENT_TIMESTAMP`).run();
 
   const url = new URL(request.url);

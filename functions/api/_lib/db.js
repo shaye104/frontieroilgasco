@@ -438,7 +438,7 @@ export async function ensureCoreSchema(env) {
       employee_id INTEGER NOT NULL,
       dismissed_at TEXT DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (notification_id, employee_id),
-      FOREIGN KEY(notification_id) REFERENCES live_notifications(id),
+      FOREIGN KEY(notification_id) REFERENCES live_notifications(id) ON DELETE CASCADE,
       FOREIGN KEY(employee_id) REFERENCES employees(id)
     )`
   ];
@@ -971,7 +971,7 @@ export async function ensureLiveNotificationsSchema(env) {
         employee_id INTEGER NOT NULL,
         dismissed_at TEXT DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (notification_id, employee_id),
-        FOREIGN KEY(notification_id) REFERENCES live_notifications(id),
+        FOREIGN KEY(notification_id) REFERENCES live_notifications(id) ON DELETE CASCADE,
         FOREIGN KEY(employee_id) REFERENCES employees(id)
       )`
     ),
