@@ -9,6 +9,7 @@ const DISMISSED_STORAGE_KEY = 'fog_live_notifications_dismissed_ids_v1';
 let pendingSoundSeverity = '';
 let retrySoundBound = false;
 let liveAudioContext = null;
+const pendingSoundQueue = [];
 
 function text(value) {
   return String(value || '').trim();
@@ -72,6 +73,11 @@ function bindRetryAfterInteraction() {
   if (retrySoundBound) return;
   retrySoundBound = true;
   const retry = () => {
+    const context = getAudioContext();
+    if (context && context.state === 'suspended') {
+      void context.resume().catch(() => {});
+    }
+    flushPendingSounds();
     const severity = pendingSoundSeverity;
     if (!severity) return;
     pendingSoundSeverity = '';
@@ -88,6 +94,23 @@ function getAudioContext() {
   if (!AudioCtx) return null;
   liveAudioContext = new AudioCtx();
   return liveAudioContext;
+}
+
+function enqueuePendingSound(severity) {
+  if (!severity) return;
+  if (pendingSoundQueue.length >= 20) pendingSoundQueue.shift();
+  pendingSoundQueue.push(severity);
+}
+
+function flushPendingSounds() {
+  if (document.hidden) return;
+  if (!pendingSoundQueue.length) return;
+  const queue = pendingSoundQueue.splice(0, pendingSoundQueue.length);
+  queue.forEach((severity, index) => {
+    window.setTimeout(() => {
+      void playNotificationSound(severity);
+    }, index * 180);
+  });
 }
 
 async function playFallbackBeep(severity) {
@@ -125,6 +148,10 @@ async function playFallbackBeep(severity) {
 }
 
 async function playNotificationSound(severity) {
+  if (document.hidden) {
+    enqueuePendingSound(severity);
+    return;
+  }
   try {
     const playedFallback = await playFallbackBeep(severity);
     if (playedFallback) return;
@@ -206,6 +233,7 @@ export function initLiveNotifications() {
   if (initialized) return;
   initialized = true;
   loadDismissedNotificationIds();
+  bindRetryAfterInteraction();
   window.addEventListener('fog:live-notification-sent', (event) => {
     const notification = event?.detail?.notification;
     if (!notification) return;
@@ -221,6 +249,7 @@ export function initLiveNotifications() {
       }, 20000);
       return;
     }
+    flushPendingSounds();
     void pollOnce();
     schedule();
   });
