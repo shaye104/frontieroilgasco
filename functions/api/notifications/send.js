@@ -91,6 +91,8 @@ export async function onRequestPost(context) {
     )
     .run();
   await env.DB.prepare(`DELETE FROM live_notifications WHERE COALESCE(expires_at, created_at) < CURRENT_TIMESTAMP`).run();
+  const createdAt = new Date().toISOString();
+  const expiresAt = isoAfterMinutes(30);
 
   const result = await env.DB
     .prepare(
@@ -106,7 +108,7 @@ export async function onRequestPost(context) {
       message,
       targetMode,
       targetMode === 'SPECIFIC' ? JSON.stringify(filteredTargetIds) : null,
-      isoAfterMinutes(30)
+      expiresAt
     )
     .run();
 
@@ -115,6 +117,8 @@ export async function onRequestPost(context) {
     ok: true,
     notification: {
       id,
+      createdAt,
+      expiresAt,
       severity,
       title,
       message,

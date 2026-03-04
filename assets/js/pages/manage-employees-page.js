@@ -1,4 +1,4 @@
-import { initIntranetLayout } from '../modules/intranet-layout.js?v=20260227j';
+import { initIntranetLayout } from '../modules/intranet-layout.js?v=20260304a';
 
 initIntranetLayout({
   feedbackSelector: '#guardFeedback',

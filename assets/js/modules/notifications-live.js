@@ -10,6 +10,13 @@ let pendingSoundSeverity = '';
 let retrySoundBound = false;
 let liveAudioContext = null;
 const pendingSoundQueue = [];
+const activeAudioElements = new Set();
+const DEFAULT_SOUND_URL = '/MorseAlert.mp3';
+const liveSoundUrls = {
+  standard: DEFAULT_SOUND_URL,
+  urgent: DEFAULT_SOUND_URL
+};
+const NOTIFICATION_AUTO_EXPIRE_MS = 30 * 60 * 1000;
 
 function text(value) {
   return String(value || '').trim();
@@ -65,10 +72,6 @@ function markNotificationDismissed(notificationId) {
   persistDismissedNotificationIds();
 }
 
-function toastDuration(severity) {
-  return severity === 'URGENT' ? 9000 : 6000;
-}
-
 function bindRetryAfterInteraction() {
   if (retrySoundBound) return;
   retrySoundBound = true;
@@ -108,7 +111,6 @@ function enqueuePendingSound(severity) {
 }
 
 function flushPendingSounds() {
-  if (document.hidden) return;
   if (!pendingSoundQueue.length) return;
   const queue = pendingSoundQueue.splice(0, pendingSoundQueue.length);
   queue.forEach((severity, index) => {
@@ -118,6 +120,59 @@ function flushPendingSounds() {
   });
 }
 
+function normalizeSoundUrl(value, fallback) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return fallback;
+  if (normalized.startsWith('/')) return normalized;
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  if (normalized.startsWith('data:audio/')) return normalized;
+  return fallback;
+}
+
+function applySoundConfig(payload) {
+  const sounds = payload && typeof payload === 'object' ? payload.sounds || {} : {};
+  liveSoundUrls.standard = normalizeSoundUrl(sounds.standard, DEFAULT_SOUND_URL);
+  liveSoundUrls.urgent = normalizeSoundUrl(sounds.urgent, liveSoundUrls.standard || DEFAULT_SOUND_URL);
+}
+
+function trackAudioElement(audio) {
+  activeAudioElements.add(audio);
+  const cleanup = () => {
+    activeAudioElements.delete(audio);
+  };
+  audio.addEventListener('ended', cleanup, { once: true });
+  audio.addEventListener('error', cleanup, { once: true });
+  window.setTimeout(cleanup, 120_000);
+}
+
+async function playConfiguredSound(severity) {
+  const key = severity === 'URGENT' ? 'urgent' : 'standard';
+  const url = String(liveSoundUrls[key] || '').trim();
+  if (!url) return false;
+
+  const first = new Audio(url);
+  first.preload = 'auto';
+  first.volume = 1;
+  first.playsInline = true;
+  trackAudioElement(first);
+  await first.play();
+
+  if (severity === 'URGENT') {
+    const followup = new Audio(url);
+    followup.preload = 'auto';
+    followup.volume = 1;
+    followup.playsInline = true;
+    trackAudioElement(followup);
+    window.setTimeout(() => {
+      void followup.play().catch(() => {
+        // no-op
+      });
+    }, 420);
+  }
+
+  return true;
+}
+
 async function playFallbackBeep(severity) {
   const context = getAudioContext();
   if (!context) return false;
@@ -125,25 +180,27 @@ async function playFallbackBeep(severity) {
   const now = context.currentTime;
   const pattern = severity === 'URGENT'
     ? [
-        { start: 0.0, end: 0.10, hz: 920, gain: 0.16, type: 'triangle' },
-        { start: 0.16, end: 0.26, hz: 920, gain: 0.16, type: 'triangle' },
-        { start: 0.32, end: 0.44, hz: 920, gain: 0.18, type: 'triangle' }
+        { start: 0.00, end: 0.18, hzA: 1240, hzB: 890, gain: 0.22, type: 'square' },
+        { start: 0.24, end: 0.42, hzA: 1240, hzB: 890, gain: 0.22, type: 'square' },
+        { start: 0.48, end: 0.66, hzA: 1240, hzB: 890, gain: 0.23, type: 'square' },
+        { start: 0.72, end: 0.92, hzA: 1320, hzB: 920, gain: 0.25, type: 'square' }
       ]
     : [
-        { start: 0.0, end: 0.09, hz: 880, gain: 0.10, type: 'sine' },
-        { start: 0.14, end: 0.23, hz: 1040, gain: 0.10, type: 'sine' }
+        { start: 0.00, end: 0.12, hzA: 980, hzB: 880, gain: 0.14, type: 'triangle' },
+        { start: 0.18, end: 0.30, hzA: 1140, hzB: 980, gain: 0.15, type: 'triangle' }
       ];
 
   for (const pulse of pattern) {
     const gain = context.createGain();
     gain.connect(context.destination);
     gain.gain.setValueAtTime(0.0001, now + pulse.start);
-    gain.gain.exponentialRampToValueAtTime(pulse.gain, now + pulse.start + 0.008);
+    gain.gain.exponentialRampToValueAtTime(pulse.gain, now + pulse.start + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + pulse.end);
 
     const osc = context.createOscillator();
     osc.type = pulse.type;
-    osc.frequency.setValueAtTime(pulse.hz, now + pulse.start);
+    osc.frequency.setValueAtTime(pulse.hzA, now + pulse.start);
+    osc.frequency.exponentialRampToValueAtTime(pulse.hzB, now + pulse.end);
     osc.connect(gain);
     osc.start(now + pulse.start);
     osc.stop(now + pulse.end + 0.01);
@@ -152,23 +209,45 @@ async function playFallbackBeep(severity) {
 }
 
 async function playNotificationSound(severity) {
-  if (document.hidden) {
-    enqueuePendingSound(severity);
-    return;
+  const normalizedSeverity = String(severity || '').toUpperCase() === 'URGENT' ? 'URGENT' : 'STANDARD';
+  try {
+    const playedUrl = await playConfiguredSound(normalizedSeverity);
+    if (playedUrl) return;
+  } catch {
+    // no-op
   }
   try {
-    const playedFallback = await playFallbackBeep(severity);
+    const playedFallback = await playFallbackBeep(normalizedSeverity);
     if (playedFallback) return;
   } catch {
     // no-op
   }
   try {
-    enqueuePendingSound(severity);
-    pendingSoundSeverity = severity;
+    enqueuePendingSound(normalizedSeverity);
+    pendingSoundSeverity = normalizedSeverity;
     bindRetryAfterInteraction();
   } catch {
     // no-op
   }
+}
+
+function parseTimestampMs(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return 0;
+  const parsedNative = Date.parse(raw);
+  if (Number.isFinite(parsedNative)) return parsedNative;
+  const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+  const parsedUtc = Date.parse(`${normalized}Z`);
+  if (Number.isFinite(parsedUtc)) return parsedUtc;
+  return 0;
+}
+
+function notificationExpiryMs(notification) {
+  const explicit = parseTimestampMs(notification?.expiresAt || notification?.expires_at);
+  if (explicit > 0) return explicit;
+  const createdAt = parseTimestampMs(notification?.createdAt || notification?.created_at);
+  if (createdAt > 0) return createdAt + NOTIFICATION_AUTO_EXPIRE_MS;
+  return Date.now() + NOTIFICATION_AUTO_EXPIRE_MS;
 }
 
 function showToast(notification) {
@@ -187,7 +266,13 @@ function showToast(notification) {
   `;
   root.append(toast);
 
+  let isClosed = false;
+  let expiryTimer = null;
+
   const cleanup = () => {
+    if (isClosed) return;
+    isClosed = true;
+    if (expiryTimer) window.clearTimeout(expiryTimer);
     toast.classList.add('is-leaving');
     window.setTimeout(() => toast.remove(), 220);
   };
@@ -201,7 +286,10 @@ function showToast(notification) {
     }
     cleanup();
   });
-  window.setTimeout(cleanup, toastDuration(severity));
+
+  const expiresAtMs = notificationExpiryMs(notification);
+  const ttlMs = Math.max(1_000, expiresAtMs - Date.now());
+  expiryTimer = window.setTimeout(cleanup, ttlMs);
 }
 
 function handleIncomingNotification(notification) {
@@ -218,6 +306,7 @@ function handleIncomingNotification(notification) {
 async function pollOnce() {
   try {
     const payload = await getLiveNotifications(lastId);
+    applySoundConfig(payload);
     const notifications = Array.isArray(payload?.notifications) ? payload.notifications : [];
     if (Number(payload?.lastId) > lastId) lastId = Number(payload.lastId);
     if (!notifications.length) return;
@@ -251,7 +340,7 @@ export function initLiveNotifications() {
       if (pollTimer) window.clearInterval(pollTimer);
       pollTimer = window.setInterval(() => {
         void pollOnce();
-      }, 20000);
+      }, 7000);
       return;
     }
     flushPendingSounds();

@@ -62,7 +62,7 @@ export async function onRequestGet(context) {
       env.DB.prepare(`SELECT COALESCE(MAX(id), 0) AS max_id FROM live_notifications`).first(),
       env.DB
         .prepare(
-          `SELECT ln.id, ln.created_at, ln.sender_employee_id, ln.sender_name, ln.severity, ln.title, ln.message, ln.target_mode, ln.target_json
+          `SELECT ln.id, ln.created_at, ln.expires_at, ln.sender_employee_id, ln.sender_name, ln.severity, ln.title, ln.message, ln.target_mode, ln.target_json
            FROM live_notifications ln
            LEFT JOIN live_notification_dismissals lnd
              ON lnd.notification_id = ln.id
@@ -87,6 +87,7 @@ export async function onRequestGet(context) {
       .map((row) => ({
         id: Number(row.id),
         createdAt: row.created_at,
+        expiresAt: row.expires_at,
         senderEmployeeId: Number(row.sender_employee_id || 0) || null,
         senderName: text(row.sender_name) || 'System',
         severity: text(row.severity).toUpperCase() === 'URGENT' ? 'URGENT' : 'STANDARD',
@@ -107,7 +108,7 @@ export async function onRequestGet(context) {
   const [rows, latestSinceRow] = await Promise.all([
     env.DB
       .prepare(
-        `SELECT ln.id, ln.created_at, ln.sender_employee_id, ln.sender_name, ln.severity, ln.title, ln.message, ln.target_mode, ln.target_json
+        `SELECT ln.id, ln.created_at, ln.expires_at, ln.sender_employee_id, ln.sender_name, ln.severity, ln.title, ln.message, ln.target_mode, ln.target_json
          FROM live_notifications ln
          LEFT JOIN live_notification_dismissals lnd
            ON lnd.notification_id = ln.id
@@ -132,6 +133,7 @@ export async function onRequestGet(context) {
     .map((row) => ({
       id: Number(row.id),
       createdAt: row.created_at,
+      expiresAt: row.expires_at,
       senderEmployeeId: Number(row.sender_employee_id || 0) || null,
       senderName: text(row.sender_name) || 'System',
       severity: text(row.severity).toUpperCase() === 'URGENT' ? 'URGENT' : 'STANDARD',
