@@ -164,8 +164,7 @@ export async function initVoyageTracker(config, session) {
   const notifyForm = document.querySelector(config.notifyFormSelector);
   const notifyTargetMode = document.querySelector(config.notifyTargetModeSelector);
   const notifySpecificPanel = document.querySelector(config.notifySpecificPanelSelector);
-  const notifyUserSearch = document.querySelector(config.notifyUserSearchSelector);
-  const notifyUserResults = document.querySelector(config.notifyUserResultsSelector);
+  const notifyUserSelect = document.querySelector(config.notifyUserSelectSelector);
   const notifySelectedUsers = document.querySelector(config.notifySelectedUsersSelector);
   const notifyFeedback = document.querySelector(config.notifyFeedbackSelector);
   const notifySendButton = document.querySelector(config.notifySendButtonSelector);
@@ -198,8 +197,7 @@ export async function initVoyageTracker(config, session) {
     !notifyForm ||
     !notifyTargetMode ||
     !notifySpecificPanel ||
-    !notifyUserSearch ||
-    !notifyUserResults ||
+    !notifyUserSelect ||
     !notifySelectedUsers ||
     !notifyFeedback ||
     !notifySendButton
@@ -409,9 +407,29 @@ export async function initVoyageTracker(config, session) {
         const id = Number(button.getAttribute('data-remove-notify-user'));
         selectedNotifyUserIds.delete(id);
         selectedNotifyUsersById.delete(id);
+        const option = notifyUserSelect.querySelector(`option[value="${id}"]`);
+        if (option) option.selected = false;
         renderNotifySelectedUsers();
       });
     });
+  }
+
+  function renderNotifyUserOptions() {
+    if (!notifyUserSelect) return;
+    if (!notifyPresenceUsers.length) {
+      notifyUserSelect.innerHTML = '';
+      return;
+    }
+    notifyUserSelect.innerHTML = notifyPresenceUsers
+      .map((user) => {
+        const selected = selectedNotifyUserIds.has(Number(user.id)) ? ' selected' : '';
+        const rank = text(user.rank);
+        const username = text(user.roblox_username || `Employee #${user.id}`);
+        const path = text(user.current_path || '/');
+        const label = `${username} ${rank !== 'N/A' ? `(${rank})` : ''} - ${path}`;
+        return `<option value="${Number(user.id)}"${selected}>${label}</option>`;
+      })
+      .join('');
   }
 
   function clearNotifyForm() {
@@ -419,9 +437,7 @@ export async function initVoyageTracker(config, session) {
     notifyTargetMode.value = 'ONLINE_USERS';
     selectedNotifyUserIds = new Set();
     selectedNotifyUsersById.clear();
-    notifyUserSearch.value = '';
-    notifyUserResults.innerHTML = '';
-    notifyUserResults.classList.remove('is-open');
+    notifyUserSelect.innerHTML = '';
     notifySpecificPanel.classList.add('hidden');
     setInlineMessage(notifyFeedback, '');
     renderNotifySelectedUsers();
@@ -447,6 +463,7 @@ export async function initVoyageTracker(config, session) {
         selectedNotifyUsersById.delete(id);
       }
     });
+    renderNotifyUserOptions();
     renderNotifySelectedUsers();
   }
 
@@ -494,23 +511,20 @@ export async function initVoyageTracker(config, session) {
     });
   });
 
-  setupCombobox({
-    input: notifyUserSearch,
-    dropdown: notifyUserResults,
-    errorTarget: notifyFeedback,
-    onSearch: async (query) =>
-      notifyPresenceUsers
-        .filter((employee) => !selectedNotifyUserIds.has(Number(employee.id)))
-        .filter((employee) => normalize(employee.roblox_username).includes(normalize(query)))
-        .slice(0, 20),
-    onSelect: (employee) => {
-      const selectedId = Number(employee.id);
-      selectedNotifyUserIds.add(selectedId);
-      selectedNotifyUsersById.set(selectedId, employee);
-      notifyUserSearch.value = '';
-      setInlineMessage(notifyFeedback, '');
-      renderNotifySelectedUsers();
-    }
+  notifyUserSelect.addEventListener('change', () => {
+    const options = [...notifyUserSelect.options];
+    selectedNotifyUserIds = new Set();
+    selectedNotifyUsersById.clear();
+    options.forEach((option) => {
+      if (!option.selected) return;
+      const id = Number(option.value);
+      if (!Number.isInteger(id) || id <= 0) return;
+      selectedNotifyUserIds.add(id);
+      const user = notifyPresenceUsers.find((entry) => Number(entry.id) === id);
+      if (user) selectedNotifyUsersById.set(id, user);
+    });
+    setInlineMessage(notifyFeedback, '');
+    renderNotifySelectedUsers();
   });
 
   notifyTargetMode.addEventListener('change', () => {

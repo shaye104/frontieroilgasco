@@ -1,5 +1,5 @@
 import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260304b';
-import { initVoyageTracker } from '../modules/voyage-tracker.js?v=20260304a';
+import { initVoyageTracker } from '../modules/voyage-tracker.js?v=20260304b';
 import { initializeYear } from '../modules/year.js';
 
 initIntranetPageGuard({
@@ -38,8 +38,7 @@ initIntranetPageGuard({
       notifyFormSelector: '#notifyForm',
       notifyTargetModeSelector: '#notifyTargetMode',
       notifySpecificPanelSelector: '#notifySpecificPanel',
-      notifyUserSearchSelector: '#notifyUserSearch',
-      notifyUserResultsSelector: '#notifyUserResults',
+      notifyUserSelectSelector: '#notifyUserSelect',
       notifySelectedUsersSelector: '#notifySelectedUsers',
       notifyFeedbackSelector: '#notifyFeedback',
       notifySendButtonSelector: '#notifySendBtn'
