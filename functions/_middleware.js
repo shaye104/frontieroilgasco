@@ -375,6 +375,34 @@ export async function onRequest(context) {
         return apiResponse;
       }
 
+      // Hard-route voyage cancel requests to avoid dynamic route ambiguity for [id] and [id]/cancel.
+      const voyageCancelMatch = pathname.match(/^\/api\/voyages\/(\d+)(?:\/cancel)?$/);
+      if (voyageCancelMatch && (requestMethod === 'POST' || requestMethod === 'DELETE')) {
+        const voyageId = String(voyageCancelMatch[1] || '').trim();
+        const { onRequestDelete, onRequestPost } = await import('./api/voyages/[id]/cancel.js');
+        const voyageContext = {
+          ...context,
+          params: {
+            ...(context.params || {}),
+            id: voyageId
+          }
+        };
+        const apiResponse = requestMethod === 'DELETE' ? await onRequestDelete(voyageContext) : await onRequestPost(voyageContext);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_voyage_cancel' }
+            })
+          );
+        }
+        return apiResponse;
+      }
+
       const apiResponse = await context.next();
       if (isLoggedIn) {
         context.waitUntil(
