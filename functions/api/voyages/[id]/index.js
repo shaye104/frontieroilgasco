@@ -86,6 +86,17 @@ async function handleCancel(context) {
     env.DB.prepare('DELETE FROM voyage_manifest_lines WHERE voyage_id = ?').bind(voyageId),
     env.DB.prepare('DELETE FROM voyage_logs WHERE voyage_id = ?').bind(voyageId),
     env.DB.prepare('DELETE FROM voyage_crew_members WHERE voyage_id = ?').bind(voyageId),
+    env.DB.prepare('DELETE FROM voyage_participants WHERE voyage_id = ?').bind(voyageId),
+    env.DB.prepare('DELETE FROM finance_settlement_audit WHERE voyage_id = ?').bind(voyageId),
+    env.DB
+      .prepare(
+        `DELETE FROM finance_cashflow_audit
+         WHERE entry_id IN (
+           SELECT id FROM finance_cash_ledger_entries WHERE voyage_id = ?
+         )`
+      )
+      .bind(voyageId),
+    env.DB.prepare('DELETE FROM finance_cash_ledger_entries WHERE voyage_id = ?').bind(voyageId),
     env.DB.prepare('DELETE FROM voyages WHERE id = ?').bind(voyageId)
   ]);
 
