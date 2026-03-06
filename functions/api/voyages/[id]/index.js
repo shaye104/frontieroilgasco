@@ -1,6 +1,6 @@
-import { cachedJson, json } from '../auth/_lib/auth.js';
-import { hasPermission } from '../_lib/permissions.js';
-import { getVoyageBase, getVoyageDetail, requireVoyagePermission } from '../_lib/voyages.js';
+import { cachedJson, json } from '../../auth/_lib/auth.js';
+import { hasPermission } from '../../_lib/permissions.js';
+import { getVoyageBase, getVoyageDetail, requireVoyagePermission } from '../../_lib/voyages.js';
 
 export async function onRequestGet(context) {
   const { params, request } = context;
