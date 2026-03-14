@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-03-06T15:19:24.749Z
+Generated: 2026-03-14T00:22:07.789Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
@@ -12,38 +12,45 @@ SITE STRUCTURE
 - admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
 - audit-log.html | title: Frontier Oil & Gas Company | Audit Log | primary heading: Audit Log
 - finances.html | title: Frontier Oil & Gas Company | Finances | primary heading: Finances
+- fleet.html | title: Frontier Oil & Gas Company | Fleet | primary heading: Fleet Leaderboard
 - index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
 - intranet.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
-- login.html | title: Frontier Oil & Gas Company | Login | primary heading: Checking session...
+- login.html | title: Frontier Oil & Gas Company | Login | primary heading: Sign In
+- maintenance.html | title: Frontier Oil &amp; Gas Company | Maintenance | primary heading: Currently Under Maintenance
 - manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
 - my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
 - not-permitted.html | title: Frontier Oil &amp; Gas Company | Not Permitted | primary heading: Not permitted
-- onboarding.html | title: Frontier Oil & Gas Company | Employee Setup | primary heading: Employee Setup
+- onboarding.html | title: Frontier Oil & Gas Company | Access Setup | primary heading: Access Setup
 - roles.html | title: Frontier Oil & Gas Company | User Groups | primary heading: User Groups
+- shipyard.html | title: Frontier Oil & Gas Company | Shipyard | primary heading: Shipyard
 - site-settings.html | title: Frontier Oil & Gas Company | Site Settings | primary heading: Site Settings
 - user-ranks.html | title: Frontier Oil & Gas Company | User Ranks | primary heading: User Ranks
-- voyage-archive.html | title: Frontier Oil & Gas Company | Archived Voyages | primary heading: Archived Voyages
+- voyage-archive.html | title: Frontier Oil & Gas Company | Past Voyages | primary heading: Past Voyages
 - voyage-details.html | title: Frontier Oil & Gas Company | Voyage Details | primary heading: Voyage Details
 - voyage-settings.html | title: Frontier Oil & Gas Company | Voyage Settings | primary heading: Voyage Settings
 - voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
 
 JAVASCRIPT MODULES
 - assets/js/modules/activity-tracker.js | exports: No public exports
-- assets/js/modules/admin-api.js | exports: activateEmployee, addDisciplinary, addEmployeeNote, addRoleMember, addUserRankDiscordRoleLink, addUserRankGroupLink, cancelVoyage, checkEmployeeSerial, createAdminRole, createConfigValue, createEmployee, createUserRank, createVoyageConfigValue, createVoyageLog, deleteAdminRole, deleteConfigValue, deleteEmployee, deleteUserRank, deleteVoyage, deleteVoyageConfigValue, dismissLiveNotification, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getAuditLogCsvUrl, getConfig, getConfigSettings, getEmployee, getEmployeeConfigBootstrap, getEmployeeDrawer, getFinancesOverview, getLiveNotificationPresence, getLiveNotifications, getMeBootstrap, getMyDetails, getOnboardingBootstrap, getOnboardingMe, getRankPermissions, getSession, getSiteSettings, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listAuditLog, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listRoleMembers, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, purgeUserByDiscord, removeRoleMember, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, resolveRobloxIdentity, saveRankPermissions, saveSiteSettings, saveUserRankPermissions, searchEmployees, sendLiveNotification, setConfigSetting, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, suggestEmployeeSerial, updateAdminRole, updateConfigValue, updateDisciplinary, updateEmployee, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus, verifyOnboardingRoblox
+- assets/js/modules/admin-api.js | exports: acceptRobloxGroupJoinRequest, activateEmployee, addDisciplinary, addEmployeeNote, addRoleMember, addUserRankDiscordRoleLink, addUserRankGroupLink, archiveShipyardShip, assignEmployeeVessel, cancelVoyage, clearEmployeeVessel, createAdminRole, createConfigValue, createEmployee, createShipyardShip, createUserRank, createVoyageConfigValue, createVoyageLog, declineRobloxGroupJoinRequest, deleteAdminRole, deleteConfigValue, deleteEmployee, deleteUserRank, deleteVoyage, deleteVoyageConfigValue, dismissLiveNotification, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getAuditLogCsvUrl, getConfig, getConfigSettings, getEmployee, getEmployeeConfigBootstrap, getEmployeeDrawer, getFinancesOverview, getFleetLeaderboard, getLiveNotificationPresence, getLiveNotifications, getMeBootstrap, getMyDetails, getOnboardingBootstrap, getOnboardingMe, getRobloxGroupJoinRequests, getRobloxGroupMemberships, getRobloxGroupRoles, getSession, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listAuditLog, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listRoleMembers, listShipyardShips, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, purgeUserByDiscord, releaseVoyageShipAssignment, removeRobloxGroupMembership, removeRoleMember, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, reserveVoyageShipAssignment, resolveRobloxIdentity, saveUserRankPermissions, searchEmployees, sendLiveNotification, setConfigSetting, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, timeoutVoyageShipAssignment, updateAdminRole, updateConfigValue, updateDisciplinary, updateEmployee, updateRobloxGroupMembershipRole, updateShipyardShip, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus, verifyOnboardingRoblox
 - assets/js/modules/app-mode.js | exports: isCoreAllowedPagePath, isCoreOnlyMode, normalizeAppMode
 - assets/js/modules/audit-log.js | exports: No public exports
 - assets/js/modules/company-data.js | exports: companyProfile
 - assets/js/modules/finances.js | exports: No public exports
+- assets/js/modules/fleet.js | exports: No public exports
 - assets/js/modules/intranet-auth.js | exports: initIntranetAuth
 - assets/js/modules/intranet-layout.js | exports: No public exports
 - assets/js/modules/intranet-page-guard.js | exports: No public exports
+- assets/js/modules/local-datetime.js | exports: dateInputToUtcIso, formatLocalDate, formatLocalDateTime, getClientTimezoneOffsetMinutes, toDateInputValueLocal, toDateTimeLocalInputValue
 - assets/js/modules/manage-employees.js | exports: No public exports
 - assets/js/modules/my-details-panel.js | exports: No public exports
 - assets/js/modules/nav.js | exports: ADMIN_PANEL_ENTRY_PERMISSIONS, canAccessAdminPanel, getPreferredUserLabel, hasPermission, renderIntranetNavbar, renderPublicNavbar
 - assets/js/modules/notice.js | exports: clearMessage, showMessage
 - assets/js/modules/notifications-live.js | exports: initLiveNotifications
+- assets/js/modules/rank-preview.js | exports: clearRankPreviewState, getRankPreviewState, setRankPreviewState
 - assets/js/modules/render-company.js | exports: renderHomeContent
 - assets/js/modules/roles-admin.js | exports: No public exports
+- assets/js/modules/shipyard.js | exports: No public exports
 - assets/js/modules/user-ranks-admin.js | exports: No public exports
 - assets/js/modules/voyage-archive.js | exports: No public exports
 - assets/js/modules/voyage-details.js | exports: No public exports
@@ -55,6 +62,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/admin-panel-page.js | exports: No public exports
 - assets/js/pages/audit-log-page.js | exports: No public exports
 - assets/js/pages/finances-page.js | exports: No public exports
+- assets/js/pages/fleet-page.js | exports: No public exports
 - assets/js/pages/home.js | exports: No public exports
 - assets/js/pages/intranet-page.js | exports: No public exports
 - assets/js/pages/manage-employees-page.js | exports: No public exports
@@ -62,6 +70,7 @@ JAVASCRIPT MODULES
 - assets/js/pages/not-permitted-page.js | exports: No public exports
 - assets/js/pages/onboarding-page.js | exports: No public exports
 - assets/js/pages/roles-page.js | exports: No public exports
+- assets/js/pages/shipyard-page.js | exports: No public exports
 - assets/js/pages/site-settings-page.js | exports: No public exports
 - assets/js/pages/user-ranks-page.js | exports: No public exports
 - assets/js/pages/voyage-archive-page.js | exports: No public exports
