@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+.wrangler/
+
+# Removed operations room easter-egg pages/assets
+operations-room*.html
+assets/js/pages/operations-room-*.js
+assets/js/pages/nuclear-auth-page.js
+assets/js/modules/operations-room.js
+assets/css/nuclear-auth.css

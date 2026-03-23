@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company audit log." />
+    <title>Frontier Oil & Gas Company | Audit Log</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout intranet-page-shell">
+        <section class="panel my-details-page-header">
+          <div>
+            <h1>Audit Log</h1>
+            <p class="my-details-subtitle">Website and API audit trail for admin actions.</p>
+          </div>
+          <div class="button-row">
+            <a class="btn btn-secondary" href="/admin">Back to Admin</a>
+            <button id="auditExportCsvBtn" class="btn btn-primary" type="button">Export CSV</button>
+          </div>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="auditLogFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="hidden admin-employees-stack">
+          <article class="panel">
+            <div class="admin-employees-filter-main">
+              <div>
+                <label for="auditSearch">Search</label>
+                <input id="auditSearch" type="text" placeholder="Summary, actor, target employee" />
+              </div>
+              <div>
+                <label for="auditActionType">Action Type</label>
+                <input id="auditActionType" type="text" placeholder="EMPLOYEE_UPDATED" />
+              </div>
+              <div>
+                <label for="auditActor">Actor</label>
+                <input id="auditActor" type="text" placeholder="Name or Discord ID" />
+              </div>
+              <div>
+                <label for="auditTargetEmployeeId">Target Employee ID</label>
+                <input id="auditTargetEmployeeId" type="number" min="1" step="1" />
+              </div>
+              <div>
+                <label for="auditDateFrom">Date From</label>
+                <input id="auditDateFrom" type="date" />
+              </div>
+              <div>
+                <label for="auditDateTo">Date To</label>
+                <input id="auditDateTo" type="date" />
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Actor</th>
+                    <th>Target Employee</th>
+                    <th>Summary</th>
+                  </tr>
+                </thead>
+                <tbody id="auditLogBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination-row">
+              <div class="button-row">
+                <button id="auditPrevPageBtn" class="btn btn-secondary" type="button">Previous</button>
+                <button id="auditNextPageBtn" class="btn btn-secondary" type="button">Next</button>
+              </div>
+              <span id="auditPaginationInfo" class="pagination-info">Page 1 of 1</span>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+    <script type="module" src="/assets/js/pages/audit-log-page.js?v=20260227a"></script>
+  </body>
+</html>
+

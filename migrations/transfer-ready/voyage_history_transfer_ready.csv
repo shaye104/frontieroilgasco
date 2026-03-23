@@ -1,0 +1,1739 @@
+source_row,record_date,etd_time,voyage_id,skipper_username,arrival_port,status,revenue_florins,profit_florins,loss_florins,crew_usernames
+2,2022-11-01,14:06,1,jormguh,Sint Eustatius,COMPLETED,22975,22975,0,jormguh | kni0002
+3,2022-11-02,13:23,2,joppiesaus_nl,Saba,COMPLETED,4802,4802,0,ukraine_forLive
+4,2022-11-02,13:52,3,joppiesaus_nl,Sint Eustatius,COMPLETED,24321,24321,0,joppiesaus_nl | ukraine_forLive
+5,2022-11-02,14:30,4,Thunder_Sanctus,Sint Eustatius,COMPLETED,6763,6763,0,wisleh
+6,2022-11-02,15:28,5,Thunder_Sanctus,Sint Eustatius,COMPLETED,5753,5753,0,ikbenhetsmientie
+7,2022-11-02,16:36,6,Thunder_Sanctus,Sint Eustatius,COMPLETED,7238,7238,0,omglologamer
+8,2022-11-02,17:25,7,joppiesaus_nl,Sint Eustatius,COMPLETED,6533,6533,0,DarkFader100
+9,2022-11-02,17:30,8,Thunder_Sanctus,Sint Eustatius,COMPLETED,5878,5878,0,caccolino2018
+10,2022-11-02,18:54,9,joppiesaus_nl,Sint Eustatius,COMPLETED,4880,4880,0,austinwrighthd
+11,2022-11-02,19:27,10,joppiesaus_nl,Sint Eustatius,COMPLETED,5678,5678,0,brammieboy1612
+12,2022-11-02,20:17,11,Capprilex,Sint Eustatius,COMPLETED,5485,5485,0,pilotMikhaelB
+13,2022-11-02,21:05,12,joppiesaus_nl,Sint Eustatius,COMPLETED,5441,5441,0,CertifiedSaraa
+14,2022-11-02,23:26,13,Thunder_Sanctus,Sint Eustatius,COMPLETED,29200,27400,0,Uinsink | Thunder_Sanctus
+15,2022-11-03,12:08,14,Thunder_Sanctus,Sint Eustatius,COMPLETED,24254,24254,0,Thunder_Sanctus | just_hein1203
+16,2022-11-03,14:26,15,SupremeBigBrother,Sint Eustatius,COMPLETED,5493,5493,0,SupremeBigBrother | piper221
+17,2022-11-03,18:24,16,Capprilex,Saba,COMPLETED,6179,5729,0,MRGCOOL2
+18,2022-11-03,18:59,17,joppiesaus_nl,Sint Eustatius,COMPLETED,25880,24230,150,CertifiedSaraa | caccolino2018 | joppiesaus_nl
+19,2022-11-03,21:47,18,jormguh,Sint Eustatius,COMPLETED,0,0,0,jormguh | MarketingGoose | SupremeBigBrother
+20,2022-11-04,11:45,19,jormguh,Sint Eustatius,COMPLETED,26453,24653,0,jormguh | MRGCOOL2 | ukraine_forLive
+21,2022-11-04,14:01,20,jormguh,Sint Eustatius,COMPLETED,27930,26130,0,minebab | ukraine_forLive
+22,2022-11-04,16:01,21,Thunder_Sanctus,Sint Eustatius,COMPLETED,0,0,1800,Thunder_Sanctus | 2cu1eforu
+23,2022-11-04,17:37,22,Thunder_Sanctus,Sint Eustatius,COMPLETED,7030,6580,0,PercyHallucination
+24,2022-11-04,19:37,23,Thunder_Sanctus,Sint Eustatius,COMPLETED,4154,3704,0,StrayzoDev
+25,2022-11-04,20:04,24,joppiesaus_nl,Sint Eustatius,COMPLETED,6445,5995,0,CertifiedBellaaaa
+26,2022-11-04,21:50,25,joppiesaus_nl,Sint Eustatius,COMPLETED,8264,8264,0,CertifiedSaraa | CertifiedNyxao | loulo383
+27,2022-11-04,22:57,26,Thunder_Sanctus,Sint Eustatius,COMPLETED,6465,6015,0,Lord_Sicment
+28,2022-11-05,02:35,27,MarketingGoose,Sint Eustatius,COMPLETED,10131,9381,150,MarketingGoose | Doy_Harthur
+29,2022-11-05,15:21,28,jormguh,Sint Eustatius,COMPLETED,5340,4890,0,Nick2709
+30,2022-11-05,22:44,29,Thunder_Sanctus,Sint Eustatius,COMPLETED,6964,6514,0,joe_whit
+31,2022-11-05,23:34,30,TheLonelyCanuck,Sint Eustatius,COMPLETED,1830,1680,0,JazzyEpicdoge
+32,2022-11-06,11:46,31,joppiesaus_nl,Sint Eustatius,COMPLETED,22938,21138,0,CertifiedBellaaaa | joppiesaus_nl
+33,2022-11-06,12:27,32,Thunder_Sanctus,Sint Eustatius,COMPLETED,6249,5799,0,asiicitive
+34,2022-11-06,13:34,33,Thunder_Sanctus,Saba,COMPLETED,4384,3934,0,ArmyGamer100
+35,2022-11-06,16:41,34,Thunder_Sanctus,Sint Eustatius,COMPLETED,7990,7540,0,BlueStarKnight
+36,2022-11-06,17:21,35,Capprilex,Saba,COMPLETED,3784,3334,0,ComplexCrimes
+37,2022-11-06,21:56,36,MarketingGoose,Sint Eustatius,COMPLETED,13801,12901,0,Uinsink | piper221
+38,2022-11-08,22:05,37,Thunder_Sanctus,Sint Eustatius,COMPLETED,5045,4595,0,Quebec404
+39,2022-11-09,01:33,38,TheLonelyCanuck,Sint Eustatius,COMPLETED,24229,22729,0,TheLonelyCanuck | Trahvski | austinwrighthd | Uinsink
+40,2022-11-09,14:15,39,jormguh,Sint Eustatius,COMPLETED,4496,4196,0,Kingme2244
+41,2022-11-09,16:43,40,jormguh,Sint Eustatius,COMPLETED,29865,28065,0,jormguh | Kingme2244
+42,2022-11-11,21:58,41,Thunder_Sanctus,Sint Eustatius,COMPLETED,0,0,1800,Thunder_Sanctus | BlueStarKnight | CertifiedBellaaaa
+43,2022-11-12,13:09,42,Thunder_Sanctus,Sint Eustatius,COMPLETED,8198,7748,0,IndonesianSpecialist
+44,2022-11-12,14:41,43,Thunder_Sanctus,Sint Eustatius,COMPLETED,6578,6128,0,lucaman10
+45,2022-11-19,05:10,44,Capprilex,Sint Eustatius,COMPLETED,7296,6846,0,sibfarmus
+46,2022-11-21,03:37,45,TheLonelyCanuck,Sint Eustatius,COMPLETED,24473,22673,0,TheLonelyCanuck | Uinsink
+47,2022-12-02,14:57,46,jormguh,Sint Eustatius,COMPLETED,22483,20683,0,jormguh | Kingme2244
+48,2022-12-08,18:51,47,TheLonelyCanuck,Sint Eustatius,COMPLETED,23405,21605,0,TheLonelyCanuck | BlueStarKnight
+49,2022-12-11,20:52,48,Uinsink,Saba,COMPLETED,0,0,1800,Vleugels | BlueStarKnight | Uinsink
+50,2022-12-15,18:54,49,jormguh,Saba,COMPLETED,19602,17802,0,Thunder_Sanctus | jormguh
+51,2022-12-16,16:25,50,jormguh,Sint Eustatius,COMPLETED,19670,18170,150,SegaSoog | Krysler14
+52,2022-12-16,17:58,51,jormguh,Sint Eustatius,COMPLETED,24831,23181,0,Krysler14 | SegaSoog
+53,2022-12-16,20:15,52,Thunder_Sanctus,Sint Eustatius,COMPLETED,23233,21433,0,Thunder_Sanctus | CertifiedBellaaaa
+54,2022-12-19,14:40,53,Thunder_Sanctus,Sint Eustatius,COMPLETED,26240,24590,0,Thunder_Sanctus | BlueStarKnight
+55,2023-01-10,00:26,54,TheLonelyCanuck,Sint Eustatius,COMPLETED,25410,23610,0,TheLonelyCanuck | loulo383
+56,2023-01-30,20:37,55,joppiesaus_nl,Sint Eustatius,COMPLETED,21356,20006,0,joppiesaus_nl | FramesStatixx
+57,2023-02-04,21:53,56,joppiesaus_nl,Sint Eustatius,COMPLETED,0,0,1800,joppiesaus_nl | piper221
+58,2023-02-04,23:10,57,TheLonelyCanuck,Sint Eustatius,COMPLETED,26356,24556,0,TheLonelyCanuck | MarketingGoose
+59,2023-02-07,03:34,58,TheLonelyCanuck,Sint Eustatius,COMPLETED,23178,21528,0,TheLonelyCanuck | Kingme2244 | Lord_Poultry
+60,2023-02-09,13:49,59,SupremeBigBrother,Sint Eustatius,COMPLETED,14630,13730,0,SupremeBigBrother | MarketingGoose
+61,2023-02-09,19:56,60,SupremeBigBrother,Sint Eustatius,COMPLETED,17315,16115,0,SupremeBigBrother | brammieboy1612
+62,2023-02-12,11:48,61,brammieboy1612,Sint Eustatius,COMPLETED,27328,25528,0,ikbenhetsmientie | brammieboy1612
+63,2023-02-12,16:29,62,brammieboy1612,Sint Eustatius,COMPLETED,0,0,1800,brammieboy1612 | BravePuffin74 | ikbenhetsmientie
+64,2023-02-12,17:29,63,TheLonelyCanuck,Sint Eustatius,COMPLETED,24476,22826,0,TheLonelyCanuck | MarketingGoose | CertifiedBellaaaa
+65,2023-02-14,23:37,64,Thunder_Sanctus,Saba,COMPLETED,5136,4686,0,dxrova
+66,2023-02-14,23:40,65,Uinsink,Sint Eustatius,COMPLETED,12168,11268,0,Uinsink | Lord_microwave
+67,2023-02-15,00:00,66,TheLonelyCanuck,Sint Eustatius,COMPLETED,2565,2415,0,NEW4RK
+68,2023-02-15,00:50,67,Thunder_Sanctus,Sint Eustatius,COMPLETED,25208,23408,0,dxrova | Thunder_Sanctus
+69,2023-02-15,17:03,68,joppiesaus_nl,Sint Eustatius,COMPLETED,8073,7623,0,Rexcityz
+70,2023-02-15,17:43,69,joppiesaus_nl,Sint Eustatius,COMPLETED,6746,6296,0,RyanFrmLamron
+71,2023-02-15,23:26,70,Uinsink,Sint Eustatius,COMPLETED,10969,10369,900,0_Alibi | Uinsink
+72,2023-02-16,19:34,71,brammieboy1612,Sint Eustatius,COMPLETED,4575,4125,0,dvstpan
+73,2023-02-17,13:43,72,brammieboy1612,Sint Eustatius,COMPLETED,4118,3668,0,cristibivolll
+74,2023-02-17,16:12,73,brammieboy1612,Sint Eustatius,COMPLETED,0,0,450,simonmutsaers
+75,2023-02-17,16:18,74,brammieboy1612,Sint Eustatius,COMPLETED,0,0,450,simonmutsaers
+76,2023-02-17,16:48,75,TheLonelyCanuck,Sint Eustatius,COMPLETED,0,0,150,LamaSchijt
+77,2023-02-18,13:05,76,ikbenhetsmientie,Sint Eustatius,COMPLETED,6610,6160,0,ghostbuster9001
+78,2023-02-18,14:30,77,brammieboy1612,Sint Eustatius,COMPLETED,23833,22033,450,RyanFrmLamron | Rexcityz | brammieboy1612
+79,2023-02-18,20:35,78,brammieboy1612,Sint Eustatius,COMPLETED,23081,21281,0,Lord_microwave | Rexcityz | ghostbuster9001 | LamaSchijt | brammieboy1612
+80,2023-02-19,00:14,79,TheLonelyCanuck,Sint Eustatius,COMPLETED,5363,5063,0,simonmutsaers | lolster1210
+81,2023-02-19,11:42,80,brammieboy1612,Sint Eustatius,COMPLETED,24330,22530,0,LamaSchijt | RyanFrmLamron | brammieboy1612
+82,2023-02-19,15:21,81,brammieboy1612,Sint Eustatius,COMPLETED,8680,8230,0,Luft_ace262
+83,2023-02-19,16:32,82,brammieboy1612,Sint Eustatius,COMPLETED,11583,10833,150,qtrcy | garlicberadTV
+84,2023-02-19,19:50,83,brammieboy1612,Sint Eustatius,COMPLETED,23180,21380,0,RyanFrmLamron | brammieboy1612
+85,2023-02-19,23:09,84,TheLonelyCanuck,Sint Eustatius,COMPLETED,3658,3358,0,higle | youiscool101
+86,2023-02-20,14:53,85,brammieboy1612,Sint Eustatius,COMPLETED,21656,19856,0,BlueStarKnight | ghostbuster9001 | brammieboy1612
+87,2023-02-25,12:14,86,ikbenhetsmientie,Sint Eustatius,COMPLETED,29120,27320,0,Luft_ace262 | BlueStarKnight | ikbenhetsmientie
+88,2023-02-25,12:31,87,brammieboy1612,Sint Eustatius,COMPLETED,14575,13675,900,RyanFrmLamron | Lord_Poultry | brammieboy1612
+89,2023-03-01,19:49,88,Thunder_Sanctus,Sint Eustatius,COMPLETED,11073,10473,1800,dxrova | Thunder_Sanctus
+90,2023-03-07,01:00,89,TheLonelyCanuck,Sint Eustatius,COMPLETED,10578,9828,0,TheLonelyCanuck | 0_Alibi
+91,2023-03-11,02:39,90,Uinsink,Sint Eustatius,COMPLETED,3383,3233,0,WISEBOSSMLG
+92,2023-03-11,20:03,91,FenstonialBoogieton,Sint Eustatius,COMPLETED,0,0,1800,FenstonialBoogieton | TheLonelyCanuck
+93,2023-03-15,10:00,92,Uinsink,Sint Eustatius,COMPLETED,29683,27883,0,WISEBOSSMLG | Uinsink
+94,2023-03-15,22:25,93,TheLonelyCanuck,Sint Eustatius,COMPLETED,31733,29933,0,TheLonelyCanuck | 0_Alibi
+95,2023-03-24,23:15,94,TheLonelyCanuck,Sint Eustatius,COMPLETED,13538,12638,0,TheLonelyCanuck | CertifiedBellaaaa
+96,2023-03-30,12:19,95,FenstonialBoogieton,Sint Eustatius,COMPLETED,32143,30343,0,Capprilex | dxrova | FenstonialBoogieton
+97,2023-03-30,20:13,96,youiscool101,Sint Eustatius,COMPLETED,5208,4908,0,worldoftanksguy30 | youiscool101
+98,2023-03-30,20:44,97,youiscool101,Sint Eustatius,COMPLETED,7118,6818,0,youiscool101 | thecoolguyisco
+99,2023-03-31,07:50,98,MarketingGoose,Sint Eustatius,COMPLETED,1460,1310,0,Hanna_Marseille
+100,2023-03-31,08:20,99,MarketingGoose,Sint Eustatius,COMPLETED,6370,5920,0,Hanna_Marseille
+101,2023-03-31,16:22,100,youiscool101,Sint Eustatius,COMPLETED,5698,5398,0,youiscool101 | Hurtenwald
+102,2023-04-01,17:57,101,ikbenhetsmientie,Sint Eustatius,COMPLETED,5508,5058,0,M_lkMilk
+103,2023-04-04,22:50,102,Uinsink,Sint Eustatius,COMPLETED,913,763,0,dlwanbarwari
+104,2023-04-14,14:31,103,TheLonelyCanuck,Sint Eustatius,COMPLETED,4650,4350,0,dsteppins01 | DeepSStudios
+105,2023-04-14,15:21,104,TheLonelyCanuck,Sint Eustatius,COMPLETED,3510,3360,0,the_communistregime
+106,2023-04-19,15:35,105,TheLonelyCanuck,Sint Eustatius,COMPLETED,3075,2925,0,limeno16
+107,2023-04-19,17:17,106,ghostbuster9001,Sint Eustatius,COMPLETED,0,0,1200,limeno16 | M_lkMilk
+108,2023-05-05,16:44,107,SupremeBigBrother,Sint Eustatius,COMPLETED,12555,11505,0,SupremeBigBrother | the_communistregime
+109,2023-05-05,21:10,109,SupremeBigBrother,Sint Eustatius,COMPLETED,0,0,900,lars0109 | TheOnly_Rysio
+110,2023-05-05,22:12,110,SupremeBigBrother,Sint Eustatius,COMPLETED,9155,8405,0,colton17483 | Techtonic532
+111,2023-05-06,02:35,111,Capprilex,Saba,COMPLETED,3859,3409,0,ThorvaldHalvorsen
+112,2023-05-07,22:51,112,Uinsink,Saba,COMPLETED,16980,15180,0,gamingwithian5961 | Uinsink
+113,2023-05-07,23:31,113,TheLonelyCanuck,Sint Eustatius,COMPLETED,20480,18680,0,TheLonelyCanuck | youiscool101
+114,2023-05-08,00:18,114,TheLonelyCanuck,Sint Eustatius,COMPLETED,19955,18155,0,TheLonelyCanuck | youiscool101
+115,2023-05-08,13:21,115,Thunder_Sanctus,Sint Eustatius,COMPLETED,17748,15948,0,TheOnly_Rysio | Thunder_Sanctus
+116,2023-05-08,14:22,116,TheLonelyCanuck,Sint Eustatius,COMPLETED,17053,15253,0,TheLonelyCanuck | LamaSchijt | simonmutsaers
+117,2023-05-08,15:12,117,ikbenhetsmientie,Saba,COMPLETED,15156,13356,0,TheOnly_Rysio | ikbenhetsmientie
+118,2023-05-09,12:58,118,ikbenhetsmientie,Sint Eustatius,COMPLETED,24038,22238,0,bIuvye | ikbenhetsmientie
+119,2023-05-09,16:18,119,joppiesaus_nl,Sint Eustatius,COMPLETED,11765,10865,900,joppiesaus_nl | the_communistregime | M_lkMilk
+120,2023-05-12,15:02,120,ikbenhetsmientie,Sint Eustatius,COMPLETED,24413,22613,0,M_lkMilk | ikbenhetsmientie
+121,2023-05-12,16:03,121,ikbenhetsmientie,Sint Eustatius,COMPLETED,17655,15855,0,M_lkMilk | ikbenhetsmientie
+122,2023-05-12,19:02,122,SupremeBigBrother,Sint Eustatius,COMPLETED,36735,34935,0,SupremeBigBrother | dsteppins01 | TheOnly_Rysio
+123,2023-05-12,19:34,123,TheLonelyCanuck,Sint Eustatius,COMPLETED,43200,41400,0,TheLonelyCanuck | colton17483
+124,2023-05-12,20:28,124,SupremeBigBrother,Sint Eustatius,COMPLETED,54390,52590,0,SupremeBigBrother | colton17483
+125,2023-05-12,22:02,125,TheLonelyCanuck,Sint Eustatius,COMPLETED,36105,34305,0,TheLonelyCanuck | M_lkMilk | garlicberadTV
+126,2023-05-12,22:40,126,TheLonelyCanuck,Sint Eustatius,COMPLETED,38700,36900,0,TheLonelyCanuck | M_lkMilk
+127,2023-05-13,07:12,127,Uinsink,Sint Eustatius,COMPLETED,57255,55455,0,zReqIess | Uinsink
+128,2023-05-13,12:25,128,SupremeBigBrother,Sint Eustatius,COMPLETED,41580,39780,0,SupremeBigBrother | bIuvye
+129,2023-05-13,12:49,129,jormguh,Sint Eustatius,COMPLETED,14535,13635,0,jormguh | TimIsNub
+130,2023-05-14,00:43,130,TheLonelyCanuck,Sint Eustatius,COMPLETED,35610,33810,0,TheLonelyCanuck | Hanna_Marseille
+131,2023-05-14,14:28,131,TheLonelyCanuck,Sint Eustatius,COMPLETED,36270,34470,0,TheLonelyCanuck | M_lkMilk
+132,2023-05-14,16:26,132,jormguh,Sint Eustatius,COMPLETED,46564,44764,0,jormguh | the_communistregime
+133,2023-05-14,19:56,133,jormguh,Sint Eustatius,COMPLETED,47700,45900,0,jormguh
+134,2023-05-14,20:29,134,jormguh,Sint Eustatius,COMPLETED,37253,35453,0,jormguh | M_lkMilk
+135,2023-05-14,21:47,135,jormguh,Sint Eustatius,COMPLETED,40368,38568,0,jormguh | ronan267090
+136,2023-05-15,18:49,136,jormguh,Sint Eustatius,COMPLETED,43890,42090,0,the_communistregime | jormguh
+137,2023-05-15,19:01,137,TheLonelyCanuck,Sint Eustatius,COMPLETED,47880,46080,0,TheLonelyCanuck | TimIsNub
+138,2023-05-16,13:45,138,joppiesaus_nl,Sint Eustatius,COMPLETED,50760,48960,0,joppiesaus_nl | simonmutsaers
+139,2023-05-16,14:28,139,joppiesaus_nl,Sint Eustatius,COMPLETED,38513,36713,0,joppiesaus_nl | simonmutsaers
+140,2023-05-16,19:31,140,jormguh,Sint Eustatius,COMPLETED,29307,27507,0,jormguh | TimIsNub
+141,2023-05-16,19:32,141,joppiesaus_nl,Sint Eustatius,COMPLETED,47055,45255,0,joppiesaus_nl | BlueStarKnight
+142,2023-05-16,19:54,142,jormguh,Saba,COMPLETED,31305,29505,0,jormguh | TimIsNub
+143,2023-05-16,20:00,143,joppiesaus_nl,Sint Eustatius,COMPLETED,36855,35055,0,joppiesaus_nl | BlueStarKnight
+144,2023-05-16,20:13,144,jormguh,Saba,COMPLETED,0,0,900,
+145,2023-05-16,20:16,145,joppiesaus_nl,Sint Eustatius,COMPLETED,30600,28800,0,joppiesaus_nl | BlueStarKnight
+146,2023-05-16,20:41,146,Abnormaalz,Saba,COMPLETED,14688,13338,450,Abnormaalz | jormguh
+147,2023-05-16,20:59,147,joppiesaus_nl,Saba,COMPLETED,36120,34320,0,joppiesaus_nl | BlueStarKnight
+148,2023-05-17,15:49,148,jormguh,Saba,COMPLETED,38664,36864,0,jormguh | Abnormaalz
+149,2023-05-17,17:05,149,jormguh,Sint Eustatius,COMPLETED,39968,38168,0,jormguh | the_communistregime
+150,2023-05-17,17:47,150,ronan267090,Sint Eustatius,COMPLETED,48458,46658,0,TheOnly_Rysio | ronan267090
+151,2023-05-18,10:50,151,joppiesaus_nl,Sint Eustatius,COMPLETED,38820,37020,0,joppiesaus_nl | ThorvaldHalvorsen | simonmutsaers
+152,2023-05-18,12:21,152,joppiesaus_nl,Sint Eustatius,COMPLETED,37695,35895,0,joppiesaus_nl | dsteppins01
+153,2023-05-18,18:46,153,joppiesaus_nl,Saba,COMPLETED,40992,39192,0,joppiesaus_nl | dsteppins01
+154,2023-05-18,19:07,154,joppiesaus_nl,Sint Eustatius,COMPLETED,35093,33293,0,joppiesaus_nl | simonmutsaers
+155,2023-05-18,19:12,155,jormguh,Sint Eustatius,COMPLETED,34245,32445,0,jormguh | dsteppins01 | ghostbuster9001
+156,2023-05-18,19:47,156,joppiesaus_nl,Sint Eustatius,COMPLETED,45315,43515,0,joppiesaus_nl | simonmutsaers
+157,2023-05-18,20:17,157,joppiesaus_nl,Sint Eustatius,COMPLETED,51390,49590,0,joppiesaus_nl | simonmutsaers
+158,2023-05-21,15:33,158,youiscool101,Saba,COMPLETED,34524,32724,0,youiscool101 | the_communistregime
+159,2023-05-23,19:22,159,joppiesaus_nl,Sint Eustatius,COMPLETED,21323,20423,0,Army_TurkeyTr | rcIstealer
+160,2023-05-23,20:54,160,ronan267090,Sint Eustatius,COMPLETED,28305,26505,1500,ronan267090 | Nx_av
+161,2023-05-23,21:26,161,jormguh,Sint Eustatius,COMPLETED,53700,51900,0,jormguh | SupremeBigBrother
+162,2023-05-23,23:08,162,Uinsink,Sint Eustatius,COMPLETED,46815,45015,0,BammySaul | TheOriginalHoax | FerdinandLuzo | babyorca001
+163,2023-05-24,11:21,163,SupremeBigBrother,Sint Eustatius,COMPLETED,30113,28913,0,SupremeBigBrother | ImortalKing3
+164,2023-05-24,22:29,164,youiscool101,Sint Eustatius,COMPLETED,15480,15030,0,Pipehitting
+165,2023-05-24,22:31,165,TheLonelyCanuck,Sint Eustatius,COMPLETED,28320,26970,0,TheLonelyCanuck | boosta_z | garlicberadTV | bobismyname9578
+166,2023-05-25,17:56,166,Uinsink,Sint Eustatius,COMPLETED,54424,52624,0,JamesBond007F | Samu5sam44
+167,2023-05-25,20:50,167,joppiesaus_nl,Sint Eustatius,COMPLETED,9180,8730,0,The_NoobyBGStirling
+168,2023-05-25,21:14,168,joppiesaus_nl,Sint Eustatius,COMPLETED,60979,59179,0,joppiesaus_nl | The_NoobyBGStirling
+169,2023-05-26,03:20,169,Capprilex,Sint Eustatius,COMPLETED,37815,36015,0,ImortalKing3 | Capprilex
+170,2023-05-27,17:00,170,TheLonelyCanuck,Sint Eustatius,COMPLETED,37811,36011,0,TheLonelyCanuck | Vexlord4me | LuckyDuckyOfficial | LostIssue
+171,2023-05-27,18:00,171,TheLonelyCanuck,Sint Eustatius,COMPLETED,36675,34875,0,TheLonelyCanuck | A_Ieksander | DMC1105 | StefanVonDietrich
+172,2023-05-27,21:38,172,ronan267090,Sint Eustatius,COMPLETED,55395,53595,0,MysticReacon | ronan267090
+173,2023-05-28,09:25,173,ikbenhetsmientie,Sint Eustatius,COMPLETED,37905,36105,0,finndufournl | ikbenhetsmientie
+174,2023-05-28,18:19,174,ronan267090,Sint Eustatius,COMPLETED,13365,12915,0,Nx_av
+175,2023-05-29,06:59,175,Uinsink,Sint Eustatius,COMPLETED,14025,13575,0,boas20000
+176,2023-05-29,08:45,176,ikbenhetsmientie,Sint Eustatius,COMPLETED,36375,34575,0,boas20000 | TimIsNub
+177,2023-05-29,09:17,177,ikbenhetsmientie,Sint Eustatius,COMPLETED,31740,29940,0,ikbenhetsmientie | TimIsNub
+178,2023-05-29,09:56,178,brammieboy1612,Sint Eustatius,COMPLETED,48750,46950,0,boas20000 | brammieboy1612
+179,2023-05-29,11:05,179,brammieboy1612,Sint Eustatius,COMPLETED,31725,30075,150,brammieboy1612 | ikbenhetsmientie
+180,2023-05-29,11:31,180,ikbenhetsmientie,Sint Eustatius,COMPLETED,34035,32235,0,ikbenhetsmientie | brammieboy1612
+181,2023-05-29,12:16,181,brammieboy1612,Sint Eustatius,COMPLETED,48634,46834,0,brammieboy1612 | ikbenhetsmientie
+182,2023-05-30,14:43,182,ikbenhetsmientie,Sint Eustatius,COMPLETED,24480,23130,0,ikbenhetsmientie | prQOO12
+183,2023-05-31,13:09,183,ikbenhetsmientie,Sint Eustatius,COMPLETED,16830,15930,0,smileybrent | Jxay015
+184,2023-06-03,10:34,184,ikbenhetsmientie,Sint Eustatius,COMPLETED,14025,13275,150,Bad_Hopes | ikbenhetsmientie
+185,2023-06-16,18:22,185,joppiesaus_nl,Sint Eustatius,COMPLETED,0,0,1800,
+186,2023-06-20,16:53,186,TheLonelyCanuck,Sint Eustatius,COMPLETED,33270,31470,0,TheLonelyCanuck | MysticReacon
+187,2023-06-25,15:15,187,ikbenhetsmientie,Sint Eustatius,COMPLETED,46178,44378,1800,ikbenhetsmientie | MysticReacon | thecoolguyisco
+188,2023-06-25,17:54,188,OminousMoons,Sint Eustatius,COMPLETED,28110,27210,900,OminousMoons | Chungalumpa
+189,2023-06-25,18:35,189,ronan267090,Sint Eustatius,COMPLETED,19890,18690,600,ronan267090 | dsteppins01
+190,2023-06-25,21:57,190,OminousMoons,Sint Eustatius,COMPLETED,40571,38771,0,OminousMoons | colton17483
+191,2023-06-25,22:13,191,OminousMoons,Sint Eustatius,COMPLETED,51810,50010,0,OminousMoons | colton17483
+192,2023-06-26,04:52,192,Uinsink,Sint Eustatius,COMPLETED,44175,42375,0,ImortalKing3 | Uinsink
+193,2023-06-26,06:11,193,OminousMoons,Sint Eustatius,COMPLETED,53985,52185,0,OminousMoons | ImortalKing3 | babyorca001 | Lord_Poultry
+194,2023-07-05,11:09,194,ikbenhetsmientie,Sint Eustatius,COMPLETED,39653,37853,0,ikbenhetsmientie | MysticReacon | ImortalKing3
+195,2023-07-05,12:19,195,ikbenhetsmientie,Sint Eustatius,COMPLETED,46515,44715,0,MysticReacon | ikbenhetsmientie
+196,2023-07-20,20:47,196,Uinsink,Sint Eustatius,COMPLETED,45791,43991,0,rcIstealer | babyorca001 | Uinsink
+197,2023-07-30,00:39,197,Uinsink,Saba,COMPLETED,0,0,1800,boosta_z | Uinsink
+198,2023-08-05,05:37,198,Uinsink,Saba,COMPLETED,17496,16596,900,Uinsink | ImortalKing3
+199,2023-08-05,22:20,199,Uinsink,Saba,COMPLETED,37236,35436,450,boosta_z | Uinsink | rcIstealer
+200,2023-08-06,16:32,200,TheLonelyCanuck,Sint Eustatius,COMPLETED,43455,41655,0,TheLonelyCanuck | Hanna_Marseille
+201,2023-08-06,20:50,201,Uinsink,Saba,COMPLETED,0,0,1350,rcIstealer | Uinsink
+202,2023-08-07,17:00,202,TheLonelyCanuck,Sint Eustatius,COMPLETED,32880,31080,0,TheLonelyCanuck | LostIssue | prQOO12
+203,2023-08-07,21:15,203,ronan267090,Sint Eustatius,COMPLETED,43489,41689,0,ronan267090 | Uinsink | Bad_Hopes
+204,2023-08-09,00:02,204,Uinsink,Saba,COMPLETED,30303,28503,0,boosta_z | Uinsink
+205,2023-08-10,17:00,205,TheLonelyCanuck,Sint Eustatius,COMPLETED,44460,42660,0,TheLonelyCanuck | colton17483
+206,2023-08-11,18:53,206,jormguh,Sint Eustatius,COMPLETED,0,0,0,
+207,2023-08-11,18:59,207,joppiesaus_nl,Sint Eustatius,COMPLETED,49703,47903,0,joppiesaus_nl | simonmutsaers
+208,2023-08-12,01:19,208,Uinsink,Saba,COMPLETED,35694,33894,0,Uinsink | babyorca001
+209,2023-08-12,10:46,209,jormguh,Sint Eustatius,COMPLETED,46455,44655,0,jormguh | kni0002
+210,2023-08-12,11:26,210,jormguh,Sint Eustatius,COMPLETED,48334,46534,0,jormguh | kni0002
+211,2023-08-12,11:46,211,jormguh,Sint Eustatius,COMPLETED,37665,35865,0,jormguh | kni0002
+212,2023-08-12,13:30,212,jormguh,Sint Eustatius,COMPLETED,47554,45754,0,jormguh | kni0002
+213,2023-08-12,13:59,213,jormguh,Sint Eustatius,COMPLETED,54255,52455,0,jormguh | kni0002
+214,2023-08-13,03:47,214,Uinsink,Saba,COMPLETED,32703,30903,0,Uinsink | ImortalKing3
+215,2023-08-13,11:42,215,joppiesaus_nl,Saba,COMPLETED,0,0,1800,
+216,2023-08-14,13:45,216,joppiesaus_nl,Sint Eustatius,COMPLETED,39541,37891,150,joppiesaus_nl | colton17483 | Army_TurkeyTr
+217,2023-08-14,15:14,217,jormguh,Saba,COMPLETED,0,0,0,kni0002
+218,2023-08-14,15:14,218,brammieboy1612,Sint Eustatius,COMPLETED,4125,3975,0,kni0002
+219,2023-08-15,17:38,219,joppiesaus_nl,Sint Eustatius,COMPLETED,41441,39641,0,joppiesaus_nl | TheLonelyCanuck
+220,2023-08-15,18:08,220,joppiesaus_nl,Sint Eustatius,COMPLETED,34744,32944,0,joppiesaus_nl | TheLonelyCanuck
+221,2023-08-15,18:45,221,joppiesaus_nl,Sint Eustatius,COMPLETED,0,0,1800,
+222,2023-08-15,19:40,222,joppiesaus_nl,Sint Eustatius,COMPLETED,42218,40418,0,joppiesaus_nl | simonmutsaers
+223,2023-08-15,20:35,223,jormguh,Sint Eustatius,COMPLETED,43680,41880,0,jormguh | MarketingGoose
+224,2023-08-15,21:23,224,joppiesaus_nl,Sint Eustatius,COMPLETED,40909,39109,0,joppiesaus_nl | Vexlord4me
+225,2023-08-15,21:28,225,jormguh,Sint Eustatius,COMPLETED,55721,53921,0,jormguh | MarketingGoose
+226,2023-08-15,21:49,226,jormguh,Sint Eustatius,COMPLETED,51998,50198,0,jormguh | MarketingGoose
+227,2023-08-15,21:57,227,joppiesaus_nl,Sint Eustatius,COMPLETED,45038,43238,0,joppiesaus_nl | Vexlord4me
+228,2023-08-15,22:32,228,jormguh,Saba,COMPLETED,31053,29253,0,jormguh | MarketingGoose
+229,2023-08-16,11:20,229,jormguh,Saba,COMPLETED,35388,33588,0,jormguh | kni0002
+230,2023-08-16,11:38,230,simonmutsaers,Saba,COMPLETED,32124,30324,0,Army_TurkeyTr | simonmutsaers
+231,2023-08-16,11:55,231,jormguh,Saba,COMPLETED,33021,31221,0,jormguh | LostIssue
+232,2023-08-16,12:34,232,jormguh,Saba,COMPLETED,31155,29355,0,jormguh | rcIstealer
+233,2023-08-16,20:35,233,ikbenhetsmientie,Sint Eustatius,COMPLETED,46316,44516,0,colton17483 | ikbenhetsmientie
+234,2023-08-16,21:09,234,ikbenhetsmientie,Saba,COMPLETED,30726,28926,0,colton17483 | ikbenhetsmientie
+235,2023-08-17,17:44,235,ikbenhetsmientie,Sint Eustatius,COMPLETED,26239,24889,0,NotShadow324 | greggsvsaldisosigrol | cowdencat
+236,2023-08-17,18:48,236,TheLonelyCanuck,Sint Eustatius,COMPLETED,13770,12870,0,lukas06yt | Waffle_Toe
+237,2023-08-17,19:40,237,ikbenhetsmientie,Sint Eustatius,COMPLETED,16830,15930,0,Toadishh | yssergamer12344
+238,2023-08-17,21:09,238,simonmutsaers,Sint Eustatius,COMPLETED,33225,31425,0,alx6ix | simonmutsaers
+239,2023-08-17,21:49,239,jormguh,Saba,COMPLETED,44100,42300,0,jormguh | colton17483
+240,2023-08-17,21:59,240,simonmutsaers,Sint Eustatius,COMPLETED,17595,16695,900,alx6ix | simonmutsaers
+241,2023-08-17,22:09,241,ikbenhetsmientie,Sint Eustatius,COMPLETED,37939,36139,0,ikbenhetsmientie | M_lkMilk
+242,2023-08-17,22:39,242,jormguh,Saba,COMPLETED,32394,30594,0,jormguh | colton17483
+243,2023-08-17,22:58,243,ikbenhetsmientie,Sint Eustatius,COMPLETED,41951,40151,0,ikbenhetsmientie | M_lkMilk
+244,2023-08-17,23:28,244,jormguh,Saba,COMPLETED,35388,33588,0,jormguh | colton17483
+245,2023-08-17,23:32,245,boosta_z,Saba,COMPLETED,32193,30393,0,rcIstealer | boosta_z
+246,2023-08-17,23:49,246,jormguh,Sint Eustatius,COMPLETED,41096,39296,0,jormguh | colton17483
+247,2023-08-18,00:06,247,boosta_z,Sint Eustatius,COMPLETED,33908,32108,0,ikbenhetsmientie | boosta_z
+248,2023-08-18,00:35,248,jormguh,Sint Eustatius,COMPLETED,50175,48375,0,jormguh | colton17483
+249,2023-08-18,00:36,249,M_lkMilk,Saba,COMPLETED,41208,39408,0,babyorca001 | M_lkMilk
+250,2023-08-18,01:12,250,jormguh,Sint Eustatius,COMPLETED,50925,49125,0,jormguh | colton17483
+251,2023-08-18,01:18,251,M_lkMilk,Sint Eustatius,COMPLETED,0,0,1800,M_lkMilk | babyorca001
+252,2023-08-18,12:38,252,simonmutsaers,Sint Eustatius,COMPLETED,5610,5310,600,enzodepoes | ikben001
+253,2023-08-18,12:55,253,jormguh,Sint Eustatius,COMPLETED,42120,40320,0,colton17483 | bIuvye | Toadishh
+254,2023-08-18,13:01,254,Uinsink,Saba,COMPLETED,13335,12435,900,Bad_Hopes | TimIsNub | Uinsink
+255,2023-08-18,13:06,255,brammieboy1612,Sint Eustatius,COMPLETED,40860,39210,150,lukas06yt | greggsvsaldisosigrol | brammieboy1612
+256,2023-08-18,13:20,256,ronan267090,Sint Eustatius,COMPLETED,29880,28530,450,ronan267090 | MatsuoSoter | JusttVas | sibfarmus
+257,2023-08-18,14:10,257,jormguh,Saba,COMPLETED,27872,26222,150,colton17483 | bIuvye | Toadishh
+258,2023-08-18,14:12,258,M_lkMilk,Saba,COMPLETED,27054,25254,0,Bad_Hopes | M_lkMilk
+259,2023-08-18,15:23,259,M_lkMilk,Sint Eustatius,COMPLETED,26895,25995,0,Tojeko_G | ThySummersPlay
+260,2023-08-18,16:12,260,M_lkMilk,Sint Eustatius,COMPLETED,10320,9870,0,prooboy4321
+261,2023-08-18,17:27,261,jormguh,Saba,COMPLETED,0,0,1800,NotShadow324 | Tojeko_G
+262,2023-08-18,18:08,262,Uinsink,Saba,COMPLETED,38913,37113,0,JusttVas | NotShadow324
+263,2023-08-18,18:38,263,ikbenhetsmientie,Saba,COMPLETED,33168,31368,0,Tojeko_G | ikbenhetsmientie
+264,2023-08-18,19:20,264,ronan267090,Sint Eustatius,COMPLETED,25245,23895,0,ronan267090 | Puccio61
+265,2023-08-18,19:43,265,ikbenhetsmientie,Saba,COMPLETED,29580,27780,0,Tojeko_G | ikbenhetsmientie
+266,2023-08-18,21:51,266,M_lkMilk,Saba,COMPLETED,38712,36912,0,M_lkMilk | Tojeko_G
+267,2023-08-18,22:17,267,boosta_z,Saba,COMPLETED,28650,27300,450,Puccio61 | boosta_z
+268,2023-08-18,22:32,268,M_lkMilk,Saba,COMPLETED,34500,32700,0,M_lkMilk | JusttVas | Tojeko_G
+269,2023-08-18,23:05,269,boosta_z,Sint Eustatius,COMPLETED,38340,36540,0,JusttVas | boosta_z
+270,2023-08-18,23:34,270,M_lkMilk,Sint Eustatius,COMPLETED,39345,37545,0,M_lkMilk | ThySummersPlay
+271,2023-08-19,00:08,271,M_lkMilk,Sint Eustatius,COMPLETED,0,0,1800,M_lkMilk | ThySummersPlay
+272,2023-08-19,02:40,272,boosta_z,Sint Eustatius,COMPLETED,29385,28035,900,boosta_z | Tojeko_G
+273,2023-08-19,11:53,273,simonmutsaers,Saba,COMPLETED,29904,28104,300,Toadishh | bIuvye | enzodepoes | simonmutsaers
+274,2023-08-19,13:04,274,boosta_z,Sint Eustatius,COMPLETED,40185,38385,0,lukas06yt | boosta_z
+275,2023-08-19,17:30,275,boosta_z,Saba,COMPLETED,19280,18080,600,boosta_z | Puccio61
+276,2023-08-19,17:37,276,boosta_z,Saba,COMPLETED,16832,15632,900,boosta_z | Puccio61
+277,2023-08-19,17:37,276,boosta_z,Saba,COMPLETED,16832,15632,600,boosta_z | Puccio61
+278,2023-08-19,17:37,276,boosta_z,Saba,COMPLETED,16832,15632,600,boosta_z | Puccio61
+279,2023-08-19,18:40,277,boosta_z,Saba,COMPLETED,35616,33816,0,boosta_z | JusttVas
+280,2023-08-19,19:38,278,boosta_z,Saba,COMPLETED,29400,27600,0,boosta_z | JusttVas
+281,2023-08-20,09:48,279,joppiesaus_nl,Sint Eustatius,COMPLETED,37215,35415,0,joppiesaus_nl | justjamienl
+282,2023-08-20,14:33,280,boosta_z,Sint Eustatius,COMPLETED,0,0,1800,boosta_z | lukas06yt
+283,2023-08-20,14:51,281,boosta_z,Sint Eustatius,COMPLETED,37485,35835,150,boosta_z | lukas06yt
+284,2023-08-20,15:41,282,boosta_z,Saba,COMPLETED,31686,29886,300,boosta_z | lukas06yt
+285,2023-08-20,17:30,283,Uinsink,Saba,COMPLETED,32292,30492,0,Finmikke1 | Uinsink
+286,2023-08-20,18:07,284,Uinsink,Saba,COMPLETED,0,0,1800,Uinsink | Tojeko_G
+287,2023-08-20,22:13,285,M_lkMilk,Sint Eustatius,COMPLETED,37965,36165,0,M_lkMilk | Tojeko_G
+288,2023-08-20,22:50,286,M_lkMilk,Sint Eustatius,COMPLETED,46740,44940,0,M_lkMilk | Tojeko_G
+289,2023-08-20,23:26,287,M_lkMilk,Sint Eustatius,COMPLETED,17010,16560,0,wir_superise
+290,2023-08-20,23:44,288,M_lkMilk,Sint Eustatius,COMPLETED,38888,37088,0,M_lkMilk | wir_superise
+291,2023-08-21,00:34,289,M_lkMilk,Sint Eustatius,COMPLETED,42165,40365,0,M_lkMilk | wir_superise
+292,2023-08-21,13:35,290,Uinsink,Saba,COMPLETED,32472,30672,0,Uinsink | cLAuStRoFoBic_aNT911
+293,2023-08-21,15:01,291,OminousMoons,Saba,CANCELLED,,,,OminousMoons | Puccio61
+294,2023-08-21,15:21,292,OminousMoons,Saba,COMPLETED,35751,33951,0,OminousMoons | Puccio61
+295,2023-08-21,15:22,293,OminousMoons,Saba,COMPLETED,36075,34275,0,OminousMoons | Puccio61
+296,2023-08-21,18:27,294,joppiesaus_nl,Sint Eustatius,COMPLETED,42585,40365,0,joppiesaus_nl | alx6ix | justjamienl
+297,2023-08-21,19:20,295,joppiesaus_nl,Sint Eustatius,COMPLETED,45045,40365,0,justjamienl | alx6ix
+298,2023-08-21,23:05,296,colton17483,Saba,COMPLETED,44400,40365,0,lukas06yt | colton17483
+299,2023-08-22,00:17,297,jormguh,Saba,COMPLETED,30952,29302,0,boosta_z | colton17483 | Tojeko_G | ikbenhetsmientie | Uinsink | YukinaHanako | lukas06yt | Hanna_Marseille | OminousMoons
+300,2023-08-22,00:52,298,jormguh,Sint Eustatius,COMPLETED,54117,52317,0,lukas06yt | Tojeko_G
+301,2023-08-22,08:56,299,joppiesaus_nl,Saba,COMPLETED,28419,26619,0,joppiesaus_nl | Tojeko_G | JusttVas
+302,2023-08-22,09:54,300,joppiesaus_nl,Saba,COMPLETED,25560,23760,0,joppiesaus_nl | bIuvye | JusttVas
+303,2023-08-22,11:42,301,jormguh,Saba,COMPLETED,38106,36306,0,jormguh | colton17483
+304,2023-08-22,12:44,302,jormguh,Saba,COMPLETED,45540,43740,0,colton17483 | jormguh | bIuvye | JusttVas
+305,2023-08-22,14:25,303,joppiesaus_nl,Sint Eustatius,COMPLETED,65213,62513,0,joppiesaus_nl | ikbenhetsmientie | colton17483
+306,2023-08-22,15:14,304,jormguh,Saba,COMPLETED,56724,54024,0,ikbenhetsmientie | colton17483 | jormguh
+307,2023-08-22,17:25,305,joppiesaus_nl,Sint Eustatius,COMPLETED,34815,33465,0,joppiesaus_nl | cLAuStRoFoBic_aNT911
+308,2023-08-22,18:06,306,joppiesaus_nl,Saba,COMPLETED,62931,60231,1800,joppiesaus_nl | ikbenhetsmientie | lukas06yt
+309,2023-08-22,19:12,307,jormguh,Saba,COMPLETED,43020,40770,0,joppiesaus_nl | lukas06yt
+310,2023-08-22,19:41,308,jormguh,Sint Eustatius,COMPLETED,32385,30585,0,joppiesaus_nl | Tojeko_G
+311,2023-08-22,20:34,309,jormguh,Sint Eustatius,COMPLETED,73646,70946,0,boosta_z | Tojeko_G | lukas06yt
+312,2023-08-22,21:37,310,jormguh,Saba,COMPLETED,40560,37860,0,boosta_z | Tojeko_G
+313,2023-08-22,22:47,311,jormguh,Sint Eustatius,COMPLETED,65835,63135,0,wir_superise | Tojeko_G | boosta_z
+314,2023-08-23,00:51,312,boosta_z,Sint Eustatius,COMPLETED,17010,16560,1350,boosta_z
+315,2023-08-23,12:27,313,ikbenhetsmientie,Sint Eustatius,COMPLETED,51278,49478,0,lukas06yt | Finmikke1 | prooboy4321 | TimIsNub | bIuvye | ikbenhetsmientie
+316,2023-08-23,13:17,314,ikbenhetsmientie,Sint Eustatius,COMPLETED,51375,49575,0,prooboy4321 | Tojeko_G | lukas06yt | TimIsNub
+317,2023-08-23,13:51,315,ikbenhetsmientie,Sint Eustatius,COMPLETED,44880,43080,0,ikbenhetsmientie | Tojeko_G | bIuvye
+318,2023-08-23,17:41,316,ikbenhetsmientie,Sint Eustatius,COMPLETED,0,0,450,kwstas2007 | kwstas2008 | kwstas2009
+319,2023-08-23,18:41,317,joppiesaus_nl,Saba,COMPLETED,36288,34488,0,joppiesaus_nl | ikbenhetsmientie
+320,2023-08-23,18:59,318,joppiesaus_nl,Saba,COMPLETED,28680,26880,0,enzodepoes | prooboy4321
+321,2023-08-23,19:55,319,simonmutsaers,Sint Eustatius,COMPLETED,43598,41798,0,alx6ix | simonmutsaers
+322,2023-08-23,20:31,320,simonmutsaers,Sint Eustatius,COMPLETED,33525,31725,0,alx6ix | simonmutsaers
+323,2023-08-23,22:56,321,colton17483,sint eustatius,COMPLETED,53055,51255,0,lukas06yt | colton17483
+324,2023-08-23,23:45,322,jormguh,Sint Eustatius,COMPLETED,80564,77864,0,jormguh | boosta_z
+325,2023-08-24,10:56,323,ikbenhetsmientie,Saba,COMPLETED,41658,39858,0,Tojeko_G | prooboy4321 | ikbenhetsmientie
+326,2023-08-24,17:37,324,joppiesaus_nl,Sint Eustatius,COMPLETED,27303,26103,0,joppiesaus_nl | lukas06yt | MysticReacon
+327,2023-08-24,19:47,325,jormguh,Sint Eustatius,COMPLETED,64414,61714,0,jormguh | Bad_Hopes
+328,2023-08-24,20:37,326,jormguh,Sint Eustatius,COMPLETED,56831,54131,0,jormguh | nestenes
+329,2023-08-24,21:02,327,joppiesaus_nl,Sint Eustatius,COMPLETED,44246,42446,0,joppiesaus_nl | Tojeko_G
+330,2023-08-24,21:21,328,joppiesaus_nl,Sint Eustatius,COMPLETED,51188,49388,0,joppiesaus_nl | Tojeko_G
+331,2023-08-24,21:53,329,Tojeko_G,Sint Eustatius,COMPLETED,38438,36638,0,Tojeko_G | MysticReacon | boosta_z
+332,2023-08-25,01:16,330,Tojeko_G,Sint Eustatius,COMPLETED,45015,43215,0,Tojeko_G | lukas06yt
+333,2023-08-25,09:25,331,Tojeko_G,Sint Eustatius,COMPLETED,53929,52129,0,Tojeko_G | bIuvye
+334,2023-08-25,14:21,332,lukas06yt,Saba,COMPLETED,38058,36258,0,lukas06yt | TimIsNub
+335,2023-08-25,14:59,333,lukas06yt,Saba,COMPLETED,28164,26364,0,lukas06yt | TimIsNub
+336,2023-08-25,16:49,334,lukas06yt,Sint Eustatius,COMPLETED,44779,42979,0,Finmikke1 | thecoolguyisco | JusttVas | lukas06yt
+337,2023-08-25,18:02,335,Uinsink,Saba,COMPLETED,37284,35484,0,joppiesaus_nl | Uinsink
+338,2023-08-25,19:30,336,lukas06yt,Saba,COMPLETED,0,0,1800,lukas06yt | thecoolguyisco
+339,2023-08-25,19:39,337,joppiesaus_nl,Sint Eustatius,COMPLETED,38955,37155,0,joppiesaus_nl | Tojeko_G
+340,2023-08-25,20:00,338,lukas06yt,Sint Eustatius,COMPLETED,32895,31095,0,lukas06yt | thecoolguyisco
+341,2023-08-25,21:02,339,boosta_z,Saba,COMPLETED,0,0,1800,boosta_z | Tojeko_G
+342,2023-08-25,22:12,340,boosta_z,Saba,COMPLETED,32580,30780,0,boosta_z | Tojeko_G
+343,2023-08-25,22:36,341,boosta_z,Saba,COMPLETED,33672,32022,150,boosta_z | Tojeko_G
+344,2023-08-26,09:28,342,lukas06yt,Saba,COMPLETED,31656,29856,0,thecoolguyisco | lukas06yt | enzodepoes
+345,2023-08-26,10:07,343,Tojeko_G,Sint Eustatius,COMPLETED,49853,48053,0,Tojeko_G | thecoolguyisco
+346,2023-08-26,10:09,344,lukas06yt,Saba,COMPLETED,23070,21270,0,enzodepoes | lukas06yt
+347,2023-08-26,10:37,345,lukas06yt,Saba,COMPLETED,26940,25140,0,enzodepoes | lukas06yt
+348,2023-08-26,11:33,346,ronan267090,Saba,COMPLETED,23868,22068,0,ronan267090 | enzodepoes
+349,2023-08-26,18:14,347,Tojeko_G,Sint Eustatius,COMPLETED,35085,33285,0,Tojeko_G | YourYummySoup
+350,2023-08-26,19:16,348,lukas06yt,Saba,COMPLETED,26856,25056,0,lukas06yt | thecoolguyisco
+351,2023-08-26,20:35,349,lukas06yt,Saba,COMPLETED,41664,39864,0,thecoolguyisco | lukas06yt
+352,2023-08-26,20:48,350,Tojeko_G,Saba,COMPLETED,31548,29748,0,Tojeko_G | YourYummySoup
+353,2023-08-26,20:54,351,lukas06yt,Saba,COMPLETED,30456,28656,0,thecoolguyisco | lukas06yt
+354,2023-08-26,21:14,352,Tojeko_G,Saba,COMPLETED,32799,30999,0,Tojeko_G | YourYummySoup
+355,2023-08-26,21:23,353,lukas06yt,Saba,COMPLETED,32596,30946,150,thecoolguyisco | lukas06yt
+356,2023-08-26,22:07,354,Tojeko_G,Saba,COMPLETED,31428,29628,0,Tojeko_G | YourYummySoup
+357,2023-08-27,03:45,355,Tojeko_G,Sint Eustatius,COMPLETED,53355,51555,0,Kravkens | Tojeko_G
+358,2023-08-27,09:34,356,joppiesaus_nl,Sint Eustatius,COMPLETED,23625,22275,0,joppiesaus_nl | Tojeko_G
+359,2023-08-27,11:51,357,lukas06yt,Saba,COMPLETED,31209,29409,0,bIuvye | lukas06yt
+360,2023-08-27,15:39,358,joppiesaus_nl,Sint Eustatius,COMPLETED,31695,30045,150,Hanna_Marseille | YukinaHanako
+361,2023-08-27,16:20,359,lukas06yt,Saba,COMPLETED,27576,25776,0,prooboy4321 | lukas06yt
+362,2023-08-27,16:36,360,joppiesaus_nl,Sint Eustatius,COMPLETED,15300,14400,900,Hanna_Marseille | YukinaHanako
+363,2023-08-28,12:53,361,lukas06yt,Sint Eustatius,COMPLETED,39045,37245,0,lukas06yt | the_communistregime
+364,2023-08-29,17:04,362,TheLonelyCanuck,Sint Eustatius,COMPLETED,42885,41085,0,TheLonelyCanuck | hindenburgmay6_1937
+365,2023-08-29,19:35,363,lukas06yt,Sint Eustatius,COMPLETED,30600,28800,0,hindenburgmay6_1937 | lukas06yt
+366,2023-08-29,20:30,364,lukas06yt,Saba,COMPLETED,38568,36768,0,hindenburgmay6_1937 | lukas06yt
+367,2023-08-29,21:10,365,lukas06yt,Saba,COMPLETED,32142,30342,0,hindenburgmay6_1937 | lukas06yt
+368,2023-08-29,21:46,366,boosta_z,Saba,COMPLETED,33243,31443,0,boosta_z | hindenburgmay6_1937
+369,2023-08-29,23:11,367,boosta_z,Saba,COMPLETED,41472,39672,0,boosta_z | greggsvsaldisosigrol
+370,2023-08-29,23:35,368,boosta_z,Saba,COMPLETED,0,0,1800,boosta_z | greggsvsaldisosigrol
+371,2023-08-31,10:08,369,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,prooboy4321 | lukas06yt
+372,2023-08-31,13:21,370,lukas06yt,Sint Eustatius,COMPLETED,37463,35663,0,bIuvye | lukas06yt
+373,2023-08-31,14:09,371,lukas06yt,Sint Eustatius,COMPLETED,45000,43200,0,bIuvye | lukas06yt
+374,2023-08-31,14:35,372,lukas06yt,Sint Eustatius,COMPLETED,42180,40380,0,bIuvye | lukas06yt
+375,2023-08-31,17:40,373,boosta_z,Sint Eustatius,COMPLETED,0,0,1800,boosta_z | LostIssue
+376,2023-08-31,18:12,374,boosta_z,Sint Eustatius,COMPLETED,43335,41535,0,boosta_z | LostIssue
+377,2023-09-01,18:20,375,lukas06yt,Saba,COMPLETED,29802,28002,0,Nx_av | lukas06yt
+378,2023-09-01,18:46,376,lukas06yt,Sint Eustatius,COMPLETED,37845,36045,0,Nx_av | lukas06yt
+379,2023-09-01,20:29,377,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,ClearlyDracoo | Demikrates | eprstbebra | cf234563
+380,2023-09-01,21:47,378,lukas06yt,Sint Eustatius,COMPLETED,15833,14933,0,ArneKingfire | lukas06yt
+381,2023-09-02,00:49,379,colton17483,Sint Eustatius,COMPLETED,0,0,1800,boosta_z | colton17483
+382,2023-09-02,01:59,380,boosta_z,Sint Eustatius,COMPLETED,35205,33405,0,boosta_z | colton17483
+383,2023-09-02,10:39,381,lukas06yt,Saba,COMPLETED,35205,33405,0,cf234563 | eprstbebra | lukas06yt
+384,2023-09-02,13:29,382,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,cf234563 | eprstbebra | lukas06yt
+385,2023-09-02,14:15,383,lukas06yt,Saba,COMPLETED,0,0,1800,cf234563 | eprstbebra | lukas06yt
+386,2023-09-03,00:49,384,boosta_z,Saba,COMPLETED,0,0,1800,boosta_z | colton17483
+387,2023-09-03,11:37,385,joppiesaus_nl,Sint Eustatius,COMPLETED,14190,13740,0,Mr_Bonesea
+388,2023-09-03,12:44,386,joppiesaus_nl,Sint Eustatius,CANCELLED,,,,
+389,2023-09-03,12:56,387,lukas06yt,Saba,COMPLETED,30564,28764,0,enzodepoes | JamesBond007F | eprstbebra | lukas06yt
+390,2023-09-03,13:47,388,lukas06yt,Sint Eustatius,COMPLETED,45660,43860,0,JamesBond007F | enzodepoes | eprstbebra | lukas06yt
+391,2023-09-03,14:40,389,lukas06yt,Sint Eustatius,COMPLETED,47340,45540,0,peterrdefries12 | lukas06yt
+392,2023-09-03,15:11,390,boosta_z,Saba,COMPLETED,0,0,1800,
+393,2023-09-03,15:40,391,lukas06yt,Sint Eustatius,COMPLETED,33053,31253,0,551sweden | RamonCasabella | lukas06yt
+394,2023-09-03,18:48,392,lukas06yt,Saba,COMPLETED,0,0,1800,
+395,2023-09-03,19:43,393,lukas06yt,Saba,COMPLETED,27576,25776,0,eprstbebra | enzodepoes | 551sweden | JamesBond007F
+396,2023-09-03,20:29,394,lukas06yt,Sint Eustatius,COMPLETED,40215,38415,0,enzodepoes | eprstbebra | lukas06yt
+397,2023-09-04,17:11,395,lukas06yt,Sint Eustatius,COMPLETED,0,0,0,
+398,2023-09-04,17:51,396,lukas06yt,Sint Eustatius,COMPLETED,23850,22650,600,lukas06yt | pineapple1234me
+399,2023-09-04,18:41,397,Tojeko_G,Saba,COMPLETED,33768,31968,0,Tojeko_G | eprstbebra
+400,2023-09-04,20:19,398,lukas06yt,Sint Eustatius,COMPLETED,41813,40013,0,eprstbebra | enzodepoes | lukas06yt
+401,2023-09-05,16:44,399,Tojeko_G,Saba,COMPLETED,0,0,900,Tojeko_G
+402,2023-09-05,16:46,400,Tojeko_G,Saba,COMPLETED,34167,32367,0,Tojeko_G | eprstbebra
+403,2023-09-05,17:34,401,lukas06yt,Sint Eustatius,COMPLETED,58725,56925,0,RamonCasabella | JamesBond007F | peterrdefries12 | prooboy4321
+404,2023-09-05,18:00,402,Tojeko_G,Sint Eustatius,COMPLETED,51750,49950,0,Tojeko_G | eprstbebra | noob
+405,2023-09-05,18:27,403,lukas06yt,Saba,COMPLETED,40677,38877,0,prooboy4321 | lukas06yt
+406,2023-09-05,18:33,404,Tojeko_G,Saba,COMPLETED,26073,24273,0,Tojeko_G | eprstbebra
+407,2023-09-05,19:06,405,lukas06yt,Sint Eustatius,COMPLETED,46080,44280,0,JamesBond007F | cf234563 | lukas06yt
+408,2023-09-05,19:27,406,joppiesaus_nl,Sint Eustatius,COMPLETED,0,0,1800,
+409,2023-09-05,20:24,407,joppiesaus_nl,Saba,COMPLETED,52305,49605,0,joppiesaus_nl | LostIssue | Tojeko_G
+410,2023-09-05,20:44,408,lukas06yt,Sint Eustatius,COMPLETED,41970,40170,0,e_lzu | AcroIyth | Karloka | lukas06yt
+411,2023-09-06,11:35,409,Tojeko_G,Sint Eustatius,COMPLETED,47501,45701,0,Tojeko_G | eprstbebra
+412,2023-09-06,12:05,410,lukas06yt,Sint Eustatius,COMPLETED,39135,37335,0,RamonCasabella | lukas06yt
+413,2023-09-06,12:44,411,lukas06yt,Sint Eustatius,COMPLETED,43590,41790,0,Karloka | RamonCasabella | eprstbebra | lukas06yt
+414,2023-09-06,13:43,412,lukas06yt,Saba,COMPLETED,38436,36636,0,KarlBernadotte | bastian0o0o | idelusionaI | lukas06yt
+415,2023-09-06,14:28,413,lukas06yt,Sint Eustatius,COMPLETED,48900,47100,0,peterrdefries12 | idelusionaI | lukas06yt
+416,2023-09-06,16:30,414,Tojeko_G,Sint Eustatius,COMPLETED,43245,41445,0,Tojeko_G | Allomnoi
+417,2023-09-06,16:58,415,joppiesaus_nl,Sint Eustatius,COMPLETED,65846,63146,0,joppiesaus_nl | justjamienl | Mr_Bonesea
+418,2023-09-06,17:00,416,Tojeko_G,Sint Eustatius,COMPLETED,29070,27270,0,Tojeko_G | peterrdefries12
+419,2023-09-06,18:16,417,joppiesaus_nl,Sint Eustatius,COMPLETED,66630,63930,0,joppiesaus_nl | KarlBernadotte | eprstbebra
+420,2023-09-06,18:17,418,lukas06yt,Saba,COMPLETED,44112,42312,0,JamesBond007F | lukas06yt
+421,2023-09-06,18:32,419,Tojeko_G,Saba,COMPLETED,30012,28362,150,DiegoStengton | Ghovxst | Jacolai5814 | 00jack_black00
+422,2023-09-06,19:09,420,joppiesaus_nl,Saba,COMPLETED,51714,49014,0,joppiesaus_nl | KarlBernadotte
+423,2023-09-06,19:15,421,lukas06yt,Saba,COMPLETED,40662,38862,0,JamesBond007F | lukas06yt
+424,2023-09-06,19:26,422,Tojeko_G,Saba,COMPLETED,30552,28752,0,Tojeko_G | Ghovxst
+425,2023-09-06,19:59,423,lukas06yt,Saba,COMPLETED,43281,41481,0,JamesBond007F | lukas06yt
+426,2023-09-06,20:12,424,lukas06yt,Saba,COMPLETED,30576,28776,0,JamesBond007F | lukas06yt
+427,2023-09-06,20:24,425,Tojeko_G,Sint Eustatius,COMPLETED,52395,50595,0,Tojeko_G | Ghovxst
+428,2023-09-06,21:42,426,boosta_z,Saba,COMPLETED,29388,27588,0,boosta_z | JaceTheCarpetStain
+429,2023-09-07,11:49,427,Tojeko_G,Sint Eustatius,COMPLETED,43725,41925,0,Tojeko_G | eprstbebra
+430,2023-09-07,12:46,428,Tojeko_G,Sint Eustatius,COMPLETED,42278,40478,0,Tojeko_G | eprstbebra
+431,2023-09-07,13:25,429,Tojeko_G,Sint Eustatius,COMPLETED,43590,41790,0,Tojeko_G | eprstbebra
+432,2023-09-07,16:12,430,Tojeko_G,Saba,COMPLETED,36495,34695,0,Tojeko_G | Allomnoi
+433,2023-09-07,16:16,431,lukas06yt,Sint Eustatius,COMPLETED,54495,52695,0,rzeczka114 | lukas06yt
+434,2023-09-07,17:07,432,joppiesaus_nl,Saba,COMPLETED,53343,50643,0,joppiesaus_nl | thecoolguyisco
+435,2023-09-07,17:49,433,joppiesaus_nl,Sint Eustatius,COMPLETED,0,0,2700,
+436,2023-09-07,18:02,434,lukas06yt,Sint Eustatius,COMPLETED,40519,38719,0,ErikBernadotte | CoIIectivism | lukas06yt
+437,2023-09-07,18:55,435,thecoolguyisco,Saba,COMPLETED,34680,32880,0,rzeczka114 | thecoolguyisco
+438,2023-09-07,19:09,436,JamesBond007F,Saba,COMPLETED,40464,38664,0,JamesBond007F | idelusionaI
+439,2023-09-07,19:11,437,lukas06yt,Sint Eustatius,COMPLETED,38685,36885,0,Ghovxst | lukas06yt
+440,2023-09-07,19:32,438,thecoolguyisco,Saba,COMPLETED,22458,20658,0,rzeczka114 | thecoolguyisco
+441,2023-09-07,19:49,439,JamesBond007F,Sint Eustatius,COMPLETED,47520,45720,0,JamesBond007F | idelusionaI
+442,2023-09-07,20:00,440,lukas06yt,Sint Eustatius,COMPLETED,40766,38966,0,Ghovxst | lukas06yt
+443,2023-09-07,20:34,441,lukas06yt,Saba,COMPLETED,37395,35595,0,Ghovxst | pineapple1234me | lukas06yt
+444,2023-09-08,01:50,442,Tojeko_G,Saba,COMPLETED,35067,33267,0,Tojeko_G | Ghovxst
+445,2023-09-08,02:38,443,Tojeko_G,Saba,COMPLETED,28464,26664,0,Tojeko_G | MMMOMOOOO
+446,2023-09-08,12:58,444,jormguh,Saba,COMPLETED,48195,45495,0,jormguh | Tojeko_G
+447,2023-09-08,13:56,445,jormguh,Saba,COMPLETED,57750,55050,0,jormguh | Tojeko_G
+448,2023-09-08,14:11,446,JamesBond007F,Sint Eustatius,COMPLETED,0,0,1800,
+449,2023-09-08,14:48,447,jormguh,Sint Eustatius,COMPLETED,0,0,2700,8
+450,2023-09-08,15:01,448,JamesBond007F,Sint Eustatius,COMPLETED,39289,37489,0,JamesBond007F | SpedSantz | cHeadq | KAM1KAZE09
+451,2023-09-08,15:19,449,thecoolguyisco,Saba,COMPLETED,36972,35172,0,idelusionaI | thecoolguyisco
+452,2023-09-08,16:10,450,Tojeko_G,Sint Eustatius,COMPLETED,43455,41655,0,finndad | kingme2244
+453,2023-09-08,16:13,451,thecoolguyisco,Saba,COMPLETED,35271,33471,0,idelusionaI | thecoolguyisco
+454,2023-09-08,16:40,452,eprstbebra,Sint Eustatius,COMPLETED,31590,29790,1800,SupremeBigBrother | cHeadq | eprstbebra
+455,2023-09-08,16:42,453,thecoolguyisco,Saba,COMPLETED,37842,36042,1800,thecoolguyisco | rzeczka114 | peterrdefries12
+456,2023-09-08,17:33,454,Tojeko_G,Saba,COMPLETED,24168,22518,0,Tojeko_G | finndad
+457,2023-09-08,18:02,455,SupremeBigBrother,Sint Eustatius,COMPLETED,59595,57045,0,SupremeBigBrother | kingme2244 | jormguh
+458,2023-09-08,18:38,456,joppiesaus_nl,Sint Eustatius,COMPLETED,85455,82755,0,joppiesaus_nl | rzeczka114 | thecoolguyisco
+459,2023-09-08,19:11,457,thecoolguyisco,Saba,COMPLETED,35304,33504,0,idelusionaI | rzeczka114 | thecoolguyisco
+460,2023-09-08,19:14,458,JamesBond007F,Sint Eustatius,COMPLETED,37530,35730,0,JamesBond007F | cHeadq
+461,2023-09-08,19:44,459,eprstbebra,Saba,COMPLETED,33000,31200,0,SpedSantz | eprstbebra
+462,2023-09-08,20:00,460,JamesBond007F,Sint Eustatius,COMPLETED,46519,44719,0,JamesBond007F | cHeadq
+463,2023-09-08,20:27,461,thecoolguyisco,Saba,COMPLETED,41868,40068,0,kingme2244 | thecoolguyisco
+464,2023-09-08,20:28,462,eprstbebra,Saba,COMPLETED,34149,32499,150,SpedSantz | eprstbebra
+465,2023-09-08,20:58,463,SupremeBigBrother,Sint Eustatius,COMPLETED,66206,63506,0,SupremeBigBrother | JamesBond007F
+466,2023-09-08,21:15,464,thecoolguyisco,Saba,COMPLETED,41364,39564,0,lukas06yt | thecoolguyisco
+467,2023-09-08,22:06,465,thecoolguyisco,Saba,COMPLETED,38448,36648,0,lukas06yt | SpedSantz | thecoolguyisco
+468,2023-09-09,06:10,466,lukas06yt,Saba,COMPLETED,31968,30168,0,JamesBond007F | lukas06yt
+469,2023-09-09,06:43,467,lukas06yt,Sint Eustatius,COMPLETED,36934,35134,0,eprstbebra | JamesBond007F | lukas06yt
+470,2023-09-09,07:26,468,lukas06yt,Sint Eustatius,COMPLETED,39994,38194,0,eprstbebra | JamesBond007F | lukas06yt
+471,2023-09-09,07:59,469,lukas06yt,Saba,COMPLETED,41088,39288,0,eprstbebra | JamesBond007F | lukas06yt
+472,2023-09-09,08:14,470,lukas06yt,Saba,COMPLETED,30072,28272,0,eprstbebra | JamesBond007F | lukas06yt
+473,2023-09-09,08:42,471,lukas06yt,Saba,COMPLETED,39096,37296,0,JamesBond007F | eprstbebra | rzeczka114
+474,2023-09-09,09:28,472,JamesBond007F,Sint Eustatius,COMPLETED,37388,35588,0,JamesBond007F | cHeadq
+475,2023-09-09,09:45,473,lukas06yt,Sint Eustatius,COMPLETED,43774,42124,150,Volorikats | stoomboo | lukas06yt
+476,2023-09-09,10:11,474,JamesBond007F,Sint Eustatius,COMPLETED,51953,50153,0,JamesBond007F | cHeadq
+477,2023-09-09,10:22,475,eprstbebra,Saba,COMPLETED,30744,28944,0,eprstbebra | Allomnoi
+478,2023-09-09,10:25,476,thecoolguyisco,Saba,COMPLETED,31281,29481,0,stoomboo | thecoolguyisco
+479,2023-09-09,11:06,477,eprstbebra,Saba,COMPLETED,38745,36945,0,Volorikats | eprstbebra
+480,2023-09-09,11:27,478,thecoolguyisco,Saba,COMPLETED,27780,25980,0,stoomboo | thecoolguyisco
+481,2023-09-09,11:58,479,JamesBond007F,Saba,COMPLETED,32664,30864,0,JamesBond007F | SpedSantz
+482,2023-09-09,11:59,480,thecoolguyisco,Saba,COMPLETED,31368,29568,0,stoomboo | thecoolguyisco
+483,2023-09-09,12:24,481,thecoolguyisco,Saba,COMPLETED,40917,39117,0,stoomboo | thecoolguyisco
+484,2023-09-09,12:39,482,JamesBond007F,Saba,COMPLETED,21044,19844,0,JamesBond007F | SpedSantz
+485,2023-09-09,12:43,483,thecoolguyisco,Saba,COMPLETED,33153,31353,0,stoomboo | thecoolguyisco
+486,2023-09-09,12:45,484,lukas06yt,Saba,COMPLETED,0,0,1800,
+487,2023-09-09,13:26,485,JamesBond007F,Saba,COMPLETED,31188,29388,0,JamesBond007F | SpedSantz
+488,2023-09-09,13:32,486,boosta_z,Sint Eustatius,COMPLETED,33080,31430,150,boosta_z | Tojeko_G
+489,2023-09-09,13:33,487,lukas06yt,Saba,COMPLETED,37902,36102,0,eprstbebra | Jacolai5814 | lukas06yt
+490,2023-09-09,14:15,488,lukas06yt,Saba,COMPLETED,32652,30852,0,eprstbebra | stoomboo | lukas06yt
+491,2023-09-09,14:25,489,thecoolguyisco,Sint Eustatius,COMPLETED,45120,43320,0,MMMOMOOOO | thecoolguyisco
+492,2023-09-09,14:40,490,lukas06yt,Saba,COMPLETED,32187,30387,0,eprstbebra | stoomboo | lukas06yt
+493,2023-09-09,14:45,491,boosta_z,Sint Eustatius,COMPLETED,32040,30240,0,boosta_z | Tojeko_G
+494,2023-09-09,15:20,492,lukas06yt,Saba,COMPLETED,29832,28032,0,stoomboo | eprstbebra | lukas06yt
+495,2023-09-09,15:24,493,boosta_z,Sint Eustatius,COMPLETED,43714,41914,0,boosta_z | Tojeko_G
+496,2023-09-09,15:47,494,eprstbebra,Saba,COMPLETED,38508,36708,0,eprstbebra | stoomboo
+497,2023-09-09,16:21,495,eprstbebra,Saba,COMPLETED,31695,29895,0,eprstbebra | stoomboo | rzeczka114
+498,2023-09-09,16:30,496,boosta_z,Saba,COMPLETED,0,0,1800,boosta_z | Tojeko_G
+499,2023-09-09,17:59,497,eprstbebra,Saba,COMPLETED,0,0,1800,ErikBernadotte | eprstbebra | stoomboo | Jacolai5814
+500,2023-09-09,18:32,498,thecoolguyisco,Saba,COMPLETED,0,0,1800,stoomboo | MMMOMOOOO | thecoolguyisco
+501,2023-09-09,18:33,499,eprstbebra,Saba,COMPLETED,32859,31059,0,ErikBernadotte | eprstbebra | 551sweden
+502,2023-09-09,18:48,500,thecoolguyisco,Saba,COMPLETED,0,0,1800,stoomboo | MMMOMOOOO | thecoolguyisco
+503,2023-09-09,18:57,501,eprstbebra,Saba,COMPLETED,28068,26268,0,eprstbebra | ErikBernadotte | 551sweden
+504,2023-09-09,23:26,502,Tojeko_G,Sint Eustatius,COMPLETED,33795,31995,0,Tojeko_G | Volorikats
+505,2023-09-10,01:52,503,Tojeko_G,Saba,COMPLETED,37128,35328,0,Tojeko_G | Ghovxst
+506,2023-09-10,03:15,504,Tojeko_G,Saba,COMPLETED,41994,40194,0,Tojeko_G | Ghovxst
+507,2023-09-10,03:58,505,Tojeko_G,Saba,COMPLETED,32808,31008,0,Tojeko_G | Ghovxst
+508,2023-09-10,04:19,506,Tojeko_G,Saba,COMPLETED,33774,31974,0,Tojeko_G | Ghovxst | 551sweden | Volorikats
+509,2023-09-10,05:08,507,Tojeko_G,Saba,COMPLETED,0,0,0,
+510,2023-09-10,08:18,508,eprstbebra,Saba,COMPLETED,29262,27462,0,eprstbebra | stoomboo
+511,2023-09-10,08:53,509,eprstbebra,Saba,COMPLETED,32478,30678,0,eprstbebra | Volorikats
+512,2023-09-10,09:27,510,eprstbebra,Saba,COMPLETED,0,0,1800,eprstbebra | rzeczka114 | Volorikats
+513,2023-09-10,10:06,511,eprstbebra,Saba,COMPLETED,0,0,1800,eprstbebra | Volorikats
+514,2023-09-10,10:29,512,joppiesaus_nl,Sint Eustatius,COMPLETED,70360,67660,0,joppiesaus_nl | stoomboo | SpedSantz
+515,2023-09-10,11:05,513,JamesBond007F,Saba,COMPLETED,33876,32076,0,JamesBond007F | Jacolai5814
+516,2023-09-10,11:39,514,JamesBond007F,Saba,COMPLETED,21624,20724,1800,JamesBond007F | Jacolai5814
+517,2023-09-10,11:42,515,eprstbebra,Sint Eustatius,COMPLETED,0,0,1800,eprstbebra | SpedSantz | stoomboo
+518,2023-09-10,12:42,516,eprstbebra,Saba,COMPLETED,33408,31608,0,eprstbebra | stoomboo | rzeczka114
+519,2023-09-10,13:07,517,lukas06yt,Saba,COMPLETED,0,0,1800,
+520,2023-09-10,13:07,518,eprstbebra,Sint Eustatius,COMPLETED,42105,40305,0,eprstbebra | stoomboo | rzeczka114
+521,2023-09-10,13:52,519,eprstbebra,Sint Eustatius,COMPLETED,30439,28639,0,eprstbebra | stoomboo | rzeczka114
+522,2023-09-10,14:41,520,eprstbebra,Sint Eustatius,COMPLETED,34673,32873,0,eprstbebra | stoomboo
+523,2023-09-10,16:21,521,Tojeko_G,Sint Eustatius,COMPLETED,0,0,1800,
+524,2023-09-10,16:58,522,Tojeko_G,Saba,COMPLETED,0,0,1800,
+525,2023-09-10,19:50,523,thecoolguyisco,Saba,COMPLETED,0,0,1800,6 | stoomboo | thecoolguyisco
+526,2023-09-10,22:26,524,Tojeko_G,Sint Eustatius,COMPLETED,52140,50340,0,Tojeko_G | Ghovxst
+527,2023-09-10,22:59,525,Tojeko_G,Sint Eustatius,COMPLETED,40983,39333,150,Tojeko_G | Ghovxst
+528,2023-09-11,09:47,526,eprstbebra,Saba,COMPLETED,34770,32970,0,eprstbebra | Volorikats
+529,2023-09-11,10:41,527,eprstbebra,Saba,COMPLETED,38046,36246,0,eprstbebra | Volorikats
+530,2023-09-11,11:06,528,eprstbebra,Saba,COMPLETED,41088,39288,0,eprstbebra | Volorikats | Jacolai5814
+531,2023-09-11,11:44,529,eprstbebra,Saba,COMPLETED,40788,38988,0,eprstbebra | Jacolai5814 | SpedSantz
+532,2023-09-11,12:58,530,eprstbebra,Saba,COMPLETED,37287,35487,0,eprstbebra | rzeczka114
+533,2023-09-11,16:09,531,eprstbebra,Saba,COMPLETED,0,0,1800,eprstbebra | rzeczka114 | peterrdefries12
+534,2023-09-11,16:13,532,lukas06yt,Sint Eustatius,COMPLETED,50696,48896,0,stoomboo | lukas06yt
+535,2023-09-11,16:43,533,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+536,2023-09-11,16:52,534,JamesBond007F,Saba,COMPLETED,32598,30798,0,stoomboo | JamesBond007F
+537,2023-09-11,17:01,535,Tojeko_G,Sint Eustatius,COMPLETED,36113,34313,0,Tojeko_G | eprstbebra
+538,2023-09-11,17:29,536,JamesBond007F,Sint Eustatius,COMPLETED,57585,55785,0,stoomboo | JamesBond007F
+539,2023-09-11,19:02,537,JamesBond007F,Saba,COMPLETED,30504,28704,0,JamesBond007F | cHeadq | idelusionaI
+540,2023-09-11,20:10,538,Tojeko_G,Sint Eustatius,COMPLETED,22950,21600,450,Tojeko_G | ThySummersPlay
+541,2023-09-11,21:20,539,lukas06yt,Sint Eustatius,COMPLETED,51769,49819,300,MMMOMOOOO | lukas06yt
+542,2023-09-11,23:35,540,Tojeko_G,Sint Eustatius,COMPLETED,36169,34369,0,Tojeko_G | AcroIyth
+543,2023-09-11,23:54,541,Tojeko_G,Sint Eustatius,COMPLETED,0,-900,1800,
+544,2023-09-12,16:42,542,JamesBond007F,Saba,COMPLETED,0,0,1800,JamesBond007F | cHeadq
+545,2023-09-12,18:29,543,JamesBond007F,Sint Eustatius,COMPLETED,44565,42765,0,JamesBond007F | cHeadq
+546,2023-09-12,18:45,544,eprstbebra,Saba,COMPLETED,0,0,1800,eprstbebra | AcroIyth
+547,2023-09-13,06:22,545,eprstbebra,Saba,COMPLETED,25704,23904,0,eprstbebra | Volorikats
+548,2023-09-13,13:04,546,lukas06yt,Saba,COMPLETED,26280,24480,0,ErikBernadotte | lukas06yt
+549,2023-09-13,17:43,547,lukas06yt,Saba,COMPLETED,35352,33552,0,prooboy4321 | lukas06yt
+550,2023-09-13,19:07,548,lukas06yt,Saba,COMPLETED,0,0,1800,
+551,2023-09-13,20:33,549,lukas06yt,Saba,COMPLETED,22644,20844,0,AcroIyth | lukas06yt
+552,2023-09-14,01:20,550,boosta_z,Sint Eustatius,COMPLETED,0,0,1800,boosta_z | JaceTheCarpetStain
+553,2023-09-14,05:04,551,Tojeko_G,Saba,COMPLETED,32472,30672,0,Tojeko_G | Ghovxst
+554,2023-09-14,08:22,552,joppiesaus_nl,Saba,COMPLETED,51411,48711,0,joppiesaus_nl | Volorikats
+555,2023-09-14,10:06,553,JamesBond007F,Saba,COMPLETED,38076,36276,0,Volorikats | SpedSantz | JamesBond007F
+556,2023-09-14,10:32,554,JamesBond007F,Saba,COMPLETED,33432,31632,0,JamesBond007F | Volorikats | SpedSantz
+557,2023-09-14,14:36,555,simonmutsaers,Sint Eustatius,COMPLETED,39926,38126,0,alx6ix | simonmutsaers
+558,2023-09-14,15:17,556,simonmutsaers,Sint Eustatius,COMPLETED,43470,41670,0,Mr_Bonesea | simonmutsaers
+559,2023-09-14,17:29,557,joppiesaus_nl,Saba,COMPLETED,0,0,2700,
+560,2023-09-14,19:26,558,Tojeko_G,Saba,COMPLETED,21924,21024,0,Tojeko_G | finndad
+561,2023-09-14,23:24,559,Ghovxst,Saba,COMPLETED,23868,22068,0,Ghovxst | Volorikats
+562,2023-09-15,00:27,560,Ghovxst,Sint Eustatius,COMPLETED,10406,0,9956,Volorikats | Ghovxst
+563,2023-09-15,19:36,561,lukas06yt,Sint Eustatius,COMPLETED,42019,40219,0,JamesBond007F | lukas06yt
+564,2023-09-15,20:04,562,lukas06yt,Saba,COMPLETED,33087,31287,0,JamesBond007F | lukas06yt
+565,2023-09-15,20:40,563,lukas06yt,Saba,COMPLETED,37938,36138,0,JamesBond007F | lukas06yt
+566,2023-09-16,12:30,564,JamesBond007F,Saba,COMPLETED,0,0,1800,JamesBond007F | enzodepoes
+567,2023-09-17,10:35,565,lukas06yt,Sint Eustatius,COMPLETED,24340,23590,1050,Volorikats | lukas06yt
+568,2023-09-17,14:47,566,lukas06yt,Saba,COMPLETED,0,0,1800,
+569,2023-09-20,00:52,567,Tojeko_G,Sint Eustatius,COMPLETED,0,0,1800,
+570,2023-09-20,12:06,568,lukas06yt,Saba,COMPLETED,33552,31752,0,JamesBond007F | eprstbebra | lukas06yt
+571,2023-09-21,07:43,569,Tojeko_G,Sint Eustatius,COMPLETED,41816,40016,0,Tojeko_G | Volorikats
+572,2023-09-21,19:23,570,lukas06yt,Sint Eustatius,COMPLETED,18750,17850,900,stoomboo | lukas06yt
+573,2023-09-21,20:32,571,lukas06yt,Sint Eustatius,COMPLETED,40643,38843,0,JamesBond007F | lukas06yt
+574,2023-09-22,13:14,572,JamesBond007F,Sint Eustatius,COMPLETED,43174,41374,0,eprstbebra | JamesBond007F
+575,2023-09-22,15:57,573,lukas06yt,Saba,COMPLETED,39660,37860,0,idelusionaI | lukas06yt
+576,2023-09-22,20:27,574,lukas06yt,Sint Eustatius,COMPLETED,44209,42409,0,JamesBond007F | lukas06yt
+577,2023-09-22,20:53,575,lukas06yt,Saba,COMPLETED,39336,37536,0,JamesBond007F | lukas06yt
+578,2023-09-23,10:34,576,lukas06yt,Sint Eustatius,COMPLETED,45559,43759,0,JamesBond007F | lukas06yt
+579,2023-09-23,16:02,577,JamesBond007F,Saba,COMPLETED,32889,31089,0,idelusionaI | JamesBond007F
+580,2023-09-23,16:19,578,JamesBond007F,Saba,COMPLETED,20493,19143,0,idelusionaI | JamesBond007F
+581,2023-09-23,19:18,579,Ghovxst,Sint Eustatius,COMPLETED,30195,28845,2314,lukas06yt | Ghovxst
+582,2023-09-23,20:14,580,Ghovxst,Sint Eustatius,COMPLETED,44216,42416,0,hindenburgmay6_1937 | Ghovxst
+583,2023-09-24,10:53,581,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+584,2023-09-24,11:35,582,lukas06yt,Sint Eustatius,COMPLETED,50835,49035,0,JusttVas | bIuvye | ErikBernadotte | lukas06yt
+585,2023-09-24,12:20,583,lukas06yt,Sint Eustatius,COMPLETED,50460,48660,0,ErikBernadotte | bIuvye | lukas06yt
+586,2023-09-24,13:18,584,lukas06yt,Saba,COMPLETED,32367,30567,0,bIuvye | lukas06yt
+587,2023-09-24,13:55,585,lukas06yt,Saba,COMPLETED,37620,35820,0,bIuvye | lukas06yt
+588,2023-09-25,02:45,586,Ghovxst,Saba,COMPLETED,31212,29412,0,MMMOMOOOO | Ghovxst
+589,2023-09-25,07:48,587,Ghovxst,Saba,COMPLETED,29916,28116,0,Volorikats | Ghovxst
+590,2023-09-25,22:19,588,colton17483,Saba,COMPLETED,0,0,900,hindenburgmay6_1937 | colton17483
+591,2023-09-27,14:36,589,lukas06yt,Sint Eustatius,COMPLETED,57334,55534,0,bastian0o0o | lukas06yt
+592,2023-09-27,15:31,590,lukas06yt,Saba,COMPLETED,39441,37641,0,bastian0o0o | lukas06yt
+593,2023-09-28,14:02,591,joppiesaus_nl,Saba,COMPLETED,48633,45933,0,joppiesaus_nl | Hanna_Marseille | BlueStarKnight
+594,2023-09-28,18:20,592,lukas06yt,Saba,COMPLETED,32067,30267,0,JusttVas | lukas06yt
+595,2023-09-28,19:00,593,lukas06yt,Saba,COMPLETED,40116,38316,0,JamesBond007F | lukas06yt
+596,2023-09-28,19:27,594,lukas06yt,Saba,COMPLETED,31548,29748,0,JamesBond007F | lukas06yt
+597,2023-09-29,14:27,595,JamesBond007F,Sint Eustatius,COMPLETED,43770,41970,0,Finmikke1 | JamesBond007F
+598,2023-09-29,15:16,596,JamesBond007F,Sint Eustatius,COMPLETED,32265,30465,0,Finmikke1 | JamesBond007F
+599,2023-09-29,20:17,597,lukas06yt,Saba,COMPLETED,37104,35304,0,lukas06yt | JusttVas
+600,2023-09-29,20:39,598,ronan267090,Sint Eustatius,COMPLETED,49028,47228,0,ronan267090 | meep6478 | KostasAgnelli | TrainedJetPilot
+601,2023-09-29,21:39,599,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+602,2023-09-29,21:54,600,lukas06yt,Sint Eustatius,COMPLETED,43935,42135,0,mrtzgc | Salty_Mark | yeatlyrics
+603,2023-09-29,22:57,601,Ghovxst,Saba,COMPLETED,0,0,1800,TrainedJetPilot | Ghovxst
+604,2023-09-29,23:55,602,Ghovxst,Sint Eustatius,COMPLETED,0,0,3600,Ghovxst | BferraiB | PolishMilitant | possila
+605,2023-09-30,08:51,603,lukas06yt,Sint Eustatius,COMPLETED,46796,44996,0,tarvcn | deadend_38 | sweggyguy454 | lukas06yt
+606,2023-09-30,09:59,604,lukas06yt,Saba,COMPLETED,33480,31680,0,mrtzgc | sweggyguy454 | tarvcn | lukas06yt
+607,2023-09-30,10:00,605,JamesBond007F,Saba,COMPLETED,34548,32748,0,TrainedJetPilot | JamesBond007F
+608,2023-09-30,10:44,606,lukas06yt,Sint Eustatius,COMPLETED,44550,42750,0,sweggyguy454 | lukas06yt
+609,2023-09-30,10:52,607,JamesBond007F,Sint Eustatius,COMPLETED,48064,46264,0,TrainedJetPilot | JamesBond007F
+610,2023-09-30,11:57,608,JamesBond007F,Sint Eustatius,COMPLETED,41100,39300,0,TrainedJetPilot | BferrariB | possila | JamesBond007F
+611,2023-09-30,12:17,609,lukas06yt,Sint Eustatius,COMPLETED,36806,35006,0,cIarkwarrior | G_rns | vittowar11 | thepud10
+612,2023-09-30,13:17,610,JamesBond007F,Sint Eustatius,COMPLETED,36326,34526,0,race_guy09 | khaos4568 | daciaexe | JamesBond007F
+613,2023-09-30,13:41,611,lukas06yt,Sint Eustatius,COMPLETED,42555,40755,0,cIarkwarrior | TrainedJetPilot | KostasAgnelli | lukas06yt
+614,2023-09-30,14:31,612,lukas06yt,Sint Eustatius,COMPLETED,45008,43208,0,TrainedJetPilot | cIarkwarrior | yeatlyrics | KostasAgnelli
+615,2023-09-30,15:42,613,lukas06yt,Saba,COMPLETED,39267,37467,0,BferrariB | TrainedJetPilot | xxlpoop | prooboy4321
+616,2023-09-30,18:46,614,Ghovxst,Saba,COMPLETED,20160,18810,612,G_rns | possila | Ghovxst | PolishMilitant
+617,2023-09-30,20:47,615,JamesBond007F,Sint Eustatius,COMPLETED,43005,41355,0,KostasAgnelli | xxlpoop | possila | JamesBond007F
+618,2023-10-01,07:47,616,Ghovxst,Sint Eustatius,COMPLETED,40838,39038,0,cIarkwarrior | Ghovxst
+619,2023-10-01,08:13,617,Ghovxst,Saba,COMPLETED,29019,27219,0,cIarkwarrior | Ghovxst
+620,2023-10-01,08:59,618,ikbenhetsmientie,Sint Eustatius,COMPLETED,27540,26190,0,biddaboddabida2000 | Zarkys_SK | MustafaYTTR
+621,2023-10-01,10:33,619,lukas06yt,Sint Eustatius,COMPLETED,39818,38018,0,biddaboddabida2000 | Finmikke1 | race_guy09 | sweggyguy454 | TrainedJetPilot | possila
+622,2023-10-01,12:30,620,lukas06yt,Sint Eustatius,COMPLETED,47531,45731,0,possila | race_guy09 | lukas06yt
+623,2023-10-01,12:47,621,lukas06yt,Sint Eustatius,COMPLETED,48510,46710,0,race_guy09 | daciaexe | possila | lukas06yt
+624,2023-10-01,13:45,622,eprstbebra,Sint Eustatius,COMPLETED,0,0,1800,Maxwellc290 | Matseetbamischijf | AlexKOT78 | LucasAThorne
+625,2023-10-01,13:57,623,lukas06yt,Saba,COMPLETED,28428,26628,0,KarlBernadotte | xxlpoop | possila | tarvcn
+626,2023-10-01,16:50,624,lukas06yt,Sint Eustatius,COMPLETED,45630,43830,0,cstat877v2 | DragonBallZ_343 | filip_file | Chrisssy2243
+627,2023-10-01,19:42,625,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+628,2023-10-01,20:47,626,lukas06yt,Sint Eustatius,COMPLETED,40313,38513,0,possila | TrainedJetPilot | Salty_Mark | DragonBallZ_343 | LucasAThorne
+629,2023-10-02,16:31,627,lukas06yt,Sint Eustatius,COMPLETED,34744,32944,0,Carreytheone | Romaducis | lukas06yt
+630,2023-10-02,18:09,628,lukas06yt,Sint Eustatius,COMPLETED,48105,46305,0,MustafaYTTR | TrainedJetPilot | KostasAgnelli | possila | deadend_38 | yeatlyrics
+631,2023-10-03,13:09,629,eprstbebra,Saba,COMPLETED,31566,29766,0,tarvcn | Salty_Mark | FIBOPENUP_NOW | KostasAgnelli
+632,2023-10-03,14:38,630,JamesBond007F,Saba,COMPLETED,35304,33504,0,KostasAgnelli | deadend_38 | Salty_Mark | JamesBond007F
+633,2023-10-03,14:41,631,Tojeko_G,Saba,COMPLETED,41112,39312,0,Tojeko_G | Finmikke1 | FIBOPENUP_NOW | biddaboddabida2000
+634,2023-10-03,15:52,632,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+635,2023-10-03,19:33,633,JamesBond007F,Sint Eustatius,COMPLETED,33214,31414,0,race_guy09 | MustafaYTTR | TrainedJetPilot | JamesBond007F
+636,2023-10-03,19:37,634,lukas06yt,Sint Eustatius,COMPLETED,38089,36289,0,bastian0o0o | lukas06yt | KostasAgnelli | possila
+637,2023-10-04,11:49,635,lukas06yt,Sint Eustatius,COMPLETED,38610,36810,0,possila | deadend_38 | lukas06yt | bIuvye
+638,2023-10-04,13:39,636,eprstbebra,Sint Eustatius,COMPLETED,49050,47250,0,eprstbebra | AlexKOT78
+639,2023-10-04,15:36,637,lukas06yt,Sint Eustatius,COMPLETED,43050,41250,0,bastian0o0o | KostasAgnelli | PolishMilitant | Matseetbamischijf
+640,2023-10-04,19:06,638,thecoolguyisco,Sint Eustatius,COMPLETED,38790,36990,0,opicityy | Bayside510 | bucchinamamma
+641,2023-10-04,19:24,639,JamesBond007F,Sint Eustatius,COMPLETED,54495,52695,0,KostasAgnelli | JamesBond007F
+642,2023-10-04,20:03,640,JamesBond007F,Sint Eustatius,COMPLETED,45390,43590,0,JamesBond007F | KostasAgnelli
+643,2023-10-05,12:15,641,eprstbebra,Sint Eustatius,COMPLETED,44445,42645,0,eprstbebra | AlexKOT78
+644,2023-10-05,16:51,642,eprstbebra,Sint Eustatius,COMPLETED,45784,43984,0,eprstbebra | AlexKOT78
+645,2023-10-05,19:17,643,lukas06yt,Sint Eustatius,COMPLETED,36326,34526,0,MustafaYTTR | deadend_38 | race_guy09 | lukas06yt
+646,2023-10-06,12:18,644,JamesBond007F,Saba,COMPLETED,0,0,1800,FIBOPENUP_NOW | JamesBond007F
+647,2023-10-06,17:00,645,lukas06yt,Sint Eustatius,COMPLETED,47344,45544,0,daciaexe | Salty_Mark | yeatlyrics | FIBOPENUP_NOW
+648,2023-10-07,19:06,646,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+649,2023-10-07,19:41,647,lukas06yt,Sint Eustatius,COMPLETED,53190,51390,0,yeatlyrics | opicityy | cstat877v2 | meep6478
+650,2023-10-07,20:18,648,lukas06yt,Sint Eustatius,COMPLETED,50385,48585,0,Samu5sam44 | lukas06yt
+651,2023-10-08,07:20,649,eprstbebra,Sint Eustatius,COMPLETED,32573,30773,0,eprstbebra | AlexKOT78
+652,2023-10-08,07:55,650,eprstbebra,Sint Eustatius,COMPLETED,29790,27990,0,eprstbebra | AlexKOT78
+653,2023-10-08,16:10,651,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+654,2023-10-09,01:52,652,boosta_z,Saba,COMPLETED,33912,32112,0,boosta_z | JaceTheCarpetStain
+655,2023-10-09,18:15,653,boosta_z,Sint Eustatius,COMPLETED,38880,37080,0,boosta_z | JaceTheCarpetStain
+656,2023-10-09,19:32,654,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+657,2023-10-09,19:57,655,boosta_z,Sint Eustatius,COMPLETED,0,0,1800,boosta_z | JaceTheCarpetStain
+658,2023-10-09,19:57,656,boosta_z,Saba,COMPLETED,29445,27645,450,boosta_z | Salty_Mark | Bayside510
+659,2023-10-10,12:20,657,JamesBond007F,Sint Eustatius,COMPLETED,36060,34260,0,JamesBond007F | JusttVas
+660,2023-10-10,18:02,658,lukas06yt,Sint Eustatius,COMPLETED,45135,43335,0,race_guy09 | yeatlyrics | Finmikke1 | vittowar11
+661,2023-10-10,19:12,659,lukas06yt,Sint Eustatius,COMPLETED,28965,27615,450,race_guy09 | yeatlyrics | bucchinamamma
+662,2023-10-13,20:50,660,JamesBond007F,Sint Eustatius,COMPLETED,58680,56880,0,cHeadq | possila | Salty_Mark | JamesBond007F
+663,2023-10-18,15:28,661,KostasAgnelli,Saba,COMPLETED,37812,36012,0,KostasAgnelli | daciaexe
+664,2023-10-18,17:15,662,TrainedJetPilot,Sint Eustatius,COMPLETED,46069,44269,0,TrainedJetPilot | KostasAgnelli
+665,2023-10-19,13:22,663,KostasAgnelli,Saba,CANCELLED,,,,KostasAgnelli | deadend_38 | Ghovxst
+666,2023-10-19,13:25,664,KostasAgnelli,Sint Eustatius,COMPLETED,37900,36250,0,KostasAgnelli | deadend_38 | Ghovxst
+667,2023-10-19,17:57,665,KostasAgnelli,Sint Eustatius,COMPLETED,41599,39799,0,KostasAgnelli | deadend_38
+668,2023-10-20,14:40,666,KostasAgnelli,Sint Eustatius,COMPLETED,22950,21600,0,KostasAgnelli | deadend_38
+669,2023-10-21,16:36,667,TrainedJetPilot,Sint Eustatius,COMPLETED,0,0,1800,TrainedJetPilot | thepud10
+670,2023-10-24,16:55,668,KostasAgnelli,Saba,COMPLETED,0,0,1800,KostasAgnelli | yeatlyrics | Salty_Mark
+671,2023-10-25,14:05,669,JamesBond007F,Saba,COMPLETED,33000,31200,0,yeatlyrics | JamesBond007F
+672,2023-10-26,19:34,670,joppiesaus_nl,Saba,COMPLETED,0,0,2700,
+673,2023-10-27,04:20,671,Ghovxst,Sint Eustatius,COMPLETED,42450,40650,0,Ghovxst | SpedSantz
+674,2023-10-27,14:33,672,JamesBond007F,Saba,COMPLETED,27468,25668,0,KostasAgnelli | yeatlyrics | daciaexe | JamesBond007F
+675,2023-10-27,18:59,673,JamesBond007F,Saba,COMPLETED,29544,27744,0,thepud10 | Samu5sam44 | bucchinamamma | JamesBond007F
+676,2023-10-27,21:48,674,boosta_z,Sint Eustatius,COMPLETED,51150,49350,0,boosta_z | Samu5sam44 | thepud10
+677,2023-10-27,22:59,675,boosta_z,Saba,COMPLETED,23256,21456,0,boosta_z | Samu5sam44
+678,2023-10-28,13:44,676,lukas06yt,Sint Eustatius,COMPLETED,37376,35576,0,lukas06yt | vittowar11
+679,2023-10-28,14:23,677,lukas06yt,Sint Eustatius,COMPLETED,53918,52118,0,lukas06yt | vittowar11
+680,2023-10-28,17:08,678,cHeadq,Saba,COMPLETED,34080,32280,0,meep6478 | cHeadq | bucchinamamma | daciaexe
+681,2023-10-28,17:55,679,cHeadq,Saba,COMPLETED,31587,29787,0,daciaexe | cHeadq | meep6478
+682,2023-10-28,21:44,680,cHeadq,Saba,COMPLETED,32088,30288,0,cHeadq | vittowar11
+683,2023-10-28,23:03,681,cHeadq,Saba,COMPLETED,11794,11344,1800,cHeadq | vittowar11
+684,2023-10-28,23:41,682,cHeadq,Saba,COMPLETED,45308,43508,0,cHeadq | vittowar11 | khaos4568
+685,2023-10-29,00:23,683,cHeadq,Sint Eustatius,COMPLETED,34335,32535,0,cHeadq | vittowar11 | khaos4568
+686,2023-10-29,10:07,684,cHeadq,Sint Eustatius,COMPLETED,40410,38610,0,cHeadq | xxlpoop
+687,2023-10-29,11:03,685,cHeadq,Sint Eustatius,COMPLETED,40429,38629,0,cHeadq | JamesBond007F
+688,2023-10-29,13:36,686,TrainedJetPilot,Saba,COMPLETED,,,0,Double accidental.
+689,2023-10-29,14:16,687,cHeadq,Saba,COMPLETED,26016,24216,0,cHeadq | xxlpoop
+690,2023-10-29,14:19,688,TrainedJetPilot,Sint Eustatius,COMPLETED,49080,47280,1350,TrainedJetPilot | vittowar11 | SpedSantz | Salty_Mark
+691,2023-10-29,14:43,689,TrainedJetPilot,Sint Eustatius,CANCELLED,,,,TrainedJetPilot | vittowar11
+692,2023-10-29,14:55,690,cHeadq,Saba,COMPLETED,32472,30672,0,cHeadq | xxlpoop
+693,2023-10-29,15:25,691,cHeadq,Saba,COMPLETED,28686,26886,0,cHeadq | xxlpoop
+694,2023-10-30,17:43,692,TrainedJetPilot,Sint Eustatius,COMPLETED,51480,49680,0,TrainedJetPilot | thepud10
+695,2023-10-30,22:32,693,lukas06yt,Saba,COMPLETED,32451,30651,0,vittowar11 | lukas06yt
+696,2023-10-31,06:13,694,Ghovxst,Saba,COMPLETED,40434,38634,0,Ghovxst | SpedSantz
+697,2023-11-01,12:17,695,TrainedJetPilot,Sint Eustatius,COMPLETED,43755,41955,0,TrainedJetPilot | KAM1KAZE09
+698,2023-11-01,13:42,696,TrainedJetPilot,Saba,COMPLETED,16524,15174,1800,TrainedJetPilot | KAM1KAZE09
+699,2023-11-01,14:30,697,TrainedJetPilot,Saba,COMPLETED,27969,26169,0,TrainedJetPilot | SpedSantz | KAM1KAZE09
+700,2023-11-01,15:22,698,TrainedJetPilot,Saba,COMPLETED,0,0,1800,TrainedJetPilot | Thepud10 | bucchinamamma | opicityy
+701,2023-11-01,17:30,699,cHeadq,Saba,COMPLETED,28224,26424,0,cHeadq | possila
+702,2023-11-02,13:06,700,vittowar11,Sint Eustatius,COMPLETED,31534,30184,0,deadend_38 | vittowar11
+703,2023-11-02,16:27,701,vittowar11,Sint Eustatius,COMPLETED,36949,35149,300,vittowar11 | deadend_38 | SpedSantz
+704,2023-11-02,18:46,702,vittowar11,Sint Eustatius,COMPLETED,43613,41813,0,possila | vittowar11
+705,2023-11-02,20:23,703,JamesBond007F,Sint Eustatius,COMPLETED,45465,43665,0,JamesBond007F | Jxay015
+706,2023-11-02,21:16,704,KostasAgnelli,Sint Eustatius,COMPLETED,0,0,1650,
+707,2023-11-02,21:23,705,vittowar11,Sint Eustatius,COMPLETED,21870,20970,0,LITHU1_NIAN | vittowar11
+708,2023-11-02,21:52,706,TrainedJetPilot,Sint Eustatius,COMPLETED,36795,35445,450,RiflemanAutarch | opgamerboy16 | iiawesomeK9 | TrainedJetPilot
+709,2023-11-02,22:28,707,vittowar11,Saba,COMPLETED,0,0,1800,vittowar11 | yeatlyrics | ikben001 | opicityy | nghtRBX | Spellmor
+710,2023-11-02,23:03,708,vittowar11,Sint Eustatius,COMPLETED,43275,41925,0,nghtRBX | vittowar11 | opicityy | Spellmor | ikben001 | yeatlyrics
+711,2023-11-02,23:14,709,boosta_z,Sint Eustatius,COMPLETED,42570,40770,0,boosta_z | colton17483
+712,2023-11-02,23:26,710,KostasAgnelli,Sint Eustatius,COMPLETED,29835,28035,0,KostasAgnelli | ikben001
+713,2023-11-03,12:14,711,JamesBond007F,Sint Eustatius,COMPLETED,50666,48866,0,Army_TurkeyTr | JamesBond007F
+714,2023-11-03,16:20,712,KostasAgnelli,Sint Eustatius,CANCELLED,,,,M1_G12G | kingkaratal | waterisopascrap | KostasAgnelli
+715,2023-11-03,16:50,713,cHeadq,Sint Eustatius,COMPLETED,35393,33593,0,cHeadq | Army_TurkeyTr | yeatlyrics | Callme_BeconHair
+716,2023-11-03,16:53,714,KostasAgnelli,Sint Eustatius,COMPLETED,0,0,1800,KostasAgnelli | M1_G12G | waterisopascrap | kingkaratal
+717,2023-11-03,17:55,715,cHeadq,Sint Eustatius,COMPLETED,33015,31665,1800,cHeadq | Nikegoras | Olbir9iR2 | Oh_MyBricks
+718,2023-11-03,18:19,716,joppiesaus_nl,Sint Eustatius,COMPLETED,73785,71085,0,daciaexe | yeatlyrics | joppiesaus_nl
+719,2023-11-03,20:13,717,boosta_z,Saba,COMPLETED,31416,29616,0,boosta_z | Callme_BeconHair
+720,2023-11-03,20:33,718,boosta_z,Saba,COMPLETED,21756,20106,0,boosta_z | M1_G12G
+721,2023-11-03,22:18,719,TrainedJetPilot,Sint Eustatius,COMPLETED,0,0,1800,TrainedJetPilot | ezRenzo | martabellapolice22 | AlabamaLifeStyle
+722,2023-11-03,22:52,720,TrainedJetPilot,Sint Eustatius,COMPLETED,42420,40620,0,TrainedJetPilot | AlabamaLifeStyle | ezRenzo
+723,2023-11-04,00:07,721,TrainedJetPilot,Saba,COMPLETED,35220,33420,0,TrainedJetPilot | ezRenzo | AlabamaLifeStyle
+724,2023-11-04,01:10,722,TrainedJetPilot,Saba,COMPLETED,27225,25425,0,TrainedJetPilot | AlabamaLifeStyle
+725,2023-11-04,02:01,723,TrainedJetPilot,Saba,COMPLETED,31296,29496,150,TrainedJetPilot | AlabamaLifeStyle
+726,2023-11-04,03:40,724,TrainedJetPilot,Saba,COMPLETED,30804,29004,0,TrainedJetPilot | AlabamaLifeStyle | bIuvye
+727,2023-11-04,03:59,725,TrainedJetPilot,Saba,COMPLETED,44486,42836,0,TrainedJetPilot | bIuvye | AlabamaLifeStyle
+728,2023-11-04,04:58,726,TrainedJetPilot,Sint Eustatius,COMPLETED,45143,43343,0,TrainedJetPilot | KAM1KAZE09 | AlabamaLifeStyle | bIuvye
+729,2023-11-04,05:57,727,TrainedJetPilot,Sint Eustatius,COMPLETED,48165,46365,0,TrainedJetPilot | AlabamaLifeStyle | KAM1KAZE09
+730,2023-11-04,09:58,728,cHeadq,Saba,COMPLETED,30507,28707,0,cHeadq | KAM1KAZE09
+731,2023-11-04,10:38,729,cHeadq,Saba,COMPLETED,28776,26976,0,cHeadq | KAM1KAZE09
+732,2023-11-04,11:25,730,JamesBond007F,Sint Eustatius,COMPLETED,41925,40125,0,Army_TurkeyTr | KAM1KAZE09 | JamesBond007F
+733,2023-11-04,12:04,731,JamesBond007F,Sint Eustatius,COMPLETED,42491,40841,150,Army_TurkeyTr | KAM1KAZE09 | JamesBond007F | LITHU1_NIAN
+734,2023-11-04,17:37,732,KostasAgnelli,Sint Eustatius,COMPLETED,0,0,1800,KostasAgnelli | SShaded
+735,2023-11-04,20:08,733,JamesBond007F,Sint Eustatius,COMPLETED,43710,41910,0,Ve6ous | ww2baconhairsoldier | SShaded | AlabamaLifeStyle | JamesBond007F
+736,2023-11-05,11:46,734,JamesBond007F,Saba,COMPLETED,29736,28086,150,SShaded | ww2baconhairsoldier | Callme_BeconHair | waterisopascrap | Olbir9iR2 | JamesBond007F
+737,2023-11-05,12:35,735,JamesBond007F,Sint Eustatius,COMPLETED,44385,42585,0,ww2baconhairsoldier | Callme_BeconHair | SShaded | JamesBond007F
+738,2023-11-05,15:25,737,boosta_z,Sint Eustatius,COMPLETED,39810,38010,0,boosta_z | Ve6ous
+739,2023-11-05,16:08,738,JamesBond007F,Sint Eustatius,COMPLETED,55703,53903,0,Roberttini | 0shazoo0 | kingkaratal | vipbroHD
+740,2023-11-06,17:15,739,lukas06yt,Sint Eustatius,COMPLETED,40583,38783,0,KalashnikovPapi | jajebiecs | XxEIliexXx | Kocba4kaqko
+741,2023-11-07,14:37,740,JamesBond007F,Sint Eustatius,COMPLETED,50618,48818,0,Jxay015 | JamesBond007F
+742,2023-11-07,17:05,741,lukas06yt,Sint Eustatius,COMPLETED,42540,40740,0,vipbroHD | Callme_BeconHair | kingkaratal | Techtonic532
+743,2023-11-07,18:35,742,lukas06yt,Sint Eustatius,COMPLETED,40943,39143,0,nineteen9991 | Bittson3 | lukas06yt
+744,2023-11-07,18:40,743,TrainedJetPilot,Saba,COMPLETED,38772,36972,0,TrainedJetPilot | SpedSantz
+745,2023-11-07,19:39,744,lukas06yt,Sint Eustatius,COMPLETED,43309,41509,0,opicityy | Roberttini | Oh_MyBricks | Kocba4kaqko
+746,2023-11-07,19:47,745,TrainedJetPilot,Saba,COMPLETED,35112,33312,0,TrainedJetPilot | kingkaratal | iiawesomeK9 | yeatlyrics | SShaded | waterisopascrap
+747,2023-11-07,20:45,746,joppiesaus_nl,Sint Eustatius,COMPLETED,55444,52744,0,joppiesaus_nl | Roberttini | SShaded
+748,2023-11-07,21:58,747,joppiesaus_nl,Sint Eustatius,COMPLETED,0,0,2700,
+749,2023-11-08,11:46,748,JamesBond007F,Sint Eustatius,COMPLETED,52320,50520,0,DeathNarutoNote | JamesBond007F
+750,2023-11-08,12:39,749,JamesBond007F,Sint Eustatius,COMPLETED,0,0,1800,Jxay015 | JamesBond007F
+751,2023-11-08,12:41,750,lukas06yt,Sint Eustatius,COMPLETED,40185,38385,0,XxEIliexXx | ww2baconhairsoldier | lukas06yt
+752,2023-11-08,13:06,751,JamesBond007F,Saba,COMPLETED,0,0,1800,Jxay015 | JamesBond007F
+753,2023-11-08,13:24,752,lukas06yt,Saba,COMPLETED,29448,27648,0,lukas06yt | ww2baconhairsoldier
+754,2023-11-08,17:15,753,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+755,2023-11-08,22:12,754,lukas06yt,Sint Eustatius,COMPLETED,41239,39439,0,Roberttini | Callme_BeconHair | 0shazoo0 | nineteen9991
+756,2023-11-09,14:57,755,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+757,2023-11-09,17:09,756,lukas06yt,Sint Eustatius,COMPLETED,42266,40466,0,Unglassified | JxderTio_32 | lukas06yt
+758,2023-11-09,18:29,757,joppiesaus_nl,Saba,COMPLETED,35424,32724,0,joppiesaus_nl | yeatlyrics
+759,2023-11-09,18:54,758,joppiesaus_nl,Saba,COMPLETED,37452,35652,0,joppiesaus_nl | ikben001
+760,2023-11-10,19:53,759,joppiesaus_nl,Saba,CANCELLED,,,,
+761,2023-11-10,19:54,760,KAM1KAZE09,Sint Eustatius,COMPLETED,39060,37260,0,KAM1KAZE09 | waterisopascrap
+762,2023-11-10,19:57,761,joppiesaus_nl,Saba,COMPLETED,55200,52500,0,joppiesaus_nl | TrainedJetPilot | yeatlyrics | Callme_BeconHair | kingkaratal
+763,2023-11-10,19:59,762,TheLonelyCanuck,Sint Eustatius,COMPLETED,67050,64350,0,TheLonelyCanuck | lukas06yt | Oh_MyBricks
+764,2023-11-10,21:05,763,KAM1KAZE09,Saba,COMPLETED,32190,30390,0,KAM1KAZE09 | ww2baconhairsoldier
+765,2023-11-10,23:13,764,lukas06yt,Saba,COMPLETED,32028,30378,150,vipbroHD | ikben001 | iiawesomeK9 | Callme_BeconHair | nineteen9991
+766,2023-11-10,23:38,765,KAM1KAZE09,Sint Eustatius,COMPLETED,41884,40084,0,KAM1KAZE09 | ikben001 | vipbroHD | nineteen9991 | Callme_BeconHair
+767,2023-11-11,00:19,766,TheLonelyCanuck,Sint Eustatius,COMPLETED,48536,46286,0,TheLonelyCanuck | yeatlyrics | iiawesomeK9
+768,2023-11-11,01:12,767,TheLonelyCanuck,Sint Eustatius,COMPLETED,60326,57626,0,TheLonelyCanuck | yeatlyrics | iiawesomeK9
+769,2023-11-11,15:51,768,lukas06yt,Sint Eustatius,COMPLETED,53299,51499,0,vipbroHD | 0shazoo0 | yeatlyrics | Army_TurkeyTr
+770,2023-11-11,16:36,769,lukas06yt,Sint Eustatius,COMPLETED,37575,35775,0,nineteen9991 | lukas06yt | 0shazoo0 | yeatlyrics | Army_TurkeyTr | Callme_BeconHair
+771,2023-11-11,20:27,770,KAM1KAZE09,Sint Eustatius,COMPLETED,59828,58028,0,KAM1KAZE09 | Hedi_eule | Frietje17
+772,2023-11-11,21:21,771,lukas06yt,Saba,COMPLETED,32151,30651,300,lukas06yt | ikben001
+773,2023-11-11,21:58,772,lukas06yt,Sint Eustatius,COMPLETED,38464,36664,0,vipbroHD | nineteen9991 | yeatlyrics | lukas06yt | Army_TurkeyTr | ikben001
+774,2023-11-11,22:35,773,lukas06yt,Sint Eustatius,COMPLETED,48480,46680,0,vipbroHD | nineteen9991 | yeatlyrics | AlabamaLifeStyle | lukas06yt | ikben001
+775,2023-11-11,23:18,774,lukas06yt,Sint Eustatius,COMPLETED,47393,45593,0,nineteen9991 | lukas06yt | ikben001 | vipbroHD
+776,2023-11-12,11:20,775,JamesBond007F,Saba,COMPLETED,39624,37824,0,vipbroHD | ikben001 | Army_TurkeyTr | JamesBond007F
+777,2023-11-12,11:50,776,JamesBond007F,Sint Eustatius,COMPLETED,36765,34965,0,vipbroHD | ikben001 | nineteen9991 | 0shazoo0 | Army_TurkeyTr | JamesBond007F
+778,2023-11-12,11:53,777,joppiesaus_nl,Sint Eustatius,COMPLETED,36825,35025,0,joppiesaus_nl | TrainedJetPilot
+779,2023-11-12,12:33,778,joppiesaus_nl,Sint Eustatius,COMPLETED,71160,68460,0,joppiesaus_nl | ikben001 | Callme_BeconHair
+780,2023-11-12,12:52,779,TrainedJetPilot,Saba,COMPLETED,31261,29611,150,TrainedJetPilot | vipbroHD
+781,2023-11-12,13:29,780,SupremeBigBrother,Sint Eustatius,COMPLETED,57540,54840,0,SupremeBigBrother | vipbroHD | Salty_Mark | yeatlyrics
+782,2023-11-12,17:14,781,Callme_BeconHair,Saba,CANCELLED,,,,vipbroHD | meep6478 | Callme_BeconHair | Frietje17
+783,2023-11-12,18:04,782,Callme_BeconHair,Sint Eustatius,COMPLETED,44569,42769,0,vipbroHD | Callme_BeconHair | Frietje17 | nineteen9991
+784,2023-11-12,21:00,783,joppiesaus_nl,Sint Eustatius,COMPLETED,42788,40988,0,joppiesaus_nl | KarlBernadotte
+785,2023-11-12,23:34,784,lukas06yt,Sint Eustatius,COMPLETED,33214,31414,0,Frietje17 | lukas06yt
+786,2023-11-13,00:17,785,lukas06yt,Sint Eustatius,COMPLETED,52639,50839,0,Frietje17 | lukas06yt
+787,2023-11-13,11:47,786,vipbroHD,Sint Eustatius,COMPLETED,36345,34545,0,Frietje17 | bIuvye | vipbroHD | eprstbebra
+788,2023-11-13,12:30,787,vipbroHD,Sint Eustatius,COMPLETED,41490,39690,0,nineteen9991 | yeatlyrics | vipbroHD
+789,2023-11-13,14:23,788,vipbroHD,Sint Eustatius,COMPLETED,35940,34140,0,nineteen9991 | vipbroHD
+790,2023-11-13,16:28,789,Callme_BeconHair,Sint Eustatius,COMPLETED,36289,34489,0,Callme_BeconHair | 0shazoo0
+791,2023-11-13,17:56,790,vipbroHD,Sint Eustatius,COMPLETED,33124,31324,0,ww2baconhairsoldier | vipbroHD
+792,2023-11-13,18:30,791,vipbroHD,Sint Eustatius,COMPLETED,47835,46035,0,ww2baconhairsoldier | vipbroHD
+793,2023-11-13,19:55,792,vipbroHD,Saba,COMPLETED,37480,35830,150,nineteen9991 | vipbroHD
+794,2023-11-14,01:25,793,Salty_Mark,Sint Eustatius,COMPLETED,47614,45814,0,Salty_Mark | Techtonic532
+795,2023-11-14,01:33,794,TheLonelyCanuck,Sint Eustatius,COMPLETED,70965,68265,0,TheLonelyCanuck | lukas06yt | AlabamaLifeStyle
+796,2023-11-14,10:48,795,eprstbebra,Saba,COMPLETED,25704,23904,0,eprstbebra | vipbroHD
+797,2023-11-14,12:23,796,vipbroHD,Saba,COMPLETED,34215,32415,0,vipbroHD | bIuvye | DeathNarutoNote
+798,2023-11-14,14:44,797,Salty_Mark,Sint Eustatius,COMPLETED,40515,39015,300,Salty_Mark | vipbroHD
+799,2023-11-14,16:38,798,Callme_BeconHair,Sint Eustatius,COMPLETED,0,0,1800,Callme_BeconHair | ww2baconhairsoldier
+800,2023-11-14,18:35,799,vipbroHD,Saba,COMPLETED,0,0,1800,nineteen9991 | vipbroHD
+801,2023-11-14,18:44,800,Callme_BeconHair,Sint Eustatius,COMPLETED,7650,7200,1800,Callme_BeconHair | opgamerboy16 | Frietje17 | opicityy
+802,2023-11-14,19:31,801,JamesBond007F,Saba,COMPLETED,30864,29064,0,yeatlyrics | JamesBond007F
+803,2023-11-15,00:45,802,Salty_Mark,Sint Eustatius,COMPLETED,38423,36623,0,Salty_Mark | opicityy
+804,2023-11-15,14:00,803,vipbroHD,Sint Eustatius,COMPLETED,17160,16410,150,vipbroHD | krewman
+805,2023-11-15,14:57,804,eprstbebra,Saba,COMPLETED,29544,27744,0,eprstbebra | vipbroHD | Ve6ous
+806,2023-11-15,15:32,805,eprstbebra,Saba,COMPLETED,32019,30219,0,eprstbebra | AlexKOT78 | vipbroHD
+807,2023-11-15,20:40,806,joppiesaus_nl,Sint Eustatius,COMPLETED,45150,43350,0,joppiesaus_nl | yeatlyrics
+808,2023-11-16,10:45,807,eprstbebra,Sint Eustatius,COMPLETED,45945,44145,0,eprstbebra | AlexKOT78
+809,2023-11-16,16:42,808,eprstbebra,Saba,COMPLETED,0,0,1800,eprstbebra | AlexKOT78
+810,2023-11-17,00:44,809,Salty_Mark,Sint Eustatius,COMPLETED,48690,46890,0,Salty_Mark | Bittson3
+811,2023-11-17,09:14,810,KAM1KAZE09,Saba,COMPLETED,28692,26892,0,KAM1KAZE09 | KalashnikovPapi
+812,2023-11-17,13:54,811,vipbroHD,Sint Eustatius,COMPLETED,0,0,1800,eprstbebra | vipbroHD
+813,2023-11-17,16:57,812,vipbroHD,Sint Eustatius,COMPLETED,30990,29190,0,ikben001 | vipbroHD
+814,2023-11-17,17:35,813,vipbroHD,Sint Eustatius,COMPLETED,51645,49845,0,ikben001 | vipbroHD
+815,2023-11-17,18:04,814,vipbroHD,Sint Eustatius,COMPLETED,0,0,1800,vipbroHD | ikben001
+816,2023-11-17,22:09,815,Salty_Mark,Sint Eustatius,COMPLETED,54135,52335,0,Salty_Mark | Frietje17
+817,2023-11-17,22:51,816,vipbroHD,Sint Eustatius,COMPLETED,0,0,1800,Frietje17 | vipbroHD
+818,2023-11-17,23:21,817,vipbroHD,Sint Eustatius,COMPLETED,45533,43733,0,Frietje17 | vipbroHD
+819,2023-11-17,23:49,818,vipbroHD,Sint Eustatius,COMPLETED,44025,42225,0,Frietje17 | vipbroHD
+820,2023-11-18,00:25,819,vipbroHD,Sint Eustatius,COMPLETED,30985,29485,300,Frietje17 | vipbroHD
+821,2023-11-18,10:25,820,lukas06yt,Sint Eustatius,COMPLETED,31755,29955,0,krewman | lukas06yt
+822,2023-11-18,12:40,821,Callme_BeconHair,Sint Eustatius,COMPLETED,32130,30330,0,vipbroHD | Callme_BeconHair | DeathNarutoNote
+823,2023-11-18,14:01,822,vipbroHD,Sint Eustatius,COMPLETED,33660,31860,0,nineteen9991 | vipbroHD
+824,2023-11-18,19:54,823,SupremeBigBrother,Sint Eustatius,COMPLETED,67155,64455,0,SupremeBigBrother | TrainedJetPilot | Frietje17
+825,2023-11-18,20:31,824,lukas06yt,Sint Eustatius,COMPLETED,44929,43129,0,AlabamaLifeStyle | lukas06yt
+826,2023-11-19,00:19,825,lukas06yt,Sint Eustatius,COMPLETED,41745,39945,0,Frietje17 | AlabamaLifeStyle | lukas06yt
+827,2023-11-19,12:21,826,vipbroHD,Sint Eustatius,COMPLETED,50168,48368,0,vipbroHD | krewman
+828,2023-11-19,12:55,827,vipbroHD,Sint Eustatius,COMPLETED,39510,37710,0,krewman | vipbroHD
+829,2023-11-20,15:09,828,vipbroHD,Sint Eustatius,COMPLETED,46793,44993,0,nineteen9991 | vipbroHD
+830,2023-11-21,13:01,829,vipbroHD,Saba,COMPLETED,31788,29988,0,DeathNarutoNote | vipbroHD
+831,2023-11-21,14:27,830,vipbroHD,Sint Eustatius,COMPLETED,0,0,1800,vipbroHD | xxlpoop | DeathNarutoNote
+832,2023-11-21,14:59,831,vipbroHD,Sint Eustatius,COMPLETED,36203,34403,0,vipbroHD | DeathNarutoNote
+833,2023-11-21,19:17,832,joppiesaus_nl,Sint Eustatius,COMPLETED,60776,58076,0,joppiesaus_nl | ErikBernadotte | KarlBernadotte
+834,2023-11-22,05:41,833,vipbroHD,Saba,COMPLETED,31014,29214,0,DeathNarutoNote | vipbroHD
+835,2023-11-22,12:08,834,vipbroHD,Sint Eustatius,COMPLETED,0,0,1800,DeathNarutoNote | vipbroHD
+836,2023-11-22,12:50,835,vipbroHD,Saba,COMPLETED,29700,27900,0,vipbroHD | DeathNarutoNote
+837,2023-11-22,13:17,836,vipbroHD,Sint Eustatius,COMPLETED,36593,34943,150,nineteen9991 | yeatlyrics | vipbroHD | DeathNarutoNote
+838,2023-11-22,13:33,837,lukas06yt,Sint Eustatius,COMPLETED,43905,42105,0,bIuvye | lukas06yt
+839,2023-11-22,13:58,838,vipbroHD,Sint Eustatius,COMPLETED,6120,5670,0,yeatlyrics
+840,2023-11-22,17:39,839,vipbroHD,Saba,COMPLETED,32415,30615,0,ArneKingfire | vipbroHD
+841,2023-11-22,18:32,840,vipbroHD,Sint Eustatius,COMPLETED,28305,26505,0,ArneKingfire | vipbroHD
+842,2023-11-22,18:32,841,JamesBond007F,Saba,COMPLETED,38040,36240,0,opicityy | JamesBond007F
+843,2023-11-22,19:10,842,JamesBond007F,Sint Eustatius,COMPLETED,47306,45506,0,opicityy | JamesBond007F
+844,2023-11-23,05:23,843,vipbroHD,Sint Eustatius,COMPLETED,45401,43601,0,DeathNarutoNote | vipbroHD
+845,2023-11-23,14:40,844,joppiesaus_nl,Saba,COMPLETED,0,0,1800,
+846,2023-11-23,17:39,845,lukas06yt,Sint Eustatius,CANCELLED,,,,opgamerboy16 | lukas06yt
+847,2023-11-23,17:40,846,JamesBond007F,Sint Eustatius,COMPLETED,44516,42716,0,possila | JamesBond007F
+848,2023-11-23,17:40,847,lukas06yt,Sint Eustatius,COMPLETED,35606,33806,0,opgamerboy16 | lukas06yt
+849,2023-11-23,18:12,848,joppiesaus_nl,Saba,COMPLETED,34380,32130,450,joppiesaus_nl | SupremeBigBrother
+850,2023-11-23,18:17,849,JamesBond007F,Sint Eustatius,COMPLETED,41760,39960,0,possila | JamesBond007F
+851,2023-11-23,18:48,850,joppiesaus_nl,Sint Eustatius,COMPLETED,62865,61065,0,joppiesaus_nl | SupremeBigBrother
+852,2023-11-23,19:31,851,joppiesaus_nl,Sint Eustatius,COMPLETED,60638,57938,0,joppiesaus_nl | SupremeBigBrother
+853,2023-11-23,20:06,852,lukas06yt,Saba,COMPLETED,23994,22644,0,lukas06yt | JamesBond007F
+854,2023-11-23,20:28,853,joppiesaus_nl,Sint Eustatius,COMPLETED,32550,31200,0,joppiesaus_nl | SupremeBigBrother
+855,2023-11-23,20:39,854,joppiesaus_nl,Sint Eustatius,COMPLETED,42885,40635,0,joppiesaus_nl | SupremeBigBrother
+856,2023-11-23,20:42,855,lukas06yt,Saba,COMPLETED,27909,26109,0,JamesBond007F | lukas06yt
+857,2023-11-23,21:06,856,lukas06yt,Saba,COMPLETED,27552,25752,0,JamesBond007F | lukas06yt
+858,2023-11-23,21:21,857,lukas06yt,Saba,COMPLETED,33639,31839,0,JamesBond007F | lukas06yt
+859,2023-11-23,21:25,858,joppiesaus_nl,Saba,COMPLETED,56664,53964,0,joppiesaus_nl | SupremeBigBrother
+860,2023-11-24,05:51,859,KAM1KAZE09,Saba,COMPLETED,37908,36108,0,KAM1KAZE09 | DeathNarutoNote
+861,2023-11-24,14:10,860,vipbroHD,Saba,COMPLETED,14796,13896,0,DeathNarutoNote
+862,2023-11-24,15:20,861,vipbroHD,Sint Eustatius,CANCELLED,,,,opgamerboy16 | DeathNarutoNote | vipbroHD
+863,2023-11-24,15:25,862,cHeadq,Sint Eustatius,COMPLETED,35134,33334,0,cHeadq | Kocba4kaqko
+864,2023-11-24,15:43,863,vipbroHD,Sint Eustatius,COMPLETED,43935,42135,0,opgamerboy16 | DeathNarutoNote | vipbroHD
+865,2023-11-24,18:06,864,joppiesaus_nl,Sint Eustatius,COMPLETED,30600,28800,1800,joppiesaus_nl | vipbroHD | Samu5sam44
+866,2023-11-24,19:31,865,joppiesaus_nl,Sint Eustatius,COMPLETED,54229,51529,0,joppiesaus_nl | Samu5sam44 | vipbroHD
+867,2023-11-24,19:37,866,lukas06yt,Saba,COMPLETED,32994,31344,150,nineteen9991 | yeatlyrics | lukas06yt
+868,2023-11-24,20:03,867,lukas06yt,Saba,COMPLETED,35700,33900,0,JamesBond007F | lukas06yt
+869,2023-11-24,20:28,868,joppiesaus_nl,Sint Eustatius,COMPLETED,61185,58485,0,joppiesaus_nl | Samu5sam44 | vipbroHD
+870,2023-11-25,11:10,869,JamesBond007F,Saba,COMPLETED,35844,34044,0,daciaexe | vipbroHD | JamesBond007F | opgamerboy16
+871,2023-11-25,14:50,870,Salty_Mark,Saba,COMPLETED,34035,32235,0,Salty_Mark | opgamerboy16
+872,2023-11-25,20:29,871,vipbroHD,Sint Eustatius,COMPLETED,34796,32996,0,vipbroHD | nineteen9991
+873,2023-11-25,20:37,872,cHeadq,Sint Eustatius,COMPLETED,46260,44460,0,cHeadq | Kocba4kaqko
+874,2023-11-25,21:55,873,cHeadq,Sint Eustatius,COMPLETED,42690,40890,0,cHeadq | Kocba4kaqko
+875,2023-11-26,08:46,874,boosta_z,Sint Eustatius,COMPLETED,35445,33645,0,boosta_z | JaceTheCarpetStain
+876,2023-11-26,11:15,875,cHeadq,Sint Eustatius,COMPLETED,39345,37545,0,cHeadq | Kocba4kaqko
+877,2023-11-26,14:04,876,vipbroHD,Saba,COMPLETED,36696,34896,0,DeathNarutoNote | vipbroHD
+878,2023-11-27,16:45,877,yeatlyrics,Sint Eustatius,COMPLETED,0,0,1800,joppiesaus_nl | yeatlyrics
+879,2023-11-27,22:12,878,joppiesaus_nl,Sint Eustatius,COMPLETED,32734,30934,0,joppiesaus_nl | SupremeBigBrother
+880,2023-11-27,22:50,879,joppiesaus_nl,Sint Eustatius,COMPLETED,68190,65490,0,joppiesaus_nl | SupremeBigBrother
+881,2023-11-28,14:59,880,Salty_Mark,Sint Eustatius,COMPLETED,33030,31230,0,Salty_Mark | jajebiecs
+882,2023-11-28,18:41,881,joppiesaus_nl,Sint Eustatius,COMPLETED,60630,57930,0,joppiesaus_nl | SupremeBigBrother
+883,2023-11-28,21:05,882,simonmutsaers,Sint Eustatius,COMPLETED,42015,40215,0,simonmutsaers | Ve6ous
+884,2023-12-01,15:50,883,KAM1KAZE09,Saba,COMPLETED,32880,31080,0,KAM1KAZE09 | vipbroHD | jajebiecs
+885,2023-12-02,00:21,884,Salty_Mark,Sint Eustatius,COMPLETED,33360,32160,0,ItzShoveel | mikempo2007 | gzmer20 | piper221 | jamjam223big | egcand2008 | 123tomas32 | Salty_Mark
+886,2023-12-02,10:51,885,TrainedJetPilot,Saba,COMPLETED,25308,23958,0,TrainedJetPilot | SShaded
+887,2023-12-02,12:54,886,lukas06yt,Sint Eustatius,COMPLETED,31320,29520,0,precision_strike | yummycake77 | AetherCurrents | enxate
+888,2023-12-02,15:46,887,lukas06yt,Saba,COMPLETED,29463,27663,0,lukas06yt | possila
+889,2023-12-02,17:39,888,Frietje17,Sint Eustatius,COMPLETED,51495,49695,0,Frietje17 | enxate | 123tomas32 | Kocba4kaqko
+890,2023-12-02,20:04,889,Frietje17,Sint Eustatius,COMPLETED,55313,53513,0,Frietje17 | lizoook_Kr | Moniieko
+891,2023-12-02,21:43,890,lukas06yt,Sint Eustatius,COMPLETED,41010,39360,150,MaximusGeronomi | kischa123 | epicdudetheco | airbases
+892,2023-12-02,23:13,891,Frietje17,Sint Eustatius,COMPLETED,54083,52283,0,gzmer20 | piper221 | kischa123 | lizoook_Kr
+893,2023-12-03,00:14,892,Frietje17,Sint Eustatius,COMPLETED,54300,52650,150,Frietje17 | jamjam223big | piper221
+894,2023-12-03,01:00,893,Frietje17,Sint Eustatius,COMPLETED,38535,36735,0,Frietje17 | airbases
+895,2023-12-03,09:36,894,KAM1KAZE09,Sint Eustatius,COMPLETED,41985,40185,0,KAM1KAZE09 | yourealbooga
+896,2023-12-03,13:22,895,TrainedJetPilot,Saba,COMPLETED,36948,35148,0,TrainedJetPilot | SShaded
+897,2023-12-03,14:01,896,Frietje17,Saba,COMPLETED,34776,32976,0,Frietje17 | lizoook_Kr | kischa123 | enxate
+898,2023-12-03,14:19,897,TrainedJetPilot,Saba,COMPLETED,24444,22644,0,TrainedJetPilot | SShaded
+899,2023-12-03,14:40,898,Frietje17,Sint Eustatius,COMPLETED,35970,34170,0,lizoook_Kr | kischa123 | enxate | Frietje17
+900,2023-12-03,15:04,899,lukas06yt,Sint Eustatius,COMPLETED,26400,25050,0,MarcelonaFB | lukas06yt
+901,2023-12-03,15:36,900,Frietje17,Sint Eustatius,COMPLETED,56040,54240,0,Frietje17 | enxate
+902,2023-12-03,19:10,901,lukas06yt,Sint Eustatius,COMPLETED,30420,28620,0,mrpowerblaster | waroar1 | Realrektmasta | lukas06yt
+903,2023-12-03,20:18,902,Frietje17,Sint Eustatius,COMPLETED,37553,35903,150,Frietje17 | Realrektmasta | Moniieko
+904,2023-12-03,21:46,903,Frietje17,Sint Eustatius,COMPLETED,30600,28800,0,lizoook_Kr | enxate | Frietje17
+905,2023-12-04,16:30,904,lukas06yt,Sint Eustatius,COMPLETED,36975,35175,0,TimIsNub | CanadianLaw_RBLX | lukas06yt
+906,2023-12-04,19:54,905,lukas06yt,Sint Eustatius,COMPLETED,33615,31815,0,vuisthaaktwan | Frizoned | DAHWIDHAWIDAWYD | tweetech
+907,2023-12-04,20:33,906,Frietje17,Sint Eustatius,COMPLETED,46125,44325,0,Frietje17 | vuisthaaktwan | waroar1
+908,2023-12-04,21:15,907,Frietje17,Sint Eustatius,COMPLETED,46774,44974,0,waroar1 | CanadianLaw_RBLX | kischa123 | vuisthaaktwan
+909,2023-12-05,01:16,908,Salty_Mark,Saba,COMPLETED,23796,22446,450,Salty_Mark | jamjam223big
+910,2023-12-05,13:01,909,Frietje17,Sint Eustatius,COMPLETED,45229,43429,0,Frietje17 | vuisthaaktwan
+911,2023-12-05,16:06,910,KAM1KAZE09,Sint Eustatius,COMPLETED,0,0,1800,KAM1KAZE09 | BecRobloxz
+912,2023-12-05,16:51,911,Frietje17,Sint Eustatius,COMPLETED,39593,37793,0,noob123ghgb | Frietje17
+913,2023-12-05,18:40,912,vipbroHD,Sint Eustatius,COMPLETED,33356,31556,0,vipbroHD | glim_glam
+914,2023-12-05,19:45,913,Frietje17,Sint Eustatius,COMPLETED,46530,44730,0,Frietje17 | tweetech | Moniieko | 1eyed_fish
+915,2023-12-05,21:17,914,Ghovxst,Saba,COMPLETED,31356,29556,0,mikempo2007 | gzmer20 | AetherCurrents | Ghovxst
+916,2023-12-06,00:29,915,Salty_Mark,Sint Eustatius,COMPLETED,39979,38179,0,Salty_Mark | jamjam223big
+917,2023-12-06,00:51,916,Ghovxst,Sint Eustatius,COMPLETED,37635,35835,0,Ghovxst | Frizoned
+918,2023-12-06,01:15,917,Salty_Mark,Sint Eustatius,COMPLETED,44021,42221,0,Salty_Mark | jamjam223big
+919,2023-12-06,15:32,918,Salty_Mark,Saba,COMPLETED,26742,24942,0,noob123ghgb | Salty_Mark
+920,2023-12-06,19:20,919,Frietje17,Sint Eustatius,COMPLETED,45705,43905,0,Frietje17 | enxate | piper221
+921,2023-12-06,19:57,920,Frietje17,Sint Eustatius,COMPLETED,38858,37058,0,Frietje17 | kischa123 | enxate | piper221
+922,2023-12-06,22:05,921,lukas06yt,Saba,COMPLETED,39693,37893,0,silverWolfDiscoX | JimmySTitanite | lukas06yt
+923,2023-12-07,03:14,922,Ghovxst,Sint Eustatius,COMPLETED,0,0,1800,Ve6ous | Ghovxst | Salty_Mark
+924,2023-12-07,18:51,923,Ghovxst,Saba,COMPLETED,27166,25516,150,Ghovxst | SShaded | AetherCurrents
+925,2023-12-07,19:18,924,lukas06yt,Sint Eustatius,COMPLETED,33428,31628,0,lukas06yt | enxate
+926,2023-12-07,20:06,925,Ghovxst,Sint Eustatius,COMPLETED,25853,24953,450,Ghovxst | Waffle_Toe
+927,2023-12-07,22:26,926,Tojeko_G,Saba,COMPLETED,30162,28362,0,Tojeko_G | silverWolfDiscoX
+928,2023-12-07,22:58,927,Ghovxst,Saba,COMPLETED,0,0,1800,
+929,2023-12-07,23:03,928,Salty_Mark,Sint Eustatius,COMPLETED,37699,35899,0,Salty_Mark | jamjam223big | Frizoned
+930,2023-12-07,23:27,929,Tojeko_G,Saba,COMPLETED,0,0,1800,
+931,2023-12-08,02:45,930,Tojeko_G,Sint Eustatius,COMPLETED,26685,24885,0,Tojeko_G | silverWolfDiscoX
+932,2023-12-08,11:37,931,lukas06yt,Sint Eustatius,COMPLETED,43508,41708,0,iiSandwich_Lawz | JasYB17 | lukas06yt
+933,2023-12-08,15:04,932,Salty_Mark,Sint Eustatius,COMPLETED,38280,36480,0,Salty_Mark | enxate | Ve6ous
+934,2023-12-08,15:58,933,Salty_Mark,Sint Eustatius,COMPLETED,53644,51844,0,Salty_Mark | enxate | Ve6ous
+935,2023-12-08,17:42,934,Frietje17,Sint Eustatius,COMPLETED,32145,30345,0,Frietje17 | kischa123 | CanadianLaw_RBLX
+936,2023-12-08,18:05,935,Salty_Mark,Sint Eustatius,COMPLETED,44719,42919,0,Salty_Mark | jamjam223big
+937,2023-12-08,20:47,936,Ghovxst,Sint Eustatius,COMPLETED,48476,46676,0,Waffle_Toe | Ghovxst
+938,2023-12-08,21:26,937,Ghovxst,Sint Eustatius,COMPLETED,32145,30345,0,Waffle_Toe | Ghovxst
+939,2023-12-08,21:49,938,lukas06yt,Sint Eustatius,COMPLETED,39304,37504,0,iliasiliasiliasbah | brian202806 | lukas06yt
+940,2023-12-08,23:10,939,Salty_Mark,Sint Eustatius,COMPLETED,42420,40620,0,Salty_Mark | JimmySTitanite
+941,2023-12-09,18:19,940,eprstbebra,Sint Eustatius,COMPLETED,30600,28800,0,eprstbebra | AlexKOT78 | piper221 | Realrektmasta
+942,2023-12-09,21:00,941,Salty_Mark,Sint Eustatius,COMPLETED,38348,36548,0,Salty_Mark | LorexBugi
+943,2023-12-09,21:22,942,Frietje17,Saba,COMPLETED,34197,32397,0,enxate | Frietje17
+944,2023-12-09,22:03,943,Frietje17,Sint Eustatius,COMPLETED,35895,34095,0,enxate | Frietje17
+945,2023-12-10,11:43,944,cHeadq,Sint Eustatius,COMPLETED,38494,36694,0,cHeadq | DeathNarutoNote
+946,2023-12-10,13:47,945,Salty_Mark,Sint Eustatius,COMPLETED,51810,50010,0,Salty_Mark | LorexBugi | brian202806 | noob123ghgb
+947,2023-12-10,14:52,946,Salty_Mark,Sint Eustatius,COMPLETED,39656,37856,0,Salty_Mark | noob123ghgb | brian202806 | LorexBugi
+948,2023-12-10,15:47,947,JamesBond007F,Saba,COMPLETED,47784,45984,0,vipbroHD | MarcelonaFB | JamesBond007F
+949,2023-12-11,11:20,948,eprstbebra,Saba,COMPLETED,46752,44952,0,eprstbebra | AlexKOT78
+950,2023-12-11,12:05,949,lukas06yt,Saba,COMPLETED,37980,36180,0,DeathNarutoNote | lukas06yt
+951,2023-12-11,12:08,950,eprstbebra,Saba,COMPLETED,39240,37440,0,eprstbebra | AlexKOT78
+952,2023-12-11,12:41,951,lukas06yt,Saba,COMPLETED,32031,30231,0,noob123ghgb | CanadianLaw_RBLX | lukas06yt
+953,2023-12-11,13:46,952,lukas06yt,Sint Eustatius,COMPLETED,50805,49005,0,iliasiliasiliasbah | lukas06yt | TimIsNub | LorexBugi
+954,2023-12-11,21:18,953,KAM1KAZE09,Sint Eustatius,COMPLETED,40980,39180,0,KAM1KAZE09 | loulo383
+955,2023-12-12,18:33,954,Frietje17,Sint Eustatius,COMPLETED,25245,23445,0,Frietje17 | enxate | kischa123
+956,2023-12-12,19:24,955,Frietje17,Sint Eustatius,COMPLETED,56790,54990,0,Frietje17 | enxate | kischa123
+957,2023-12-12,19:47,956,JamesBond007F,Saba,COMPLETED,30912,29112,0,LorexBugi | kischa123 | vuisthaaktwan | JamesBond007F
+958,2023-12-12,20:57,957,Salty_Mark,Sint Eustatius,COMPLETED,32644,31294,450,Salty_Mark | gzmer20 | LorexBugi | JimmySTitanite
+959,2023-12-13,14:40,958,JamesBond007F,Sint Eustatius,COMPLETED,47790,45990,0,LorexBugi | JamesBond007F
+960,2023-12-13,21:54,959,Salty_Mark,Sint Eustatius,COMPLETED,45045,43245,0,Salty_Mark | jamjam223big
+961,2023-12-14,12:57,960,JamesBond007F,Sint Eustatius,COMPLETED,53314,51514,0,vuisthaaktwan | JamesBond007F
+962,2023-12-14,14:51,961,lukas06yt,Sint Eustatius,COMPLETED,43481,41681,0,LorexBugi | piper221 | yeatlyrics | lukas06yt
+963,2023-12-14,19:13,962,lukas06yt,Sint Eustatius,COMPLETED,40980,39180,0,TimIsNub | iliasiliasiliasbah | silverWolfDiscoX | LorexBugi
+964,2023-12-15,11:17,963,eprstbebra,Saba,COMPLETED,33660,31860,0,eprstbebra | AlexKOT78
+965,2023-12-15,12:54,964,JamesBond007F,Saba,COMPLETED,35268,33468,0,vuisthaaktwan | JamesBond007F
+966,2023-12-15,13:20,965,JamesBond007F,Sint Eustatius,COMPLETED,39300,37500,0,vuisthaaktwan | JamesBond007F
+967,2023-12-15,15:04,966,JamesBond007F,Sint Eustatius,COMPLETED,44820,43020,0,frizzer_HCW | JamesBond007F
+968,2023-12-15,15:18,967,Salty_Mark,Sint Eustatius,COMPLETED,37905,36105,1800,Salty_Mark | DAHWIDHAWIDAWYD
+969,2023-12-15,19:28,968,JamesBond007F,Sint Eustatius,COMPLETED,0,0,2700,frizzer_HCW | vuisthaaktwan | JamesBond007F
+970,2023-12-16,17:50,969,JamesBond007F,Sint Eustatius,COMPLETED,51529,49729,0,vuisthaaktwan | JamesBond007F
+971,2023-12-16,18:24,970,JamesBond007F,Sint Eustatius,COMPLETED,36503,34703,0,iliasiliasiliasbah | vuisthaaktwan | JamesBond007F
+972,2023-12-17,11:07,971,vipbroHD,Sint Eustatius,COMPLETED,45975,44175,0,DeathNarutoNote | vipbroHD
+973,2023-12-17,12:04,972,JamesBond007F,Sint Eustatius,COMPLETED,37245,35445,0,frizzer_HCW | vuisthaaktwan | JamesBond007F
+974,2023-12-17,12:38,973,JamesBond007F,Sint Eustatius,COMPLETED,44033,42233,0,frizzer_HCW | JamesBond007F
+975,2023-12-20,08:50,974,lukas06yt,Sint Eustatius,COMPLETED,39195,37395,0,vuisthaaktwan | lukas06yt
+976,2023-12-20,14:55,975,lukas06yt,Sint Eustatius,COMPLETED,41055,39255,0,SShaded | vuisthaaktwan | bIuvye | yeatlyrics
+977,2023-12-20,15:33,976,lukas06yt,Sint Eustatius,COMPLETED,30296,28496,0,SShaded | vuisthaaktwan | bIuvye | yeatlyrics
+978,2023-12-20,16:01,977,lukas06yt,Sint Eustatius,COMPLETED,46410,44610,0,frizzer_HCW | vuisthaaktwan | iliasiliasiliasbah | lukas06yt
+979,2023-12-20,19:00,978,boosta_z,Saba,COMPLETED,0,0,1800,boosta_z | vuisthaaktwan
+980,2023-12-20,19:43,979,JamesBond007F,Saba,COMPLETED,30999,29199,0,Jxay015 | JamesBond007F
+981,2023-12-21,15:28,980,Salty_Mark,Sint Eustatius,COMPLETED,38423,36623,0,Salty_Mark | enxate | vuisthaaktwan
+982,2023-12-21,16:39,981,TrainedJetPilot,Saba,COMPLETED,48938,47138,0,TrainedJetPilot | SShaded
+983,2023-12-22,13:00,982,JamesBond007F,Sint Eustatius,COMPLETED,27435,26085,0,JamesBond007F | vuisthaaktwan
+984,2023-12-22,14:55,983,simonmutsaers,Saba,COMPLETED,42900,41100,0,simonmutsaers | vuisthaaktwan | silverWolfDiscoX
+985,2023-12-22,15:43,984,lukas06yt,Sint Eustatius,COMPLETED,42255,40455,0,King_Levi05 | lukas06yt
+986,2023-12-22,18:11,985,Salty_Mark,Sint Eustatius,COMPLETED,38550,36750,0,Salty_Mark | Frizoned | vuisthaaktwan
+987,2023-12-22,18:59,986,Salty_Mark,Sint Eustatius,COMPLETED,41359,39559,0,Salty_Mark | Frizoned | vuisthaaktwan
+988,2023-12-22,19:13,987,joppiesaus_nl,Sint Eustatius,COMPLETED,71265,68565,0,joppiesaus_nl | frizzer_HCW | iliasiliasiliasbah
+989,2023-12-22,20:42,988,jormguh,Sint Eustatius,COMPLETED,67316,64616,0,frizzer_HCW | iliasiliasiliasbah | Salty_Mark
+990,2023-12-22,21:48,989,joppiesaus_nl,Sint Eustatius,COMPLETED,54735,52935,0,joppiesaus_nl | SupremeBigBrother
+991,2023-12-25,11:46,990,joppiesaus_nl,Saba,COMPLETED,33894,32094,0,joppiesaus_nl
+992,2023-12-25,15:06,991,Salty_Mark,Saba,COMPLETED,39408,37608,0,LorexBugi | Salty_Mark
+993,2023-12-26,15:01,992,boosta_z,Sint Eustatius,COMPLETED,31969,30169,0,boosta_z | FIBOPENUP_NOW | Finmikke1 | LorexBugi
+994,2023-12-26,17:34,993,boosta_z,Saba,COMPLETED,0,0,1800,boosta_z | yummycake77
+995,2023-12-26,21:13,994,lukas06yt,Sint Eustatius,COMPLETED,46676,44876,0,Techtonic532 | nineteen9991 | lukas06yt
+996,2023-12-28,16:27,995,Salty_Mark,Sint Eustatius,COMPLETED,51090,49290,0,jamjam223big | Salty_Mark
+997,2023-12-28,16:56,996,Salty_Mark,Sint Eustatius,COMPLETED,51210,49410,0,jamjam223big | Salty_Mark
+998,2023-12-29,08:37,997,lukas06yt,Sint Eustatius,COMPLETED,39195,37395,0,Hi_Champion | lukas06yt
+999,2023-12-29,09:10,998,lukas06yt,Sint Eustatius,COMPLETED,44760,42960,0,peterrdefries12 | lukas06yt
+1000,2023-12-29,15:45,999,Frietje17,Sint Eustatius,COMPLETED,44925,43125,0,Frietje17 | enxate
+1001,2023-12-29,16:02,1000,lukas06yt,Sint Eustatius,COMPLETED,34410,32610,0,iliasiliasiliasbah | frizzer_HCW | vuisthaaktwan | King_Levi05
+1002,2023-12-29,18:29,1001,Frietje17,Sint Eustatius,COMPLETED,44636,42836,0,Frietje17 | lizoook_Kr
+1003,2023-12-29,21:02,1002,Salty_Mark,Sint Eustatius,COMPLETED,48780,46980,0,JimmySTitanite | Salty_Mark
+1004,2023-12-29,21:42,1003,Salty_Mark,Sint Eustatius,COMPLETED,33356,31556,0,JimmySTitanite | Salty_Mark
+1005,2023-12-29,22:20,1004,Salty_Mark,Sint Eustatius,COMPLETED,43343,41543,0,JimmySTitanite | Salty_Mark
+1006,2023-12-30,20:33,1005,Salty_Mark,Sint Eustatius,COMPLETED,46178,44378,0,0shazoo0 | iliasiliasiliasbah | Salty_Mark | vuisthaaktwan
+1007,2023-12-31,00:35,1006,TheLonelyCanuck,Sint Eustatius,COMPLETED,62580,59880,0,TheLonelyCanuck | yeatlyrics | enxate | nineteen9991
+1008,2023-12-31,01:37,1007,TheLonelyCanuck,Sint Eustatius,COMPLETED,68498,66098,0,TheLonelyCanuck | enxate | yeatlyrics | Tojeko_G
+1009,2023-12-31,18:43,1008,SupremeBigBrother,Saba,COMPLETED,35136,33336,0,SupremeBigBrother | enxate | JimmySTitanite
+1010,2024-01-01,00:26,1009,SupremeBigBrother,Saba,COMPLETED,34005,32205,0,SupremeBigBrother | enxate
+1011,2024-01-01,16:33,1010,thecoolguyisco,Saba,COMPLETED,37944,36144,1800,Hi_Champion | vuisthaaktwan | thecoolguyisco
+1012,2024-01-01,19:33,1011,lukas06yt,Sint Eustatius,COMPLETED,41828,40028,0,frizzer_HCW | lukas06yt | yeatlyrics | TimIsNub | iliasiliasiliasbah
+1013,2024-01-02,00:07,1012,Salty_Mark,Sint Eustatius,COMPLETED,45026,43226,0,enxate | Salty_Mark | JimmySTitanite
+1014,2024-01-02,16:17,1013,lukas06yt,Sint Eustatius,COMPLETED,53756,51956,0,Finmikke1 | peterrdefries12 | enxate | lukas06yt
+1015,2024-01-02,18:10,1014,Salty_Mark,Sint Eustatius,COMPLETED,42645,40845,0,vuisthaaktwan | Salty_Mark
+1016,2024-01-02,19:56,1015,lukas06yt,Sint Eustatius,COMPLETED,51615,49815,0,yeatlyrics | peterrdefries12 | vuisthaaktwan | Salty_Mark
+1017,2024-01-02,22:26,1016,TrainedJetPilot,Sint Eustatius,COMPLETED,37860,36060,0,TrainedJetPilot | JimmySTitanite | vuisthaaktwan
+1018,2024-01-02,23:44,1017,TrainedJetPilot,Sint Eustatius,COMPLETED,0,0,1800,
+1019,2024-01-03,00:29,1018,jormguh,Saba,COMPLETED,47778,45078,0,enxate | lukas06yt | jormguh
+1020,2024-01-03,14:19,1019,jormguh,Sint Eustatius,COMPLETED,0,0,2700,jormguh | vuisthaaktwan
+1021,2024-01-03,14:45,1020,enxate,Sint Eustatius,COMPLETED,0,0,0,enxate | yummycake77
+1022,2024-01-03,15:07,1021,jormguh,Saba,COMPLETED,0,0,0,jormguh | vuisthaaktwan
+1023,2024-01-03,19:26,1022,vipbroHD,Sint Eustatius,COMPLETED,46455,44655,0,nineteen9991 | vipbroHD
+1024,2024-01-03,19:36,1023,JamesBond007F,Sint Eustatius,COMPLETED,29880,28680,900,EternalMaethor | Dellz3 | OIivine | DivineIsNotFine | kanamies123456788 | kanamies123456789 | KaijiroYamaguchi | JosephSpadavechio
+1025,2024-01-03,19:47,1024,lukas06yt,Sint Eustatius,COMPLETED,41524,39724,0,tposte02 | victorboemer123 | Hermengildt | sweggyguy454
+1026,2024-01-04,09:29,1025,Finmikke1,Sint Eustatius,COMPLETED,41933,40133,0,Finmikke1 | kanamies123456789
+1027,2024-01-04,10:21,1026,Finmikke1,Sint Eustatius,COMPLETED,38479,36679,0,Finmikke1 | Dellz3 | kanamies123456789
+1028,2024-01-04,11:40,1027,enxate,Sint Eustatius,COMPLETED,45990,44190,0,enxate | victorboemer123 | lizoook_Kr | vuisthaaktwan
+1029,2024-01-04,12:28,1028,enxate,Sint Eustatius,COMPLETED,43448,41648,0,enxate | victorboemer123 | vuisthaaktwan
+1030,2024-01-04,13:50,1029,Finmikke1,Sint Eustatius,COMPLETED,42045,40245,0,kanamies123456789 | Finmikke1
+1031,2024-01-04,14:58,1030,Finmikke1,Sint Eustatius,COMPLETED,39563,37913,150,Finmikke1 | kanamies123456789 | vuisthaaktwan
+1032,2024-01-04,15:01,1031,Salty_Mark,Sint Eustatius,COMPLETED,20655,19305,0,StasiAgentKim | WubbersOrDie | moyed
+1033,2024-01-04,15:17,1032,enxate,Sint Eustatius,COMPLETED,53295,51495,0,enxate | yummycake77
+1034,2024-01-04,15:21,1033,KAM1KAZE09,Saba,COMPLETED,35856,34056,0,KAM1KAZE09 | KaijiroYamaguchi
+1035,2024-01-04,17:02,1034,Finmikke1,Sint Eustatius,COMPLETED,36870,35370,300,Finmikke1 | Hermengildt | sweggyguy454 | victorboemer123
+1036,2024-01-04,17:34,1035,enxate,Sint Eustatius,COMPLETED,0,0,1800,
+1037,2024-01-04,17:54,1036,enxate,Sint Eustatius,COMPLETED,40650,38850,0,enxate | koekenbakker_1
+1038,2024-01-04,20:48,1037,enxate,Sint Eustatius,COMPLETED,0,0,2700,
+1039,2024-01-04,20:58,1038,JamesBond007F,Sint Eustatius,COMPLETED,49286,47486,0,vipdude8908 | JamesBond007F
+1040,2024-01-04,21:01,1039,enxate,Sint Eustatius,COMPLETED,0,0,1800,
+1041,2024-01-05,00:20,1040,enxate,Sint Eustatius,COMPLETED,43054,41254,0,enxate | DivineIsNotFine
+1042,2024-01-05,10:56,1041,JamesBond007F,Sint Eustatius,COMPLETED,45675,43875,0,d_eadend38 | JamesBond007F
+1043,2024-01-05,12:03,1042,Finmikke1,Saba,COMPLETED,33408,31608,0,Finmikke1 | kanamies123456789
+1044,2024-01-05,12:10,1043,JamesBond007F,Sint Eustatius,COMPLETED,44693,42893,0,VerifiedStructure | Verfied_Justkai
+1045,2024-01-05,12:40,1044,JamesBond007F,Sint Eustatius,COMPLETED,49373,47573,0,VerifiedStructure | Verfied_Justkai | JamesBond007F
+1046,2024-01-05,13:07,1045,Finmikke1,Saba,COMPLETED,34428,32628,0,Finmikke1 | vipdude8908 | DivineIsNotFine | sweggyguy454
+1047,2024-01-05,13:18,1046,JamesBond007F,Sint Eustatius,COMPLETED,42405,40605,0,Verfied_Justkai | JamesBond007F
+1048,2024-01-05,13:51,1047,enxate,Sint Eustatius,COMPLETED,51150,49350,0,enxate | mrpowerblaster
+1049,2024-01-05,14:02,1048,Finmikke1,Saba,COMPLETED,44163,42363,0,Finmikke1 | Soundtrapcloud | vipdude8908 | DivineIsNotFine
+1050,2024-01-05,14:18,1049,KAM1KAZE09,Sint Eustatius,COMPLETED,30600,28800,0,KAM1KAZE09 | 6dcry
+1051,2024-01-05,15:50,1050,lukas06yt,Sint Eustatius,COMPLETED,46170,44370,0,lucaspro1150 | xd_Bullersej | lukas06yt
+1052,2024-01-05,17:28,1051,enxate,Saba,COMPLETED,28876,27376,0,jupkoo | cf234563 | Sturmschaaden | tarvcn | l3xqc
+1053,2024-01-05,18:27,1052,Finmikke1,Saba,COMPLETED,37362,35562,0,zReqIess | vilias74 | LuksiVerse | bob212699 | Finmikke1
+1054,2024-01-05,18:41,1053,Salty_Mark,Saba,COMPLETED,35109,33309,0,VerifiedStructure | Salty_Mark
+1055,2024-01-05,22:43,1054,enxate,Saba,COMPLETED,31470,29670,0,enxate | DepIoyments | conquistadorian | Ayrxon | m0rble | N2ONitrousOxide
+1056,2024-01-05,23:42,1055,enxate,Sint Eustatius,COMPLETED,40163,38363,0,enxate | Ayrxon | DivineIsNotFine | EternalMaethor
+1057,2024-01-06,04:04,1056,Ghovxst,Saba,COMPLETED,33300,31500,0,Ghovxst | Hacknets | T_rabacco
+1058,2024-01-06,08:57,1057,Finmikke1,Saba,COMPLETED,26316,24516,0,Finmikke1 | cf234563
+1059,2024-01-06,10:45,1058,Finmikke1,Sint Eustatius,COMPLETED,54083,52283,0,Finmikke1 | lucaspro1150 | cf234563 | Hermengildt
+1060,2024-01-06,11:34,1059,Finmikke1,Sint Eustatius,COMPLETED,58399,56599,0,Finmikke1 | lucaspro1150 | cf234563 | Hermengildt
+1061,2024-01-06,11:47,1060,lukas06yt,Sint Eustatius,COMPLETED,54495,52695,0,luritheship214 | VILJAMI60 | HarryCeretto | FlightLemonFTW
+1062,2024-01-06,14:48,1061,Ghovxst,Sint Eustatius,COMPLETED,36184,34384,0,Ghovxst | ArmedLivvy
+1063,2024-01-06,15:16,1062,KAM1KAZE09,Sint Eustatius,COMPLETED,47250,45450,0,KAM1KAZE09 | GCHQ_COMMAND
+1064,2024-01-06,15:32,1063,Salty_Mark,Saba,COMPLETED,34656,32856,0,Salty_Mark | l3xqc
+1065,2024-01-06,17:23,1064,enxate,Sint Eustatius,COMPLETED,39300,37500,0,enxate | bob212699 | DivineIsNotFine | T_rabacco
+1066,2024-01-06,17:47,1065,Finmikke1,Saba,COMPLETED,35292,33492,0,Finmikke1 | VILJAMI60 | KaijiroYamaguchi | Soundtrapcloud | vilias74
+1067,2024-01-06,21:09,1066,vuisthaaktwan,Saba,COMPLETED,30699,29349,450,vuisthaaktwan | frizzer_HCW | iliasiliasiliasbah | HarryCeretto
+1068,2024-01-06,22:18,1067,Frietje17,Sint Eustatius,COMPLETED,33266,31466,0,Hacknets | LorexBugi | bob212699 | Frietje17
+1069,2024-01-06,22:24,1068,enxate,Sint Eustatius,COMPLETED,49320,47520,0,enxate | vilias74 | conquistadorian | Sturmschaaden
+1070,2024-01-06,22:24,1069,vuisthaaktwan,Sint Eustatius,COMPLETED,0,0,1800,hulkatron66 | zJohnnykillerx | vuisthaaktwan
+1071,2024-01-06,22:54,1070,vuisthaaktwan,Sint Eustatius,COMPLETED,40875,39075,0,hulkatron66 | zJohnnykillerx | vuisthaaktwan
+1072,2024-01-07,10:25,1071,vuisthaaktwan,Sint Eustatius,COMPLETED,45675,43875,0,Verfied_Justkai | vuisthaaktwan
+1073,2024-01-07,11:12,1072,vuisthaaktwan,Sint Eustatius,COMPLETED,41850,40050,0,Verfied_Justkai | vuisthaaktwan
+1074,2024-01-07,11:47,1073,vuisthaaktwan,Sint Eustatius,COMPLETED,40463,38663,0,T_rabacco | cf234563 | dxawot | vuisthaaktwan
+1075,2024-01-07,12:42,1074,vuisthaaktwan,Sint Eustatius,COMPLETED,22950,21600,450,T_rabacco | dxawot | vuisthaaktwan
+1076,2024-01-07,13:07,1075,Finmikke1,Sint Eustatius,COMPLETED,37039,35239,0,Finmikke1 | vilias74
+1077,2024-01-07,14:01,1076,Finmikke1,Sint Eustatius,COMPLETED,39420,37620,0,Finmikke1 | bob212699 | vilias74
+1078,2024-01-07,14:38,1077,lukas06yt,Sint Eustatius,COMPLETED,45281,43481,0,XxHTML | IR1SHM4N | Rockit13323_alt | tuxar
+1079,2024-01-07,18:51,1078,Salty_Mark,Saba,COMPLETED,37923,36123,0,Hacknets | tuxar | Hermengildt | T_rabacco
+1080,2024-01-07,22:33,1079,Frietje17,Saba,COMPLETED,0,0,1800,T_rabacco | m0rble | enxate | Frietje17
+1081,2024-01-07,23:40,1080,Salty_Mark,Saba,COMPLETED,48588,46788,0,Hacknets | Frizoned | Salty_Mark
+1082,2024-01-08,01:37,1081,Salty_Mark,Sint Eustatius,COMPLETED,0,0,1800,pete51p | Salty_Mark
+1083,2024-01-08,17:28,1082,lukas06yt,Sint Eustatius,COMPLETED,51900,50100,0,ninilol2011 | HanzGhxst | lukas06yt
+1084,2024-01-08,18:09,1083,enxate,Sint Eustatius,COMPLETED,28980,27330,0,enxate | DivineIsNotFine | XxHTML | LorexBugi
+1085,2024-01-08,19:38,1084,lukas06yt,Sint Eustatius,COMPLETED,35786,34136,150,LorexBugi | HanzGhxst | Sturmschaaden | IR1SHM4N | lukas06yt | bob212699
+1086,2024-01-09,03:24,1085,Tojeko_G,Sint Eustatius,COMPLETED,28935,27585,450,Tojeko_G | Iceyze
+1087,2024-01-09,08:38,1086,Tojeko_G,Sint Eustatius,COMPLETED,37650,35850,0,Tojeko_G | Soundtrapcloud
+1088,2024-01-09,17:57,1087,Salty_Mark,Sint Eustatius,COMPLETED,57540,55740,0,Hacknets | Ayrxon | Sturmschaaden | tuxar
+1089,2024-01-09,18:35,1088,lukas06yt,Sint Eustatius,COMPLETED,40155,38355,0,lukas06yt | LorexBugi | yeatlyrics | JimmySTitanite | DivineIsNotFine
+1090,2024-01-09,22:06,1089,enxate,Sint Eustatius,COMPLETED,36094,34294,0,enxate | yummycake77
+1091,2024-01-09,22:44,1090,colton17483,Sint Eustatius,COMPLETED,35276,33476,0,ArmedLivvy | colton17483
+1092,2024-01-10,18:47,1091,Salty_Mark,Saba,COMPLETED,28171,26671,300,LorexBugi | DivineIsNotFine
+1093,2024-01-10,19:57,1092,lukas06yt,Saba,COMPLETED,34884,33084,0,LorexBugi | Sturmschaaden | DivineIsNotFine | lukas06yt
+1094,2024-01-10,20:36,1093,lukas06yt,Saba,COMPLETED,39768,37968,0,LorexBugi | Sturmschaaden | lukas06yt
+1095,2024-01-10,22:42,1094,Tojeko_G,Sint Eustatius,COMPLETED,42225,40425,0,Tojeko_G | silverWolfDiscoX
+1096,2024-01-10,23:48,1095,Salty_Mark,Sint Eustatius,COMPLETED,52380,50580,0,Salty_Mark | Hacknets | tuxar | T_rabacco
+1097,2024-01-11,13:19,1096,vuisthaaktwan,Sint Eustatius,COMPLETED,41940,40140,0,ErikBernadotte | LorexBugi | vuisthaaktwan
+1098,2024-01-11,14:13,1097,vuisthaaktwan,Sint Eustatius,COMPLETED,39960,38160,0,LorexBugi | vuisthaaktwan
+1099,2024-01-11,15:23,1098,Salty_Mark,Sint Eustatius,COMPLETED,45788,43988,0,LorexBugi | Salty_Mark
+1100,2024-01-11,21:14,1099,lukas06yt,Sint Eustatius,COMPLETED,39818,38018,0,lukas06yt | caccolino2018
+1101,2024-01-12,15:23,1100,JamesBond007F,Saba,COMPLETED,31974,30174,0,VerifiedStructure | JamesBond007F
+1102,2024-01-12,20:57,1101,colton17483,Sint Eustatius,COMPLETED,40793,38993,0,colton17483 | LorexBugi
+1103,2024-01-13,14:27,1102,Salty_Mark,Sint Eustatius,COMPLETED,40463,38663,0,FlightLemonFTW | T_rabacco | Salty_Mark
+1104,2024-01-13,21:27,1103,colton17483,Sint Eustatius,COMPLETED,49613,47813,0,colton17483 | ArmedLivvy
+1105,2024-01-14,13:29,1104,Salty_Mark,Sint Eustatius,COMPLETED,47580,45780,0,Salty_Mark | T_rabacco | zReqIess | m0rble
+1106,2024-01-14,16:47,1105,enxate,Sint Eustatius,COMPLETED,32895,31095,0,enxate | victorboemer123 | DivineIsNotFine | T_rabacco
+1107,2024-01-15,00:17,1106,TheLonelyCanuck,Sint Eustatius,COMPLETED,67868,65168,0,TheLonelyCanuck | Salty_Mark
+1108,2024-01-15,00:17,1106,TheLonelyCanuck,Sint Eustatius,COMPLETED,67868,65168,0,TheLonelyCanuck | Salty_Mark
+1109,2024-01-15,00:17,1106,TheLonelyCanuck,Sint Eustatius,COMPLETED,67868,65168,0,TheLonelyCanuck | Salty_Mark
+1110,2024-01-15,03:09,1107,Salty_Mark,Saba,COMPLETED,27909,26109,0,hulkatron66 | Salty_Mark
+1111,2024-01-15,14:45,1108,Salty_Mark,Sint Eustatius,COMPLETED,38670,36870,0,LorexBugi | Salty_Mark
+1112,2024-01-15,15:27,1109,vuisthaaktwan,Sint Eustatius,COMPLETED,55624,53824,0,LorexBugi | m0rble | vuisthaaktwan
+1113,2024-01-15,16:10,1110,vuisthaaktwan,Sint Eustatius,COMPLETED,32951,31601,450,LorexBugi | m0rble | vuisthaaktwan
+1114,2024-01-15,18:50,1111,vuisthaaktwan,Sint Eustatius,COMPLETED,52759,50959,0,Hermengildt | LorexBugi | lucaspro1150 | vuisthaaktwan
+1115,2024-01-16,00:30,1112,Salty_Mark,Sint Eustatius,COMPLETED,39521,37721,0,hulkatron66 | JimmySTitanite
+1116,2024-01-16,03:44,1113,Tojeko_G,Sint Eustatius,COMPLETED,41835,40035,0,Tojeko_G | silverWolfDiscoX
+1117,2024-01-17,06:13,1114,Tojeko_G,Saba,COMPLETED,30168,28368,0,Tojeko_G | hulkatron66
+1118,2024-01-17,14:08,1115,vuisthaaktwan,Sint Eustatius,COMPLETED,0,0,1800,Hi_Champion | m0rble | vuisthaaktwan
+1119,2024-01-17,14:17,1116,Salty_Mark,Sint Eustatius,COMPLETED,37733,35933,0,LorexBugi | Salty_Mark
+1120,2024-01-17,18:20,1117,vuisthaaktwan,Saba,COMPLETED,40530,38730,0,hulkatron66 | Ayrxon | LorexBugi | vuisthaaktwan
+1121,2024-01-17,22:39,1118,colton17483,Sint Eustatius,COMPLETED,47723,45923,0,colton17483 | hulkatron66
+1122,2024-01-18,12:53,1119,T_rabacco,Saba,COMPLETED,22440,20640,0,T_rabacco | caccolino2018 | zJohnnykillerx
+1123,2024-01-18,14:46,1120,T_rabacco,Saba,COMPLETED,22200,20550,0,T_rabacco | DepIoyments | Ayrxon | Hi_Champion
+1124,2024-01-18,16:19,1121,cf234563,Saba,COMPLETED,37992,36192,0,m0rble | cf234563 | Ayrxon
+1125,2024-01-18,17:22,1122,cf234563,Saba,COMPLETED,41496,39696,0,cf234563 | Ayrxon | m0rble | luritheship214
+1126,2024-01-18,18:06,1123,T_rabacco,Saba,COMPLETED,21801,20451,0,T_rabacco | luritheship214
+1127,2024-01-18,19:11,1124,cf234563,Saba,COMPLETED,32889,31089,0,cf234563 | vipdude8908
+1128,2024-01-18,20:05,1125,T_rabacco,Saba,COMPLETED,27162,25812,0,T_rabacco | m0rble | CanadianLaw_RBLX
+1129,2024-01-19,00:39,1126,T_rabacco,Saba,COMPLETED,33852,32052,0,T_rabacco | vipdude8908
+1130,2024-01-19,02:05,1127,T_rabacco,Saba,COMPLETED,32388,30588,0,T_rabacco | d_eadend38 | hulkatron66
+1131,2024-01-20,00:45,1128,T_rabacco,Saba,COMPLETED,32448,30648,0,T_rabacco | d_eadend38 | hulkatron66
+1132,2024-01-20,00:49,1129,KAM1KAZE09,Saba,COMPLETED,30252,28452,0,KAM1KAZE09 | GCHQ_COMMAND
+1133,2024-01-20,02:30,1130,T_rabacco,Sint Eustatius,COMPLETED,21131,20231,0,Kravkens | dsteppins01
+1134,2024-01-20,12:34,1131,T_rabacco,Saba,COMPLETED,16320,15120,0,cIarkwarrior | T_rabacco
+1135,2024-01-20,16:26,1132,T_rabacco,Saba,COMPLETED,30636,28836,0,Ayrxon | d_eadend38 | m0rble | T_rabacco
+1136,2024-01-20,18:05,1133,T_rabacco,Sint Eustatius,COMPLETED,36420,34620,0,bob212699 | T_rabacco
+1137,2024-01-20,18:54,1134,JamesBond007F,Sint Eustatius,COMPLETED,33795,31995,0,WubbersOrDie | JamesBond007F
+1138,2024-01-20,19:31,1135,Salty_Mark,Sint Eustatius,COMPLETED,0,0,1800,
+1139,2024-01-20,20:01,1136,Salty_Mark,Sint Eustatius,COMPLETED,44093,42293,0,hulkatron66 | WubbersOrDie | koekenbakker_1
+1140,2024-01-20,21:39,1137,lukas06yt,Saba,COMPLETED,33021,31221,0,lukas06yt | Kravkens | CanadianLaw_RBLX
+1141,2024-01-20,21:40,1138,T_rabacco,Sint Eustatius,COMPLETED,10320,9870,0,rakkef
+1142,2024-01-20,22:24,1139,lukas06yt,Saba,COMPLETED,33003,31203,0,lukas06yt | Kravkens | CanadianLaw_RBLX
+1143,2024-01-20,23:11,1140,cf234563,Saba,COMPLETED,32262,30462,0,cf234563 | T_rabacco
+1144,2024-01-21,04:12,1141,T_rabacco,Sint Eustatius,COMPLETED,0,0,1800,T_rabacco | hulkatron66
+1145,2024-01-21,05:49,1142,T_rabacco,Sint Eustatius,COMPLETED,42769,40969,0,hulkatron66 | T_rabacco
+1146,2024-01-21,14:52,1143,T_rabacco,Saba,COMPLETED,32115,30315,0,gzmer20 | T_rabacco
+1147,2024-01-21,18:19,1144,T_rabacco,Saba,COMPLETED,22782,21582,0,rakkef | T_rabacco
+1148,2024-01-24,19:28,1145,Salty_Mark,Sint Eustatius,COMPLETED,0,0,1800,
+1149,2024-01-25,23:30,1146,T_rabacco,Saba,COMPLETED,35400,33600,0,T_rabacco | WubbersOrDie
+1150,2024-01-27,21:41,1147,Salty_Mark,Saba,COMPLETED,40368,38568,0,lucaspro1150 | Salty_Mark
+1151,2024-01-28,00:29,1148,colton17483,Sint Eustatius,COMPLETED,40624,38824,0,colton17483 | ArmedLivvy
+1152,2024-01-28,13:24,1149,KAM1KAZE09,Sint Eustatius,COMPLETED,38693,36893,0,KAM1KAZE09 | cIarkwarrior
+1153,2024-01-28,18:57,1150,T_rabacco,Sint Eustatius,COMPLETED,0,0,1200,T_rabacco | Soundtrapcloud
+1154,2024-01-28,20:42,1151,T_rabacco,Sint Eustatius,COMPLETED,28073,26723,0,iliasiliasiliasbah | T_rabacco
+1155,2024-01-29,15:39,1152,Salty_Mark,Sint Eustatius,COMPLETED,48994,47194,0,iliasiliasiliasbah | Salty_Mark
+1156,2024-01-29,18:13,1153,Tojeko_G,Sint Eustatius,COMPLETED,35115,33315,0,Tojeko_G | Pikaplayer2912
+1157,2024-01-29,22:39,1154,T_rabacco,Saba,COMPLETED,27654,25854,0,T_rabacco | KaijiroYamaguchi
+1158,2024-01-30,19:29,1155,lukas06yt,Sint Eustatius,COMPLETED,42413,40613,0,cIarkwarrior | yeatlyrics | lukas06yt
+1159,2024-01-31,16:51,1156,yeatlyrics,Sint Eustatius,COMPLETED,48379,46579,0,nineteen9991 | yeatlyrics
+1160,2024-01-31,19:28,1157,lukas06yt,Saba,COMPLETED,30225,28575,150,lukas06yt | yeatlyrics | Ayrxon | EternalMaethor
+1161,2024-01-31,20:21,1158,joppiesaus_nl,Sint Eustatius,COMPLETED,66188,63488,0,joppiesaus_nl | Ayrxon | yeatlyrics
+1162,2024-02-01,01:09,1159,T_rabacco,Sint Eustatius,COMPLETED,55890,54090,0,T_rabacco | JimmySTitanite
+1163,2024-02-01,09:48,1160,joppiesaus_nl,Sint Eustatius,COMPLETED,27308,25958,0,joppiesaus_nl | bIuvye | m0rble
+1164,2024-02-03,16:52,1161,Frietje17,Sint Eustatius,COMPLETED,41730,39930,0,kischa123 | Frietje17
+1165,2024-02-03,20:32,1162,T_rabacco,Sint Eustatius,COMPLETED,55935,54135,0,XxHTML | d_eadend38 | T_rabacco
+1166,2024-02-03,21:43,1163,T_rabacco,Sint Eustatius,COMPLETED,26933,25583,0,T_rabacco | XxHTML | d_eadend38
+1167,2024-02-04,12:01,1164,lukas06yt,Sint Eustatius,COMPLETED,48990,47190,0,iliasiliasiliasbah | frizzer_HCW | m0rble | lukas06yt
+1168,2024-02-09,15:18,1165,vuisthaaktwan,Sint Eustatius,COMPLETED,56835,55035,0,cIarkwarrior | vuisthaaktwan
+1169,2024-02-09,16:33,1166,Callme_BeconHair,Sint Eustatius,COMPLETED,36023,34223,0,Callme_BeconHair | KaijiroYamaguchi | vipdude8908
+1170,2024-02-09,18:54,1167,cf234563,Saba,COMPLETED,32571,30771,0,cf234563 | silverWolfDiscoX
+1171,2024-02-09,21:29,1168,Frietje17,Sint Eustatius,COMPLETED,30420,28770,150,kischa123 | CanadianLaw_RBLX | Frietje17
+1172,2024-02-10,13:53,1169,T_rabacco,Saba,COMPLETED,38670,36870,0,T_rabacco | cIarkwarrior
+1173,2024-02-10,17:58,1170,T_rabacco,Saba,COMPLETED,35730,33930,0,T_rabacco | KaijiroYamaguchi
+1174,2024-02-10,20:52,1171,T_rabacco,Sint Eustatius,COMPLETED,41970,40170,0,KaijiroYamaguchi | T_rabacco
+1175,2024-02-11,13:00,1172,JamesBond007F,Sint Eustatius,COMPLETED,44531,42731,0,DAHWIDHAWIDAWYD | JamesBond007F
+1176,2024-02-11,13:32,1173,T_rabacco,Saba,COMPLETED,32508,30708,0,Pikaplayer2912 | T_rabacco
+1177,2024-02-11,20:06,1174,T_rabacco,Sint Eustatius,COMPLETED,41340,39540,0,KaijiroYamaguchi | T_rabacco
+1178,2024-02-11,20:53,1175,T_rabacco,Saba,COMPLETED,28728,26928,0,T_rabacco | KaijiroYamaguchi
+1179,2024-02-12,19:11,1176,cf234563,Saba,COMPLETED,33612,31812,0,cf234563 | LorexBugi
+1180,2024-02-13,04:53,1177,T_rabacco,Saba,COMPLETED,41547,39747,0,T_rabacco | silverWolfDiscoX
+1181,2024-02-13,18:59,1178,Salty_Mark,Sint Eustatius,COMPLETED,40890,39090,0,LorexBugi | Salty_Mark
+1182,2024-02-14,00:37,1179,T_rabacco,Sint Eustatius,COMPLETED,56599,54799,1800,T_rabacco | KaijiroYamaguchi
+1183,2024-02-14,02:11,1180,T_rabacco,Saba,COMPLETED,27297,25497,0,T_rabacco | KaijiroYamaguchi
+1184,2024-02-17,00:14,1181,T_rabacco,Saba,COMPLETED,34680,32880,0,T_rabacco | KaijiroYamaguchi
+1185,2024-02-17,00:53,1182,T_rabacco,Saba,COMPLETED,28980,27180,0,KaijiroYamaguchi | T_rabacco
+1186,2024-02-17,15:04,1183,Salty_Mark,Saba,COMPLETED,34536,32736,0,bIuvye | XxHTML | cIarkwarrior
+1187,2024-02-17,15:51,1184,T_rabacco,Saba,COMPLETED,18972,17622,0,Hermengildt | XxHTML | T_rabacco
+1188,2024-02-17,20:43,1185,T_rabacco,Sint Eustatius,COMPLETED,34886,33086,0,T_rabacco | KaijiroYamaguchi
+1189,2024-02-17,21:26,1186,T_rabacco,Saba,COMPLETED,35652,33852,0,T_rabacco | KaijiroYamaguchi
+1190,2024-02-18,14:27,1187,T_rabacco,Sint Eustatius,COMPLETED,39705,37905,0,XxHTML | KarlBernadotte | DivineIsNotFine | T_rabacco
+1191,2024-02-18,20:48,1188,Salty_Mark,Sint Eustatius,COMPLETED,0,0,1800,noob123ghgb | Salty_Mark
+1192,2024-02-19,19:05,1189,thecoolguyisco,Sint Eustatius,COMPLETED,53633,51833,0,XxHTML | victorboemer123 | thecoolguyisco
+1193,2024-02-19,20:24,1190,thecoolguyisco,Saba,COMPLETED,31500,29700,0,victorboemer123 | XxHTML | thecoolguyisco
+1194,2024-02-21,12:22,1191,KAM1KAZE09,Saba,COMPLETED,31368,29568,0,KAM1KAZE09 | noob123ghgb
+1195,2024-02-21,13:48,1192,vuisthaaktwan,Saba,COMPLETED,31236,29436,0,luritheship214 | vuisthaaktwan
+1196,2024-02-21,13:54,1193,JamesBond007F,Sint Eustatius,COMPLETED,43425,41625,0,noob123ghgb | JamesBond007F | DAHWIDHAWIDAWYD
+1197,2024-02-21,17:24,1194,Salty_Mark,Sint Eustatius,COMPLETED,0,0,1800,luritheship214 | Dellz3
+1198,2024-02-21,21:07,1195,JimmySTitanite,Sint Eustatius,COMPLETED,34219,32419,0,XxHTML | JimmySTitanite
+1199,2024-02-21,23:49,1196,T_rabacco,Saba,COMPLETED,30240,28440,0,dsteppins01 | T_rabacco
+1200,2024-02-22,11:51,1197,JamesBond007F,Saba,COMPLETED,34947,33147,0,Jxay015 | JamesBond007F
+1201,2024-02-22,12:25,1198,JamesBond007F,Saba,COMPLETED,32220,30420,0,Jxay015 | JamesBond007F
+1202,2024-02-22,17:37,1199,Salty_Mark,Saba,COMPLETED,40644,38844,0,XxHTML | bob212699
+1203,2024-02-23,18:12,1200,eprstbebra,Sint Eustatius,COMPLETED,39960,38160,0,eprstbebra | AlexKOT78
+1204,2024-02-23,19:58,1201,cf234563,Saba,COMPLETED,0,0,1800,cf234563 | FlightLemonFTW | Hermengildt
+1205,2024-02-24,11:41,1202,T_rabacco,Saba,COMPLETED,33126,31326,0,Dellz3 | T_rabacco
+1206,2024-02-24,17:43,1203,cf234563,Saba,COMPLETED,30240,28440,0,cf234563 | bob212699
+1207,2024-02-24,20:46,1204,XxHTML,Saba,COMPLETED,37986,36186,0,XxHTML | Kravkens | Ve6ous
+1208,2024-02-24,21:39,1205,XxHTML,Saba,COMPLETED,25020,23220,0,XxHTML | Ve6ous
+1209,2024-02-25,08:10,1206,XxHTML,Sint Eustatius,COMPLETED,51308,49508,0,XxHTML | Dellz3
+1210,2024-02-25,14:00,1207,XxHTML,Saba,COMPLETED,34716,32916,0,XxHTML | noob123ghgb
+1211,2024-02-25,14:22,1208,T_rabacco,Sint Eustatius,COMPLETED,40519,38719,0,T_rabacco | bob212699
+1212,2024-02-25,17:30,1209,Frietje17,Saba,COMPLETED,27156,25356,0,Frietje17 | lizoook_Kr
+1213,2024-02-25,17:48,1210,lukas06yt,Sint Eustatius,COMPLETED,44554,42754,0,TimIsNub | lukas06yt | DivineIsNotFine
+1214,2024-02-25,19:00,1211,XxHTML,Saba,COMPLETED,25704,23904,0,bob212699 | XxHTML
+1215,2024-02-25,22:25,1212,JimmySTitanite,Sint Eustatius,COMPLETED,45285,43485,0,Salty_Mark | JimmySTitanite
+1216,2024-02-25,23:02,1213,JimmySTitanite,Sint Eustatius,COMPLETED,51784,49984,0,Salty_Mark | JimmySTitanite
+1217,2024-02-26,13:58,1214,XxHTML,Sint Eustatius,COMPLETED,46650,44850,0,XxHTML | dxawot
+1218,2024-02-26,14:35,1215,Salty_Mark,Sint Eustatius,COMPLETED,42150,40350,0,LorexBugi | Salty_Mark
+1219,2024-02-26,17:49,1216,SupremeBigBrother,Saba,COMPLETED,46539,43839,0,SupremeBigBrother | Hermengildt | TheLonelyCanuck | LorexBugi
+1220,2024-02-27,15:45,1217,JamesBond007F,Saba,COMPLETED,34425,32625,0,l3xqc | JamesBond007F
+1221,2024-02-28,19:11,1218,SupremeBigBrother,Sint Eustatius,COMPLETED,61991,59291,0,SupremeBigBrother | aeronautic_ace | TimIsNub
+1222,2024-02-28,20:22,1219,SupremeBigBrother,Sint Eustatius,COMPLETED,70163,67613,0,SupremeBigBrother | aeronautic_ace | Ayrxon | DivineIsNotFine
+1223,2024-02-29,15:44,1220,vuisthaaktwan,Sint Eustatius,COMPLETED,29070,27270,0,iliasiliasiliasbah | frizzer_HCW | vuisthaaktwan | TimIsNub
+1224,2024-02-29,16:33,1221,vuisthaaktwan,Sint Eustatius,COMPLETED,40718,38918,0,TimIsNub | frizzer_HCW | vuisthaaktwan | iliasiliasiliasbah
+1225,2024-03-01,01:10,1222,T_rabacco,Sint Eustatius,COMPLETED,29693,28343,0,aeronautic_ace | WubbersOrDie | T_rabacco
+1226,2024-03-02,10:45,1223,XxHTML,Sint Eustatius,COMPLETED,53340,51540,0,XxHTML | iliasiliasiliasbah
+1227,2024-03-02,11:31,1224,XxHTML,Sint Eustatius,COMPLETED,39173,37373,0,XxHTML | iliasiliasiliasbah
+1228,2024-03-06,01:16,1225,colton17483,Saba,COMPLETED,32088,30288,0,colton17483 | ArmedLivvy
+1229,2024-03-09,00:13,1226,JimmySTitanite,Sint Eustatius,COMPLETED,42555,40755,0,JimmySTitanite | Salty_Mark
+1230,2024-03-10,00:39,1227,colton17483,Saba,COMPLETED,24168,22368,0,colton17483 | T_rabacco
+1231,2024-03-11,13:19,1228,vuisthaaktwan,Sint Eustatius,COMPLETED,42570,40770,0,rzeczka11 | vuisthaaktwan
+1232,2024-03-11,16:02,1229,XxHTML,Sint Eustatius,COMPLETED,36559,34759,0,XxHTML | karambaboy1234567890
+1233,2024-03-11,18:35,1230,vipbroHD,Sint Eustatius,COMPLETED,7650,7200,1800,AlexKOT78 | karambaboy1234567890 | eprstbebra | vipbroHD
+1234,2024-03-12,18:08,1231,cf234563,Sint Eustatius,COMPLETED,42656,40856,0,orangesainsburys | cf234563
+1235,2024-03-12,18:56,1232,joppiesaus_nl,Sint Eustatius,COMPLETED,14190,13740,0,u_Jimbo
+1236,2024-03-12,19:19,1233,lukas06yt,Sint Eustatius,COMPLETED,55455,53655,0,snepmal3 | Highboomman | raikkon3n | lukas06yt
+1237,2024-03-12,21:15,1234,JamesBond007F,Sint Eustatius,COMPLETED,29910,28110,0,tacinn0 | JamesBond007F | DAHWIDHAWIDAWYD
+1238,2024-03-13,15:09,1235,JamesBond007F,Sint Eustatius,COMPLETED,34193,32393,0,tacinn0 | JamesBond007F
+1239,2024-03-13,17:51,1236,cf234563,Sint Eustatius,COMPLETED,45191,43391,0,cf234563 | miquelrenart
+1240,2024-03-13,19:30,1237,Tojeko_G,Sint Eustatius,COMPLETED,31410,29910,300,NotMCmilitry | tr_iage | tunefelshark11 | Veyauvh
+1241,2024-03-13,22:31,1238,lukas06yt,Sint Eustatius,COMPLETED,0,0,1800,
+1242,2024-03-13,23:34,1239,Salty_Mark,Sint Eustatius,COMPLETED,55373,53573,0,DreamlinerKpyai | EmperorJohannes | TheRealKeeper_1
+1243,2024-03-14,14:48,1240,XxHTML,Sint Eustatius,COMPLETED,20910,20010,1800,LorexBugi | XxHTML | rzeczka11
+1244,2024-03-14,21:34,1241,lukas06yt,Sint Eustatius,COMPLETED,36810,35010,0,MagicDimension | DeltaTrigger | lukas06yt | tr_iage
+1245,2024-03-15,01:13,1242,T_rabacco,Saba,COMPLETED,15408,14508,0,T_rabacco | SonnySaladino
+1246,2024-03-15,12:53,1243,JamesBond007F,Sint Eustatius,COMPLETED,52549,50749,0,tr_iage | JamesBond007F
+1247,2024-03-15,23:58,1244,T_rabacco,Saba,COMPLETED,37560,35760,0,tr_iage | T_rabacco
+1248,2024-03-16,10:25,1245,XxHTML,Sint Eustatius,COMPLETED,32970,31170,0,XxHTML | Project_Concorde | torixsl
+1249,2024-03-16,11:00,1246,T_rabacco,Sint Eustatius,COMPLETED,45094,43294,0,tr_iage | T_rabacco
+1250,2024-03-16,12:09,1247,cf234563,Sint Eustatius,COMPLETED,41194,39394,0,cf234563 | tr_iage | Highboomman | LorexBugi
+1251,2024-03-16,13:46,1248,T_rabacco,Sint Eustatius,COMPLETED,33994,32644,0,Highboomman | T_rabacco
+1252,2024-03-16,14:46,1249,cf234563,Sint Eustatius,COMPLETED,34560,32760,0,cf234563 | miquelrenart | 3rdmegatron | Highboomman
+1253,2024-03-16,16:57,1250,T_rabacco,Saba,COMPLETED,25860,24060,0,tr_iage | T_rabacco
+1254,2024-03-16,21:09,1251,cf234563,Sint Eustatius,COMPLETED,50055,48255,0,cf234563 | speciiaIe | BagyRagy
+1255,2024-03-16,23:59,1252,T_rabacco,Saba,COMPLETED,28521,26721,0,tr_iage | BagyRagy | 3rdmegatron | T_rabacco
+1256,2024-03-17,01:04,1253,T_rabacco,Sint Eustatius,COMPLETED,46950,45150,0,tr_iage | BagyRagy | 3rdmegatron | T_rabacco
+1257,2024-03-17,12:15,1254,T_rabacco,Saba,COMPLETED,33198,31398,0,torixsl | LorexBugi | tr_iage | T_rabacco
+1258,2024-03-17,13:15,1255,lukas06yt,Sint Eustatius,COMPLETED,46485,44685,0,xyzz_mark | TheManLikeMan | akidon884 | jajebiecs
+1259,2024-03-17,17:20,1256,lukas06yt,Sint Eustatius,COMPLETED,42255,40455,0,lukas06yt | 3rdmegatron | Highboomman
+1260,2024-03-17,17:22,1257,TheLonelyCanuck,Sint Eustatius,COMPLETED,57938,55688,0,TheLonelyCanuck | DeltaTrigger | tr_iage | T_rabacco | TheRealKeeper_1
+1261,2024-03-17,19:54,1258,JimmySTitanite,Sint Eustatius,COMPLETED,29835,28035,0,JimmySTitanite | Salty_Mark
+1262,2024-03-18,02:14,1259,tr_iage,Sint Eustatius,COMPLETED,36278,34478,0,tr_iage | TyrantAugustusCaesar | p_otatos1 | Gamegamerz68
+1263,2024-03-18,03:28,1260,tr_iage,Sint Eustatius,COMPLETED,29835,28035,0,tr_iage | Kravkens | TyrantAugustusCaesar | Gamegamerz68
+1264,2024-03-18,08:47,1261,tr_iage,Sint Eustatius,COMPLETED,33615,31815,0,tr_iage | cooldbx
+1265,2024-03-18,14:28,1262,Salty_Mark,Sint Eustatius,COMPLETED,39165,37365,0,Salty_Mark | JimmySTitanite
+1266,2024-03-18,15:09,1263,Salty_Mark,Sint Eustatius,COMPLETED,41959,40159,0,JimmySTitanite | Salty_Mark
+1267,2024-03-18,15:39,1264,JimmySTitanite,Sint Eustatius,COMPLETED,34853,33053,0,JimmySTitanite | LorexBugi
+1268,2024-03-18,17:27,1265,lukas06yt,Saba,COMPLETED,36180,34380,0,torixsl | orangesainsburys | JimmySTitanite | lukas06yt
+1269,2024-03-18,18:47,1266,eprstbebra,Saba,COMPLETED,24792,22992,600,AlexKOT78 | eprstbebra | snepmal3
+1270,2024-03-18,18:58,1267,JamesBond007F,Saba,COMPLETED,39324,37524,0,tacinn0 | JamesBond007F
+1271,2024-03-19,04:54,1268,tr_iage,Sint Eustatius,COMPLETED,43118,41318,0,tr_iage | calirippa
+1272,2024-03-19,19:20,1269,lukas06yt,Saba,COMPLETED,31800,30000,0,lukas06yt | LorexBugi
+1273,2024-03-19,22:45,1270,JimmySTitanite,Sint Eustatius,COMPLETED,43395,41595,0,JimmySTitanite | Kr0moTitanite
+1274,2024-03-19,23:41,1271,JimmySTitanite,Sint Eustatius,COMPLETED,22950,21600,450,JimmySTitanite | Kr0moTitanite
+1275,2024-03-20,10:57,1272,eprstbebra,Saba,COMPLETED,22518,21168,1500,eprstbebra | karambaboy1234567890 | speciiaIe | TakinaWatanabe
+1276,2024-03-20,15:20,1273,eprstbebra,Saba,COMPLETED,34632,32832,0,AlexKOT78 | eprstbebra | noob123ghgb
+1277,2024-03-20,18:09,1274,Salty_Mark,Sint Eustatius,COMPLETED,43298,41498,0,LorexBugi | Salty_Mark
+1278,2024-03-20,18:29,1275,JimmySTitanite,Saba,COMPLETED,31704,29904,0,JimmySTitanite | TheManLikeMan
+1279,2024-03-20,19:51,1276,Salty_Mark,Sint Eustatius,COMPLETED,47344,45544,0,Kr0moTitanite | Salty_Mark
+1280,2024-03-20,21:27,1277,JimmySTitanite,Sint Eustatius,COMPLETED,0,0,1800,JimmySTitanite | RaiVonSurrey
+1281,2024-03-21,00:21,1278,JimmySTitanite,Sint Eustatius,COMPLETED,41280,39480,0,JimmySTitanite | RoloTitanite
+1282,2024-03-21,02:24,1279,tr_iage,Saba,COMPLETED,41454,39654,1350,Project_Concorde | Gamegamerz68 | raikkon3n | tr_iage
+1283,2024-03-21,02:42,1280,tr_iage,Saba,COMPLETED,26328,24528,0,Project_Concorde | Gamegamerz68 | raikkon3n | tr_iage
+1284,2024-03-21,14:43,1281,LorexBugi,Sint Eustatius,COMPLETED,0,0,1800,Salty_Mark | LorexBugi
+1285,2024-03-21,16:45,1282,LorexBugi,Sint Eustatius,COMPLETED,35438,33638,0,speciiaIe | LorexBugi | NotMCmilitry
+1286,2024-03-21,17:52,1283,JimmySTitanite,Saba,COMPLETED,29256,27456,0,JimmySTitanite | RaiVonSurrey
+1287,2024-03-21,18:03,1284,Salty_Mark,Sint Eustatius,COMPLETED,34583,32783,0,Kr0moTitanite | Salty_Mark
+1288,2024-03-21,18:39,1285,Salty_Mark,Sint Eustatius,COMPLETED,33964,32764,600,Kr0moTitanite | Salty_Mark
+1289,2024-03-21,19:42,1286,simonmutsaers,Saba,COMPLETED,34500,32700,0,milanzegthoi | Jxay015
+1290,2024-03-21,19:46,1287,Salty_Mark,Sint Eustatius,COMPLETED,48660,46860,0,Kr0moTitanite | Salty_Mark
+1291,2024-03-21,20:16,1288,simonmutsaers,Sint,COMPLETED,56664,54864,0,milanzegthoi | Jxay015
+1292,2024-03-21,20:48,1289,cf234563,Sint Eustatius,COMPLETED,28305,26505,0,cf234563 | miquelrenart
+1293,2024-03-21,21:12,1290,LorexBugi,Sint Eustatius,COMPLETED,18360,17460,900,LorexBugi | v_fud | cooldbx
+1294,2024-03-21,21:42,1291,tr_iage,Sint Eustatius,COMPLETED,0,0,1800,tr_iage | Centurion_Vascense | ImportedChaser
+1295,2024-03-21,23:25,1292,Salty_Mark,Sint Eustatius,COMPLETED,43110,41310,0,Salty_Mark | RoloTitanite
+1296,2024-03-21,23:26,1293,JimmySTitanite,Sint Eustatius,COMPLETED,37135,35485,150,JimmySTitanite | Kr0moTitanite
+1297,2024-03-22,00:01,1294,tr_iage,Sint Eustatius,COMPLETED,25984,25084,1800,tr_iage | ImportedChaser | Centurion_Vascense
+1298,2024-03-22,11:33,1295,XxHTML,Sint Eustatius,COMPLETED,46046,44246,0,XxHTML | Jxay015 | milanzegthoi
+1299,2024-03-22,12:09,1296,XxHTML,Sint Eustatius,COMPLETED,39746,37946,0,XxHTML | Jxay015 | milanzegthoi | snepmal3
+1300,2024-03-22,12:57,1297,eprstbebra,Saba,COMPLETED,31281,29481,0,Jxay015 | eprstbebra | milanzegthoi
+1301,2024-03-22,14:16,1298,JamesBond007F,Sint Eustatius,COMPLETED,54900,53100,0,Jxay015 | JamesBond007F
+1302,2024-03-22,14:42,1299,JamesBond007F,Sint Eustatius,COMPLETED,38130,36330,0,Jxay015 | JamesBond007F
+1303,2024-03-22,17:25,1300,LorexBugi,Sint Eustatius,COMPLETED,42585,40785,0,LorexBugi | Kr0moTitanite
+1304,2024-03-22,19:04,1301,lukas06yt,Saba,COMPLETED,40428,38628,0,Jxay015 | milanzegthoi | lukas06yt
+1305,2024-03-22,22:20,1302,LorexBugi,Sint Eustatius,COMPLETED,40241,38441,0,LorexBugi | bob212699 | TheManLikeMan | Centurion_Vascense
+1306,2024-03-22,22:24,1303,JamesBond007F,Sint Eustatius,COMPLETED,36570,34770,0,milanzegthoi | Jxay015 | JamesBond007F
+1307,2024-03-22,22:56,1304,JamesBond007F,Sint Eustatius,COMPLETED,29115,27765,450,milanzegthoi | Jxay015 | JamesBond007F
+1308,2024-03-23,12:01,1305,Tojeko_G,Sint Eustatius,COMPLETED,47543,45743,0,Tojeko_G | LoadingLoadingg1 | jam1443
+1309,2024-03-23,14:26,1306,LorexBugi,Saba,COMPLETED,31665,29865,0,LorexBugi | LoadingLoadingg1
+1310,2024-03-23,16:48,1307,tr_iage,Sint Eustatius,COMPLETED,23685,22785,1800,LoadingLoadingg1 | SonnySaladino | tr_iage
+1311,2024-03-23,17:38,1308,JamesBond007F,Saba,COMPLETED,43776,41976,0,milanzegthoi | Jxay015 | JamesBond007F
+1312,2024-03-23,18:54,1309,JimmySTitanite,Sint Eustatius,COMPLETED,40770,38970,0,RoloTitanite | Kr0moTitanite | JimmySTitanite
+1313,2024-03-23,19:48,1310,LorexBugi,Saba,COMPLETED,37530,35730,0,LorexBugi | SonnySaladino | LoadingLoadingg1
+1314,2024-03-23,20:24,1311,JimmySTitanite,Sint Eustatius,COMPLETED,43774,41974,0,Kr0moTitanite | JimmySTitanite
+1315,2024-03-24,00:15,1312,tr_iage,Saba,COMPLETED,23994,22644,0,tr_iage | SonnySaladino | TyrantAugustusCaesar
+1316,2024-03-24,01:26,1313,JimmySTitanite,Sint Eustatius,COMPLETED,37039,35239,0,RaptorTitanite | JimmySTitanite
+1317,2024-03-24,01:28,1314,Salty_Mark,Saba,COMPLETED,35952,34152,0,Kr0moTitanite | Salty_Mark
+1318,2024-03-24,02:09,1315,Salty_Mark,Saba,COMPLETED,29298,27498,0,Kr0moTitanite | Salty_Mark
+1319,2024-03-24,04:55,1316,tr_iage,Saba,COMPLETED,31386,29586,0,tr_iage | TheRealKeeper_1
+1320,2024-03-24,15:08,1317,T_rabacco,Sint Eustatius,COMPLETED,44445,42645,0,TimIsNub | milanzegthoi | frizzer_HCW | T_rabacco
+1321,2024-03-24,16:40,1318,tr_iage,Saba,COMPLETED,0,0,1350,SonnySaladino | SaintedStatic | tr_iage
+1322,2024-03-24,18:26,1319,Salty_Mark,Sint Eustatius,COMPLETED,38430,36630,0,RoloTitanite | Salty_Mark
+1323,2024-03-24,18:29,1320,JimmySTitanite,Sint Eustatius,COMPLETED,42075,40275,0,JimmySTitanite | Kr0moTitanite | RaptorTitanite
+1324,2024-03-24,19:21,1321,SupremeBigBrother,Sint Eustatius,COMPLETED,0,0,0,SupremeBigBrother | milanzegthoi | simonmutsaers
+1325,2024-03-24,19:32,1322,JimmySTitanite,Sint Eustatius,COMPLETED,0,0,0,Kr0moTitanite | RoloTitanite
+1326,2024-03-24,19:35,1323,JimmySTitanite,Sint Eustatius,COMPLETED,52928,51128,0,Kr0moTitanite | RoloTitanite | JimmySTitanite
+1327,2024-03-24,23:49,1324,T_rabacco,Saba,COMPLETED,32268,30468,0,Ve6ous | BagyRagy | Kravkens | T_rabacco
+1328,2024-03-25,01:53,1325,tr_iage,Saba,COMPLETED,22644,20844,0,tr_iage | TyrantAugustusCaesar
+1329,2024-03-25,10:29,1326,enxate,Sint Eustatius,COMPLETED,40590,38790,0,enxate | miquelrenart | jam1443
+1330,2024-03-25,12:59,1327,XxHTML,Saba,COMPLETED,29616,27816,0,XxHTML | jam1443
+1331,2024-03-25,15:17,1328,LorexBugi,Saba,COMPLETED,36246,34446,0,LorexBugi | TimIsNub | frizzer_HCW
+1332,2024-03-25,17:23,1329,JamesBond007F,Sint Eustatius,COMPLETED,50460,48660,0,tacinn0 | JamesBond007F
+1333,2024-03-25,17:57,1330,simonmutsaers,Sint Eustatius,COMPLETED,38205,36405,0,tunefelshark11 | simonmutsaers
+1334,2024-03-25,18:05,1331,JamesBond007F,Saba,COMPLETED,33480,31680,0,tacinn0 | milanzegthoi | JamesBond007F
+1335,2024-03-25,18:45,1332,SupremeBigBrother,Sint Eustatius,COMPLETED,50096,47396,0,SupremeBigBrother | Salty_Mark | v_fud
+1336,2024-03-25,21:56,1333,SupremeBigBrother,Sint Eustatius,COMPLETED,75776,73076,0,SupremeBigBrother | Kr0moTitanite | Salty_Mark
+1337,2024-03-25,23:37,1334,SupremeBigBrother,Saba,COMPLETED,53748,51048,0,SupremeBigBrother | tr_iage
+1338,2024-03-26,00:22,1335,SupremeBigBrother,Saba,COMPLETED,43764,41514,0,SupremeBigBrother | tr_iage
+1339,2024-03-26,16:15,1336,Finmikke1,Saba,COMPLETED,32340,30540,0,Finmikke1 | EmperorJohannes
+1340,2024-03-26,17:07,1337,Finmikke1,Saba,COMPLETED,29895,28095,0,Finmikke1 | EmperorJohannes
+1341,2024-03-26,17:22,1338,Jxay015,Saba,COMPLETED,29262,27462,0,Jxay015 | milanzegthoi | tacinn0
+1342,2024-03-26,17:48,1339,Finmikke1,Saba,COMPLETED,29304,27504,0,Finmikke1 | jam1443
+1343,2024-03-26,18:14,1340,Jxay015,Sint Eustatius,COMPLETED,34654,32854,0,Jxay015 | milanzegthoi
+1344,2024-03-26,18:26,1341,JamesBond007F,Sint Eustatius,COMPLETED,57964,56164,0,tunefelshark11 | JamesBond007F
+1345,2024-03-26,18:57,1342,SupremeBigBrother,Sint Eustatius,COMPLETED,48885,46185,0,SupremeBigBrother | RaiVonSurrey | EmperorJohannes
+1346,2024-03-26,18:58,1343,Jxay015,Saba,COMPLETED,35163,33363,0,Jxay015 | milanzegthoi
+1347,2024-03-26,19:57,1344,SupremeBigBrother,Saba,COMPLETED,65187,62487,0,SupremeBigBrother | Salty_Mark
+1348,2024-03-26,21:14,1345,SupremeBigBrother,Sint Eustatius,COMPLETED,33285,31485,0,SupremeBigBrother | Salty_Mark
+1349,2024-03-26,21:45,1346,SupremeBigBrother,Saba,COMPLETED,64920,62220,0,SupremeBigBrother | Salty_Mark | RaptorTitanite
+1350,2024-03-27,01:54,1347,tr_iage,Saba,COMPLETED,29733,27933,0,tr_iage | raikkon3n
+1351,2024-03-27,10:04,1348,Jxay015,Saba,COMPLETED,29943,28143,0,Jxay015 | tacinn0
+1352,2024-03-27,12:03,1349,SupremeBigBrother,Sint Eustatius,COMPLETED,66731,64031,0,SupremeBigBrother | frizzer_HCW
+1353,2024-03-27,15:02,1350,Jxay015,Sint Eustatius,COMPLETED,34121,32321,0,Jxay015 | milanzegthoi
+1354,2024-03-27,15:52,1351,Jxay015,Sint Eustatius,COMPLETED,44516,42716,0,Jxay015 | milanzegthoi
+1355,2024-03-27,16:17,1352,Jxay015,Sint Eustatius,COMPLETED,37369,35569,0,Jxay015 | milanzegthoi
+1356,2024-03-27,18:35,1353,Finmikke1,Saba,COMPLETED,34584,32784,0,Finmikke1 | RaiVonSurrey
+1357,2024-03-27,23:26,1354,Salty_Mark,Sint Eustatius,COMPLETED,57270,55470,0,EmperorJohannes | RaptorTitanite
+1358,2024-03-28,01:50,1355,JimmySTitanite,Sint Eustatius,COMPLETED,54225,52425,0,JimmySTitanite | Kr0moTitanite | RaptorTitanite
+1359,2024-03-28,12:28,1356,Jxay015,Saba,COMPLETED,34584,32784,0,Jxay015 | milanzegthoi
+1360,2024-03-28,13:14,1357,Jxay015,Saba,COMPLETED,31152,29352,0,Jxay015 | milanzegthoi
+1361,2024-03-28,13:41,1358,lukas06yt,Sint Eustatius,COMPLETED,51060,49260,0,lukas06yt | snepmal3 | frizzer_HCW
+1362,2024-03-28,13:59,1359,SupremeBigBrother,Saba,COMPLETED,62040,59340,2700,SupremeBigBrother | milanzegthoi | Jxay015
+1363,2024-03-28,14:57,1360,Finmikke1,Saba,COMPLETED,31992,30192,0,Finmikke1 | RaiVonSurrey
+1364,2024-03-28,15:41,1361,Finmikke1,Saba,COMPLETED,7344,6894,1350,Finmikke1 | RaiVonSurrey
+1365,2024-03-28,16:06,1362,SupremeBigBrother,Saba,COMPLETED,32040,30240,0,SupremeBigBrother | Ayrxon
+1366,2024-03-28,16:51,1363,Finmikke1,Sint Eustatius,COMPLETED,31133,29333,0,Finmikke1 | Hermengildt | bob212699
+1367,2024-03-28,17:24,1364,lukas06yt,Saba,COMPLETED,35442,33642,0,lukas06yt | frizzer_HCW
+1368,2024-03-28,18:01,1365,LorexBugi,Saba,COMPLETED,27468,25668,0,LorexBugi | TimIsNub | SonnySaladino
+1369,2024-03-28,18:08,1366,lukas06yt,Saba,COMPLETED,27126,25326,0,lukas06yt | frizzer_HCW
+1370,2024-03-28,20:22,1367,lukas06yt,Sint Eustatius,COMPLETED,52793,50993,0,Dyetje | lukas06yt
+1371,2024-03-28,21:32,1368,LorexBugi,Saba,COMPLETED,40200,38400,0,LorexBugi | SonnySaladino | Ve6ous
+1372,2024-03-29,09:11,1369,Finmikke1,Sint Eustatius,COMPLETED,43943,42143,0,Finmikke1 | Dyetje
+1373,2024-03-29,09:13,1370,LorexBugi,Saba,COMPLETED,38943,37143,0,LorexBugi | jajebiecs
+1374,2024-03-29,11:20,1371,Finmikke1,Sint Eustatius,COMPLETED,45019,43219,0,Finmikke1 | Dyetje
+1375,2024-03-29,11:52,1372,JamesBond007F,Sint Eustatius,COMPLETED,61740,59940,0,JamesBond007F | milanzegthoi
+1376,2024-03-29,13:33,1373,Finmikke1,Saba,COMPLETED,23868,22068,0,Finmikke1 | SonnySaladino
+1377,2024-03-29,15:13,1374,Finmikke1,Saba,COMPLETED,29628,27828,0,Finmikke1 | Dyetje
+1378,2024-03-29,18:58,1375,lukas06yt,Saba,COMPLETED,0,0,1800,
+1379,2024-03-29,19:02,1376,lukas06yt,Saba,COMPLETED,31635,29835,0,bob212699 | SonnySaladino | lukas06yt
+1380,2024-03-29,20:19,1377,tr_iage,Saba,COMPLETED,32688,30888,0,SonnySaladino | tr_iage
+1381,2024-03-29,21:17,1378,lukas06yt,Sint Eustatius,COMPLETED,38535,36735,0,lukas06yt | frizzer_HCW
+1382,2024-03-30,02:00,1379,tr_iage,Saba,COMPLETED,28947,27147,0,tr_iage | SonnySaladino
+1383,2024-03-30,03:12,1380,tr_iage,Sint Eustatius,COMPLETED,29070,27270,0,tr_iage | Nickland_YT
+1384,2024-03-30,12:38,1381,lukas06yt,Saba,COMPLETED,36096,34296,0,lukas06yt | jajebiecs | SonnySaladino | bob212699
+1385,2024-03-30,13:55,1382,lukas06yt,Sint Eustatius,COMPLETED,45900,44100,0,SonnySaladino | lukas06yt
+1386,2024-03-30,16:35,1383,tr_iage,Saba,COMPLETED,30906,29106,0,tr_iage | TyrantAugustusCaesar
+1387,2024-03-30,21:58,1384,tr_iage,Sint Eustatius,COMPLETED,41419,39619,0,tr_iage | TheRealKeeper_1
+1388,2024-03-31,06:00,1385,tr_iage,Saba,COMPLETED,20808,19008,0,tr_iage | SonnySaladino
+1389,2024-03-31,10:00,1386,Finmikke1,Sint Eustatius,COMPLETED,51371,49571,0,Finmikke1 | Dyetje | snepmal3
+1390,2024-03-31,20:09,1387,tr_iage,Saba,COMPLETED,38304,36504,0,tr_iage | SonnySaladino
+1391,2024-03-31,23:18,1388,lukas06yt,Sint Eustatius,COMPLETED,34129,32329,0,lukas06yt | milanzegthoi | frizzer_HCW
+1392,2024-03-31,23:23,1389,tr_iage,Saba,COMPLETED,30852,29052,0,tr_iage | SonnySaladino
+1393,2024-04-01,00:39,1390,tr_iage,Saba,COMPLETED,45156,43356,0,tr_iage | SonnySaladino
+1394,2024-04-01,01:29,1391,tr_iage,Saba,COMPLETED,23184,21834,0,tr_iage | Nickland_YT | SonnySaladino
+1395,2024-04-01,04:41,1392,tr_iage,Saba,COMPLETED,22713,21363,0,tr_iage | SonnySaladino | Nickland_YT
+1396,2024-04-01,05:13,1393,tr_iage,Sint Eustatius,COMPLETED,31515,30165,0,tr_iage | SonnySaladino | Nickland_YT
+1397,2024-04-01,05:52,1394,tr_iage,Sint Eustatius,COMPLETED,37575,35775,0,tr_iage | SonnySaladino
+1398,2024-04-01,06:13,1395,tr_iage,Sint Eustatius,COMPLETED,37140,35340,0,tr_iage | SonnySaladino
+1399,2024-04-01,07:15,1396,tr_iage,Sint Eustatius,COMPLETED,37316,35516,0,tr_iage | SonnySaladino
+1400,2024-04-01,07:37,1397,tr_iage,Saba,COMPLETED,41976,40176,0,tr_iage | SonnySaladino
+1401,2024-04-01,09:30,1398,Finmikke1,Saba,COMPLETED,31464,29664,0,Finmikke1 | Dyetje
+1402,2024-04-01,10:44,1399,tr_iage,Saba,COMPLETED,40416,38616,0,tr_iage | Hermengildt
+1403,2024-04-02,16:10,1400,Finmikke1,Saba,COMPLETED,0,0,1800,Finmikke1 | SonnySaladino
+1404,2024-04-03,04:17,1401,thecoolguyisco,Saba,COMPLETED,42612,40812,0,SonnySaladino | thecoolguyisco
+1405,2024-04-03,16:06,1402,LorexBugi,Saba,COMPLETED,33558,31758,0,LorexBugi | SonnySaladino | Ve6ous
+1406,2024-04-04,12:47,1403,Finmikke1,Saba,COMPLETED,36354,34554,0,Finmikke1 | SonnySaladino
+1407,2024-04-04,16:47,1404,cf234563,Saba,COMPLETED,29004,27204,0,cf234563 | SonnySaladino
+1408,2024-04-04,18:02,1405,Salty_Mark,Sint Eustatius,COMPLETED,44370,42570,0,Kr0moTitanite | Salty_Mark
+1409,2024-04-05,12:52,1406,Finmikke1,Saba,COMPLETED,38694,36894,0,Finmikke1 | SonnySaladino
+1410,2024-04-05,16:57,1407,lukas06yt,Sint Eustatius,COMPLETED,37913,36113,0,lukas06yt | RobloxianoPro0
+1411,2024-04-05,18:45,1408,Tojeko_G,Sint Eustatius,COMPLETED,42705,40905,0,Tojeko_G | silverWolfDiscoX
+1412,2024-04-06,13:10,1409,cf234563,Saba,COMPLETED,25668,23868,0,cf234563 | Highboomman | RobloxianoPro0
+1413,2024-04-06,13:22,1410,Finmikke1,Sint Eustatius,COMPLETED,0,0,0,Finmikke1 | speciiaIe
+1414,2024-04-06,15:33,1411,XxHTML,Saba,COMPLETED,38376,36576,0,XxHTML | SonnySaladino | RobloxianoPro0 | raikkon3n
+1415,2024-04-06,16:18,1412,XxHTML,Saba,COMPLETED,33582,31782,0,XxHTML | RobloxianoPro0 | SonnySaladino | raikkon3n
+1416,2024-04-06,17:07,1413,Finmikke1,Saba,COMPLETED,31266,29466,0,Finmikke1 | SonnySaladino | RobloxianoPro0
+1417,2024-04-06,17:59,1414,tr_iage,Saba,COMPLETED,31128,29328,1800,SonnySaladino | tr_iage
+1418,2024-04-06,18:24,1415,joppiesaus_nl,Sint Eustatius,COMPLETED,340200,338400,0,SonnySaladino
+1419,2024-04-06,21:13,1416,cf234563,Sint Eustatius,COMPLETED,61170,59370,0,cf234563 | RobloxianoPro0
+1420,2024-04-07,02:02,1417,tr_iage,Sint Eustatius,COMPLETED,37665,35865,0,tr_iage | pcRobbie
+1421,2024-04-07,03:26,1418,T_rabacco,Saba,COMPLETED,26613,24813,0,Project_Concorde | T_rabacco
+1422,2024-04-07,03:55,1419,T_rabacco,Saba,COMPLETED,28824,27024,0,SonnySaladino | Project_Concorde | T_rabacco
+1423,2024-04-07,04:45,1420,tr_iage,Sint Eustatius,COMPLETED,41156,39356,1800,tr_iage | Project_Concorde | SonnySaladino
+1424,2024-04-07,12:35,1421,XxHTML,Sint Eustatius,COMPLETED,54158,52358,0,XxHTML | Highboomman
+1425,2024-04-07,16:18,1422,LorexBugi,Saba,COMPLETED,25812,24012,0,LorexBugi | SonnySaladino
+1426,2024-04-07,19:09,1423,lukas06yt,Saba,COMPLETED,26514,24714,0,SonnySaladino | lukas06yt
+1427,2024-04-10,16:28,1424,SonnySaladino,Saba,COMPLETED,37839,36039,0,speciiaIe | SonnySaladino
+1428,2024-04-10,17:04,1425,SonnySaladino,Saba,COMPLETED,27468,25668,0,speciiaIe | SonnySaladino
+1429,2024-04-10,17:52,1426,SonnySaladino,Saba,COMPLETED,35748,33948,0,pcRobbie | SonnySaladino
+1430,2024-04-10,18:51,1427,SonnySaladino,Saba,COMPLETED,27744,25944,0,pcRobbie | SonnySaladino
+1431,2024-04-10,19:25,1428,SonnySaladino,Saba,COMPLETED,38040,36240,0,bob212699 | SonnySaladino
+1432,2024-04-10,19:39,1429,SonnySaladino,Saba,COMPLETED,33726,31926,0,bob212699 | SonnySaladino
+1433,2024-04-10,20:18,1430,SonnySaladino,Saba,COMPLETED,38049,36249,0,bob212699 | SonnySaladino
+1434,2024-04-10,21:57,1431,SonnySaladino,Sint Eustatius,COMPLETED,13005,12105,0,RamenliciousAriana | SonnySaladino
+1435,2024-04-10,22:45,1432,SonnySaladino,Saba,COMPLETED,22644,20844,0,RamenliciousAriana | SonnySaladino
+1436,2024-04-10,23:38,1433,SonnySaladino,Saba,CANCELLED,,,,RamenliciousAriana | SonnySaladino
+1437,2024-04-11,16:29,1434,Finmikke1,Sint Eustatius,COMPLETED,42641,40841,0,Finmikke1 | RobloxianoPro0
+1438,2024-04-11,22:17,1435,JimmySTitanite,Sint Eustatius,COMPLETED,44021,42221,0,JimmySTitanite | RoloTitanite
+1439,2024-04-12,17:57,1436,joppiesaus_nl,Sint Eustatius,COMPLETED,28901,27551,450,joppiesaus_nl | Ve6ous
+1440,2024-04-13,02:30,1437,JimmySTitanite,Sint Eustatius,COMPLETED,44400,42600,0,JimmySTitanite | Kr0moTitanite
+1441,2024-04-13,09:49,1438,T_rabacco,Saba,COMPLETED,0,0,1800,orangesainsburys | T_rabacco
+1442,2024-04-14,15:34,1439,Salty_Mark,Sint Eustatius,COMPLETED,46579,44779,0,jam1443 | Hermengildt | Salty_Mark
+1443,2024-04-15,09:57,1440,joppiesaus_nl,Sint Eustatius,COMPLETED,55264,52564,0,joppiesaus_nl | kischa123
+1444,2024-04-15,16:25,1441,joppiesaus_nl,Sint Eustatius,COMPLETED,27859,26509,450,joppiesaus_nl | XxHTML
+1445,2024-04-15,18:22,1442,LorexBugi,Saba,COMPLETED,35640,33840,0,LorexBugi | orangesainsburys
+1446,2024-04-16,09:10,1443,joppiesaus_nl,Saba,COMPLETED,34092,32292,0,joppiesaus_nl | speciiaIe
+1447,2024-04-18,18:53,1444,joppiesaus_nl,Saba,COMPLETED,52560,49860,0,joppiesaus_nl | Hermengildt | Dellz3 | orangesainsburys
+1448,2024-04-18,19:03,1445,Salty_Mark,Sint Eustatius,COMPLETED,41205,39405,0,Kr0moTitanite | Salty_Mark
+1449,2024-04-20,08:37,1446,XxHTML,Sint Eustatius,COMPLETED,38104,36304,0,kischa123 | XxHTML
+1450,2024-04-21,01:04,1447,JimmySTitanite,Sint Eustatius,COMPLETED,36525,34725,0,Kr0moTitanite | JimmySTitanite
+1451,2024-04-21,16:47,1448,T_rabacco,Sint Eustatius,COMPLETED,32760,31410,0,orangesainsburys | raikkon3n | T_rabacco
+1452,2024-04-23,14:42,1449,Salty_Mark,Sint Eustatius,COMPLETED,48308,46508,0,Hermengildt | Salty_Mark
+1453,2024-04-23,18:13,1450,joppiesaus_nl,Sint Eustatius,COMPLETED,73999,71299,0,joppiesaus_nl | Hermengildt
+1454,2024-04-24,14:14,1451,Salty_Mark,Sint Eustatius,COMPLETED,40538,38738,0,karambaboy1234567890 | Salty_Mark
+1455,2024-04-25,18:22,1452,Salty_Mark,Sint Eustatius,COMPLETED,50663,48863,0,raikkon3n | Salty_Mark
+1456,2024-04-25,19:33,1453,Salty_Mark,Sint Eustatius,COMPLETED,45836,44036,0,noob123ghgb | Salty_Mark
+1457,2024-04-26,18:49,1454,LorexBugi,Saba,COMPLETED,30132,28332,0,LorexBugi | TheManLikeMan
+1458,2024-04-26,21:33,1455,Salty_Mark,Sint Eustatius,COMPLETED,44115,42315,0,TheManLikeMan | Salty_Mark
+1459,2024-04-27,00:12,1456,T_rabacco,Sint Eustatius,COMPLETED,37433,35633,0,TheManLikeMan | T_rabacco
+1460,2024-04-27,01:05,1457,T_rabacco,Sint Eustatius,COMPLETED,41108,39308,0,TheManLikeMan | T_rabacco
+1461,2024-04-27,12:16,1458,T_rabacco,Sint Eustatius,COMPLETED,42094,40294,0,speciiaIe | T_rabacco
+1462,2024-04-27,21:41,1459,LorexBugi,Sint Eustatius,COMPLETED,51210,49410,0,LorexBugi | TheManLikeMan
+1463,2024-04-28,18:28,1460,JimmySTitanite,Sint Eustatius,COMPLETED,47513,45713,0,Salty_Mark | RoloTitanite | JimmySTitanite
+1464,2024-04-30,11:13,1461,jormguh,Sint Eustatius,COMPLETED,12375,11925,0,GCHQ_COMMAND
+1465,2024-04-30,11:49,1462,KAM1KAZE09,Sint Eustatius,COMPLETED,0,0,0,KAM1KAZE09 | wkwjwaduwiaudw | lucavella2 | Volorikats
+1466,2024-04-30,12:43,1463,GCHQ_COMMAND,Sint Eustatius,COMPLETED,48401,46601,0,GCHQ_COMMAND | Allomnoi
+1467,2024-04-30,13:00,1464,LorexBugi,Saba,COMPLETED,30408,28608,0,LorexBugi | wkwjwaduwiaudw
+1468,2024-04-30,13:40,1465,LorexBugi,Saba,COMPLETED,29544,27744,0,LorexBugi | jam1443 | wkwjwaduwiaudw
+1469,2024-04-30,13:47,1466,GCHQ_COMMAND,Sint Eustatius,COMPLETED,36169,34369,0,Allomnoi | GCHQ_COMMAND
+1470,2024-04-30,14:02,1467,Salty_Mark,Sint Eustatius,COMPLETED,55718,53918,0,orangesainsburys | Salty_Mark
+1471,2024-04-30,14:56,1468,Salty_Mark,Sint Eustatius,COMPLETED,41363,39563,0,polsbur | BlitzSTitanite | Olmos075
+1472,2024-04-30,15:13,1469,GCHQ_COMMAND,Saba,COMPLETED,0,0,3150,Allomnoi | lucavella2 | GCHQ_COMMAND
+1473,2024-04-30,16:01,1470,XxHTML,Sint Eustatius,COMPLETED,30510,28710,0,Allomnoi | XxHTML
+1474,2024-04-30,17:48,1471,LorexBugi,Saba,COMPLETED,38313,36513,0,LorexBugi | orangesainsburys | polsbur
+1475,2024-05-01,00:47,1472,JimmySTitanite,Sint Eustatius,COMPLETED,53175,51375,0,JimmySTitanite | WaterySTitanite
+1476,2024-05-01,06:53,1473,XxHTML,Sint Eustatius,COMPLETED,40343,38543,0,XxHTML | wkwjwaduwiaudw
+1477,2024-05-01,07:07,1474,GCHQ_COMMAND,Saba,COMPLETED,40248,38448,0,GCHQ_COMMAND | Allomnoi
+1478,2024-05-01,07:35,1475,GCHQ_COMMAND,Saba,COMPLETED,0,0,1800,GCHQ_COMMAND | Allomnoi
+1479,2024-05-01,07:58,1476,GCHQ_COMMAND,Saba,COMPLETED,35343,33543,0,Allomnoi | GCHQ_COMMAND
+1480,2024-05-01,09:21,1477,XxHTML,Sint Eustatius,COMPLETED,34174,32374,0,XxHTML | wkwjwaduwiaudw
+1481,2024-05-01,10:05,1478,XxHTML,Sint Eustatius,COMPLETED,51713,49913,0,XxHTML | nexusmax4576
+1482,2024-05-01,11:10,1479,GCHQ_COMMAND,Sint Eustatius,COMPLETED,43886,42086,0,GCHQ_COMMAND | SilentDudey
+1483,2024-05-01,11:45,1480,GCHQ_COMMAND,Saba,COMPLETED,34428,32628,0,GCHQ_COMMAND | SilentDudey
+1484,2024-05-01,14:13,1481,GCHQ_COMMAND,Saba,COMPLETED,39060,37260,0,GCHQ_COMMAND | Allomnoi | orangesainsburys
+1485,2026-02-07,16:22,1485,SupremeBigBrother,Sint Eustatius,CANCELLED,,,,SupremeBigBrother | Salty_Mark | karambaboy1234567890
+1486,2026-02-07,16:40,1486,cf234563,Saba,COMPLETED,0,0,600,cf234563 | d_eadend38
+1487,2026-02-07,19:05,1487,lukas06yt,Saba,COMPLETED,34728,32928,0,lukas06yt | RobloxianoPro0 | Dyetje | eprstbebra
+1488,2026-02-07,20:00,1488,lukas06yt,Sint Eustatius,COMPLETED,42394,40594,0,lukas06yt | RobloxianoPro0 | Dyetje | eprstbebra
+1489,2026-02-07,22:15,1489,jormguh,Sint Eustatius,COMPLETED,9019,8569,0,RamenliciousAriana
+1490,2026-02-07,22:48,1490,ikbenhetsmientie,Sint Eustatius,CANCELLED,,,,FearsFullfilled
+1491,2026-02-07,22:36,1491,SupremeBigBrother,Sint Eustatius,CANCELLED,,,,SupremeBigBrother | Salty_Mark
+1492,2026-02-07,23:43,1492,ikbenhetsmientie,Sint Eustatius,COMPLETED,41089,39289,0,FearsFullfilled | ikbenhetsmientie
+1493,2026-02-07,23:30,1493,SupremeBigBrother,Saba,COMPLETED,34779,32979,0,SupremeBigBrother | TheManLikeMan
+1494,2026-02-08,04:59,1494,Ghovxst,Saba,COMPLETED,20010,18660,0,lacednopy | Ghovxst
+1495,2026-02-08,11:36,1495,SupremeBigBrother,Sint Eustatius,COMPLETED,41100,39300,0,SupremeBigBrother | torixsl | Fuseliers
+1496,2026-02-08,15:56,1496,lukas06yt,Sint Eustatius,COMPLETED,30490,29290,600,lukas06yt | TimIsNub | iliasiliasiliasbah
+1497,2026-02-08,15:58,1497,ikbenhetsmientie,Sint Eustatius,COMPLETED,26685,25335,450,FearsFullfilled | ikbenhetsmientie
+1498,2026-02-08,17:50,1498,cf234563,Sint Eustatius,COMPLETED,37530,35730,0,cf234563 | metaliebe | Olmos075
+1499,2026-02-08,19:12,1499,lukas06yt,Sint Eustatius,COMPLETED,50198,48398,0,xd_Oreos | CoffeeOrDeath | lukas06yt | Wealthy890
+1500,2026-02-09,03:26,1500,Ghovxst,Saba,CANCELLED,,,,Ghovxst | metaliebe
+1501,2026-02-09,10:20,1501,SupremeBigBrother,Sint Eustatius,COMPLETED,65535,63285,0,SupremeBigBrother | CoffeeOrDeath | eprstbebra
+1502,2026-02-09,15:46,1502,joppiesaus_nl,Saba,CANCELLED,,,,jormguh
+1503,2026-02-09,15:48,1503,joppiesaus_nl,Saba,COMPLETED,0,0,0,
+1504,2026-02-09,15:40,1504,eprstbebra,Sint Eustatius,COMPLETED,20790,19890,900,eprstbebra | jupetchu
+1505,2026-02-08,20:57,1505,lukas06yt,Sint Eustatius,COMPLETED,47306,45506,0,0021th | opicityy | TyrantAugustusCaesar | lukas06yt
+1506,2026-02-09,15:47,1506,SupremeBigBrother,Sint Eustatius,COMPLETED,66855,64155,0,SupremeBigBrother | Olmos075
+1507,2026-02-09,16:39,1507,jormguh,Sint Eustatius,COMPLETED,15480,15030,0,jormguh | ghostbuster9001 | Freezing_White
+1508,2026-02-09,18:00,1508,cf234563,Saba,COMPLETED,0,0,600,Catonius | d_eadend38 | Jimmy32k | iromen191
+1509,2026-02-09,20:08,1509,SupremeBigBrother,Sint Eustatius,COMPLETED,30585,29085,500,SupremeBigBrother | MysticReacon | thecoolguyisco | Psyonix_x | Lenizz
+1510,2026-02-09,19:37,1510,jormguh,Sint Eustatius,COMPLETED,72398,69848,150,jormguh | Hermengildt | torixsl | Olmos075 | noob123ghgb | d_eadend38
+1511,2026-02-09,21:20,1511,jormguh,Sint Eustatius,COMPLETED,65730,63030,0,Olmos075 | jormguh
+1512,2026-02-09,22:52,1512,jormguh,Saba,COMPLETED,59712,57012,0,Olmos075 | TheManLikeMan
+1513,2026-02-10,00:42,1513,jormguh,Saba,COMPLETED,48372,45672,0,Olmos075 | metaliebe
+1514,2026-02-10,01:40,1514,jormguh,Saba,COMPLETED,33390,31740,1050,metaliebe | CoffeeOrDeath | Olmos075
+1515,2026-02-10,11:17,1515,jormguh,Saba,COMPLETED,6732,6282,0,jormguh | hshshshsjsjsjsjj | theystolemyledger
+1516,2026-02-10,14:22,1516,eprstbebra,Saba,COMPLETED,40539,38739,0,eprstbebra | jupetchu
+1517,2026-02-10,15:11,1517,eprstbebra,Saba,COMPLETED,27036,25236,0,eprstbebra | Hermengildt
+1518,2026-02-10,15:56,1518,jormguh,Saba,COMPLETED,41380,38830,0,Olmos075 | lacednopy | metaliebe
+1519,2026-02-10,17:16,1519,jormguh,Sint Eustatius,COMPLETED,0,0,2550,lacednopy | Olmos075 | metaliebe
+1520,2026-02-10,21:10,1520,jormguh,Sint Eustatius,CANCELLED,,,,cIarkwarrior | jormguh | MysticReacon
+1521,2026-02-10,20:41,1521,cf234563,Sint,COMPLETED,39799,37999,0,theystolemyledger | Olmos075 | metaliebe | iromen191 | TheManLikeMan | Freezing_White
+1522,2026-02-11,17:11,1522,eprstbebra,Saba,COMPLETED,36696,34896,0,eprstbebra | jupetchu
+1523,2026-02-11,17:21,1523,jormguh,Sint Eustatius,COMPLETED,0,0,2700,cIarkwarrior | jormguh
+1524,2026-02-11,17:28,1524,cf234563,Saba,COMPLETED,0,0,1800,Dellz3 | xXLegitBoisXx | Formula1EG
+1525,2026-02-11,19:29,1525,jormguh,Sint Eustatius,COMPLETED,62213,59513,0,jormguh | Formula1EG
+1526,2026-02-11,20:34,1526,jormguh,Saba,COMPLETED,39888,37188,0,Olmos075 | SupremeBigBrother
+1527,2026-02-11,21:48,1527,jormguh,Saba,COMPLETED,37536,34836,0,SupremeBigBrother | Olmos075 | metaliebe
+1528,2026-02-12,00:00,1528,thecoolguyisco,Sint Eustatius,COMPLETED,36473,34673,0,samotrious | SilencedAnt | NocturnalZone | thecoolguyisco
+1529,2026-02-12,01:43,1529,thecoolguyisco,Saba,COMPLETED,28788,26988,0,thecoolguyisco | NocturnalZone | SilencedAnt | Olmos075 | metaliebe
+1530,2026-02-12,10:58,1530,eprstbebra,Saba,COMPLETED,30642,28842,0,eprstbebra | jupetchu | Formula1EG
+1531,2026-02-12,14:18,1531,simonmutsaers,Sint Eustatius,COMPLETED,32513,30713,0,Lenizz | d_eadend38 | simonmutsaers
+1532,2026-02-12,15:30,1532,simonmutsaers,Sint Eustatius,COMPLETED,22995,21645,450,Lenizz | SilencedAnt | simonmutsaers
+1533,2026-02-12,17:49,1534,SupremeBigBrother,Saba,COMPLETED,0,0,2700,
+1534,2026-02-13,10:11,1535,eprstbebra,Saba,COMPLETED,0,0,1800,eprstbebra | jupetchu
+1535,2026-02-13,15:47,1536,Salty_Mark,Sint Eustatius,COMPLETED,13073,12173,0,Salty_Mark | metaliebe
+1536,2026-02-13,16:34,1537,Olmos075,Sint Eustatius,COMPLETED,29978,28178,0,ninjapower0102 | CorporateHarold | Olmos075
+1537,2026-02-13,18:16,1538,Olmos075,Sint Eustatius,COMPLETED,37635,35835,0,ninjapower0102 | metaliebe | xXLegitBoisXx | Olmos075
+1538,2026-02-13,19:09,1539,thecoolguyisco,Saba,COMPLETED,23916,22116,0,thecoolguyisco | iromen191 | Wealthy890
+1539,2026-02-13,19:54,1541,thecoolguyisco,Saba,COMPLETED,0,0,1800,iromen191 | Wealthy890 | thecoolguyisco
+1540,2026-02-13,20:15,1542,thecoolguyisco,Saba,COMPLETED,23652,21852,0,iromen191 | Wealthy890 | thecoolguyisco
+1541,2026-02-13,19:52,1543,Olmos075,Sint Eustatius,COMPLETED,29310,27510,0,Olmos075 | metaliebe | ninjapower0102 | TheManLikeMan
+1542,2026-02-13,20:59,1544,Olmos075,Sint Eustatius,COMPLETED,34313,32513,0,Olmos075 | metaliebe | TheManLikeMan
+1543,2026-02-13,21:55,1545,Olmos075,Sint Eustatius,COMPLETED,36450,34650,0,Olmos075 | metaliebe | TheManLikeMan
+1544,2026-02-13,23:16,1546,thecoolguyisco,Sint Eustatius,COMPLETED,23543,22043,300,thecoolguyisco | SilencedAnt
+1545,2026-02-13,23:43,1547,Olmos075,Sint Eustatius,COMPLETED,33240,31440,0,Olmos075 | ricardobcooper | WaterySTitanite
+1546,2026-02-14,00:23,1548,thecoolguyisco,Sint Eustatius,COMPLETED,40815,39015,0,thecoolguyisco | SilencedAnt
+1547,2026-02-14,01:10,1549,thecoolguyisco,Saba,COMPLETED,14814,13464,450,thecoolguyisco | SilencedAnt
+1548,2026-02-14,01:16,1550,Olmos075,Sint Eustatius,COMPLETED,32520,30720,0,Olmos075 | metaliebe | TheManLikeMan
+1549,2026-02-14,02:11,1551,Olmos075,Sint Eustatius,COMPLETED,0,0,1800,Olmos075 | metaliebe | TheManLikeMan
+1550,2026-02-14,03:21,1552,Olmos075,Sint Eustatius,COMPLETED,34433,32633,0,Olmos075 | ninjapower0102 | TheManLikeMan
+1551,2026-02-14,04:17,1553,Olmos075,Sint Eustatius,COMPLETED,42683,40883,0,Olmos075 | ninjapower0102 | metaliebe
+1552,2026-02-14,05:18,1554,Olmos075,Sint Eustatius,COMPLETED,46238,44438,0,Olmos075 | ninjapower0102 | metaliebe
+1553,2026-02-14,06:11,1555,Olmos075,Sint Eustatius,COMPLETED,40433,38633,0,Olmos075 | ninjapower0102 | metaliebe
+1554,2026-02-14,07:10,1556,Olmos075,Saba,COMPLETED,28278,26478,0,Olmos075 | ninjapower0102 | metaliebe
+1555,2026-02-14,15:20,1557,Olmos075,Sint Eustatius,COMPLETED,33810,32010,0,Olmos075 | theystolemyledger | TheManLikeMan
+1556,2026-02-14,15:49,1558,jormguh,Sint Eustatius,COMPLETED,0,0,2700,jormguh | BagyRagy
+1557,2026-02-14,15:52,1559,eprstbebra,Saba,COMPLETED,0,0,1800,eprstbebra | jupetchu
+1558,2026-02-14,16:35,1560,SupremeBigBrother,Sint Eustatius,COMPLETED,42688,40138,150,SupremeBigBrother | TheLonelyCanuck
+1559,2026-02-14,16:47,1561,Olmos075,Sint Eustatius,COMPLETED,46695,44895,0,Olmos075 | TheManLikeMan
+1560,2026-02-14,18:11,1562,Olmos075,Sint Eustatius,COMPLETED,41168,39368,0,Olmos075 | metaliebe | TheManLikeMan | ninjapower0102
+1561,2026-02-14,18:51,1563,Olmos075,Sint Eustatius,COMPLETED,36750,34950,0,Olmos075 | metaliebe | TheManLikeMan
+1562,2026-02-14,20:15,1564,Olmos075,Sint Eustatius,COMPLETED,22618,20968,150,TheManLikeMan | rzeczka11 | Olmos075 | peterrdefries12
+1563,2026-02-14,23:28,1565,lukas06yt,Sint Eustatius,COMPLETED,17823,16773,0,TimIsNub | iliasiliasiliasbah | SilencedAnt | lukas06yt | TheManLikeMan | rzeczka11
+1564,2026-02-14,23:28,1566,lukas06yt,Sint Eustatius,COMPLETED,17823,16773,1200,TimIsNub | lukas06yt | TheManLikeMan
+1565,2026-02-14,23:28,1566,lukas06yt,Sint Eustatius,COMPLETED,17823,16773,1200,TimIsNub | lukas06yt | TheManLikeMan
+1566,2026-02-14,23:28,1566,lukas06yt,Sint Eustatius,COMPLETED,17823,16773,1200,TimIsNub | lukas06yt | TheManLikeMan
+1567,2026-02-15,01:18,1567,lukas06yt,Sint Eustatius,CANCELLED,,,,TimIsNub | lukas06yt | TheManLikeMan | SilencedAnt
+1568,2026-02-15,01:18,1567,lukas06yt,Sint Eustatius,COMPLETED,29430,28080,1350,TimIsNub | lukas06yt | TheManLikeMan | SilencedAnt
+1569,2026-02-15,02:11,1568,Olmos075,Sint Eustatius,COMPLETED,27804,25024,0,Olmos075 | theystolemyledger | RamenliciousAriana
+1570,2026-02-15,03:08,1569,Olmos075,Sint Eustatius,COMPLETED,39998,38198,0,Olmos075 | theystolemyledger
+1571,2026-02-15,04:17,1570,Olmos075,Sint Eustatius,COMPLETED,36623,34823,0,Olmos075 | theystolemyledger | SilencedAnt
+1572,2026-02-15,04:38,1571,Ghovxst,Saba,COMPLETED,0,0,1800,Ghovxst | metaliebe
+1573,2026-02-15,05:15,1572,Olmos075,Sint Eustatius,COMPLETED,36608,34808,0,Olmos075 | MMMOMOOOO
+1574,2026-02-15,07:07,1573,Olmos075,Sint Eustatius,COMPLETED,49935,48135,0,Olmos075 | MMMOMOOOO | SilencedAnt
+1575,2026-02-15,08:29,1574,Olmos075,Sint Eustatius,COMPLETED,0,0,1800,Olmos075 | SilencedAnt
+1576,2026-02-15,08:44,1575,Olmos075,Sint Eustatius,COMPLETED,45255,43455,0,Olmos075 | SilencedAnt
+1577,2026-02-15,11:11,1576,eprstbebra,Saba,COMPLETED,29034,27234,600,eprstbebra | orangesainsburys
+1578,2026-02-15,13:31,1577,lukas06yt,Saba,COMPLETED,7968,7068,1800,lukas06yt
+1579,2026-02-15,14:10,1578,lukas06yt,Sint Eustatius,COMPLETED,50003,47303,0,lukas06yt | TimIsNub
+1580,2026-02-15,15:36,1579,lukas06yt,Sint Eustatius,COMPLETED,51825,49125,0,iliasiliasiliasbah | TimIsNub | lukas06yt
+1581,2026-02-15,15:51,1580,eprstbebra,Sint Eustatius,COMPLETED,35888,34088,0,eprstbebra | orangesainsburys
+1582,2026-02-15,17:04,1581,eprstbebra,Sint Eustatius,COMPLETED,36458,34658,0,eprstbebra | orangesainsburys
+1583,2026-02-15,17:42,1582,lukas06yt,Sint Eustatius,COMPLETED,43410,41610,0,lukas06yt | MysticReacon
+1584,2026-02-15,18:15,1583,eprstbebra,Sint Eustatius,COMPLETED,31836,30036,0,eprstbebra | orangesainsburys | metaliebe
+1585,2026-02-15,19:20,1584,Olmos075,Sint Eustatius,COMPLETED,43275,41475,0,Olmos075 | metaliebe
+1586,2026-02-15,20:20,1585,Finmikke1,Sint Eustatius,CANCELLED,,,,Finmikke1 | MysticReacon | lucavella2 | NocturnalZone
+1587,2026-02-15,20:32,1586,Olmos075,Sint Eustatius,COMPLETED,35130,33330,0,Olmos075 | metaliebe
+1588,2026-02-15,21:00,1587,Finmikke1,Saba,COMPLETED,25512,23712,0,Finmikke1 | MysticReacon | lucavella2 | NocturnalZone
+1589,2026-02-15,21:13,1588,thecoolguyisco,Sint Eustatius,COMPLETED,35700,33900,0,thecoolguyisco | SilencedAnt
+1590,2026-02-15,22:03,1589,thecoolguyisco,Sint Eustatius,COMPLETED,34305,32505,0,thecoolguyisco | SilencedAnt
+1591,2026-02-15,22:58,1590,Olmos075,Sint Eustatius,COMPLETED,39758,37958,0,Olmos075 | SilencedAnt
+1592,2026-02-16,00:01,1591,lukas06yt,Sint Eustatius,COMPLETED,58163,55463,0,lukas06yt | metaliebe | SilencedAnt | Olmos075 | Kravkens | TheManLikeMan
+1593,2026-02-16,00:37,1592,thecoolguyisco,Saba,COMPLETED,27102,25302,0,thecoolguyisco | Wealthy890
+1594,2026-02-16,01:32,1593,thecoolguyisco,Saba,COMPLETED,18750,16950,0,thecoolguyisco | Wealthy890 | SilencedAnt
+1595,2026-02-16,02:07,1594,thecoolguyisco,Sint Eustatius,COMPLETED,29565,27765,0,thecoolguyisco | Wealthy890 | SilencedAnt
+1596,2026-02-16,03:06,1595,Olmos075,Sint Eustatius,COMPLETED,37110,35310,0,Olmos075 | metaliebe | SilencedAnt
+1597,2026-02-16,04:26,1596,Olmos075,Sint Eustatius,COMPLETED,27878,26078,0,Olmos075 | metaliebe | MMMOMOOOO | SilencedAnt
+1598,2026-02-16,07:41,1597,Olmos075,Sint Eustatius,COMPLETED,0,0,1800,Olmos075 | SilencedAnt | metaliebe
+1599,2026-02-16,07:55,1598,eprstbebra,Saba,COMPLETED,0,0,1800,eprstbebra | SilencedAnt | metaliebe
+1600,2026-02-16,13:45,1599,cf234563,Saba,COMPLETED,23508,21708,0,cf234563 | CoffeeOrDeath
+1601,2026-02-16,16:44,1600,Olmos075,Sint Eustatius,COMPLETED,41895,40095,0,Olmos075 | Kravkens
+1602,2026-02-16,18:44,1601,Olmos075,Sint Eustatius,COMPLETED,45225,43425,0,Olmos075 | ninjapower0102
+1603,2026-02-16,19:56,1602,Olmos075,Sint Eustatius,COMPLETED,33113,31763,450,Olmos075 | ninjapower0102
+1604,2026-02-16,21:19,1603,cf234563,Sint Eustatius,COMPLETED,30270,28470,0,emppuhenkka074 | jnrsanch | ssh_dow | Thunder_Sanctus
+1605,2026-02-16,21:23,1604,Olmos075,Sint Eustatius,COMPLETED,29250,27450,0,Olmos075 | metaliebe
+1606,2026-02-16,23:15,1605,Olmos075,Sint Eustatius,COMPLETED,30615,28815,0,Olmos075 | SilencedAnt
+1607,2026-02-17,00:41,1606,thecoolguyisco,Saba,COMPLETED,20664,18864,0,thecoolguyisco | SilencedAnt
+1608,2026-02-17,01:36,1607,thecoolguyisco,Saba,COMPLETED,32196,30396,0,thecoolguyisco | SilencedAnt
+1609,2026-02-17,01:45,1608,thecoolguyisco,Saba,COMPLETED,24378,22578,0,thecoolguyisco | SilencedAnt
+1610,2026-02-17,02:26,1609,thecoolguyisco,Saba,COMPLETED,23088,21288,0,thecoolguyisco | SilencedAnt
+1611,2026-02-17,03:05,1610,thecoolguyisco,Saba,COMPLETED,30096,28296,0,thecoolguyisco | SilencedAnt
+1612,2026-02-17,08:06,1611,Finmikke1,Sint Eustatius,COMPLETED,0,0,1800,Finmikke1 | Olmos075
+1613,2026-02-17,16:34,1612,thecoolguyisco,Saba,CANCELLED,,,0,thecoolguyisco | CorporateHarold
+1614,2026-02-17,16:41,1613,ikbenhetsmientie,Sint Eustatius,COMPLETED,0,0,1800,GoonGarrison | FearsFullfilled | ikbenhetsmientie
+1615,2026-02-18,13:16,1614,eprstbebra,Saba,COMPLETED,0,0,1800,jupetchu | eprstbebra
+1616,2026-02-18,13:31,1615,Olmos075,Sint Eustatius,COMPLETED,32573,30773,0,Olmos075 | Dyetje
+1617,2026-02-18,21:48,1616,thecoolguyisco,Saba,COMPLETED,0,0,1800,thecoolguyisco | Dyetje
+1618,2026-02-18,22:40,1617,Olmos075,Sint Eustatius,COMPLETED,40770,38970,0,Olmos075 | SilencedAnt | metaliebe | Kravkens
+1619,2026-02-18,23:44,1618,Olmos075,Sint Eustatius,COMPLETED,40485,38685,0,Olmos075 | SilencedAnt
+1620,2026-02-19,16:24,1620,lukas06yt,Sint Eustatius,COMPLETED,68468,65768,0,TheManLikeMan | lukas06yt | Thunder_Sanctus
+1621,2026-02-19,17:10,1621,lukas06yt,Sint Eustatius,COMPLETED,42090,40290,0,lukas06yt | Patkot_Military
+1622,2026-02-19,18:15,1622,SupremeBigBrother,Sint Eustatius,COMPLETED,25043,23693,0,SupremeBigBrother | TheManLikeMan
+1623,2026-02-19,19:42,1623,SupremeBigBrother,Sint Eustatius,COMPLETED,57653,54953,0,SupremeBigBrother | TheManLikeMan
+1624,2026-02-19,20:44,1624,SupremeBigBrother,Sint Eustatius,COMPLETED,52725,50025,0,SupremeBigBrother | TheManLikeMan
+1625,2026-02-20,13:35,1625,Finmikke1,Sint Eustatius,COMPLETED,0,0,1800,Finmikke1 | d_eadend38 | Waltoorg
+1626,2026-02-20,14:00,1626,Finmikke1,Sint Eustatius,COMPLETED,0,0,1800,Finmikke1 | Waltoorg | d_eadend38
+1627,2026-02-20,14:25,1627,Finmikke1,Saba,COMPLETED,26760,24960,0,Finmikke1 | Waltoorg | d_eadend38
+1628,2026-02-20,20:32,1628,SupremeBigBrother,Sint Eustatius,COMPLETED,36428,34178,0,SupremeBigBrother | FearsFullfilled
+1629,2026-02-21,01:09,1629,Olmos075,Sint Eustatius,COMPLETED,0,0,1800,Olmos075 | metaliebe | Kravkens
+1630,2026-02-19,13:41,1619,eprstbebra,Saba,COMPLETED,30684,28884,0,eprstbebra | jupetchu
+1631,2026-02-21,09:45,1630,Olmos075,Sint Eustatius,COMPLETED,38948,37148,0,Olmos075 | vipdude8908
+1632,2026-02-21,12:42,1631,eprstbebra,Saba,COMPLETED,31080,29280,0,eprstbebra | jupetchu
+1633,2026-02-22,03:37,1632,Olmos075,Sint Eustatius,COMPLETED,28643,26843,0,Olmos075 | metaliebe
+1634,2026-02-22,05:16,1633,Ghovxst,Saba,COMPLETED,0,0,1800,Ghovxst | SilencedAnt
+1635,2026-02-22,15:13,1634,ikbenhetsmientie,Sint Eustatius,COMPLETED,24975,23625,450,ikbenhetsmientie | FearsFullfilled | Maksi7002 | TakinaWatanabe
+1636,2026-02-22,20:44,1635,ikbenhetsmientie,Sint Eustatius,COMPLETED,41400,39600,0,ikbenhetsmientie | EtheraLoka
+1637,2026-02-22,22:06,1636,SupremeBigBrother,Sint Eustatius,COMPLETED,51128,48428,0,SupremeBigBrother | metaliebe
+1638,2026-02-22,23:22,1637,SupremeBigBrother,Sint Eustatius,COMPLETED,25208,23408,0,SupremeBigBrother | metaliebe
+1639,2026-02-23,01:08,1638,ikbenhetsmientie,Sint Eustatius,COMPLETED,30795,28995,0,EtheraLoka | ikbenhetsmientie
+1640,2026-02-23,02:01,1639,Olmos075,Sint Eustatius,COMPLETED,0,0,1800,Olmos075 | metaliebe
+1641,2026-02-23,20:33,1640,Olmos075,Sint Eustatius,COMPLETED,44865,43065,0,Olmos075 | metaliebe
+1642,2026-02-25,00:24,1641,Olmos075,Sint Eustatius,COMPLETED,0,0,1800,Olmos075 | metaliebe
+1643,2026-02-25,02:17,1642,Olmos075,Sint Eustatius,COMPLETED,34575,32775,0,Olmos075 | metaliebe
+1644,2026-02-25,03:07,1643,Olmos075,Sint Eustatius,COMPLETED,47288,45488,0,Olmos075 | metaliebe
+1645,2026-02-25,11:23,1644,ikbenhetsmientie,Sint Eustatius,COMPLETED,35100,33300,0,ikbenhetsmientie | EtheraLoka
+1646,2026-02-25,12:03,1645,ikbenhetsmientie,Sint Eustatius,COMPLETED,24743,22943,0,ikbenhetsmientie | EtheraLoka
+1647,2026-02-25,19:58,1646,TheLonelyCanuck,Sint Eustatius,COMPLETED,16750,15850,1800,TheLonelyCanuck | Dyetje
+1648,2026-02-25,23:12,1647,lukas06yt,Sint Eustatius,COMPLETED,60165,57615,150,SupremeBigBrother | Kravkens | lukas06yt
+1649,2026-02-27,21:44,1648,cf234563,Saba,COMPLETED,22152,20802,450,metaliebe | cf234563
+1650,2026-03-01,03:39,1649,Olmos075,Sint Eustatius,COMPLETED,32760,30960,0,Olmos075 | SilencedAnt | metaliebe
+1651,2026-03-01,03:46,1650,Olmos075,Sint Eustatius,COMPLETED,44843,43043,0,Olmos075 | SilencedAnt
+1652,2026-03-01,14:17,1651,metaliebe,Sint Eustatius,COMPLETED,36443,34643,0,metaliebe | cIarkwarrior
+1653,2026-03-01,15:33,1652,metaliebe,Saba,COMPLETED,32520,30720,0,metaliebe | cIarkwarrior
+1654,2026-03-01,16:30,1654,metaliebe,Saba,COMPLETED,26940,25140,0,metaliebe | cIarkwarrior
+1655,2026-03-01,15:55,1653,TheLonelyCanuck,Sint Eustatius,COMPLETED,51263,48563,0,TheLonelyCanuck | d_eadend38 | Formula1EG
+1656,2026-03-01,17:51,1655,metaliebe,Sint Eustatius,COMPLETED,46590,44790,0,metaliebe | WindowsAviation | vuisthaaktwan
+1657,2026-03-01,20:32,1656,lukas06yt,Sint Eustatius,COMPLETED,62265,59565,0,xxlpoop | birkenvos | WindowsAviation | rcIstealer | ProbKota | kingofmykonos
+1658,2026-03-01,20:53,1657,SilencedAnt,Sint Eustatius,COMPLETED,29603,27803,0,SilencedAnt | ninilol2011 | notHadesq | Roberttini | nbaballn | BravoBlood
+1659,2026-03-01,23:27,1660,TheLonelyCanuck,Sint Eustatius,COMPLETED,29355,27555,0,TheLonelyCanuck | notHadesq
+1660,2026-03-01,23:23,1659,SilencedAnt,Saba,COMPLETED,16746,15846,900,SilencedAnt | BravoBlood
+1661,2026-03-02,01:41,1661,TheLonelyCanuck,Sint Eustatius,COMPLETED,37845,35595,0,TheLonelyCanuck | notHadesq
+1662,2026-03-02,02:28,1663,SilencedAnt,Saba,COMPLETED,34998,33198,0,SilencedAnt | WindowsAviation
+1663,2026-03-02,02:28,1664,metaliebe,Sint Eustatius,COMPLETED,48338,46538,0,metaliebe | blockyliebe | Fr4nkIin_CIinton
+1664,2026-03-02,03:38,1665,SilencedAnt,Sint Eustatius,COMPLETED,42585,40785,0,SilencedAnt | WindowsAviation
+1665,2026-03-02,04:07,1666,Olmos075,Sint Eustatius,COMPLETED,37388,35588,0,Olmos075 | Velantheus
+1666,2026-03-02,13:39,1667,joppiesaus_nl,Sint Eustatius,COMPLETED,0,0,1000,joppiesaus_nl | villainflare | Formula1EG
+1667,2026-03-02,14:50,1668,Finmikke1,Sint Eustatius,COMPLETED,35588,34988,,Finmikke1 | vilias74
+1668,2026-03-02,15:39,1670,Finmikke1,Sint Eustatius,COMPLETED,0,0,600,Finmikke1 | vilias74
+1669,2026-03-02,14:55,1669,metaliebe,Sint Eustatius,COMPLETED,16808,16358,50,metaliebe | Schzmit_Smith | ItsYaBoyNick01 | mohamad12mhe | stuffhidden1
+1670,2026-03-02,02:24,1662,TheLonelyCanuck,Sint Eustatius,COMPLETED,52628,51728,0,TheLonelyCanuck | notHadesq
+1671,2026-03-02,16:05,1671,metaliebe,Sint Eustatius,COMPLETED,9180,8980,400,metaliebe | unloadedshots
+1672,2026-03-02,17:08,1672,SupremeBigBrother,Sint Eustatius,COMPLETED,38085,37485,0,SupremeBigBrother | c_eops | n0t_s4m
+1673,2026-03-02,17:47,1673,metaliebe,Sint Eustatius,COMPLETED,30143,29543,0,metaliebe | unloadedshots
+1674,2026-03-02,19:22,1674,Olmos075,Sint Eustatius,COMPLETED,32633,32033,0,Olmos075 | nbaballn | ItsYaBoyNick01 | Roberttini
+1675,2026-03-01,22:40,1658,lukas06yt,Sint Eustatius,COMPLETED,46530,45830,200,Mihai_Ghe101 | bunn78787 | Moonvvisv | Oh_MyBricks | iCavalry | MarbleYarment
+1676,2026-03-02,20:31,1675,lukas06yt,Sint Eustatius,COMPLETED,55283,54383,0,lukas06yt | Dragon_Crypto | Miss_Onk | AkihitoSaito | 1234larsie | krisalex100
+1677,2026-03-02,22:06,1677,lukas06yt,Sint Eustatius,COMPLETED,47543,46643,0,lukas06yt | NocturnalZone | birkenvos
+1678,2026-03-02,21:34,1676,SilencedAnt,Sint Eustatius,COMPLETED,40553,39953,0,SilencedAnt | orangesainsburys
+1679,2026-03-02,23:10,1679,metaliebe,Sint Eustatius,COMPLETED,0,0,600,metaliebe | unloadedshots | blockyliebe
+1680,2026-03-02,22:57,1678,SilencedAnt,Sint Eustatius,COMPLETED,0,0,600,SilencedAnt | orangesainsburys
+1681,2026-03-02,23:23,1680,metaliebe,Sint Eustatius,COMPLETED,39885,39285,0,metaliebe | blockyliebe | unloadedshots
+1682,2026-03-03,00:09,1681,SilencedAnt,Sint Eustatius,COMPLETED,27773,27173,0,SilencedAnt | ProbKota
+1683,2026-03-03,01:07,1682,SilencedAnt,Sint Eustatius,COMPLETED,40425,39825,0,SilencedAnt | ProbKota | blockyliebe
+1684,2026-03-03,01:19,1683,metaliebe,Sint Eustatius,COMPLETED,37170,36570,0,metaliebe | GuerrillaJaxon | BeepoLight | Alxvvk
+1685,2026-03-03,02:03,1684,SilencedAnt,Sint Eustatius,COMPLETED,31583,30983,0,SilencedAnt | blockyliebe | ProbKota
+1686,2026-03-03,03:11,1685,SilencedAnt,Sint Eustatius,COMPLETED,42608,42008,0,SilencedAnt | blockyliebe
+1687,2026-03-03,05:27,1686,SilencedAnt,Sint Eustatius,COMPLETED,30023,29423,0,hulkatron66 | SarinAttacker | SilencedAnt
+1688,2026-03-03,18:29,1687,lukas06yt,Sint Eustatius,COMPLETED,0,0,900,
+1689,2026-03-03,19:49,1688,lukas06yt,Sint Eustatius,COMPLETED,44618,43718,0,lukas06yt | birkenvos | cIarkwarrior | n0t_s4m
+1690,2026-03-04,01:02,1689,metaliebe,Sint Eustatius,COMPLETED,25223,24773,150,metaliebe | unloadedshots | blockyliebe
+1691,2026-03-04,02:17,1690,metaliebe,Saba,COMPLETED,0,0,600,metaliebe | blockyliebe
+1692,2026-03-04,05:12,1691,SilencedAnt,Sint Eustatius,COMPLETED,42930,42330,0,SilencedAnt | estynva
+1693,2026-03-04,08:38,1692,Olmos075,Saba,COMPLETED,25824,25224,0,Olmos075 | hulkatron66 | BravoBlood | SarinAttacker
+1694,2026-03-04,11:32,1693,Olmos075,Saba,COMPLETED,32514,31914,0,Olmos075 | SarinAttacker
+1695,2026-03-04,12:08,1694,Olmos075,Saba,COMPLETED,30714,30114,0,Olmos075 | SarinAttacker | notHadesq
+1696,2026-03-04,14:40,1695,lukas06yt,Sint Eustatius,COMPLETED,56813,55913,0,lukas06yt | Olmos075 | kingofmykonos
+1697,2026-03-04,17:19,1696,SupremeBigBrother,Sint Eustatius,COMPLETED,7470,7320,0,SupremeBigBrother | Techtonic532 | Hiszekegy | cIarkwarrior | OtIeth
+1698,2026-03-04,18:22,1697,thecoolguyisco,Sint Eustatius,COMPLETED,0,0,600,thecoolguyisco | TBtitan234
+1699,2026-03-04,20:09,1698,metaliebe,Saba,COMPLETED,0,0,600,metaliebe | ninilol2011
+1700,2026-03-05,01:22,1699,metaliebe,Saba,COMPLETED,20694,20094,0,metaliebe | ProbKota | notHadesq
+1701,2026-03-05,02:08,1700,metaliebe,Sint Eustatius,COMPLETED,43500,42900,0,metaliebe | notHadesq
+1702,2026-03-05,08:34,1701,Olmos075,Saba,COMPLETED,0,0,600,Olmos075 | SarinAttacker
+1703,2026-03-05,18:43,1702,thecoolguyisco,Sint Eustatius,COMPLETED,0,0,600,thecoolguyisco | TBtitan234
+1704,2026-03-05,23:46,1703,metaliebe,Sint Eustatius,COMPLETED,32520,31920,0,metaliebe | Techtonic532
+1705,2026-03-06,03:32,1704,SilencedAnt,Sint Eustatius,COMPLETED,31965,31365,0,SilencedAnt | hulkatron66
+1706,2026-03-06,15:16,1705,SupremeBigBrother,Sint Eustatius,COMPLETED,39128,38378,0,SupremeBigBrother | OtIeth
+1707,2026-03-06,17:37,1706,SupremeBigBrother,Sint Eustatius,COMPLETED,44288,43388,0,SupremeBigBrother | blockyliebe
+1708,2026-03-06,21:21,1708,SilencedAnt,Sint Eustatius,COMPLETED,35663,35063,0,SilencedAnt | Roberttini | nbaballn
+1709,2026-03-07,04:02,1709,metaliebe,Saba,COMPLETED,7860,7710,600,metaliebe | blockyliebe
+1710,2026-03-06,18:02,1707,SupremeBigBrother,Sint Eustatius,COMPLETED,30600,30000,0,SupremeBigBrother | blockyliebe
+1711,2026-03-07,14:09,1710,jormguh,Saba,COMPLETED,39054,38204,50,cIarkwarrior | Formula1EG | TBtitan234
+1712,2026-03-07,15:09,1711,metaliebe,Sint Eustatius,COMPLETED,30938,30338,0,metaliebe | Deniz_Actions | filaxxdj
+1713,2026-03-07,16:44,1712,metaliebe,Saba,COMPLETED,0,0,600,metaliebe | ProbKota | unloadedshots
+1714,2026-03-07,19:24,1713,jormguh,Sint Eustatius,COMPLETED,31715,31315,200,jormguh | KarlBernadotte
+1715,2026-03-07,19:38,1714,metaliebe,Sint Eustatius,COMPLETED,49358,48758,0,metaliebe | unloadedshots
+1716,2026-03-07,19:40,1715,TheManLikeMan,Sint Eustatius,COMPLETED,31890,31290,0,TheManLikeMan | Deniz_Actions
+1717,2026-03-07,20:23,1717,TheManLikeMan,Sint Eustatius,COMPLETED,27075,26475,0,TheManLikeMan | Deniz_Actions
+1718,2026-03-07,21:50,1719,TheManLikeMan,Sint Eustatius,COMPLETED,40800,40200,0,Deniz_Actions | TheManLikeMan
+1719,2026-03-07,21:41,1718,metaliebe,Saba,COMPLETED,27750,27300,150,metaliebe | unloadedshots
+1720,2026-03-07,22:46,1720,TheManLikeMan,Sint Eustatius,COMPLETED,28523,27923,0,TheManLikeMan | Deniz_Actions
+1721,2026-03-07,20:18,1716,SilencedAnt,Sint Eustatius,COMPLETED,38190,37590,0,SilencedAnt | lucavella2
+1722,2026-03-08,00:01,1722,metaliebe,Sint Eustatius,COMPLETED,37343,36743,0,metaliebe | WubbersOrDie | MySeedIsFarGreaterTY
+1723,2026-03-07,23:46,1721,TheManLikeMan,Sint Eustatius,COMPLETED,31463,30863,0,Deniz_Actions | TheManLikeMan
+1724,2026-03-08,01:01,1723,TheManLikeMan,Sint Eustatius,COMPLETED,29663,29063,0,Deniz_Actions | TheManLikeMan
+1725,2026-03-08,01:24,1724,TheManLikeMan,Sint Eustatius,COMPLETED,26145,25545,0,Deniz_Actions | TheManLikeMan
+1726,2026-03-08,04:31,1725,metaliebe,Sint Eustatius,COMPLETED,27555,26955,0,metaliebe | 108poophead108
+1727,2026-03-08,05:15,1726,SilencedAnt,Sint Eustatius,COMPLETED,17400,17100,300,SilencedAnt | GuerrillaJaxon
+1728,2026-03-08,20:39,1727,SilencedAnt,Sint Eustatius,COMPLETED,30278,29678,0,Miss_Onk | WubbersOrDie | SilencedAnt
+1729,2026-03-09,00:26,1728,SilencedAnt,Sint Eustatius,COMPLETED,0,0,600,SilencedAnt | ricardobcooper
+1730,2026-03-09,01:10,1729,metaliebe,Saba,COMPLETED,27006,26406,0,metaliebe | unloadedshots
+1731,2026-03-09,23:16,1730,SilencedAnt,Sint Eustatius,COMPLETED,0,0,600,SilencedAnt | ProbKota
+1732,2026-03-10,00:03,1731,SilencedAnt,Sint Eustatius,COMPLETED,0,0,600,
+1733,2026-03-10,22:58,1732,SilencedAnt,Sint Eustatius,COMPLETED,0,0,600,
+1734,2026-03-11,01:12,1733,metaliebe,Sint Eustatius,COMPLETED,45833,45233,0,metaliebe | notHadesq
+1735,2026-03-11,02:50,1734,SupremeBigBrother,Sint Eustatius,COMPLETED,51930,51030,0,SupremeBigBrother | c_eops | OtIeth
+1736,2026-03-11,21:32,1737,metaliebe,Saba,COMPLETED,0,0,600,metaliebe | ProbKota
+1737,2026-03-11,20:30,1735,SilencedAnt,Sint Eustatius,COMPLETED,38955,38355,0,SilencedAnt | Velantheus | BeepoLight
+1738,2026-03-11,21:27,1736,TheManLikeMan,Sint Eustatius,COMPLETED,31058,30458,0,noob123ghgb | sc_ndi | AwhLol3 | trossar_d
+1739,2026-03-12,00:58,1738,metaliebe,Sint Eustatius,COMPLETED,46178,45578,0,metaliebe | ProbKota

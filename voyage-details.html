@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company voyage details and tote settlement." />
+    <title>Frontier Oil & Gas Company | Voyage Details</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet page-voyage-details">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel voyage-details-top-panel">
+          <div class="modal-header">
+            <h1>Voyage Details</h1>
+            <a class="btn btn-secondary" href="/voyage-tracker">&larr; Back to Voyage Tracker</a>
+          </div>
+          <p id="voyageHeading" class="lead hidden">Loading voyage...</p>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="voyageDetailFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="panel hidden employee-page-grid voyage-detail-grid">
+          <div class="voyage-left-column">
+            <section class="employee-page-panel voyage-overview-panel">
+              <div class="modal-header">
+                <h2>Voyage Overview</h2>
+                <div id="shipStatusControls" class="ship-status-controls hidden">
+                  <button
+                    id="shipStatusToggle"
+                    class="ship-status-switch"
+                    type="button"
+                    role="switch"
+                    aria-checked="false"
+                    aria-label="Toggle ship status"
+                  >
+                    <span class="ship-status-switch-track">
+                      <span class="ship-status-switch-thumb" aria-hidden="true"></span>
+                      <span class="ship-status-switch-label in-port">In Port</span>
+                      <span class="ship-status-switch-label underway">Underway</span>
+                    </span>
+                  </button>
+                  <span id="shipStatusFeedback" class="muted" aria-live="polite"></span>
+                </div>
+              </div>
+              <div id="voyageFieldList" class="voyage-field-list"></div>
+            </section>
+
+            <section class="employee-page-panel voyage-manifest-module">
+              <div class="modal-header">
+                <h2>Freight Manifest</h2>
+                <div class="modal-actions">
+                  <span id="toteAutosaveState" class="muted" aria-live="polite"></span>
+                  <button id="addToteBtn" class="btn btn-secondary btn-plus hidden" type="button" aria-label="Add Freight/Cargo" title="Add Freight/Cargo">+</button>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>Owner</th>
+                    <th>Cargo Type</th>
+                    <th>Quantity</th>
+                    <th>Action</th>
+                  </tr>
+                  </thead>
+                  <tbody id="toteTableBody"></tbody>
+                </table>
+              </div>
+              <div id="toteFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
+              <div class="tote-actions-row">
+                <button id="openEndVoyageBtn" class="btn btn-secondary btn-danger-outline hidden" type="button">End Voyage</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="voyage-right-column">
+            <section id="shipLogPanel" class="employee-page-panel">
+              <div class="modal-header">
+                <h2>Ship Log</h2>
+              </div>
+              <form id="addLogForm" class="hidden">
+                <label>New Log Entry</label>
+                <textarea name="message" rows="3"></textarea>
+                <div class="modal-actions">
+                  <button class="btn btn-accent" type="submit">Add Entry</button>
+                </div>
+              </form>
+              <ul id="shipLogList" class="role-list"></ul>
+            </section>
+
+            <section id="settlementSection" class="employee-page-panel hidden">
+              <div class="modal-header">
+                <h2>Settlement Summary</h2>
+              </div>
+              <div id="settlementSummary"></div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <section id="endVoyageModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card modal-card-wide">
+        <div class="modal-header">
+          <h2>End Voyage Settlement</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="endVoyageModal">Close</button>
+        </div>
+        <div id="endVoyageFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
+        <form id="endVoyageForm" class="end-voyage-form-clean">
+          <section class="end-voyage-topline">
+            <div class="end-voyage-topline-field">
+              <label for="sellLocationSelect">Sell Location</label>
+              <select id="sellLocationSelect" name="sellLocationId"></select>
+            </div>
+            <div class="end-voyage-topline-field">
+              <label for="sellMultiplierInput">Multiplier</label>
+              <input id="sellMultiplierInput" name="sellMultiplier" type="number" min="0" step="0.01" value="1" />
+            </div>
+          </section>
+
+          <h3 class="end-voyage-heading">Freight/Cargo Settlement</h3>
+          <div class="table-wrap end-settlement-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Owner</th>
+                  <th>Cargo Type</th>
+                  <th class="align-right">Qty</th>
+                  <th class="align-right">Base Sell Price</th>
+                  <th class="align-right">Row Value</th>
+                  <th class="align-right">Owner Due (10%)</th>
+                  <th class="align-right">Reimbursement</th>
+                  <th class="align-right">Lost</th>
+                </tr>
+              </thead>
+              <tbody id="ownerSettlementBody"></tbody>
+            </table>
+          </div>
+
+          <section class="end-voyage-totals-grid">
+            <p><strong>Total Earnings:</strong> <span id="voyageTotalEarnings">ƒ 0</span></p>
+          </section>
+
+          <div class="modal-actions end-voyage-submit-row">
+            <button
+              id="cancelVoyageBtn"
+              class="btn btn-warning btn-hold-confirm btn-hold-warning"
+              type="button"
+              data-hold-confirm-ms="1000"
+            >
+              Cancel Voyage
+            </button>
+            <button
+              id="finaliseVoyageBtn"
+              class="btn btn-danger btn-hold-confirm btn-hold-danger"
+              type="button"
+              data-hold-confirm-ms="1000"
+            >
+              Finalise Voyage
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+    <script type="module" src="/assets/js/pages/voyage-details-page.js?v=20260313f"></script>
+  </body>
+</html>

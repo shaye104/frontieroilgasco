@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Sign in to Frontier Oil & Gas Company intranet." />
+    <title>Frontier Oil & Gas Company | Login</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-login">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/login">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="login-page section">
+      <div class="container login-cluster">
+        <div class="login-shell">
+          <section class="panel login-card">
+            <div id="authPanel">
+              <span class="eyebrow">Frontier Oil & Gas Company Intranet</span>
+              <h1>Sign In</h1>
+              <p class="lead">Login to access voyage operations, finance tracking, and admin tools.</p>
+              <div id="loginFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <button id="discordLoginBtn" type="button" class="btn btn-primary btn-block">
+                <span data-login-label>Login with Discord</span>
+                <span data-login-spinner class="login-spinner hidden" aria-hidden="true"></span>
+              </button>
+              <div class="login-helper">
+                Use your staff Discord account. If access fails, ask an admin to map your role in
+                <strong>Admin Panel → User Groups</strong>.
+              </div>
+              <div class="login-meta" aria-hidden="true">
+                <span class="login-meta-pill">Secure Session</span>
+                <span class="login-meta-pill">Role-Based Access</span>
+                <span class="login-meta-pill">Fast Sign-In</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="/assets/js/pages/intranet-page.js?v=20260221ac"></script>
+  </body>
+</html>

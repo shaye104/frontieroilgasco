@@ -1,0 +1,152 @@
+import { clearMessage, showMessage } from './notice.js';
+import { getMyDetails } from './admin-api.js';
+
+function safeText(value) {
+  const text = String(value ?? '').trim();
+  return text || 'N/A';
+}
+
+function applyStatusBadgeClass(element, statusValue) {
+  if (!element) return;
+  element.classList.remove('is-active', 'is-inactive');
+  const status = String(statusValue || '').trim().toLowerCase();
+  if (!status) return;
+  if (status === 'active') {
+    element.classList.add('is-active');
+    return;
+  }
+  if (status === 'terminated' || status === 'suspended' || status === 'inactive') {
+    element.classList.add('is-inactive');
+  }
+}
+
+function renderDisciplinaryList(target, items, emptyMessage) {
+  if (!target) return;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    target.innerHTML = `<li class="discipline-empty"><span class="discipline-empty-icon" aria-hidden="true">i</span><span>${emptyMessage}</span></li>`;
+    return;
+  }
+
+  target.innerHTML = items
+    .map((item) => {
+      const status = safeText(item.status || item.record_status);
+      const type = safeText(item.type_label || item.type_key || item.record_type);
+      const date = safeText(item.effective_at || item.record_date || item.created_at);
+      const notes = safeText(item.reason_text || item.notes);
+      const issuedBy = safeText(item.issued_by_name || item.issued_by);
+      return `<li class="role-item"><span class="role-id">${type} | ${status} | ${date} | Issued By: ${issuedBy} | ${notes}</span></li>`;
+    })
+    .join('');
+}
+
+function initDisciplineTabs() {
+  const activeButton = document.querySelector('#disciplineTabActive');
+  const historyButton = document.querySelector('#disciplineTabHistory');
+  const activePanel = document.querySelector('#disciplinePanelActive');
+  const historyPanel = document.querySelector('#disciplinePanelHistory');
+
+  if (!activeButton || !historyButton || !activePanel || !historyPanel) return;
+  if (activeButton.dataset.bound === '1') return;
+  activeButton.dataset.bound = '1';
+
+  const setTab = (tab) => {
+    const showActive = tab === 'active';
+    activeButton.classList.toggle('is-active', showActive);
+    historyButton.classList.toggle('is-active', !showActive);
+    activeButton.setAttribute('aria-selected', showActive ? 'true' : 'false');
+    historyButton.setAttribute('aria-selected', showActive ? 'false' : 'true');
+    activePanel.classList.toggle('hidden', !showActive);
+    historyPanel.classList.toggle('hidden', showActive);
+  };
+
+  activeButton.addEventListener('click', () => setTab('active'));
+  historyButton.addEventListener('click', () => setTab('history'));
+  setTab('active');
+}
+
+function renderDetailsSkeleton(fields, activeList, historyList) {
+  const textFieldIds = [
+    'robloxUsername',
+    'robloxUserId',
+    'rank',
+    'employeeStatus',
+    'hireDate',
+    'tenureDays'
+  ];
+  textFieldIds.forEach((key) => {
+    if (!fields[key]) return;
+    fields[key].innerHTML = '<span class="skeleton-line skeleton-w-55"></span>';
+  });
+  if (fields.totalVoyages) fields.totalVoyages.innerHTML = '<span class="skeleton-line skeleton-w-35"></span>';
+  if (fields.monthlyVoyages) fields.monthlyVoyages.innerHTML = '<span class="skeleton-line skeleton-w-35"></span>';
+
+  if (activeList) {
+    activeList.innerHTML = `<li class="role-item skeleton-shell"><span class="skeleton-line skeleton-w-90"></span></li>`;
+  }
+  if (historyList) {
+    historyList.innerHTML = `<li class="role-item skeleton-shell"><span class="skeleton-line skeleton-w-90"></span></li>`;
+  }
+}
+
+export async function initMyDetailsPanel(config) {
+  const startedAt = typeof performance !== 'undefined' ? performance.now() : 0;
+  const feedback = document.querySelector(config.feedbackSelector);
+  const accessPendingPanel = document.querySelector(config.accessPendingSelector);
+  const detailsPanel = document.querySelector(config.detailsPanelSelector);
+  const activeList = document.querySelector(config.activeDisciplinarySelector);
+  const historyList = document.querySelector(config.disciplinaryHistorySelector);
+
+  const fields = Object.fromEntries(
+    Object.entries(config.fields || {}).map(([key, selector]) => [key, document.querySelector(selector)])
+  );
+
+  if (!feedback || !accessPendingPanel || !detailsPanel || !activeList || !historyList) return;
+
+  try {
+    renderDetailsSkeleton(fields, activeList, historyList);
+    const details = await getMyDetails();
+    clearMessage(feedback);
+
+    if (details.accessPending) {
+      accessPendingPanel.classList.remove('hidden');
+      detailsPanel.classList.add('hidden');
+      return;
+    }
+
+    accessPendingPanel.classList.add('hidden');
+    detailsPanel.classList.remove('hidden');
+
+    const employee = details.employee || {};
+    if (fields.robloxUsername) fields.robloxUsername.textContent = safeText(employee.robloxUsername);
+    if (fields.robloxUserId) fields.robloxUserId.textContent = safeText(employee.robloxUserId);
+    if (fields.rank) fields.rank.textContent = safeText(employee.rank);
+    if (fields.employeeStatus) fields.employeeStatus.textContent = safeText(employee.employeeStatus);
+    if (fields.hireDate) fields.hireDate.textContent = safeText(employee.hireDate);
+    if (fields.tenureDays) fields.tenureDays.textContent = safeText(employee.tenureDays);
+    if (fields.totalVoyages) fields.totalVoyages.textContent = String(Number(details?.voyageActivity?.totalVoyages || 0));
+    if (fields.monthlyVoyages) fields.monthlyVoyages.textContent = String(Number(details?.voyageActivity?.monthlyVoyages || 0));
+    if (fields.identityUsername) fields.identityUsername.textContent = safeText(employee.robloxUsername);
+    if (fields.identityRankBadge) fields.identityRankBadge.textContent = safeText(employee.rank);
+    if (fields.identityStatusBadge) fields.identityStatusBadge.textContent = safeText(employee.employeeStatus);
+    if (fields.profileUsername) fields.profileUsername.textContent = safeText(employee.robloxUsername);
+    if (fields.profileRankText) fields.profileRankText.textContent = safeText(employee.rank);
+    if (fields.profileStatusText) fields.profileStatusText.textContent = safeText(employee.employeeStatus);
+    if (fields.profileTenureText) {
+      const tenure = safeText(employee.tenureDays);
+      fields.profileTenureText.textContent = tenure === 'N/A' ? tenure : `${tenure} days`;
+    }
+
+    applyStatusBadgeClass(fields.identityStatusBadge, employee.employeeStatus);
+
+    renderDisciplinaryList(activeList, details.activeDisciplinaryRecords || [], 'No active disciplinary records.');
+    renderDisciplinaryList(historyList, details.disciplinaryHistory || [], 'No disciplinary history.');
+    initDisciplineTabs();
+    if (startedAt) {
+      const elapsed = Math.round(performance.now() - startedAt);
+      console.info('[perf] my-details first data render', { ms: elapsed });
+    }
+  } catch (error) {
+    showMessage(feedback, error.message || 'Unable to load My Details.', 'error');
+  }
+}

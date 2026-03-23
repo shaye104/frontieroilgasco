@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company voyage tracker." />
+    <title>Frontier Oil & Gas Company | Voyage Tracker</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet page-voyage-tracker">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel voyage-console-header">
+          <div class="voyage-control-bar">
+            <div class="voyage-control-title">
+              <h1>Voyage Tracker</h1>
+              <p class="voyage-control-subtitle">Fleet operations overview</p>
+            </div>
+            <div class="voyage-control-actions">
+              <div class="voyage-count-chips" aria-label="Voyage counts">
+                <span class="voyage-count-chip">Ongoing: <strong id="ongoingCountChip">0</strong></span>
+                <span class="voyage-count-chip">Past: <strong id="archivedCountChip">0</strong></span>
+              </div>
+              <button id="openNotifyModalBtn" class="btn btn-secondary" type="button">Send Notification</button>
+              <button id="openStartVoyageBtn" class="btn btn-primary hidden" type="button">Start Voyage</button>
+            </div>
+          </div>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="voyageFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="hidden voyage-console-sections">
+          <article class="voyage-console-section voyage-console-section-plain voyage-console-section-ongoing">
+            <h2><span>Ongoing Voyages</span></h2>
+            <div id="ongoingVoyages" class="voyage-grid"></div>
+          </article>
+
+          <article class="details-card voyage-console-section voyage-console-section-archived">
+            <h2><span>Past Voyages</span></h2>
+            <div id="archivedVoyages" class="voyage-grid"></div>
+            <a id="viewAllArchivedLink" class="voyage-archive-cta hidden" href="/voyages/archive">View all past voyages →</a>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <section id="startVoyageModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Start Voyage</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="startVoyageModal">Close</button>
+        </div>
+        <form id="startVoyageForm" class="voyage-start-form">
+          <section class="voyage-modal-section">
+            <h3 class="voyage-modal-section-title">Departure Port</h3>
+            <div class="voyage-start-grid">
+              <div class="voyage-field">
+                <label>Port of Departure</label>
+                <select name="departurePort" id="voyageDepartureSelect" required></select>
+              </div>
+            </div>
+          </section>
+          <section class="voyage-modal-section">
+            <h3 class="voyage-modal-section-title">Ship Assignment</h3>
+            <div class="voyage-assigned-wrap">
+              <div class="voyage-assigned-ship">
+                <div id="voyageAssignedVesselInfo" class="voyage-assigned-ship-details">
+                  <div class="voyage-assigned-ship-title">Ship Details</div>
+                  <div class="voyage-assigned-ship-meta">Vessel Name: Assigned on start</div>
+                  <div class="voyage-assigned-ship-meta">Vessel Callsign: Assigned on start</div>
+                  <div class="voyage-assigned-ship-meta">Vessel Class: Assigned on start</div>
+                </div>
+                <p id="voyageOowSelected" class="voyage-Officer of the Watch (OOTW)-line">Officer of the Watch (OOTW) will be set to your account.</p>
+              </div>
+            </div>
+          </section>
+          <input type="hidden" name="vesselName" id="voyageVesselNameInput" />
+          <input type="hidden" name="vesselClass" id="voyageVesselClassInput" />
+          <input type="hidden" name="vesselCallsign" id="voyageVesselCallsignInput" />
+          <input type="hidden" name="reservationToken" id="voyageShipReservationToken" />
+          <input type="hidden" name="officerOfWatchEmployeeId" id="voyageOowHidden" />
+          <section class="voyage-modal-section">
+            <h3 class="voyage-modal-section-title">Crew Complement</h3>
+            <div class="combobox-wrap combobox-wrap-multi voyage-crew-picker">
+              <div id="voyageCrewSelected" class="pill-list"></div>
+              <input id="voyageCrewSerialSearch" type="text" placeholder="Search crew by Roblox username..." autocomplete="off" />
+              <div id="voyageCrewResults" class="autocomplete-list"></div>
+            </div>
+          </section>
+          <div id="voyageCrewInfo" class="inline-feedback hidden" role="status" aria-live="polite"></div>
+          <div id="voyageCrewError" class="inline-feedback hidden" role="status" aria-live="polite"></div>
+          <p id="voyageStartHint" class="voyage-start-hint"></p>
+          <div class="modal-actions">
+            <button id="startVoyageSubmitBtn" class="btn btn-primary" type="submit">Start</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="startVoyageModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="notifyModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Send Live Notification</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="notifyModal">Close</button>
+        </div>
+        <form id="notifyForm">
+          <label for="notifySeverity">Severity</label>
+          <select id="notifySeverity" name="severity">
+            <option value="STANDARD">Standard</option>
+            <option value="URGENT">Urgent</option>
+          </select>
+          <label for="notifyTitle">Title</label>
+          <input id="notifyTitle" name="title" type="text" maxlength="120" required />
+          <label for="notifyMessage">Message</label>
+          <textarea id="notifyMessage" name="message" rows="4" maxlength="1000" required></textarea>
+          <label for="notifyTargetMode">Target</label>
+          <select id="notifyTargetMode" name="targetMode">
+            <option value="ONLINE_USERS">Online Users (Open Page Now)</option>
+            <option value="SELECT_USERS">Select Users (Open Page Now)</option>
+            <option value="ALL_USERS">All Users (Visible for 30 mins)</option>
+          </select>
+          <div id="notifySpecificPanel" class="hidden">
+            <label for="notifyUserSelect">Select active users</label>
+            <select id="notifyUserSelect" name="notifyUserSelect" multiple size="8"></select>
+            <div id="notifySelectedUsers" class="pill-list"></div>
+            <p class="muted">Only users with an active open intranet page appear here.</p>
+          </div>
+          <div id="notifyFeedback" class="inline-feedback hidden" role="status" aria-live="polite"></div>
+          <div class="modal-actions">
+            <button id="notifySendBtn" class="btn btn-primary" type="submit">Send</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="notifyModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+    <script type="module" src="/assets/js/pages/voyage-tracker-page.js?v=20260313d"></script>
+  </body>
+</html>

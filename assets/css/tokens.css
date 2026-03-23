@@ -1,0 +1,32 @@
+:root {
+  --font-heading: "Inter", Arial, Helvetica, sans-serif;
+  --font-body: "Inter", Arial, Helvetica, sans-serif;
+
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f8fafc;
+  --color-ink: #0f172a;
+  --color-ink-soft: #334155;
+  --color-muted: #64748b;
+  --color-primary: #2f76d2;
+  --color-primary-strong: #0b2447;
+  --color-secondary: #2f76d2;
+  --color-border: #e2e8f0;
+  --color-success: #167e62;
+  --color-danger: #b43f3f;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+
+  --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.05);
+
+  --space-1: 0.5rem;
+  --space-2: 0.75rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+  --space-6: 3rem;
+
+  --container-max: 1700px;
+}

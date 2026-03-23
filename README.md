@@ -1,0 +1,65 @@
+# Codswallop Family Fishing Website
+
+Static, modular website for Codswallop Family Fishing:
+
+- `index.html`: public landing page and company details
+- `intranet.html`: employee intranet login shell (temporary local session mode)
+- `voyage-tracker.html`: voyage operations page
+- `my-details.html`: employee HR profile page
+- `finances.html`: finance dashboard
+- `admin-panel.html`: admin-only operations hub
+- `manage-employees.html`: admin employee management
+- `roles.html`: user groups and permissions configuration
+- `user-ranks.html`: user rank + rank permission mappings
+- `activity-tracker.html`: global website activity audit log
+
+## Project Structure
+
+- `assets/css/`: design tokens, base styles, reusable components, page layouts
+- `assets/js/modules/`: reusable JavaScript modules
+- `assets/js/pages/`: page entry scripts
+- `functions/api/auth/`: Cloudflare Pages Functions for intranet session handling
+- `scripts/update-webinfo.mjs`: auto-generates `WEBINFO.txt`
+- `.githooks/pre-commit`: updates `WEBINFO.txt` before commits
+
+## Local Workflow
+
+1. Regenerate website handoff file:
+
+```bash
+npm run webinfo
+```
+
+2. Enable git hook once per local clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+## GitHub Setup
+
+```bash
+git init
+git branch -M main
+git remote add origin https://github.com/shaye104/frontieroilgasco.git
+git add .
+git commit -m "Initial modular website scaffold"
+git push -u origin main
+```
+
+## Cloudflare Deployment
+
+1. Push updated code to GitHub.
+2. In a Git-connected Pages project, use:
+   - Build command: `echo static`
+   - Build output directory: `.`
+   - Deploy command (if required by your UI): `echo ok`
+3. In Cloudflare, connect your custom domain and complete DNS routing.
+
+## Environment Variables (Pages Project)
+
+Set these in Cloudflare Pages project settings:
+
+- `SESSION_SECRET` (long random secret string)
+
+Also bind a D1 database to the Pages project as `DB`. Employee data, disciplinaries, notes, access requests, and config values are stored in D1.

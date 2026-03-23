@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company admin panel." />
+    <title>Frontier Oil & Gas Company | Admin Panel</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet page-admin-panel">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel admin-panel-hero">
+          <h1>Admin Panel</h1>
+          <p class="my-details-subtitle">Quick shortcuts for management, settings, and logs.</p>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="panel hidden">
+          <section id="rankPreviewPanel" class="panel hidden">
+            <div class="modal-header">
+              <h3>Preview Web As Rank</h3>
+              <div class="modal-actions">
+                <button id="applyRankPreviewBtn" class="btn btn-secondary btn-compact" type="button">Apply Preview</button>
+                <button id="clearRankPreviewBtn" class="btn btn-secondary btn-compact hidden" type="button">Exit Preview</button>
+              </div>
+            </div>
+            <div class="field-grid">
+              <label>
+                Website Rank
+                <select id="rankPreviewSelect">
+                  <option value="">Select rank...</option>
+                </select>
+              </label>
+            </div>
+            <p id="rankPreviewHint" class="muted">Preview changes what navigation and page actions are visible. It does not change backend permissions.</p>
+          </section>
+
+          <h2 class="admin-panel-heading">Administration</h2>
+          <ul class="admin-link-grid">
+            <li>
+              <a id="adminLinkEmployees" class="admin-action-link hidden" href="/admin/employees">
+                <strong>Manage Employees</strong>
+                <span>Employee records, rank changes, status, and activation.</span>
+              </a>
+            </li>
+            <li>
+              <a id="adminLinkVoyageSettings" class="admin-action-link hidden" href="/admin/voyages">
+                <strong>Voyage Settings</strong>
+                <span>Configure routes, vessels, and voyage defaults.</span>
+              </a>
+            </li>
+            <li>
+              <a id="adminLinkRoles" class="admin-action-link hidden" href="/admin/user-groups">
+                <strong>User Groups</strong>
+                <span>Manage permissions and role structures.</span>
+              </a>
+            </li>
+            <li>
+              <a id="adminLinkUserRanks" class="admin-action-link hidden" href="/admin/user-ranks">
+                <strong>User Ranks</strong>
+                <span>Control rank tiers and linked access.</span>
+              </a>
+            </li>
+            <li>
+              <a id="adminLinkActivityTracker" class="admin-action-link hidden" href="/admin/activity">
+                <strong>Activity Tracker</strong>
+                <span>Review user actions and operational activity.</span>
+              </a>
+            </li>
+            <li>
+              <a id="adminLinkAuditLog" class="admin-action-link hidden" href="/admin/audit">
+                <strong>Audit Log</strong>
+                <span>View accountability records and change history.</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+      </div>
+    </main>
+    <script type="module" src="/assets/js/pages/admin-panel-page.js?v=20260313b"></script>
+  </body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company past voyages." />
+    <title>Frontier Oil & Gas Company | Past Voyages</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet page-voyage-archive">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel voyage-console-header">
+          <div class="voyage-control-bar">
+            <div class="voyage-control-title">
+              <h1>Past Voyages</h1>
+              <p class="voyage-control-subtitle">Complete ended and cancelled voyage history</p>
+            </div>
+            <div class="voyage-control-actions">
+              <a class="btn btn-secondary" href="/voyages/my">&larr; Back to Voyage Tracker</a>
+            </div>
+          </div>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="archiveFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="hidden voyage-console-sections">
+          <article class="details-card voyage-console-section">
+            <div id="archiveGrid" class="voyage-grid"></div>
+            <div class="pagination-row" id="archivePagination">
+              <button id="archivePrevBtn" class="btn btn-secondary" type="button">Previous</button>
+              <span id="archivePageInfo" class="pagination-info">Page 1 of 1</span>
+              <button id="archiveNextBtn" class="btn btn-secondary" type="button">Next</button>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <section id="deleteVoyageModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Delete Voyage</h2>
+          <button class="btn btn-secondary" type="button" data-close-voyage-delete-modal>Close</button>
+        </div>
+        <div id="deleteVoyageSummary" class="finance-inline-caption"></div>
+        <form id="deleteVoyageForm">
+          <input id="deleteVoyageId" type="hidden" />
+          <label for="deleteVoyageReason">Reason (required)</label>
+          <textarea id="deleteVoyageReason" rows="3" minlength="4" required></textarea>
+          <p class="archive-delete-note">This permanently removes the voyage, tote log, and settlement records.</p>
+          <div id="deleteVoyageModalFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div class="modal-actions">
+            <button id="deleteVoyageConfirmBtn" class="btn btn-danger" type="submit" disabled>Delete Voyage</button>
+            <button class="btn btn-secondary" type="button" data-close-voyage-delete-modal>Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <script type="module" src="/assets/js/pages/voyage-archive-page.js?v=20260310a"></script>
+  </body>
+</html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company my details page." />
+    <title>Frontier Oil & Gas Company | My Details</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet page-my-details">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel my-details-feedback-wrap">
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="hidden">
+          <article id="accessPendingPanel" class="panel hidden">
+            <h2>Access Pending</h2>
+            <p>Your access request is pending admin review. You will receive access once approved.</p>
+          </article>
+
+          <article id="detailsPanel" class="hidden my-details-shell">
+            <header class="my-details-page-header">
+              <div>
+                <h1>My Details</h1>
+                <p class="my-details-subtitle">Employee overview</p>
+              </div>
+              <div class="identity-pill" aria-label="Identity summary">
+                <span id="identityUsername" class="identity-user">N/A</span>
+                <span id="identityRankBadge" class="badge badge-rank">Rank</span>
+                <span id="identityStatusBadge" class="badge badge-status">Status</span>
+              </div>
+            </header>
+
+            <div class="my-details-main-grid">
+              <section class="my-details-left-col">
+                <article class="details-card profile-card">
+                  <header class="profile-card-header">
+                    <div>
+                      <h2 id="profileUsername" class="profile-title">N/A</h2>
+                    </div>
+                  </header>
+
+                  <div class="profile-highlight-grid">
+                    <article class="profile-highlight">
+                      <p class="profile-highlight-label">Status</p>
+                      <p id="profileStatusText" class="profile-highlight-value">N/A</p>
+                    </article>
+                    <article class="profile-highlight">
+                      <p class="profile-highlight-label">Rank</p>
+                      <p id="profileRankText" class="profile-highlight-value">N/A</p>
+                    </article>
+                    <article class="profile-highlight">
+                      <p class="profile-highlight-label">Tenure</p>
+                      <p id="profileTenureText" class="profile-highlight-value">N/A</p>
+                    </article>
+                  </div>
+
+                  <h3>Profile Information</h3>
+                  <dl class="profile-kv-grid">
+                    <dt>Employee Status</dt>
+                    <dd id="fieldEmployeeStatus"></dd>
+
+                    <dt>Rank</dt>
+                    <dd id="fieldRank"></dd>
+
+                    <dt>Roblox Username</dt>
+                    <dd id="fieldRobloxUsername"></dd>
+
+                    <dt>Roblox User ID</dt>
+                    <dd id="fieldRobloxUserId"></dd>
+
+                    <dt>Hire Date</dt>
+                    <dd id="fieldHireDate"></dd>
+
+                    <dt>Tenure (Days)</dt>
+                    <dd id="fieldTenureDays"></dd>
+                  </dl>
+                </article>
+              </section>
+
+              <section class="my-details-right-col">
+                <article class="details-card discipline-card">
+                  <header class="discipline-header">
+                    <h3>Disciplinary Records</h3>
+                    <div class="segmented-control" role="tablist" aria-label="Disciplinary records tabs">
+                      <button id="disciplineTabActive" type="button" class="segmented-btn is-active" role="tab" aria-selected="true">
+                        Active
+                      </button>
+                      <button id="disciplineTabHistory" type="button" class="segmented-btn" role="tab" aria-selected="false">
+                        History
+                      </button>
+                    </div>
+                  </header>
+
+                  <section id="disciplinePanelActive" class="discipline-tab-panel">
+                    <ul id="activeDisciplinaryList" class="role-list"></ul>
+                  </section>
+
+                  <section id="disciplinePanelHistory" class="discipline-tab-panel hidden">
+                    <ul id="disciplinaryHistoryList" class="role-list"></ul>
+                  </section>
+                </article>
+
+                <article class="details-card voyage-activity-card">
+                  <h3>Voyage Activity</h3>
+                  <div class="voyage-stats-grid">
+                    <article class="voyage-stat-tile">
+                      <p id="fieldTotalVoyages" class="voyage-stat-value">0</p>
+                      <p class="voyage-stat-label">Total Voyages</p>
+                      <p class="voyage-stat-note">Completed voyage participation</p>
+                    </article>
+                    <article class="voyage-stat-tile">
+                      <p id="fieldMonthlyVoyages" class="voyage-stat-value">0</p>
+                      <p class="voyage-stat-label">Voyages This Month</p>
+                      <p class="voyage-stat-note">Current calendar month</p>
+                    </article>
+                  </div>
+                </article>
+              </section>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+    <script type="module" src="/assets/js/pages/my-details-page.js?v=20260308a"></script>
+  </body>
+</html>

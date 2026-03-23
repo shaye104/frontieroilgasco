@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company manage employees." />
+    <title>Frontier Oil & Gas Company | Manage Employees</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+
+  </head>
+  <body class="page page-intranet page-manage-employees">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout intranet-page-shell">
+        <section class="panel my-details-page-header">
+          <div>
+            <h1>Manage Employees</h1>
+            <p class="my-details-subtitle">Employee directory, status tracking, and operational activity.</p>
+          </div>
+          <div class="admin-employees-header-actions">
+            <div class="button-row admin-employees-header-actions-secondary">
+              <a class="btn btn-secondary" href="/admin/activity">Activity Tracker</a>
+              <button id="openJoinRequestsBtn" class="btn btn-secondary" type="button">Join Requests</button>
+            </div>
+            <div class="button-row admin-employees-header-actions-primary">
+              <button id="openDeleteUserBtn" class="btn btn-danger" type="button">Delete User</button>
+              <button id="openCreateEmployeeBtn" class="btn btn-primary" type="button">New Employee</button>
+            </div>
+          </div>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="manageEmployeesFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="hidden admin-employees-stack">
+          <article class="panel admin-employee-stats-grid" id="employeeStatsStrip">
+            <div class="admin-employee-stat-card skeleton-shell">
+              <p class="admin-employee-stat-label">Total Employees</p>
+              <p id="employeeStatTotal" class="admin-employee-stat-value"><span class="skeleton-line skeleton-w-55"></span></p>
+            </div>
+            <div class="admin-employee-stat-card skeleton-shell">
+              <p class="admin-employee-stat-label">Active</p>
+              <p id="employeeStatActive" class="admin-employee-stat-value"><span class="skeleton-line skeleton-w-45"></span></p>
+            </div>
+            <div class="admin-employee-stat-card skeleton-shell">
+              <p class="admin-employee-stat-label">Inactive / Suspended</p>
+              <p id="employeeStatInactive" class="admin-employee-stat-value"><span class="skeleton-line skeleton-w-45"></span></p>
+            </div>
+            <div class="admin-employee-stat-card skeleton-shell">
+              <p class="admin-employee-stat-label">New Hires (30d)</p>
+              <p id="employeeStatNewHires" class="admin-employee-stat-value"><span class="skeleton-line skeleton-w-45"></span></p>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="admin-employees-filter-bar">
+              <div class="admin-employees-filter-main">
+                <div>
+                  <label for="filterEmployeeQuery">Search</label>
+                  <input id="filterEmployeeQuery" type="text" placeholder="Username, Roblox ID" />
+                </div>
+                <div>
+                  <label for="filterRank">Rank</label>
+                  <select id="filterRank"></select>
+                </div>
+                <div>
+                  <label for="filterStatus">Status</label>
+                  <select id="filterStatus"></select>
+                </div>
+                <div>
+                  <label for="filterActivationStatus">Activation</label>
+                  <select id="filterActivationStatus">
+                    <option value="">All Activation States</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="DISABLED">Disabled</option>
+                    <option value="REJECTED">Rejected</option>
+                  </select>
+                </div>
+              </div>
+              <div class="admin-employees-filter-actions">
+                <button id="toggleMoreFiltersBtn" type="button" class="btn btn-secondary">More Filters</button>
+                <button id="clearEmployeeFiltersBtn" type="button" class="btn btn-secondary">Clear Filters</button>
+              </div>
+            </div>
+            <div id="moreEmployeeFilters" class="admin-employees-more-filters hidden">
+              <div>
+                <label for="filterHireDateFrom">Hire Date From</label>
+                <input id="filterHireDateFrom" type="date" />
+              </div>
+              <div>
+                <label for="filterHireDateTo">Hire Date To</label>
+                <input id="filterHireDateTo" type="date" />
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="admin-employees-table-header">
+              <h2>Employees</h2>
+              <div class="admin-employees-table-actions">
+                <button id="columnVisibilityBtn" type="button" class="btn btn-secondary">Columns</button>
+              </div>
+            </div>
+            <div id="columnVisibilityMenu" class="admin-column-menu hidden"></div>
+            <div class="table-wrap">
+              <table class="data-table admin-employees-table">
+                <thead>
+                  <tr>
+                    <th><button type="button" class="table-sort-btn" data-sort="id">ID</button></th>
+                    <th data-col="roblox_username"><button type="button" class="table-sort-btn" data-sort="roblox_username">Roblox Username</button></th>
+                    <th data-col="roblox_user_id"><button type="button" class="table-sort-btn" data-sort="roblox_user_id">Roblox User ID</button></th>
+                    <th data-col="rank"><button type="button" class="table-sort-btn" data-sort="rank">Rank</button></th>
+                    <th data-col="employee_status"><button type="button" class="table-sort-btn" data-sort="employee_status">Status</button></th>
+                    <th data-col="hire_date"><button type="button" class="table-sort-btn" data-sort="hire_date">Hire Date</button></th>
+                  </tr>
+                </thead>
+                <tbody id="employeeTableBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination-row">
+              <div class="button-row">
+                <button id="employeePrevPageBtn" class="btn btn-secondary" type="button">Previous</button>
+                <button id="employeeNextPageBtn" class="btn btn-secondary" type="button">Next</button>
+              </div>
+              <span id="employeePaginationInfo" class="pagination-info">Page 1 of 1</span>
+            </div>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <!-- Employee Drawer -->
+    <aside
+      id="employeeDrawer"
+      class="admin-employee-drawer hidden"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Employee details"
+    >
+      <div class="admin-employee-drawer-backdrop" data-close-drawer></div>
+
+      <section class="admin-employee-drawer-panel">
+        <header class="admin-employee-drawer-header">
+          <div>
+            <h2 id="drawerEmployeeName">Employee Details</h2>
+            <p id="drawerEmployeeMeta" class="finance-inline-caption">Select an employee row.</p>
+          </div>
+          <button type="button" class="btn btn-secondary" data-close-drawer>Close</button>
+        </header>
+
+        <!-- Tabs (these MUST be wired in JS by data-employee-tab and data-employee-panel) -->
+        <div class="admin-employee-drawer-tabs" role="tablist" aria-label="Employee drawer sections">
+          <button
+            type="button"
+            class="finance-tab is-active"
+            data-drawer-tab="overview"
+            data-employee-tab="overview"
+            role="tab"
+            aria-selected="true"
+            aria-controls="drawerTabOverview"
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            class="finance-tab"
+            data-drawer-tab="voyages"
+            data-employee-tab="voyages"
+            role="tab"
+            aria-selected="false"
+            aria-controls="drawerTabVoyages"
+          >
+            Voyages
+          </button>
+          <button
+            type="button"
+            class="finance-tab"
+            data-drawer-tab="activity"
+            data-employee-tab="activity"
+            role="tab"
+            aria-selected="false"
+            aria-controls="drawerTabActivity"
+          >
+            Activity
+          </button>
+          <button
+            type="button"
+            class="finance-tab"
+            data-drawer-tab="access"
+            data-employee-tab="access"
+            role="tab"
+            aria-selected="false"
+            aria-controls="drawerTabAccess"
+          >
+            Access
+          </button>
+          <button
+            type="button"
+            class="finance-tab"
+            data-drawer-tab="notes"
+            data-employee-tab="notes"
+            role="tab"
+            aria-selected="false"
+            aria-controls="drawerTabNotes"
+          >
+            Notes
+          </button>
+          <button
+            type="button"
+            class="finance-tab"
+            data-drawer-tab="disciplinary"
+            data-employee-tab="disciplinary"
+            role="tab"
+            aria-selected="false"
+            aria-controls="drawerTabDisciplinary"
+          >
+            Disciplinary
+          </button>
+        </div>
+
+        <!-- Scrollable body -->
+        <div class="admin-employee-drawer-body" tabindex="0">
+          <!-- Overview -->
+          <section
+            id="drawerTabOverview"
+            class="admin-employee-drawer-tab"
+            role="tabpanel"
+            data-employee-panel="overview"
+          >
+            <!-- JS should render:
+              - clean overview rows
+              - Edit details button -> form mode
+              - Save/Cancel
+              - Activation actions (Activate / Request changes) if permitted
+              NOTE: Do NOT render notes here.
+            -->
+          </section>
+
+          <!-- Voyages -->
+          <section
+            id="drawerTabVoyages"
+            class="admin-employee-drawer-tab hidden"
+            role="tabpanel"
+            data-employee-panel="voyages"
+          >
+            <!-- JS renders voyages table/empty state -->
+          </section>
+
+          <!-- Activity -->
+          <section
+            id="drawerTabActivity"
+            class="admin-employee-drawer-tab hidden"
+            role="tabpanel"
+            data-employee-panel="activity"
+          >
+            <!-- JS renders audit/activity timeline -->
+          </section>
+
+          <!-- Access -->
+          <section
+            id="drawerTabAccess"
+            class="admin-employee-drawer-tab hidden"
+            role="tabpanel"
+            data-employee-panel="access"
+          >
+            <!-- JS renders user group assignment -->
+          </section>
+
+          <!-- Notes -->
+          <section
+            id="drawerTabNotes"
+            class="admin-employee-drawer-tab hidden"
+            role="tabpanel"
+            data-employee-panel="notes"
+          >
+            <!-- JS renders:
+              - system toggle
+              - notes timeline
+              - add note form
+            -->
+          </section>
+
+          <!-- Disciplinary -->
+          <section
+            id="drawerTabDisciplinary"
+            class="admin-employee-drawer-tab hidden"
+            role="tabpanel"
+            data-employee-panel="disciplinary"
+          >
+            <!-- JS renders disciplinary list + new record action -->
+          </section>
+        </div>
+      </section>
+    </aside>
+
+    <section id="createEmployeeModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Create Employee</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="createEmployeeModal">Close</button>
+        </div>
+        <form id="createEmployeeForm">
+          <label>Discord User ID</label>
+          <input name="discordUserId" type="text" required />
+          <label>Roblox Username</label>
+          <input name="robloxUsername" type="text" />
+          <label>Roblox User ID</label>
+          <input name="robloxUserId" type="text" />
+          <label>Rank</label>
+          <select name="rank"></select>
+          <label>Employee Status</label>
+          <select name="employeeStatus"></select>
+          <label>Activation Status</label>
+          <select name="activationStatus">
+            <option value="ACTIVE">Active</option>
+            <option value="PENDING">Pending</option>
+            <option value="DISABLED">Disabled</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+          <label>Hire Date</label>
+          <input name="hireDate" type="date" />
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit">Create Employee</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="createEmployeeModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="deleteUserModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Delete User</h2>
+          <button class="btn btn-secondary" type="button" data-close-modal="deleteUserModal">Close</button>
+        </div>
+        <form id="deleteUserForm">
+          <label>Discord User ID</label>
+          <input name="discordUserId" type="text" required />
+          <label>Reason</label>
+          <textarea name="reason" rows="3" required></textarea>
+          <p class="finance-inline-caption">Deletes pending/unauthorised records by Discord ID. If an employee exists without voyage/finance history, that account is also removed.</p>
+          <div class="modal-actions">
+            <button class="btn btn-danger" type="submit">Delete User</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="deleteUserModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="joinRequestsModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card join-requests-modal-card">
+        <div class="modal-header join-requests-modal-header">
+          <h2>Roblox Join Requests</h2>
+          <div class="join-requests-modal-controls">
+            <button id="refreshJoinRequestsBtn" class="btn btn-secondary" type="button">Refresh</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="joinRequestsModal">Close</button>
+          </div>
+        </div>
+        <div id="joinRequestsFeedback" class="feedback" role="status" aria-live="polite"></div>
+        <div class="table-wrap">
+          <table class="data-table join-requests-table">
+            <thead>
+              <tr>
+                <th>Requester</th>
+                <th>Requested At</th>
+                <th class="align-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="joinRequestsTableBody">
+              <tr><td colspan="3">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260309b"></script>
+  </body>
+</html>

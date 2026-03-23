@@ -1,0 +1,116 @@
+const CORE_ALLOWED_PAGE_EXACT = new Set([
+  '/my-details',
+  '/my-details.html',
+  '/voyages',
+  '/voyage-tracker',
+  '/voyage-tracker.html',
+  '/voyage-archive',
+  '/voyage-archive.html',
+  '/voyage-details',
+  '/voyage-details.html',
+  '/fleet',
+  '/fleet.html',
+  '/shipyard',
+  '/shipyard.html',
+  '/finances',
+  '/finances.html',
+  '/admin',
+  '/admin-panel',
+  '/admin-panel.html',
+  '/admin/employees',
+  '/admin/activity',
+  '/admin/audit',
+  '/admin/voyages',
+  '/admin/user-groups',
+  '/admin/user-ranks',
+  '/roles',
+  '/roles.html',
+  '/user-ranks',
+  '/user-ranks.html',
+  '/activity-tracker',
+  '/activity-tracker.html',
+  '/audit-log',
+  '/audit-log.html',
+  '/voyage-settings',
+  '/voyage-settings.html',
+  '/access-setup',
+  '/access-setup.html',
+  '/not-permitted',
+  '/not-permitted.html',
+  '/onboarding',
+  '/onboarding.html',
+  '/onboarding/status'
+]);
+
+const CORE_ALLOWED_PAGE_PREFIXES = [
+  '/voyages/',
+  '/fleet/',
+  '/shipyard/',
+  '/finances/',
+  '/admin/employees/',
+  '/admin/activity/',
+  '/admin/audit/',
+  '/admin/voyages/',
+  '/admin/user-groups/',
+  '/admin/user-ranks/',
+  '/activity-tracker/',
+  '/audit-log/',
+  '/access-setup/',
+  '/onboarding/',
+];
+
+const CORE_ALLOWED_API_PREFIXES = [
+  '/api/auth/session',
+  '/api/auth/logout',
+  '/api/auth/discord/start',
+  '/api/auth/discord/callback',
+  '/api/onboarding',
+  '/api/me/bootstrap',
+  '/api/roblox/resolve',
+  '/api/me/details',
+  '/api/voyages',
+  '/api/fleet',
+  '/api/shipyard',
+  '/api/voyage-config',
+  '/api/cargo-types',
+  '/api/finances',
+  '/api/notifications',
+  '/api/notifications/live',
+  '/api/notifications/presence',
+  '/api/notifications/send',
+  '/api/notifications/dismiss',
+  '/api/live-notify',
+  '/api/admin/employees',
+  '/api/admin/roblox',
+  '/api/admin/roles',
+  '/api/admin/user-ranks',
+  '/api/admin/config',
+  '/api/admin/activity',
+  '/api/admin/audit-log',
+  '/api/admin/activity-tracker',
+  '/api/admin/voyage-config',
+  '/api/employees',
+  '/api/employees/search'
+];
+
+export function normalizeAppMode(value) {
+  const mode = String(value || '').trim().toLowerCase();
+  return mode === 'core' ? 'core' : 'full';
+}
+
+export function isCoreOnly(env) {
+  return normalizeAppMode(env?.APP_MODE) === 'core';
+}
+
+export function isCoreAllowedPagePath(pathname) {
+  const path = String(pathname || '').trim();
+  if (!path) return false;
+  if (CORE_ALLOWED_PAGE_EXACT.has(path)) return true;
+  return CORE_ALLOWED_PAGE_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
+export function isCoreAllowedApiPath(pathname) {
+  const path = String(pathname || '').trim();
+  if (!path.startsWith('/api/')) return false;
+  return CORE_ALLOWED_API_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}

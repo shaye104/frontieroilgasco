@@ -1,0 +1,13 @@
+{
+  "name": "frontier-oil-gas-company-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static modular website for Frontier Oil & Gas Company",
+  "scripts": {
+    "build:assets": "node scripts/build-assets.mjs",
+    "webinfo": "node scripts/build-assets.mjs && node scripts/update-webinfo.mjs"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.10"
+  }
+}

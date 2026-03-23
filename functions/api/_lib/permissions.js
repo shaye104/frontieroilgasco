@@ -1,0 +1,331 @@
+import { ensureCoreSchema, getEmployeeByDiscordUserId } from './db.js';
+import { expireDisciplinaryRecordsForEmployee, reconcileEmployeeSuspensionState } from './disciplinary.js';
+
+export const SUPER_ADMIN_PERMISSION = 'super.admin';
+export const ADMIN_OVERRIDE_PERMISSION = 'admin.override';
+export const ADMIN_READ_ONLY_PERMISSION = 'admin.read_only';
+export const BOOKKEEPER_PERMISSION = 'finances.bookkeeper';
+export const ADMIN_PANEL_ENTRY_PERMISSIONS = [
+  ADMIN_READ_ONLY_PERMISSION,
+  'employees.read',
+  'voyages.config.manage',
+  'user_groups.manage',
+  'user_ranks.manage',
+  'config.manage',
+  'activity_tracker.view'
+];
+
+const PERMISSION_ALIASES = {
+  'roles.read': 'user_groups.read',
+  'roles.manage': 'user_groups.manage',
+  'roles.assign': 'user_groups.assign',
+  'user_groups.read': 'roles.read',
+  'user_groups.manage': 'roles.manage',
+  'user_groups.assign': 'roles.assign'
+};
+
+export const PERMISSION_GROUPS = [
+  {
+    key: 'employees',
+    label: 'Employees',
+    permissions: [
+      { key: 'employees.read', label: 'View Employees', description: 'View employee lists and employee profiles.' },
+      { key: 'employees.create', label: 'Create Employees', description: 'Create employee records.' },
+      { key: 'employees.edit', label: 'Edit Employees', description: 'Edit employee profile fields.' },
+      { key: 'employees.delete', label: 'Delete Employees', description: 'Delete employee records and related onboarding data.' },
+      { key: 'employees.discipline', label: 'Manage Discipline', description: 'Create and update disciplinary records.' },
+      { key: 'employees.notes', label: 'Manage Notes', description: 'Add employee notes and activity log entries.' }
+    ]
+  },
+  {
+    key: 'config',
+    label: 'System Config',
+    permissions: [
+      { key: 'config.manage', label: 'Manage Config', description: 'Manage statuses, ranks, grades, and disciplinary types.' }
+    ]
+  },
+  {
+    key: 'user_groups',
+    label: 'User Groups',
+    permissions: [
+      { key: 'user_groups.read', label: 'View User Groups', description: 'View user group definitions and permissions.' },
+      { key: 'user_groups.manage', label: 'Manage User Groups', description: 'Create, edit, delete, and reorder user groups.' },
+      { key: 'user_groups.assign', label: 'Assign User Groups', description: 'Assign and unassign user groups for employees.' }
+    ]
+  },
+  {
+    key: 'user_ranks',
+    label: 'User Ranks',
+    permissions: [
+      { key: 'user_ranks.manage', label: 'Manage User Ranks', description: 'Create, edit, delete, and reorder user ranks.' }
+    ]
+  },
+  {
+    key: 'admin',
+    label: 'Admin',
+    permissions: [
+      { key: ADMIN_READ_ONLY_PERMISSION, label: 'Admin Read Only', description: 'Read-only access across all admin areas.' },
+      { key: ADMIN_OVERRIDE_PERMISSION, label: 'Admin Override', description: 'Grant all permissions across the application.' }
+    ]
+  },
+  {
+    key: 'activity_tracker',
+    label: 'Activity Tracker',
+    permissions: [
+      { key: 'activity_tracker.view', label: 'View Activity Tracker', description: 'View voyage activity statistics for employees.' }
+    ]
+  },
+  {
+    key: 'voyages',
+    label: 'Voyages & Fleet',
+    permissions: [
+      { key: 'voyages.read', label: 'View Voyages', description: 'View voyage tracker.' },
+      { key: 'voyages.create', label: 'Create Voyages', description: 'Create voyage entries.' },
+      { key: 'voyages.edit', label: 'Edit Voyages', description: 'Edit voyage entries.' },
+      { key: 'voyages.end', label: 'End Voyages', description: 'End voyages and finalise voyage accounting.' },
+      { key: 'voyages.delete', label: 'Delete Voyages', description: 'Delete archived voyages with financial reversal and audit trail.' },
+      {
+        key: 'voyages.override',
+        label: 'Voyage Override',
+        description: 'Allow force edit/end/delete actions for voyages without Officer of the Watch (OOTW) assignment.'
+      },
+      { key: 'voyages.config.manage', label: 'Manage Voyage Config', description: 'Manage voyage config lists for ports and vessels.' }
+    ]
+  },
+  {
+    key: 'finances',
+    label: 'Finances',
+    permissions: [
+      { key: 'finances.view', label: 'View Finances', description: 'View the finance dashboard and debt summaries.' },
+      { key: 'finances.debts.settle', label: 'Settle Finance Debts', description: 'Settle outstanding company share debts.' },
+      {
+        key: BOOKKEEPER_PERMISSION,
+        label: 'Bookkeeper',
+        description: 'Settle collector pending transfers into company cashflow (CEO transfer flow).'
+      },
+      { key: 'finances.audit.view', label: 'View Finance Audit', description: 'View finance settlement audit logs.' }
+    ]
+  }
+];
+
+export function getPermissionCatalog() {
+  return PERMISSION_GROUPS.flatMap((group) =>
+    group.permissions.map((permission) => ({
+      ...permission,
+      group: group.key,
+      groupLabel: group.label
+    }))
+  );
+}
+
+export function getPermissionKeys() {
+  return getPermissionCatalog().map((permission) => permission.key);
+}
+
+export function normalizePermissionKeys(values) {
+  const allowed = new Set([...getPermissionKeys(), SUPER_ADMIN_PERMISSION, ...Object.keys(PERMISSION_ALIASES)]);
+  const source = Array.isArray(values) ? values : [];
+  return [...new Set(source.map((value) => String(value || '').trim()).filter((value) => allowed.has(value)))];
+}
+
+function expandPermissionAliases(values) {
+  const normalized = normalizePermissionKeys(values);
+  const expanded = new Set(normalized);
+  normalized.forEach((permission) => {
+    const alias = PERMISSION_ALIASES[permission];
+    if (alias) expanded.add(alias);
+  });
+  return [...expanded];
+}
+
+export function hasPermission(session, permissionKey) {
+  if (!session || !permissionKey) return false;
+  const permissions = expandPermissionAliases(Array.isArray(session.permissions) ? session.permissions : []);
+  const requested = String(permissionKey || '').trim();
+  const requestedAlias = PERMISSION_ALIASES[requested];
+  return (
+    permissions.includes(SUPER_ADMIN_PERMISSION) ||
+    permissions.includes(ADMIN_OVERRIDE_PERMISSION) ||
+    permissions.includes(requested) ||
+    (requestedAlias ? permissions.includes(requestedAlias) : false)
+  );
+}
+
+export function hasAnyPermission(session, permissionKeys) {
+  if (!Array.isArray(permissionKeys) || permissionKeys.length === 0) return true;
+  return permissionKeys.some((permissionKey) => hasPermission(session, permissionKey));
+}
+
+async function getMappedRoleIdsByDiscordRoles(env, discordRoleIds) {
+  if (!Array.isArray(discordRoleIds) || discordRoleIds.length === 0) return [];
+  const normalizedRoleIds = [...new Set(discordRoleIds.map((value) => String(value || '').trim()).filter(Boolean))];
+  if (!normalizedRoleIds.length) return [];
+
+  const placeholders = normalizedRoleIds.map(() => '?').join(', ');
+  const [mappingRows, directRoleRows] = await Promise.all([
+    env.DB
+      .prepare(`SELECT role_id FROM auth_role_mappings WHERE discord_role_id IN (${placeholders})`)
+      .bind(...normalizedRoleIds)
+      .all(),
+    env.DB
+      .prepare(`SELECT id FROM app_roles WHERE discord_role_id IN (${placeholders})`)
+      .bind(...normalizedRoleIds)
+      .all()
+  ]);
+
+  const roleIds = [
+    ...(mappingRows?.results || []).map((row) => Number(row.role_id)),
+    ...(directRoleRows?.results || []).map((row) => Number(row.id))
+  ];
+  return [...new Set(roleIds.filter((value) => Number.isInteger(value) && value > 0))];
+}
+
+async function getAssignedRoleIdsByEmployeeId(env, employeeId) {
+  if (!Number.isInteger(employeeId) || employeeId <= 0) return [];
+  const result = await env.DB
+    .prepare('SELECT role_id FROM employee_role_assignments WHERE employee_id = ?')
+    .bind(employeeId)
+    .all();
+
+  return [...new Set((result?.results || []).map((row) => Number(row.role_id)).filter((value) => Number.isInteger(value) && value > 0))];
+}
+
+async function getRolePermissions(env, roleIds) {
+  if (!Array.isArray(roleIds) || roleIds.length === 0) return { roles: [], permissions: [] };
+
+  const placeholders = roleIds.map(() => '?').join(', ');
+  const roleRows = await env.DB
+    .prepare(`SELECT id, name, description, sort_order FROM app_roles WHERE id IN (${placeholders}) ORDER BY sort_order ASC, id ASC`)
+    .bind(...roleIds)
+    .all();
+
+  const permissionRows = await env.DB
+    .prepare(
+      `SELECT DISTINCT arp.permission_key
+       FROM app_role_permissions arp
+       WHERE arp.role_id IN (${placeholders})`
+    )
+    .bind(...roleIds)
+    .all();
+
+  return {
+    roles: roleRows?.results || [],
+    permissions: normalizePermissionKeys((permissionRows?.results || []).map((row) => row.permission_key))
+  };
+}
+
+async function getRankPermissions(env, rankValue) {
+  const rank = String(rankValue || '').trim();
+  if (!rank) return [];
+  const rows = await env.DB
+    .prepare(
+      `SELECT DISTINCT permission_key
+       FROM rank_permission_mappings
+       WHERE LOWER(rank_value) = LOWER(?)`
+    )
+    .bind(rank)
+    .all();
+  return normalizePermissionKeys((rows?.results || []).map((row) => row.permission_key));
+}
+
+async function getDisciplinaryRestrictionFlags(env, employeeId) {
+  if (!Number.isInteger(employeeId) || employeeId <= 0) {
+    return { restrictIntranet: false, restrictVoyages: false, restrictFinance: false };
+  }
+  const row = await env.DB
+    .prepare(
+      `SELECT
+         MAX(COALESCE(dt.restrict_intranet, 0)) AS restrict_intranet,
+         MAX(COALESCE(dt.restrict_voyages, 0)) AS restrict_voyages,
+         MAX(COALESCE(dt.restrict_finance, 0)) AS restrict_finance
+       FROM disciplinary_records dr
+       LEFT JOIN config_disciplinary_types dt ON UPPER(COALESCE(dt.key, '')) = UPPER(COALESCE(dr.type_key, ''))
+       WHERE dr.employee_id = ?
+         AND UPPER(COALESCE(dr.status, 'ACTIVE')) IN ('ACTIVE', 'OPEN')`
+    )
+    .bind(employeeId)
+    .first();
+  return {
+    restrictIntranet: Number(row?.restrict_intranet || 0) === 1,
+    restrictVoyages: Number(row?.restrict_voyages || 0) === 1,
+    restrictFinance: Number(row?.restrict_finance || 0) === 1
+  };
+}
+
+export async function buildPermissionContext(env, { discordUserId, discordRoleIds = [], isSuperAdmin = false } = {}) {
+  await ensureCoreSchema(env);
+  const ownerId = String(env?.OWNER_DISCORD_ID || env?.ADMIN_DISCORD_USER_ID || '').trim();
+  const normalizedDiscordUserId = String(discordUserId || '').trim();
+  const isOwnerOverride = Boolean(ownerId && normalizedDiscordUserId && ownerId === normalizedDiscordUserId);
+  const effectiveSuperAdmin = Boolean(isSuperAdmin || isOwnerOverride);
+
+  let employee = discordUserId ? await getEmployeeByDiscordUserId(env, discordUserId) : null;
+  if (employee) {
+    await expireDisciplinaryRecordsForEmployee(env, Number(employee.id));
+    const reconciled = await reconcileEmployeeSuspensionState(env, Number(employee.id));
+    employee = reconciled?.employee || employee;
+  }
+  const assignedRoleIds = employee ? await getAssignedRoleIdsByEmployeeId(env, Number(employee.id)) : [];
+  const mappedRoleIds = await getMappedRoleIdsByDiscordRoles(env, discordRoleIds);
+
+  const appRoleIds = [...new Set([...assignedRoleIds, ...mappedRoleIds])];
+  const { roles, permissions } = await getRolePermissions(env, appRoleIds);
+  const rankPermissions = await getRankPermissions(env, employee?.rank);
+
+  let normalizedPermissions = expandPermissionAliases(
+    effectiveSuperAdmin
+      ? [...permissions, ...rankPermissions, SUPER_ADMIN_PERMISSION, ADMIN_OVERRIDE_PERMISSION, ...getPermissionKeys()]
+      : [...permissions, ...rankPermissions]
+  );
+
+  const restrictions = await getDisciplinaryRestrictionFlags(env, Number(employee?.id || 0));
+  if (!effectiveSuperAdmin) {
+    if (restrictions.restrictIntranet) {
+      normalizedPermissions = [];
+    } else {
+      if (restrictions.restrictVoyages) {
+        normalizedPermissions = normalizedPermissions.filter((key) => !String(key || '').startsWith('voyages.'));
+      }
+      if (restrictions.restrictFinance) {
+        normalizedPermissions = normalizedPermissions.filter((key) => !String(key || '').startsWith('finances.'));
+      }
+    }
+  }
+
+  return {
+    employee,
+    appRoleIds,
+    appRoles: roles,
+    permissions: normalizedPermissions,
+    isSuperAdmin: effectiveSuperAdmin,
+    isOwnerOverride,
+    restrictions
+  };
+}
+
+export async function enrichSessionWithPermissions(env, session) {
+  if (!session) return null;
+  const context = await buildPermissionContext(env, {
+    discordUserId: session.userId,
+    discordRoleIds: Array.isArray(session.discordRoles)
+      ? session.discordRoles
+      : Array.isArray(session.roles)
+      ? session.roles
+      : [],
+    isSuperAdmin: Boolean(session.isAdmin)
+  });
+
+  return {
+    ...session,
+    roles: Array.isArray(session.discordRoles)
+      ? session.discordRoles
+      : Array.isArray(session.roles)
+      ? session.roles
+      : [],
+    appRoleIds: context.appRoleIds,
+    appRoles: context.appRoles,
+    permissions: context.permissions,
+    employee: context.employee,
+    restrictions: context.restrictions
+  };
+}

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company Shipyard configuration." />
+    <title>Frontier Oil & Gas Company | Shipyard</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet page-shipyard">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section id="guardFeedback" class="feedback" role="status" aria-live="polite"></section>
+        <section id="protectedContent" class="hidden">
+          <article class="panel fleet-header-panel">
+            <div class="admin-employees-table-header fleet-header-row">
+              <div>
+                <h1>Shipyard</h1>
+                <p class="finance-inline-caption">Configure ships once, then assign crew from Fleet.</p>
+              </div>
+              <div class="button-row">
+                <a class="btn btn-secondary btn-compact" href="/fleet">Back to Fleet</a>
+              </div>
+            </div>
+          </article>
+
+          <section id="shipyardFeedback" class="feedback" role="status" aria-live="polite"></section>
+
+          <article class="panel shipyard-panel">
+            <div class="shipyard-head">
+              <form id="shipyardCreateForm" class="shipyard-form" autocomplete="off">
+                <label>
+                  <span>Ship Name</span>
+                  <input name="shipName" type="text" placeholder="FN Example" required />
+                </label>
+                <label>
+                  <span>Vessel Callsign</span>
+                  <input name="vesselCallsign" type="text" placeholder="TRIDENT 1" required />
+                </label>
+                <label>
+                  <span>Vessel Class</span>
+                  <input name="vesselClass" type="text" placeholder="Marlin 130" required />
+                </label>
+                <div class="shipyard-form-actions">
+                  <button class="btn btn-primary" type="submit">Add Ship</button>
+                </div>
+              </form>
+            </div>
+            <section id="shipyardList"></section>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="/assets/js/pages/shipyard-page.js?v=20260313a"></script>
+  </body>
+</html>

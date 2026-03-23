@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "frontieroilgasco",
+  "compatibility_date": "2026-02-19",
+  "pages_build_output_dir": ".",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "frontier",
+      "database_id": "70582565-bf09-43a5-b471-f0d1b845eab5"
+    }
+  ]
+}

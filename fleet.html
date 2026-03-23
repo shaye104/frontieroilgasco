@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company fleet leaderboard and ship assignments." />
+    <title>Frontier Oil & Gas Company | Fleet</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet page-fleet">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section id="guardFeedback" class="feedback" role="status" aria-live="polite"></section>
+        <section id="protectedContent" class="hidden">
+          <article class="panel fleet-header-panel">
+            <div class="admin-employees-table-header fleet-header-row">
+              <div>
+                <h1>Fleet Leaderboard</h1>
+                <p class="finance-inline-caption">Breakdown by ship assignment with crew performance totals.</p>
+              </div>
+              <div class="button-row">
+                <button id="fleetToggleEmptyShipsBtn" class="btn btn-secondary btn-compact" type="button">Show Empty Ships</button>
+                <a class="btn btn-secondary btn-compact" href="/shipyard">Manage Ships</a>
+              </div>
+            </div>
+          </article>
+          <section id="fleetFeedback" class="feedback" role="status" aria-live="polite"></section>
+          <section id="fleetTotals" class="metric-grid"></section>
+          <section id="fleetShips" class="stack"></section>
+        </section>
+      </div>
+    </main>
+
+    <section id="fleetDrawerModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card" style="width:min(1400px,95vw);height:min(900px,92vh);padding:0;">
+        <div class="modal-header" style="padding:0.8rem 1rem;">
+          <h2>Employee Drawer</h2>
+          <button id="fleetDrawerClose" class="btn btn-secondary" type="button">Close</button>
+        </div>
+        <iframe id="fleetDrawerFrame" title="Employee Drawer" style="width:100%;height:calc(100% - 60px);border:0;" src="about:blank"></iframe>
+      </div>
+    </section>
+
+    <section id="fleetShipModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card fleet-ship-modal-card">
+        <div class="modal-header">
+          <h2 id="fleetShipModalTitle">Ship</h2>
+          <button id="fleetShipModalClose" class="btn btn-secondary" type="button">Close</button>
+        </div>
+        <div id="fleetShipModalBody" class="fleet-ship-modal-body"></div>
+      </div>
+    </section>
+
+    <script type="module" src="/assets/js/pages/fleet-page.js?v=20260313i"></script>
+  </body>
+  </html>

@@ -1,0 +1,110 @@
+WEBINFO - Frontier Oil & Gas Company
+Generated: 2026-03-14T00:22:07.789Z
+
+PROJECT PURPOSE
+- Public-facing landing website for Frontier Oil & Gas Company.
+- Includes employee intranet login and operational dashboards.
+- Built for Cloudflare Pages with optional Pages Functions for authenticated intranet access.
+
+SITE STRUCTURE
+- access-denied.html | title: Frontier Oil & Gas Company | Access Denied | primary heading: You cannot access this page
+- activity-tracker.html | title: Frontier Oil & Gas Company | Activity Tracker | primary heading: Activity Tracker
+- admin-panel.html | title: Frontier Oil & Gas Company | Admin Panel | primary heading: Admin Panel
+- audit-log.html | title: Frontier Oil & Gas Company | Audit Log | primary heading: Audit Log
+- finances.html | title: Frontier Oil & Gas Company | Finances | primary heading: Finances
+- fleet.html | title: Frontier Oil & Gas Company | Fleet | primary heading: Fleet Leaderboard
+- index.html | title: Frontier Oil & Gas Company | Landing | primary heading: Reliable production built on safety, precision, and accountability.
+- intranet.html | title: Frontier Oil & Gas Company | Login | primary heading: Login
+- login.html | title: Frontier Oil & Gas Company | Login | primary heading: Sign In
+- maintenance.html | title: Frontier Oil &amp; Gas Company | Maintenance | primary heading: Currently Under Maintenance
+- manage-employees.html | title: Frontier Oil & Gas Company | Manage Employees | primary heading: Manage Employees
+- my-details.html | title: Frontier Oil & Gas Company | My Details | primary heading: My Details
+- not-permitted.html | title: Frontier Oil &amp; Gas Company | Not Permitted | primary heading: Not permitted
+- onboarding.html | title: Frontier Oil & Gas Company | Access Setup | primary heading: Access Setup
+- roles.html | title: Frontier Oil & Gas Company | User Groups | primary heading: User Groups
+- shipyard.html | title: Frontier Oil & Gas Company | Shipyard | primary heading: Shipyard
+- site-settings.html | title: Frontier Oil & Gas Company | Site Settings | primary heading: Site Settings
+- user-ranks.html | title: Frontier Oil & Gas Company | User Ranks | primary heading: User Ranks
+- voyage-archive.html | title: Frontier Oil & Gas Company | Past Voyages | primary heading: Past Voyages
+- voyage-details.html | title: Frontier Oil & Gas Company | Voyage Details | primary heading: Voyage Details
+- voyage-settings.html | title: Frontier Oil & Gas Company | Voyage Settings | primary heading: Voyage Settings
+- voyage-tracker.html | title: Frontier Oil & Gas Company | Voyage Tracker | primary heading: Voyage Tracker
+
+JAVASCRIPT MODULES
+- assets/js/modules/activity-tracker.js | exports: No public exports
+- assets/js/modules/admin-api.js | exports: acceptRobloxGroupJoinRequest, activateEmployee, addDisciplinary, addEmployeeNote, addRoleMember, addUserRankDiscordRoleLink, addUserRankGroupLink, archiveShipyardShip, assignEmployeeVessel, cancelVoyage, clearEmployeeVessel, createAdminRole, createConfigValue, createEmployee, createShipyardShip, createUserRank, createVoyageConfigValue, createVoyageLog, declineRobloxGroupJoinRequest, deleteAdminRole, deleteConfigValue, deleteEmployee, deleteUserRank, deleteVoyage, deleteVoyageConfigValue, dismissLiveNotification, endVoyage, getActivityTrackerCsvUrl, getAdminRoles, getAuditLogCsvUrl, getConfig, getConfigSettings, getEmployee, getEmployeeConfigBootstrap, getEmployeeDrawer, getFinancesOverview, getFleetLeaderboard, getLiveNotificationPresence, getLiveNotifications, getMeBootstrap, getMyDetails, getOnboardingBootstrap, getOnboardingMe, getRobloxGroupJoinRequests, getRobloxGroupMemberships, getRobloxGroupRoles, getSession, getUserRankLinks, getUserRankPermissions, getVoyage, getVoyageManifest, getVoyageOverview, listActivityTracker, listAuditLog, listCargoTypes, listEmployees, listFinanceAudit, listFinanceDebts, listRoleMembers, listShipyardShips, listUserRanks, listVoyageConfig, listVoyageConfigAdmin, listVoyageLogs, listVoyages, prefetchJson, prefetchRouteData, purgeUserByDiscord, releaseVoyageShipAssignment, removeRobloxGroupMembership, removeRoleMember, removeUserRankDiscordRoleLink, removeUserRankGroupLink, reorderAdminRole, reserveVoyageShipAssignment, resolveRobloxIdentity, saveUserRankPermissions, searchEmployees, sendLiveNotification, setConfigSetting, settleFinanceDebt, startVoyage, submitOnboarding, submitOnboardingRobloxProfile, timeoutVoyageShipAssignment, updateAdminRole, updateConfigValue, updateDisciplinary, updateEmployee, updateRobloxGroupMembershipRole, updateShipyardShip, updateUserRank, updateVoyageConfigValue, updateVoyageDetails, updateVoyageLog, updateVoyageManifest, updateVoyageShipStatus, verifyOnboardingRoblox
+- assets/js/modules/app-mode.js | exports: isCoreAllowedPagePath, isCoreOnlyMode, normalizeAppMode
+- assets/js/modules/audit-log.js | exports: No public exports
+- assets/js/modules/company-data.js | exports: companyProfile
+- assets/js/modules/finances.js | exports: No public exports
+- assets/js/modules/fleet.js | exports: No public exports
+- assets/js/modules/intranet-auth.js | exports: initIntranetAuth
+- assets/js/modules/intranet-layout.js | exports: No public exports
+- assets/js/modules/intranet-page-guard.js | exports: No public exports
+- assets/js/modules/local-datetime.js | exports: dateInputToUtcIso, formatLocalDate, formatLocalDateTime, getClientTimezoneOffsetMinutes, toDateInputValueLocal, toDateTimeLocalInputValue
+- assets/js/modules/manage-employees.js | exports: No public exports
+- assets/js/modules/my-details-panel.js | exports: No public exports
+- assets/js/modules/nav.js | exports: ADMIN_PANEL_ENTRY_PERMISSIONS, canAccessAdminPanel, getPreferredUserLabel, hasPermission, renderIntranetNavbar, renderPublicNavbar
+- assets/js/modules/notice.js | exports: clearMessage, showMessage
+- assets/js/modules/notifications-live.js | exports: initLiveNotifications
+- assets/js/modules/rank-preview.js | exports: clearRankPreviewState, getRankPreviewState, setRankPreviewState
+- assets/js/modules/render-company.js | exports: renderHomeContent
+- assets/js/modules/roles-admin.js | exports: No public exports
+- assets/js/modules/shipyard.js | exports: No public exports
+- assets/js/modules/user-ranks-admin.js | exports: No public exports
+- assets/js/modules/voyage-archive.js | exports: No public exports
+- assets/js/modules/voyage-details.js | exports: No public exports
+- assets/js/modules/voyage-settings-admin.js | exports: No public exports
+- assets/js/modules/voyage-tracker.js | exports: No public exports
+- assets/js/modules/year.js | exports: initializeYear
+- assets/js/pages/access-denied-page.js | exports: No public exports
+- assets/js/pages/activity-tracker-page.js | exports: No public exports
+- assets/js/pages/admin-panel-page.js | exports: No public exports
+- assets/js/pages/audit-log-page.js | exports: No public exports
+- assets/js/pages/finances-page.js | exports: No public exports
+- assets/js/pages/fleet-page.js | exports: No public exports
+- assets/js/pages/home.js | exports: No public exports
+- assets/js/pages/intranet-page.js | exports: No public exports
+- assets/js/pages/manage-employees-page.js | exports: No public exports
+- assets/js/pages/my-details-page.js | exports: No public exports
+- assets/js/pages/not-permitted-page.js | exports: No public exports
+- assets/js/pages/onboarding-page.js | exports: No public exports
+- assets/js/pages/roles-page.js | exports: No public exports
+- assets/js/pages/shipyard-page.js | exports: No public exports
+- assets/js/pages/site-settings-page.js | exports: No public exports
+- assets/js/pages/user-ranks-page.js | exports: No public exports
+- assets/js/pages/voyage-archive-page.js | exports: No public exports
+- assets/js/pages/voyage-details-page.js | exports: No public exports
+- assets/js/pages/voyage-settings-page.js | exports: No public exports
+- assets/js/pages/voyage-tracker-page.js | exports: No public exports
+
+CSS MODULES
+- assets/css/base.css | stylesheet module
+- assets/css/components.css | stylesheet module
+- assets/css/pages.css | stylesheet module
+- assets/css/tokens.css | stylesheet module
+
+DATA FLOW
+- Landing page imports company data from `assets/js/modules/company-data.js` and renders cards/stats via `renderHomeContent`.
+- Intranet login starts Discord OAuth2 at `/api/auth/discord/start` and enforces access by Discord role membership.
+- Cloudflare Pages Functions in `functions/api/auth/*` exchange Discord auth code, verify guild roles, and issue a signed session cookie with admin flag.
+- Users with valid auth role but no employee record are not auto-added; an access request is created in D1 for admin approval.
+- Admin actions for employee CRUD, disciplinaries, notes, access requests, and system config are handled by `functions/api/admin/*`.
+- Protected intranet pages verify active session via `/api/auth/session` before rendering content.
+- Shared feedback UI is handled in `assets/js/modules/notice.js`.
+
+MAINTENANCE WORKFLOW
+- Regenerate this file at any time using: `npm run webinfo`.
+- If git hooks are enabled, this file auto-updates on every commit through `.githooks/pre-commit`.
+- For AI handoff, read this file first, then inspect referenced module files.
+
+DEPLOYMENT NOTES
+- Primary repo target: https://github.com/shaye104/frontieroilgasco
+- Cloudflare deployment command: `echo ok` when using Git-connected Pages deployments.
+- Static hosting is configured in `wrangler.jsonc` with `pages_build_output_dir` set to `.`.
+- Pages Functions auto-deploy with site code from `functions/`.
+- Bind your D1 database as `DB` in Cloudflare Pages project settings.
+- After deploy, attach your custom domain in Cloudflare and complete DNS routing.
+
+SECURITY NOTE
+- Configure secure environment variables before production OAuth use: DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_GUILD_ID, DISCORD_BOT_TOKEN, ADMIN_DISCORD_USER_ID, SESSION_SECRET, and optional DISCORD_REDIRECT_URI.

@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Frontier Oil & Gas Company finance dashboard." />
+    <title>Frontier Oil & Gas Company | Finances</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet page-finances">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel finance-page-header">
+          <div class="finance-head">
+            <div>
+              <h1>Finances</h1>
+              <p class="finance-subtitle">Voyage revenue &amp; company share performance</p>
+            </div>
+            <div class="finance-range-control segmented-control" role="group" aria-label="Finance range">
+              <button class="segmented-btn is-active" type="button" data-finance-range="week">Week</button>
+              <button class="segmented-btn" type="button" data-finance-range="month">Month</button>
+              <button class="segmented-btn" type="button" data-finance-range="3m">3M</button>
+              <button class="segmented-btn" type="button" data-finance-range="6m">6M</button>
+              <button class="segmented-btn" type="button" data-finance-range="year">Year</button>
+              <button class="segmented-btn" type="button" data-finance-range="all">All Time</button>
+            </div>
+          </div>
+          <nav class="finance-tabs" aria-label="Finance sections">
+            <button class="finance-tab is-active" type="button" data-finance-tab="overview" aria-current="page">Overview</button>
+            <button class="finance-tab" type="button" data-finance-tab="trends">Trends</button>
+            <button class="finance-tab" type="button" data-finance-tab="debts">Debts</button>
+            <button class="finance-tab" type="button" data-finance-tab="cashflow">Cashflow</button>
+          </nav>
+          <div id="guardFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <div id="financesFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="protectedContent" class="finance-dashboard-shell">
+          <section id="financeTabOverview" class="finance-tab-panel is-active" data-finance-panel="overview">
+            <div class="finance-kpi-grid">
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="trending-up"></span>
+                <p class="finance-kpi-label">Net Profit</p>
+                <p id="kpiNetProfit" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaNetProfit" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="building"></span>
+                <p class="finance-kpi-label">Company Share Earned</p>
+                <p id="kpiCompanyShare" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaCompanyShare" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="fish"></span>
+                <p class="finance-kpi-label">CO₂ Emissions</p>
+                <p id="kpiEmissions" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaEmissions" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
+              </article>
+              <article class="finance-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="package-x"></span>
+                <p class="finance-kpi-label">Freight Loss Value</p>
+                <p id="kpiLossValue" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p id="kpiDeltaLossValue" class="finance-kpi-delta"><span class="finance-line-skeleton"></span></p>
+              </article>
+            </div>
+
+            <div class="finance-overview-main">
+              <article class="finance-chart-card finance-overview-primary">
+                <h3>Profit &amp; Losses Trend</h3>
+                <div id="chartNetProfit" class="finance-chart-host">
+                  <div class="finance-chart-skeleton"></div>
+                </div>
+              </article>
+
+              <article class="finance-chart-card finance-overview-side">
+                <div class="finance-overview-unsettled-top">
+                  <h3>Unsettled Company Share</h3>
+                  <p id="unsettledOutstandingTotal" class="finance-overview-unsettled-amount"><span class="finance-value-skeleton"></span></p>
+                  <p id="unsettledVoyageCount" class="finance-overview-unsettled-count">Unsettled Voyages: 0</p>
+                </div>
+                <div class="finance-performance-grid">
+                  <article class="finance-performance-stat">
+                    <span>Completed Voyages</span>
+                    <strong id="overviewCompletedVoyages">0</strong>
+                  </article>
+                  <article class="finance-performance-stat">
+                    <span>Avg Days to Settle</span>
+                    <strong id="overviewAvgDaysToSettle">—</strong>
+                  </article>
+                  <article class="finance-performance-stat">
+                    <span>Overdue Unsettled (&gt;5d)</span>
+                    <strong id="overviewOverdueUnsettled">0</strong>
+                  </article>
+                </div>
+                <h4 class="finance-inline-heading">Top Unsettled by Officer of the Watch (OOTW)</h4>
+                <ul id="unsettledTopList" class="finance-unsettled-list">
+                  <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
+                  <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
+                  <li class="finance-unsettled-item"><span class="finance-line-skeleton"></span></li>
+                </ul>
+                <a class="btn btn-secondary finance-unsettled-link" href="/finances?tab=debts" data-finance-open-tab="debts">View Debts &rarr;</a>
+              </article>
+            </div>
+
+            <div class="finance-performer-strip">
+              <article class="finance-performer-card">
+                <div class="finance-performer-head">
+                  <span class="finance-inline-icon" aria-hidden="true" data-icon="route"></span>
+                  <span>Top Sell Location</span>
+                </div>
+                <p id="topRouteLabel" class="finance-performer-title">—</p>
+                <p id="topRouteValue" class="finance-performer-value">ƒ 0</p>
+              </article>
+              <article class="finance-performer-card">
+                <div class="finance-performer-head">
+                  <span class="finance-inline-icon" aria-hidden="true" data-icon="ship"></span>
+                  <span>Top Voyage</span>
+                </div>
+                <p id="topVesselLabel" class="finance-performer-title">—</p>
+                <p id="topVesselValue" class="finance-performer-value">ƒ 0</p>
+              </article>
+              <article class="finance-performer-card">
+                <div class="finance-performer-head">
+                  <span class="finance-inline-icon" aria-hidden="true" data-icon="users"></span>
+                  <span>Top Employee</span>
+                </div>
+                <p id="topOotwLabel" class="finance-performer-title">—</p>
+                <p id="topOotwValue" class="finance-performer-value">ƒ 0</p>
+              </article>
+            </div>
+
+          </section>
+
+          <section id="financeTabTrends" class="finance-tab-panel hidden" data-finance-panel="trends">
+            <div class="finance-main-chart-grid finance-trends-grid">
+              <article class="finance-chart-card">
+                <h3>Revenue vs Profit vs Freight Loss</h3>
+                <div id="trendsChartOutstanding" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+              </article>
+              <article class="finance-chart-card">
+                <h3>Voyage Count Trend</h3>
+                <div id="trendsChartVoyageCount" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+              </article>
+              <article class="finance-chart-card">
+                <h3>Average Net Profit / Voyage</h3>
+                <div id="trendsChartAvgProfit" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+              </article>
+              <article class="finance-chart-card">
+                <div class="finance-chart-head-row">
+                  <h3>Profit Drivers</h3>
+                  <div class="finance-inline-segmented" role="group" aria-label="Profit driver breakdown">
+                    <button type="button" class="segmented-btn is-active" data-breakdown-mode="route">Sell Location</button>
+                    <button type="button" class="segmented-btn" data-breakdown-mode="vessel">Vessel</button>
+                    <button type="button" class="segmented-btn" data-breakdown-mode="ootw">Employee</button>
+                  </div>
+                </div>
+                <div id="trendsChartProfitDrivers" class="finance-chart-host"><div class="finance-chart-skeleton"></div></div>
+              </article>
+            </div>
+          </section>
+
+          <section id="financeTabDebts" class="finance-tab-panel hidden" data-finance-panel="debts">
+            <article class="finance-chart-card finance-filter-card">
+              <div class="filter-row">
+                <div>
+                  <label for="debtSearch">Search Officer of the Watch (OOTW)</label>
+                  <input id="debtSearch" type="text" />
+                </div>
+                <div>
+                  <label for="debtMinOutstanding">Only show &gt;= ƒ X</label>
+                  <input id="debtMinOutstanding" type="number" min="0" step="1" />
+                </div>
+                <div>
+                  <label for="debtScope">Scope</label>
+                  <select id="debtScope">
+                    <option value="all">All Time</option>
+                    <option value="range">This Range</option>
+                  </select>
+                </div>
+                <div class="finance-toggle-wrap finance-toggle-pill-wrap">
+                  <label>Debt View</label>
+                  <div class="finance-inline-segmented finance-inline-segmented-tight" role="group" aria-label="Debt view filter">
+                    <button id="debtFilterAll" type="button" class="segmented-btn" data-debt-filter="all">All</button>
+                    <button id="debtFilterUnsettled" type="button" class="segmented-btn is-active" data-debt-filter="unsettled">Unsettled</button>
+                  </div>
+                  <input id="debtOnlyUnsettled" type="checkbox" checked hidden />
+                </div>
+              </div>
+            </article>
+
+            <div class="finance-debts-grid">
+              <article class="finance-chart-card finance-table-card">
+                <h3 class="finance-panel-title">Owed To Company (Shares)</h3>
+                <div class="table-wrap">
+                  <table class="data-table finance-data-table">
+                    <thead>
+                      <tr>
+                        <th>Officer of the Watch (OOTW)</th>
+                        <th>Voyages</th>
+                        <th class="align-right">Amount ƒ</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="financeDebtsBody">
+                      <tr><td colspan="5"><div class="finance-chart-skeleton"></div></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="pagination-row">
+                  <button id="financeDebtsPrev" class="btn btn-secondary" type="button">Previous</button>
+                  <span id="financeDebtsPageInfo" class="pagination-info">Page 1 of 1</span>
+                  <button id="financeDebtsNext" class="btn btn-secondary" type="button">Next</button>
+                </div>
+              </article>
+
+              <article class="finance-chart-card finance-table-card finance-reimbursements-card">
+                <h3 class="finance-panel-title">Company Owes (Lost Freight/Cargo Reimbursements)</h3>
+                <div class="table-wrap">
+                  <table class="data-table finance-data-table finance-reimbursements-table">
+                    <thead>
+                      <tr>
+                        <th>Owner</th>
+                        <th class="align-right">Reimbursement ƒ</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="financeReimbursementsBody">
+                      <tr><td colspan="3"><div class="finance-chart-skeleton"></div></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="pagination-row reimbursements-spacer" aria-hidden="true">&nbsp;</div>
+              </article>
+            </div>
+          </section>
+
+          <section id="financeTabCashflow" class="finance-tab-panel hidden" data-finance-panel="cashflow">
+            <div class="finance-cashflow-kpi-grid">
+              <article class="finance-kpi finance-cashflow-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="arrow-up-right" title="Cash inflow"></span>
+                <p class="finance-kpi-label">Cash In</p>
+                <p id="cashflowKpiIn" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p class="finance-kpi-delta">This period</p>
+              </article>
+              <article class="finance-kpi finance-cashflow-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="arrow-down-right" title="Cash outflow"></span>
+                <p class="finance-kpi-label">Cash Out</p>
+                <p id="cashflowKpiOut" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p class="finance-kpi-delta">This period</p>
+              </article>
+              <article class="finance-kpi finance-cashflow-kpi">
+                <span class="finance-kpi-icon" aria-hidden="true" data-icon="activity" title="Net cashflow"></span>
+                <p class="finance-kpi-label">Net Cashflow</p>
+                <p id="cashflowKpiNet" class="finance-kpi-value"><span class="finance-value-skeleton"></span></p>
+                <p class="finance-kpi-delta">This period</p>
+              </article>
+            </div>
+            <div class="finance-cashflow-workspace">
+              <article class="finance-chart-card finance-table-card finance-cashflow-ledger-card">
+                <div class="finance-cashflow-entry-head">
+                  <div>
+                    <h3>Cashflow Ledger</h3>
+                    <p class="finance-inline-caption">Track manual financial adjustments and settlement inflows.</p>
+                  </div>
+                  <button id="cashflowOpenModal" type="button" class="btn btn-primary">New Cashflow Entry</button>
+                </div>
+                <div id="cashflowEntryFeedback" class="feedback" role="status" aria-live="polite"></div>
+                <div class="filter-row">
+                  <div>
+                    <label for="cashflowSearch">Search</label>
+                    <input id="cashflowSearch" type="text" placeholder="Reason, category, user, voyage" />
+                  </div>
+                  <div>
+                    <label for="cashflowDateFrom">From</label>
+                    <input id="cashflowDateFrom" type="date" />
+                  </div>
+                  <div>
+                    <label for="cashflowDateTo">To</label>
+                    <input id="cashflowDateTo" type="date" />
+                  </div>
+                  <div>
+                    <label for="cashflowFilterCategory">Category</label>
+                    <select id="cashflowFilterCategory">
+                      <option value="">All categories</option>
+                      <option value="Operational Revenue">Operational Revenue</option>
+                      <option value="Reimbursements">Reimbursements</option>
+                      <option value="Salary">Salary</option>
+                      <option value="Charity">Charity</option>
+                      <option value="Other Income">Other Income</option>
+                      <option value="Other Expense">Other Expense</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="cashflowCreatedBy">Created By</label>
+                    <input id="cashflowCreatedBy" type="text" placeholder="Username / ID" />
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table class="data-table finance-data-table">
+                    <thead>
+                      <tr>
+                        <th>Timestamp</th>
+                        <th>Type</th>
+                        <th class="align-right">Amount (ƒ)</th>
+                        <th>Reason</th>
+                        <th>Category</th>
+                        <th>Related Voyage</th>
+                        <th>Created By</th>
+                        <th class="align-right">Balance After</th>
+                      </tr>
+                    </thead>
+                    <tbody id="financeCashflowBody">
+                      <tr><td colspan="8"><div class="finance-chart-skeleton"></div></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div id="financeCashflowPagination" class="pagination-row">
+                  <button id="financeCashflowPrev" class="btn btn-secondary" type="button">Previous</button>
+                  <span id="financeCashflowPageInfo" class="pagination-info">Page 1 of 1</span>
+                  <button id="financeCashflowNext" class="btn btn-secondary" type="button">Next</button>
+                </div>
+              </article>
+
+              <article class="finance-chart-card finance-table-card finance-remittance-table-card">
+                <h3 class="finance-panel-title">Manager Pending Transfers</h3>
+                <div class="table-wrap">
+                  <table class="data-table finance-data-table">
+                    <thead>
+                      <tr>
+                        <th>Manager</th>
+                        <th class="align-right">Held Amount ƒ</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="financeCollectorRemittancesBody">
+                      <tr><td colspan="3"><div class="finance-chart-skeleton"></div></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+            </div>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <div id="financeSettleModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="financeSettleTitle">
+      <div class="modal-card finance-confirm-modal">
+        <h3 id="financeSettleTitle">Confirm Settlement</h3>
+        <p id="financeSettleMessage" class="muted">Mark this company share as settled?</p>
+        <div class="finance-confirm-actions">
+          <button id="financeSettleCancel" type="button" class="btn btn-secondary">Cancel</button>
+          <button id="financeSettleConfirm" type="button" class="btn btn-primary">Confirm Settlement</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cashflowEntryModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cashflowEntryTitle">
+      <div class="modal-card finance-cashflow-modal">
+        <div class="finance-cashflow-modal-head">
+          <h3 id="cashflowEntryTitle">New Cashflow Entry</h3>
+          <button id="cashflowModalClose" type="button" class="btn btn-secondary">Close</button>
+        </div>
+        <form id="cashflowEntryForm" class="finance-cashflow-entry-form">
+          <div class="finance-cashflow-type-wrap">
+            <label>Type</label>
+            <div class="segmented-control finance-cashflow-type-control" role="group" aria-label="Cashflow entry type">
+              <button type="button" class="segmented-btn is-active" data-cashflow-type="IN">IN</button>
+              <button type="button" class="segmented-btn" data-cashflow-type="OUT">OUT</button>
+            </div>
+            <input id="cashflowType" type="hidden" value="IN" />
+          </div>
+          <div>
+            <label for="cashflowAmount">Amount (ƒ)</label>
+            <input id="cashflowAmount" type="number" min="1" step="1" required />
+          </div>
+          <div>
+            <label for="cashflowCategory">Category</label>
+            <select id="cashflowCategory" required>
+              <option value="">Select category</option>
+              <option value="Operational Revenue">Operational Revenue</option>
+              <option value="Reimbursements">Reimbursements</option>
+              <option value="Salary">Salary</option>
+              <option value="Charity">Charity</option>
+              <option value="Other Income">Other Income</option>
+              <option value="Other Expense">Other Expense</option>
+            </select>
+          </div>
+          <div>
+            <label for="cashflowRelatedVoyage">Related Voyage</label>
+            <input id="cashflowRelatedVoyage" type="text" list="cashflowVoyageOptions" placeholder="Optional" />
+            <datalist id="cashflowVoyageOptions"></datalist>
+          </div>
+          <div class="finance-cashflow-entry-wide">
+            <label for="cashflowReason">Reason</label>
+            <textarea id="cashflowReason" rows="3" minlength="5" required></textarea>
+          </div>
+          <div class="finance-cashflow-entry-actions">
+            <button id="cashflowCancel" type="button" class="btn btn-secondary">Cancel</button>
+            <button id="cashflowSubmit" type="submit" class="btn btn-primary">Submit Entry</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="/assets/js/pages/finances-page.js?v=20260313o"></script>
+  </body>
+</html>

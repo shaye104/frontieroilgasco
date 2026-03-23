@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Manage branding and Open Graph settings for shared links." />
+    <title>Frontier Oil & Gas Company | Site Settings</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260314c" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/tokens.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/base.css?v=20260314e" />
+    <link rel="stylesheet" href="/assets/css/components.css?v=20260314d" />
+    <link rel="stylesheet" href="/assets/css/pages.css?v=20260314d" />
+  </head>
+  <body class="page page-intranet">
+    <header class="site-header">
+      <div class="container header-row">
+        <a class="brand" href="/">
+          <span class="brand-mark brand-mark-image" aria-hidden="true"><img src="/assets/brand/frontierlogo.svg?v=20260314c" alt="" loading="eager" decoding="async" /></span>
+          <span class="brand-text">Frontier Oil &amp; Gas Company</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary"></nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container intranet-layout">
+        <section class="panel">
+          <div class="button-row align-between">
+            <div>
+              <h1>Site Settings</h1>
+              <p class="my-details-subtitle">Configure favicon, Open Graph preview, and branding meta tags.</p>
+            </div>
+            <a class="btn btn-secondary" href="/admin">Back to Admin Panel</a>
+          </div>
+          <div id="siteSettingsFeedback" class="feedback" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="siteSettingsContent" class="panel hidden">
+          <form id="siteSettingsForm" class="finance-cashflow-entry-form">
+            <div>
+              <label for="settingsBrandName">Brand Name</label>
+              <input id="settingsBrandName" name="brandName" type="text" maxlength="120" required />
+            </div>
+            <div>
+              <label for="settingsSiteTagline">Tagline</label>
+              <input id="settingsSiteTagline" name="siteTagline" type="text" maxlength="160" />
+            </div>
+            <div>
+              <label for="settingsThemeColor">Theme Color</label>
+              <input id="settingsThemeColor" name="themeColor" type="text" placeholder="#112d72" maxlength="7" />
+            </div>
+            <div>
+              <label for="settingsHeaderLogoUrl">Header Logo URL (optional)</label>
+              <input id="settingsHeaderLogoUrl" name="headerLogoUrl" type="text" placeholder="/assets/brand/logo.svg" />
+            </div>
+            <div>
+              <label for="settingsTwitterCard">Twitter Card</label>
+              <select id="settingsTwitterCard" name="twitterCard">
+                <option value="summary_large_image">summary_large_image</option>
+                <option value="summary">summary</option>
+              </select>
+            </div>
+            <div>
+              <label for="settingsFaviconUrl">Favicon URL</label>
+              <input id="settingsFaviconUrl" name="faviconUrl" type="text" placeholder="/assets/brand/favicon.svg?v=20260314c" required />
+            </div>
+            <div>
+              <label for="settingsAppleTouchIconUrl">Apple Touch Icon URL</label>
+              <input id="settingsAppleTouchIconUrl" name="appleTouchIconUrl" type="text" placeholder="/assets/brand/favicon.svg?v=20260314c" required />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsOgTitle">Open Graph Title</label>
+              <input id="settingsOgTitle" name="ogTitle" type="text" maxlength="120" required />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsOgDescription">Open Graph Description</label>
+              <textarea id="settingsOgDescription" name="ogDescription" rows="3" maxlength="300" required></textarea>
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsOgImageUrl">Open Graph Image URL</label>
+              <input id="settingsOgImageUrl" name="ogImageUrl" type="text" placeholder="/assets/brand/og-default.svg" required />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsNotificationSoundStandardUrl">Notification Sound (Standard) URL</label>
+              <input id="settingsNotificationSoundStandardUrl" name="notificationSoundStandardUrl" type="text" placeholder="https://..." />
+              <input id="settingsNotificationSoundStandardUpload" type="file" accept="audio/*" />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsNotificationSoundUrgentUrl">Notification Sound (Urgent) URL</label>
+              <input id="settingsNotificationSoundUrgentUrl" name="notificationSoundUrgentUrl" type="text" placeholder="https://..." />
+              <input id="settingsNotificationSoundUrgentUpload" type="file" accept="audio/*" />
+            </div>
+            <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+              <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
+              <button id="siteSettingsResetBtn" class="btn btn-secondary" type="button">Reset Form</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="siteSettingsPreview" class="panel hidden">
+          <h2>Preview</h2>
+          <div class="table-wrap">
+            <table class="data-table">
+              <tbody>
+                <tr><th>Title</th><td id="previewTitle">-</td></tr>
+                <tr><th>Description</th><td id="previewDescription">-</td></tr>
+                <tr><th>Image</th><td id="previewImage">-</td></tr>
+                <tr><th>Header Logo</th><td id="previewHeaderLogo">-</td></tr>
+                <tr><th>Favicon</th><td id="previewFavicon">-</td></tr>
+                <tr><th>Theme Color</th><td id="previewTheme">-</td></tr>
+                <tr><th>Sound (Standard)</th><td id="previewSoundStandard">-</td></tr>
+                <tr><th>Sound (Urgent)</th><td id="previewSoundUrgent">-</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="finance-inline-caption">Changes apply to all HTML pages immediately after save.</p>
+        </section>
+
+        <section id="gradePresetsPanel" class="panel hidden">
+          <div class="modal-header">
+            <h2>Grade Presets</h2>
+          </div>
+          <p class="finance-inline-caption">Manage the selectable grade values used in employee forms.</p>
+          <div id="gradePresetsFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <form id="gradePresetForm" class="filter-row">
+            <div class="full-width-field">
+              <label for="gradePresetValue">Grade</label>
+              <input id="gradePresetValue" name="value" type="text" maxlength="120" placeholder="e.g. Grade 1" required />
+            </div>
+            <div class="modal-actions">
+              <button id="gradePresetAddBtn" class="btn btn-primary" type="submit">Add Grade</button>
+            </div>
+          </form>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Grade</th>
+                  <th>Created</th>
+                  <th class="align-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="gradePresetsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="disciplinaryConfigPanel" class="panel hidden">
+          <div class="modal-header">
+            <h2>Disciplinary Config</h2>
+          </div>
+          <p class="finance-inline-caption">Configure disciplinary types and suspended-rank automation.</p>
+          <div id="disciplinaryConfigFeedback" class="feedback" role="status" aria-live="polite"></div>
+          <form id="suspendedRankForm" class="filter-row">
+            <div class="full-width-field">
+              <label for="suspendedRankValue">Suspended Rank</label>
+              <select id="suspendedRankValue" name="suspendedRankValue"></select>
+            </div>
+            <div class="modal-actions">
+              <button id="saveSuspendedRankBtn" class="btn btn-primary" type="submit">Save Suspended Rank</button>
+            </div>
+          </form>
+
+          <form id="disciplinaryTypeForm" class="finance-cashflow-entry-form">
+            <div>
+              <label for="disciplinaryTypeKey">Key</label>
+              <input id="disciplinaryTypeKey" name="key" type="text" placeholder="SUSPENSION" required />
+            </div>
+            <div>
+              <label for="disciplinaryTypeLabel">Label</label>
+              <input id="disciplinaryTypeLabel" name="label" type="text" placeholder="Suspension" required />
+            </div>
+            <div>
+              <label for="disciplinaryTypeSeverity">Severity</label>
+              <input id="disciplinaryTypeSeverity" name="severity" type="number" min="1" value="1" />
+            </div>
+            <div>
+              <label for="disciplinaryTypeDefaultStatus">Default Status</label>
+              <select id="disciplinaryTypeDefaultStatus" name="default_status">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="OPEN">OPEN</option>
+              </select>
+            </div>
+            <div>
+              <label for="disciplinaryTypeDefaultDuration">Default Duration (days)</label>
+              <input id="disciplinaryTypeDefaultDuration" name="default_duration_days" type="number" min="0" placeholder="Optional" />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label><input id="disciplinaryTypeActive" name="is_active" type="checkbox" checked /> Active</label>
+              <label><input id="disciplinaryTypeRequiresEndDate" name="requires_end_date" type="checkbox" /> Requires end date</label>
+              <label><input id="disciplinaryTypeApplySuspension" name="apply_suspension_rank" type="checkbox" /> Apply suspension rank</label>
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="disciplinaryTypeSetEmployeeStatus">Set employee status (optional)</label>
+              <input id="disciplinaryTypeSetEmployeeStatus" name="set_employee_status" type="text" placeholder="Suspended" />
+            </div>
+            <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+              <button id="disciplinaryTypeAddBtn" class="btn btn-primary" type="submit">Add Type</button>
+            </div>
+          </form>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Behavior</th>
+                  <th>Status</th>
+                  <th class="align-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="disciplinaryTypesTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+    <script type="module" src="/assets/js/pages/site-settings-page.js?v=20260303a"></script>
+  </body>
+</html>
