@@ -201,12 +201,34 @@ export function sumSettlementLineRevenue(settlementLines) {
   return toMoney(lines.reduce((sum, line) => sum + toMoney(line?.lineRevenue || 0), 0));
 }
 
+function parseFinanceTimestamp(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return Number.NaN;
+  const d1Match = raw.match(/^(\\d{4}-\\d{2}-\\d{2})[ T](\\d{2}:\\d{2}:\\d{2})(?:\\.(\\d{1,3}))?$/);
+  const parsed = d1Match
+    ? new Date(`${d1Match[1]}T${d1Match[2]}.${String(d1Match[3] || '0').padEnd(3, '0')}Z`)
+    : new Date(raw);
+  return parsed.getTime();
+}
+
+function shouldUpscaleShareSizedEarnings(row, earnings, storedShare) {
+  if (!(earnings > 0) || !(storedShare > 0)) return false;
+  const eventAt = parseFinanceTimestamp(row?.ended_at || row?.updated_at || row?.created_at);
+  if (!Number.isFinite(eventAt)) return false;
+  const cutoff = Date.parse('2026-03-14T00:00:00Z');
+  if (!Number.isFinite(cutoff) || eventAt < cutoff) return false;
+  const tolerance = Math.max(2, Math.round(storedShare * 0.02));
+  return Math.abs(earnings - storedShare) <= tolerance;
+}
+
 export function resolveVoyageEarnings(row, settlementLines = []) {
   const settlementRevenue = Math.max(0, sumSettlementLineRevenue(settlementLines));
   const storedProfit = Math.max(0, toMoney(row?.profit || 0));
   const storedEffectiveSell = Math.max(0, toMoney(row?.effective_sell || 0));
   const legacyRevenue = Math.max(0, toMoney(row?.legacy_revenue_florins || 0));
-  return Math.max(settlementRevenue, storedProfit, storedEffectiveSell, legacyRevenue);
+  const resolvedEarnings = Math.max(settlementRevenue, storedProfit, storedEffectiveSell, legacyRevenue);
+  const storedShare = Math.max(0, toMoney(row?.company_share_amount || row?.company_share || 0));
+  return shouldUpscaleShareSizedEarnings(row, resolvedEarnings, storedShare) ? toMoney(resolvedEarnings * 10) : resolvedEarnings;
 }
 
 export function resolveVoyageCompanyShare(row, settlementLines = [], companyShareRate = 0.1, earnings = null) {
@@ -242,4 +264,5 @@ export async function requireFinancePermission(context, permissionKey) {
 
   return { errorResponse: null, session };
 }
+
 
