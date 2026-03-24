@@ -1001,34 +1001,10 @@ export async function onRequestGet(context) {
     return { key: bucket.key, label: bucket.label, value: runningOutstanding };
   });
 
-  const directRangeTotals = await env.DB
-    .prepare(
-      `SELECT
-         COUNT(*) AS voyage_count,
-         ROUND(COALESCE(SUM(COALESCE(v.profit, 0)), 0)) AS profit_total,
-         ROUND(COALESCE(SUM(COALESCE(v.effective_sell, v.profit, 0)), 0)) AS gross_revenue_total,
-         ROUND(COALESCE(SUM(COALESCE(v.company_share_amount, v.company_share, COALESCE(v.profit, 0) * ${COMPANY_SHARE_RATE})), 0)) AS company_share_total
-       FROM voyages v
-       WHERE COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-         AND ${VOYAGE_EVENT_AT_SQL} IS NOT NULL
-         AND datetime(${VOYAGE_EVENT_AT_SQL}) >= datetime(?)
-         AND datetime(${VOYAGE_EVENT_AT_SQL}) <= datetime(?)`
-    )
-    .bind(startIso, endIso)
-    .first();
-
-  const directVoyageCount = Math.max(0, Number(directRangeTotals?.voyage_count || 0));
-  const directNetProfit = toMoney(directRangeTotals?.profit_total || 0);
-  const directGrossRevenue = toMoney(directRangeTotals?.gross_revenue_total || 0);
-  const directCompanyShare = Math.max(0, toMoney(directRangeTotals?.company_share_total || 0));
-
-  if (directVoyageCount > 0 || directNetProfit !== 0 || directGrossRevenue !== 0 || directCompanyShare !== 0) {
-    netProfitTotal = directNetProfit;
-    grossRevenueTotal = directGrossRevenue || Math.max(0, toMoney(directCompanyShare + crewShareTotal));
-    companyShareTotal = directCompanyShare;
-    crewShareTotal = Math.max(0, toMoney(grossRevenueTotal - directCompanyShare));
-    if (completedVoyagesCount === 0) completedVoyagesCount = directVoyageCount;
-  }
+  const directVoyageCount = Math.max(0, Number(allEndedInRange.length || 0));
+  const directNetProfit = toMoney(netProfitTotal);
+  const directGrossRevenue = toMoney(grossRevenueTotal);
+  const directCompanyShare = Math.max(0, toMoney(companyShareTotal));
 
   return cachedJson(
     request,
