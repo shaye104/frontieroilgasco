@@ -367,7 +367,7 @@ function parseLegacyCatchTotal(catchSummary) {
   return total;
 }
 
-export async function onRequestGet(context) {
+async function buildOverviewResponse(context) {
   const { env, request } = context;
   const { errorResponse } = await requireFinancePermission(context, 'finances.view');
   if (errorResponse) return errorResponse;
@@ -1074,5 +1074,36 @@ export async function onRequestGet(context) {
     },
     { cacheControl: 'private, max-age=20, stale-while-revalidate=40' }
   );
+}
+export async function onRequestGet(context) {
+  try {
+    return await buildOverviewResponse(context);
+  } catch (error) {
+    console.error('finances overview route failed; using debug fallback', error);
+
+    try {
+      const { onRequestGet: onDebugRequestGet } = await import('./debug.js');
+      const debugResponse = await onDebugRequestGet(context);
+      const debugPayload = await debugResponse.clone().json().catch(() => null);
+      const fallbackOverview = debugPayload?.fallbackOverview;
+      if (fallbackOverview) {
+        return cachedJson(
+          context.request,
+          {
+            ...fallbackOverview,
+            debugOverview: {
+              source: 'overview_error_fallback',
+              error: String(error?.message || error || 'Unknown error')
+            }
+          },
+          { cacheControl: 'private, max-age=5, stale-while-revalidate=10' }
+        );
+      }
+    } catch (fallbackError) {
+      console.error('finances overview debug fallback failed', fallbackError);
+    }
+
+    throw error;
+  }
 }
 
