@@ -337,6 +337,21 @@ export function setConfigSetting(key, value) {
   });
 }
 
+export function getSiteSettings() {
+  return requestJson('/api/admin/site-settings', {
+    method: 'GET',
+    cacheTtlMs: 10000,
+    cacheKey: 'GET:/api/admin/site-settings'
+  });
+}
+
+export function saveSiteSettings(payload) {
+  return requestJson('/api/admin/site-settings', {
+    method: 'PUT',
+    body: JSON.stringify(payload || {})
+  });
+}
+
 export function listEmployees(options = {}) {
   const params = new URLSearchParams();
   if (options.page) params.set('page', String(options.page));
