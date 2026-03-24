@@ -99,7 +99,7 @@ async function listLegacyArchiveVoyages(env) {
         buy_total: null,
         effective_sell: Number(row.revenue_florins || 0),
         profit: Number(row.profit_florins || 0),
-        company_share: Math.round(Number(row.profit_florins || 0) * 0.2),
+        company_share: Math.round(Number(row.profit_florins || 0) * 0.1),
         officer_name: text(row.skipper_username) || 'Legacy',
         owner_name: text(row.skipper_username) || 'Legacy',
         isLegacy: true,
@@ -524,3 +524,4 @@ export async function onRequestPost(context) {
   const created = await env.DB.prepare('SELECT id FROM voyages WHERE id = ?').bind(voyageId).first();
   return json({ voyageId: created?.id || voyageId }, 201);
 }
+

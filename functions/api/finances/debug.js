@@ -224,7 +224,9 @@ export async function onRequestGet(context) {
       toMoney(
         lines.reduce((sum, line) => {
           const lostQty = Math.max(0, Number(line.lostQuantity || 0));
-          const unit = Math.max(0, Number(line.trueSellUnitPrice || 0));
+          const lostValue = Math.max(0, Number(line.lostValue || 0));
+          if (lostValue > 0) return sum + toMoney(lostValue);
+          const unit = Math.max(0, Number(line.trueSellUnitPrice || line.baseSellPrice || 0));
           return sum + toMoney(lostQty * unit);
         }, 0)
       )
@@ -245,8 +247,12 @@ export async function onRequestGet(context) {
         if (ownerRevenue > 0) addProfit(employeeEarnings, owner, ownerRevenue);
 
         const lostQty = Math.max(0, Number(line.lostQuantity || 0));
-        const unit = Math.max(0, Number(line.trueSellUnitPrice || 0));
-        freightLossValue = toMoney(freightLossValue + toMoney(lostQty * unit));
+        const lostValue = Math.max(0, Number(line.lostValue || 0));
+        if (lostValue > 0) freightLossValue = toMoney(freightLossValue + toMoney(lostValue));
+        else {
+          const unit = Math.max(0, Number(line.trueSellUnitPrice || line.baseSellPrice || 0));
+          freightLossValue = toMoney(freightLossValue + toMoney(lostQty * unit));
+        }
 
         const soldQty = Math.max(0, Number(line.netQuantity || Math.max(0, Number(line.quantity || 0) - lostQty)));
         if (isCrudeOilCargo(line.cargoName)) crudeSold += soldQty;
@@ -382,3 +388,4 @@ export async function onRequestGet(context) {
     recentVoyages: recentRowsResult?.results || []
   });
 }
+

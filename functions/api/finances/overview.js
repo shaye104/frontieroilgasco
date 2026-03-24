@@ -266,8 +266,10 @@ function grossRevenueForVoyage(row, settlementLines = [], netProfit = null, frei
         0,
         toMoney(
           (Array.isArray(settlementLines) ? settlementLines : []).reduce((sum, line) => {
+            const lostValue = toMoney(line?.lostValue || 0);
+            if (lostValue > 0) return sum + lostValue;
             const lostQty = Math.max(0, Number(line?.lostQuantity || 0));
-            const unit = toMoney(line?.trueSellUnitPrice ?? line?.lostValue ?? 0);
+            const unit = toMoney(line?.trueSellUnitPrice || line?.baseSellPrice || 0);
             return sum + toMoney(lostQty * unit);
           }, 0)
         )
@@ -618,7 +620,9 @@ export async function onRequestGet(context) {
       0,
       toMoney(
         settlementLines.reduce((sum, line) => {
-          const unit = toMoney(line.trueSellUnitPrice || 0);
+          const lostValue = toMoney(line.lostValue || 0);
+          if (lostValue > 0) return sum + lostValue;
+          const unit = toMoney(line.trueSellUnitPrice || line.baseSellPrice || 0);
           const lostQty = Math.max(0, Number(line.lostQuantity || 0));
           return sum + toMoney(unit * lostQty);
         }, 0)
@@ -1071,3 +1075,4 @@ export async function onRequestGet(context) {
     { cacheControl: 'private, max-age=20, stale-while-revalidate=40' }
   );
 }
+

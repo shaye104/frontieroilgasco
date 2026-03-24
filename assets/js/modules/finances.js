@@ -532,7 +532,7 @@ function renderDebtGroups(root, groups, canSettle, onSettle) {
                 <th>Vessel</th>
                 <th>Route</th>
                 <th>Ended</th>
-                <th class="align-right">Company Share (20%)</th>
+                <th class="align-right">Company Share (10%)</th>
                 <th>Status</th>
                 ${canSettle ? '<th>Action</th>' : ''}
               </tr>
@@ -851,3 +851,4 @@ export async function initFinancesConsole(config) {
   setTab('overview');
   await loadOverview();
 }
+
