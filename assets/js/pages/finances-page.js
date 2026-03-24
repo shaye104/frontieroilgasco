@@ -2028,7 +2028,7 @@ async function loadOverview(state) {
       `/api/finances/overview?range=${encodeURIComponent(state.range)}&unsettledScope=all&tzOffsetMinutes=${encodeURIComponent(
         String(CLIENT_TZ_OFFSET_MINUTES)
       )}&${cacheBust}`
-    );
+    ).catch((error) => ({ __error: error }));
     const previousPromise =
       state.range === 'all'
         ? Promise.resolve({ kpis: {} })
@@ -2036,15 +2036,17 @@ async function loadOverview(state) {
             `/api/finances/overview?range=${encodeURIComponent(state.range)}&unsettledScope=all&offset=1&tzOffsetMinutes=${encodeURIComponent(
               String(CLIENT_TZ_OFFSET_MINUTES)
             )}&${cacheBust}`
-          );
+          ).catch((error) => ({ __error: error }));
 
     const debugPromise = fetchJson(
       `/api/finances/debug?range=${encodeURIComponent(state.range)}&tzOffsetMinutes=${encodeURIComponent(String(CLIENT_TZ_OFFSET_MINUTES))}`
     ).catch((error) => ({ error: error?.message || 'Failed to load debug endpoint.' }));
 
     const [current, previous, debugPayload] = await Promise.all([currentPromise, previousPromise, debugPromise]);
-    let effectiveCurrent = current || {};
-    let effectivePrevious = previous || {};
+    const currentError = current?.__error || null;
+    const previousError = previous?.__error || null;
+    let effectiveCurrent = currentError ? { kpis: {} } : current || {};
+    let effectivePrevious = previousError ? { kpis: {} } : previous || {};
 
     const kpis = effectiveCurrent?.kpis || {};
     const hasSelectedRangeData =
@@ -2057,7 +2059,7 @@ async function loadOverview(state) {
     if (!hasSelectedRangeData && state.range !== 'all') {
       const allTime = await fetchJson(
         `/api/finances/overview?range=all&unsettledScope=all&tzOffsetMinutes=${encodeURIComponent(String(CLIENT_TZ_OFFSET_MINUTES))}&${cacheBust}`
-      );
+      ).catch(() => null);
       if (allTime && allTime.kpis) {
         effectiveCurrent = allTime;
         effectivePrevious = { kpis: {} };
@@ -2169,8 +2171,12 @@ async function loadOverview(state) {
       state.auditPage = 1;
       await loadAudit(state);
     }
+    if (currentError) {
+      console.warn('finances overview primary endpoint failed; rendered using fallback data', currentError);
+    }
   } catch (error) {
-    console.error('finances overview fetch error', error);
+    const primaryError = error?.__error || error;
+    console.error('finances overview fetch error', primaryError);
     setFeedback(`Failed to load finance data: ${error.message || 'Unknown error'}`, 'error', async () => loadOverview(state));
   } finally {
     state.overviewLoading = false;
@@ -2720,3 +2726,5 @@ init().catch((error) => {
   console.error('finances init error', error);
   setFeedback(`Failed to load finance module: ${error.message || 'Unknown error'}`, 'error');
 });
+
+
