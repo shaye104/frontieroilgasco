@@ -13,8 +13,6 @@
 /voyages/ /voyage-tracker 200
 /voyages/archive /voyage-archive 200
 /voyages/archive/ /voyage-archive 200
-/voyages/:id /voyage-details?voyageId=:id 200
-/voyages/:id/ /voyage-details?voyageId=:id 200
 
 /finances/debts /finances?tab=debts 302
 /finances/debts/ /finances?tab=debts 302
@@ -41,3 +39,6 @@
 /admin/voyages/ /voyage-settings 200
 /admin/employees /manage-employees 200
 /admin/employees/ /manage-employees 200
+
+/voyages/:id /voyage-details?voyageId=:id 200
+/voyages/:id/ /voyage-details?voyageId=:id 200
