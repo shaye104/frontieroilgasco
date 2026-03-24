@@ -1,5 +1,5 @@
 import { cachedJson } from '../auth/_lib/auth.js';
-import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, toMoney } from '../_lib/finances.js';
+import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, resolveVoyageCompanyShare, resolveVoyageEarnings, toMoney } from '../_lib/finances.js';
 import { hasPermission } from '../_lib/permissions.js';
 
 const COMPANY_SHARE_RATE = 0.1;
@@ -21,24 +21,12 @@ function normalizeBool(value, fallback = true) {
 
 function mapDebtRow(row) {
   const settlementLines = parseSettlementLines(row.settlement_lines_json);
-  const settlementNetProfit = toMoney(settlementLines.reduce((sum, line) => sum + Number(line.lineRevenue || 0), 0));
-  const storedEffectiveSell = Number(row.effective_sell);
   const storedPayableAmount = Number(row.total_payable_amount);
-  const voyageProfit = toMoney(row.profit || 0);
-  const storedShare = Number(row.company_share_amount);
-  const legacyShare = Number(row.company_share);
-  const derivedCompanyShare =
-    settlementNetProfit > 0
-      ? Math.max(0, toMoney(settlementNetProfit * COMPANY_SHARE_RATE))
-      : Number.isFinite(storedShare) && storedShare > 0
-      ? Math.max(0, toMoney(storedShare))
-      : Number.isFinite(storedPayableAmount) && storedPayableAmount > 0
-      ? Math.max(0, toMoney(storedPayableAmount))
-      : Number.isFinite(legacyShare) && legacyShare > 0
-      ? Math.max(0, toMoney(legacyShare))
-      : Number.isFinite(storedEffectiveSell) && storedEffectiveSell > 0
-      ? Math.max(0, toMoney(storedEffectiveSell * COMPANY_SHARE_RATE))
-      : Math.max(0, toMoney(voyageProfit * COMPANY_SHARE_RATE));
+  const resolvedEarnings = resolveVoyageEarnings(row, settlementLines);
+  const derivedCompanyShare = Math.max(
+    resolveVoyageCompanyShare(row, settlementLines, COMPANY_SHARE_RATE, resolvedEarnings),
+    Number.isFinite(storedPayableAmount) && storedPayableAmount > 0 ? Math.max(0, toMoney(storedPayableAmount)) : 0
+  );
   const serialRaw = String(row.officer_serial || '').trim();
   const officerSerial = serialRaw.toUpperCase() === 'N/A' ? '' : serialRaw;
   return {
@@ -343,3 +331,4 @@ export async function onRequestGet(context) {
     { cacheControl: 'private, no-store' }
   );
 }
+

@@ -1,5 +1,5 @@
 import { json } from '../auth/_lib/auth.js';
-import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, toMoney } from '../_lib/finances.js';
+import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, resolveVoyageCompanyShare, resolveVoyageEarnings, toMoney } from '../_lib/finances.js';
 
 const COMPANY_SHARE_RATE = 0.1;
 const VOYAGE_EVENT_AT_SQL = `COALESCE(NULLIF(TRIM(v.ended_at), ''), NULLIF(TRIM(v.updated_at), ''), NULLIF(TRIM(v.created_at), ''))`;
@@ -207,8 +207,8 @@ export async function onRequestGet(context) {
 
   rangeVoyages.forEach((voyage) => {
     const lines = parseSettlementLines(voyage.settlement_lines_json);
-    const netProfit = Math.max(0, toMoney(lines.reduce((sum, line) => sum + Number(line.lineRevenue || 0), 0) || voyage.profit || voyage.effective_sell || 0));
-    const companyShare = Math.max(0, toMoney((netProfit > 0 ? netProfit : Number(voyage.company_share_amount ?? voyage.company_share ?? 0)) * (netProfit > 0 ? COMPANY_SHARE_RATE : 1)));
+    const netProfit = resolveVoyageEarnings(voyage, lines);
+    const companyShare = resolveVoyageCompanyShare(voyage, lines, COMPANY_SHARE_RATE, netProfit);
     const routeLabel = normalizeSellLocationLabel(voyage.sell_location_name || voyage.destination_port || voyage.departure_port);
     const voyageLabel = `Voyage #${Number(voyage.id || 0)}`;
     const officerLabel = String(voyage.officer_name || '').trim() || 'Unknown';
@@ -231,7 +231,7 @@ export async function onRequestGet(context) {
         }, 0)
       )
     );
-    const grossRevenue = toMoney(netProfit + voyageFreightLoss);
+    const grossRevenue = netProfit;
     const pointKey = String(voyage.ended_at || `voyage-${Number(voyage.id || 0)}`);
     netProfitTrend.push({ key: pointKey, label: pointKey, value: netProfit });
     companyShareTrend.push({ key: pointKey, label: pointKey, value: companyShare });
@@ -269,8 +269,9 @@ export async function onRequestGet(context) {
     0,
     toMoney(
       unsettledRows.reduce((sum, row) => {
-        const fallbackShare = toMoney(Number(row.profit || 0) * COMPANY_SHARE_RATE);
-        const amount = Number(row.company_share_amount ?? row.company_share ?? fallbackShare ?? 0);
+        const settlementLines = parseSettlementLines(row.settlement_lines_json);
+        const fallbackShare = resolveVoyageEarnings(row, settlementLines);
+        const amount = resolveVoyageCompanyShare(row, settlementLines, COMPANY_SHARE_RATE, fallbackShare);
         return sum + amount;
       }, 0)
     )
@@ -294,8 +295,9 @@ export async function onRequestGet(context) {
       });
     }
     const entry = debtByOfficer.get(key);
-    const fallbackShare = toMoney(Number(row.profit || 0) * COMPANY_SHARE_RATE);
-    const amount = Number(row.company_share_amount ?? row.company_share ?? fallbackShare ?? 0);
+    const settlementLines = parseSettlementLines(row.settlement_lines_json);
+    const fallbackShare = resolveVoyageEarnings(row, settlementLines);
+    const amount = resolveVoyageCompanyShare(row, settlementLines, COMPANY_SHARE_RATE, fallbackShare);
     entry.outstanding = toMoney(entry.outstanding + amount);
     entry.voyageCount += 1;
   });
@@ -388,4 +390,7 @@ export async function onRequestGet(context) {
     recentVoyages: recentRowsResult?.results || []
   });
 }
+
+
+
 

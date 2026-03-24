@@ -1,5 +1,5 @@
 import { json } from '../auth/_lib/auth.js';
-import { parseSettlementLines, toMoney } from '../_lib/finances.js';
+import { parseSettlementLines, resolveVoyageEarnings, toMoney } from '../_lib/finances.js';
 import { hasPermission } from '../_lib/permissions.js';
 import { requireVoyagePermission } from '../_lib/voyages.js';
 
@@ -159,9 +159,7 @@ export async function onRequestGet(context) {
     bucket.totalVoyages += 1;
 
     const lines = parseSettlementLines(row.settlement_lines_json);
-    const settlementRevenue = Math.max(0, toMoney(lines.reduce((sum, line) => sum + Number(line.lineRevenue || 0), 0)));
-    const fallbackRevenue = Math.max(0, toMoney(Number(row.profit || 0)));
-    const voyageEarnings = settlementRevenue > 0 ? settlementRevenue : fallbackRevenue;
+    const voyageEarnings = resolveVoyageEarnings(row, lines);
     bucket.totalEarnings = toMoney(bucket.totalEarnings + voyageEarnings);
   });
   const byShip = new Map();
@@ -302,3 +300,4 @@ export async function onRequestGet(context) {
     }
   });
 }
+

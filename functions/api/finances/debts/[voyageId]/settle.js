@@ -1,25 +1,18 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { getCurrentCashBalance, toOptionalInteger } from '../../../_lib/cashflow.js';
-import { parseSettlementLines, requireFinancePermission, toMoney } from '../../../_lib/finances.js';
+import { parseSettlementLines, requireFinancePermission, resolveVoyageCompanyShare, resolveVoyageEarnings, toMoney } from '../../../_lib/finances.js';
 import { BOOKKEEPER_PERMISSION } from '../../../_lib/permissions.js';
 
 const COMPANY_SHARE_RATE = 0.1;
 
 function deriveSettlementAmount(row) {
   const settlementLines = parseSettlementLines(row?.settlement_lines_json);
-  const settlementCutAmount = toMoney(settlementLines.reduce((sum, line) => sum + Number(line.lineRevenue || 0), 0));
-  if (settlementCutAmount > 0) return Math.max(0, toMoney(settlementCutAmount * COMPANY_SHARE_RATE));
-
-  const effectiveSell = Number(row?.effective_sell);
-  if (Number.isFinite(effectiveSell) && effectiveSell > 0) return Math.max(0, toMoney(effectiveSell * COMPANY_SHARE_RATE));
-
+  const resolvedEarnings = resolveVoyageEarnings(row, settlementLines);
   const totalPayable = Number(row?.total_payable_amount);
-  if (Number.isFinite(totalPayable) && totalPayable > 0) return Math.max(0, toMoney(totalPayable));
-
-  const storedAmount = Number(row?.company_share_amount);
-  if (Number.isFinite(storedAmount) && storedAmount > 0) return Math.max(0, toMoney(storedAmount));
-
-  return Math.max(0, toMoney(toMoney(row?.profit || 0) * COMPANY_SHARE_RATE));
+  return Math.max(
+    resolveVoyageCompanyShare(row, settlementLines, COMPANY_SHARE_RATE, resolvedEarnings),
+    Number.isFinite(totalPayable) && totalPayable > 0 ? Math.max(0, toMoney(totalPayable)) : 0
+  );
 }
 
 function toInt(value) {
@@ -215,3 +208,4 @@ export async function onRequestPost(context) {
     remittancePending: amount > 0 && !settledWithBookkeeper
   });
 }
+

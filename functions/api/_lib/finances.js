@@ -196,6 +196,28 @@ export function parseSettlementLines(settlementLinesJson) {
   }
 }
 
+export function sumSettlementLineRevenue(settlementLines) {
+  const lines = Array.isArray(settlementLines) ? settlementLines : [];
+  return toMoney(lines.reduce((sum, line) => sum + toMoney(line?.lineRevenue || 0), 0));
+}
+
+export function resolveVoyageEarnings(row, settlementLines = []) {
+  const settlementRevenue = Math.max(0, sumSettlementLineRevenue(settlementLines));
+  const storedProfit = Math.max(0, toMoney(row?.profit || 0));
+  const storedEffectiveSell = Math.max(0, toMoney(row?.effective_sell || 0));
+  const legacyRevenue = Math.max(0, toMoney(row?.legacy_revenue_florins || 0));
+  return Math.max(settlementRevenue, storedProfit, storedEffectiveSell, legacyRevenue);
+}
+
+export function resolveVoyageCompanyShare(row, settlementLines = [], companyShareRate = 0.1, earnings = null) {
+  const resolvedEarnings =
+    Number.isFinite(Number(earnings)) && Number(earnings) > 0 ? Math.max(0, toMoney(earnings)) : resolveVoyageEarnings(row, settlementLines);
+  const derivedShare = Math.max(0, toMoney(resolvedEarnings * Number(companyShareRate || 0)));
+  const storedShare = Math.max(0, toMoney(row?.company_share_amount || 0));
+  const legacyShare = Math.max(0, toMoney(row?.company_share || 0));
+  return Math.max(derivedShare, storedShare, legacyShare);
+}
+
 export async function requireFinancePermission(context, permissionKey) {
   const { env, request } = context;
   const rawSession = await readSessionFromRequest(env, request);
@@ -220,3 +242,4 @@ export async function requireFinancePermission(context, permissionKey) {
 
   return { errorResponse: null, session };
 }
+

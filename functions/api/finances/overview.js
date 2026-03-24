@@ -1,5 +1,5 @@
 import { cachedJson } from '../auth/_lib/auth.js';
-import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, toMoney } from '../_lib/finances.js';
+import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, resolveVoyageCompanyShare, resolveVoyageEarnings, toMoney } from '../_lib/finances.js';
 
 const COMPANY_SHARE_RATE = 0.1;
 const VOYAGE_EVENT_AT_SQL = `COALESCE(NULLIF(TRIM(v.ended_at), ''), NULLIF(TRIM(v.updated_at), ''), NULLIF(TRIM(v.created_at), ''))`;
@@ -224,69 +224,17 @@ function parseTimestamp(value) {
 }
 
 function netProfitForVoyage(row, settlementLines = []) {
-  const lines = Array.isArray(settlementLines) ? settlementLines : [];
-  const settlementNetProfit = toMoney(lines.reduce((sum, line) => sum + toMoney(line.lineRevenue || 0), 0));
-  if (settlementNetProfit > 0) return settlementNetProfit;
-
-  const storedProfit = Number(row?.profit);
-  if (Number.isFinite(storedProfit) && storedProfit > 0) {
-    return Math.max(0, toMoney(storedProfit));
-  }
-
-  const storedEffectiveSell = Number(row?.effective_sell);
-  if (Number.isFinite(storedEffectiveSell) && storedEffectiveSell > 0) {
-    return Math.max(0, toMoney(storedEffectiveSell));
-  }
-
-  const legacyRevenue = Number(row?.legacy_revenue_florins);
-  if (Number.isFinite(legacyRevenue) && legacyRevenue > 0) {
-    return Math.max(0, toMoney(legacyRevenue));
-  }
-
-  return 0;
+  return resolveVoyageEarnings(row, settlementLines);
 }
 
 function companyShareForVoyage(row, settlementLines = [], netProfit = null) {
-  const derivedNetProfit = Number.isFinite(Number(netProfit)) ? Number(netProfit) : netProfitForVoyage(row, settlementLines);
-  const derivedShare = Math.max(0, toMoney(derivedNetProfit * COMPANY_SHARE_RATE));
-  if (derivedShare > 0) return derivedShare;
-
-  const stored = Number(row?.company_share_amount);
-  if (Number.isFinite(stored) && stored > 0) return Math.max(0, toMoney(stored));
-  const legacy = Number(row?.company_share);
-  if (Number.isFinite(legacy) && legacy > 0) return Math.max(0, toMoney(legacy));
-  return 0;
+  return resolveVoyageCompanyShare(row, settlementLines, COMPANY_SHARE_RATE, netProfit);
 }
 
 function grossRevenueForVoyage(row, settlementLines = [], netProfit = null, freightLossValue = null) {
-  const derivedNetProfit = Number.isFinite(Number(netProfit)) ? Number(netProfit) : netProfitForVoyage(row, settlementLines);
-  const derivedLoss = Number.isFinite(Number(freightLossValue))
-    ? Math.max(0, toMoney(freightLossValue))
-    : Math.max(
-        0,
-        toMoney(
-          (Array.isArray(settlementLines) ? settlementLines : []).reduce((sum, line) => {
-            const lostValue = toMoney(line?.lostValue || 0);
-            if (lostValue > 0) return sum + lostValue;
-            const lostQty = Math.max(0, Number(line?.lostQuantity || 0));
-            const unit = toMoney(line?.trueSellUnitPrice || line?.baseSellPrice || 0);
-            return sum + toMoney(lostQty * unit);
-          }, 0)
-        )
-      );
-  if (derivedNetProfit > 0 || derivedLoss > 0) return toMoney(derivedNetProfit + derivedLoss);
-
-  const legacyRevenue = Number(row?.legacy_revenue_florins);
-  if (Number.isFinite(legacyRevenue) && legacyRevenue > 0) {
-    return Math.max(0, toMoney(legacyRevenue));
-  }
-
-  const storedEffectiveSell = Number(row?.effective_sell);
-  if (Number.isFinite(storedEffectiveSell) && storedEffectiveSell > 0) {
-    return Math.max(0, toMoney(storedEffectiveSell));
-  }
-
-  return Math.max(0, toMoney(derivedNetProfit));
+  return Number.isFinite(Number(netProfit)) && Number(netProfit) > 0
+    ? Math.max(0, toMoney(netProfit))
+    : resolveVoyageEarnings(row, settlementLines);
 }
 
 async function hasLegacyHistoryTable(env) {
@@ -1106,4 +1054,5 @@ export async function onRequestGet(context) {
     throw error;
   }
 }
+
 
