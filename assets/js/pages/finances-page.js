@@ -156,30 +156,125 @@ function formatDateLabel(value, fallbackLabel = '') {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function parseFinanceDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(`${raw}T00:00:00Z`);
+  if (/^\d{4}-\d{2}$/.test(raw)) return new Date(`${raw}-01T00:00:00Z`);
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(raw)) {
+    return new Date(raw.replace(' ', 'T') + 'Z');
+  }
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function toDayBucketKey(value) {
-  const parsed = new Date(String(value || '').trim());
-  if (Number.isNaN(parsed.getTime())) return '';
+  const parsed = parseFinanceDate(value);
+  if (!parsed || Number.isNaN(parsed.getTime())) return '';
   return parsed.toISOString().slice(0, 10);
 }
 
-function aggregateTrendByDay(series, mode = 'sum') {
+function startOfUtcWeek(date) {
+  const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
+  const day = next.getUTCDay();
+  const delta = day === 0 ? -6 : 1 - day;
+  next.setUTCDate(next.getUTCDate() + delta);
+  return next;
+}
+
+function addUtcDays(date, days) {
+  const next = new Date(date.getTime());
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function bucketForRange(date, range, anchorStart) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+
+  if (range === 'week' || range === 'month') {
+    const key = date.toISOString().slice(0, 10);
+    return { key, label: key };
+  }
+
+  if (range === '3m' || range === '6m') {
+    const stepDays = range === '3m' ? 7 : 14;
+    const anchor = startOfUtcWeek(anchorStart || date);
+    const weekStart = startOfUtcWeek(date);
+    const diffDays = Math.max(0, Math.floor((weekStart.getTime() - anchor.getTime()) / 86400000));
+    const steppedDays = Math.floor(diffDays / stepDays) * stepDays;
+    const bucketStart = addUtcDays(anchor, steppedDays);
+    const key = bucketStart.toISOString().slice(0, 10);
+    return { key, label: key };
+  }
+
+  const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+  return { key, label: key };
+}
+
+function aggregateTrendForRange(series, range, mode = 'sum') {
   const rows = Array.isArray(series) ? series : [];
+  const viewport = rangeWindow(range);
+  const anchorStart = new Date(Date.UTC(viewport.start.getFullYear(), viewport.start.getMonth(), viewport.start.getDate(), 0, 0, 0, 0));
   const map = new Map();
+
   rows.forEach((point) => {
-    const key = toDayBucketKey(point?.key || point?.label || '');
-    if (!key) return;
-    if (!map.has(key)) map.set(key, { key, label: key, sum: 0, count: 0 });
-    const bucket = map.get(key);
+    const parsed = parseFinanceDate(point?.key || point?.label || '');
+    const bucketInfo = bucketForRange(parsed, range, anchorStart);
+    if (!bucketInfo?.key) return;
+    if (!map.has(bucketInfo.key)) {
+      map.set(bucketInfo.key, { key: bucketInfo.key, label: bucketInfo.label, sum: 0, count: 0, last: 0 });
+    }
+    const bucket = map.get(bucketInfo.key);
     bucket.sum += Number(point?.value || 0);
     bucket.count += 1;
+    bucket.last = Number(point?.value || 0);
   });
+
   return [...map.values()]
     .sort((a, b) => a.key.localeCompare(b.key))
     .map((bucket) => ({
       key: bucket.key,
       label: bucket.label,
-      value: mode === 'avg' ? toMoney(bucket.sum / Math.max(1, bucket.count)) : toMoney(bucket.sum)
+      value:
+        mode === 'avg'
+          ? toMoney(bucket.sum / Math.max(1, bucket.count))
+          : mode === 'last'
+          ? toMoney(bucket.last)
+          : toMoney(bucket.sum)
     }));
+}
+
+function normalizeOverviewChartsForRange(data, range) {
+  if (!data || typeof data !== 'object') return data;
+  const charts = data.charts || {};
+  const netProfitTrend = aggregateTrendForRange(charts.netProfitTrend || [], range, 'sum');
+  const companyShareTrend = aggregateTrendForRange(charts.companyShareTrend || [], range, 'sum');
+  const voyageCountTrend = aggregateTrendForRange(charts.voyageCountTrend || [], range, 'sum');
+  const freightLossValueTrend = aggregateTrendForRange(charts.freightLossValueTrend || [], range, 'sum');
+  const grossRevenueTrend = aggregateTrendForRange(charts.grossRevenueTrend || [], range, 'sum');
+  const outstandingTrend = aggregateTrendForRange(charts.outstandingTrend || companyShareTrend, range, 'last');
+  const avgNetProfitTrend = netProfitTrend.map((point, index) => ({
+    key: point.key,
+    label: point.label,
+    value:
+      Number(voyageCountTrend[index]?.value || 0) > 0
+        ? toMoney(Number(point.value || 0) / Math.max(1, Number(voyageCountTrend[index]?.value || 0)))
+        : toMoney(point.value || 0)
+  }));
+
+  return {
+    ...data,
+    charts: {
+      ...charts,
+      netProfitTrend,
+      companyShareTrend,
+      voyageCountTrend,
+      freightLossValueTrend,
+      grossRevenueTrend,
+      avgNetProfitTrend,
+      outstandingTrend
+    }
+  };
 }
 
 function normalizeSeriesPoints(series) {
@@ -2086,11 +2181,11 @@ async function loadOverview(state) {
       const fallbackUnsettled = debugFallbackOverview?.unsettled || {};
       const fallbackCharts = debugFallbackOverview?.charts || {};
       const fallbackBreakdowns = debugFallbackOverview?.breakdowns || {};
-      const netProfitTrend = aggregateTrendByDay(fallbackCharts.netProfitTrend, 'sum');
-      const companyShareTrend = aggregateTrendByDay(fallbackCharts.companyShareTrend, 'sum');
-      const voyageCountTrend = aggregateTrendByDay(fallbackCharts.voyageCountTrend, 'sum');
-      const freightLossValueTrend = aggregateTrendByDay(fallbackCharts.freightLossValueTrend, 'sum');
-      const grossRevenueTrend = aggregateTrendByDay(fallbackCharts.grossRevenueTrend, 'sum');
+      const netProfitTrend = aggregateTrendForRange(fallbackCharts.netProfitTrend, state.range, 'sum');
+      const companyShareTrend = aggregateTrendForRange(fallbackCharts.companyShareTrend, state.range, 'sum');
+      const voyageCountTrend = aggregateTrendForRange(fallbackCharts.voyageCountTrend, state.range, 'sum');
+      const freightLossValueTrend = aggregateTrendForRange(fallbackCharts.freightLossValueTrend, state.range, 'sum');
+      const grossRevenueTrend = aggregateTrendForRange(fallbackCharts.grossRevenueTrend, state.range, 'sum');
       const avgNetProfitTrend = netProfitTrend.map((point, index) => ({
         key: point.key,
         label: point.label,
@@ -2156,6 +2251,7 @@ async function loadOverview(state) {
       effectivePrevious = effectivePrevious || { kpis: {} };
     }
 
+    effectiveCurrent = normalizeOverviewChartsForRange(effectiveCurrent, state.range);
     state.overview = effectiveCurrent;
     state.overviewPrevious = effectivePrevious;
     state.financeDebug = debugPayload || null;
@@ -2726,4 +2822,5 @@ init().catch((error) => {
   console.error('finances init error', error);
   setFeedback(`Failed to load finance module: ${error.message || 'Unknown error'}`, 'error');
 });
+
 
