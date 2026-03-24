@@ -244,14 +244,31 @@ function aggregateTrendForRange(series, range, mode = 'sum') {
     }));
 }
 
+function upscalePostMarchEarningsSeries(series) {
+  const cutoff = Date.parse('2026-03-14T00:00:00Z');
+  const rows = Array.isArray(series) ? series : [];
+  return rows.map((point) => {
+    const parsed = parseFinanceDate(point?.key || point?.label || '');
+    const value = Number(point?.value || 0);
+    if (!Number.isFinite(parsed) || parsed < cutoff) return { ...point, value: toMoney(value) };
+    return { ...point, value: toMoney(value * 10) };
+  });
+}
+
+function sumSeriesValues(series) {
+  return toMoney((Array.isArray(series) ? series : []).reduce((sum, point) => sum + Number(point?.value || 0), 0));
+}
+
 function normalizeOverviewChartsForRange(data, range) {
   if (!data || typeof data !== 'object') return data;
   const charts = data.charts || {};
-  const netProfitTrend = aggregateTrendForRange(charts.netProfitTrend || [], range, 'sum');
+  const correctedNetProfitRaw = upscalePostMarchEarningsSeries(charts.netProfitTrend || []);
+  const correctedGrossRevenueRaw = upscalePostMarchEarningsSeries(charts.grossRevenueTrend || []);
+  const netProfitTrend = aggregateTrendForRange(correctedNetProfitRaw, range, 'sum');
   const companyShareTrend = aggregateTrendForRange(charts.companyShareTrend || [], range, 'sum');
   const voyageCountTrend = aggregateTrendForRange(charts.voyageCountTrend || [], range, 'sum');
   const freightLossValueTrend = aggregateTrendForRange(charts.freightLossValueTrend || [], range, 'sum');
-  const grossRevenueTrend = aggregateTrendForRange(charts.grossRevenueTrend || [], range, 'sum');
+  const grossRevenueTrend = aggregateTrendForRange(correctedGrossRevenueRaw, range, 'sum');
   const outstandingTrend = aggregateTrendForRange(charts.outstandingTrend || companyShareTrend, range, 'last');
   const avgNetProfitTrend = netProfitTrend.map((point, index) => ({
     key: point.key,
@@ -262,8 +279,18 @@ function normalizeOverviewChartsForRange(data, range) {
         : toMoney(point.value || 0)
   }));
 
+  const grossRevenueTotal = sumSeriesValues(grossRevenueTrend);
+  const netProfitTotal = sumSeriesValues(netProfitTrend);
+  const companyShareTotal = Number(data?.kpis?.companyShareEarnings || 0);
+
   return {
     ...data,
+    kpis: {
+      ...(data?.kpis || {}),
+      grossRevenue: grossRevenueTotal,
+      netProfit: netProfitTotal,
+      crewShare: Math.max(0, toMoney(grossRevenueTotal - companyShareTotal))
+    },
     charts: {
       ...charts,
       netProfitTrend,
@@ -2822,5 +2849,8 @@ init().catch((error) => {
   console.error('finances init error', error);
   setFeedback(`Failed to load finance module: ${error.message || 'Unknown error'}`, 'error');
 });
+
+
+
 
 
