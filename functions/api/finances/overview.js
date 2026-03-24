@@ -1,7 +1,7 @@
 import { cachedJson } from '../auth/_lib/auth.js';
 import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, toMoney } from '../_lib/finances.js';
 
-const COMPANY_SHARE_RATE = 0.2;
+const COMPANY_SHARE_RATE = 0.1;
 const VOYAGE_EVENT_AT_SQL = `COALESCE(NULLIF(TRIM(v.ended_at), ''), NULLIF(TRIM(v.updated_at), ''), NULLIF(TRIM(v.created_at), ''))`;
 
 function isoDay(date) {
@@ -223,18 +223,15 @@ function parseTimestamp(value) {
   return new Date(raw);
 }
 
-function companyShareForVoyage(row) {
-  const stored = Number(row?.company_share_amount);
-  if (Number.isFinite(stored) && stored > 0) return Math.max(0, toMoney(stored));
-  const legacy = Number(row?.company_share);
-  if (Number.isFinite(legacy) && legacy > 0) return Math.max(0, toMoney(legacy));
-  return Math.max(0, toMoney(Number(row?.profit || 0) * COMPANY_SHARE_RATE));
-}
-
-function grossRevenueForVoyage(row, settlementLines = []) {
+function netProfitForVoyage(row, settlementLines = []) {
   const lines = Array.isArray(settlementLines) ? settlementLines : [];
-  const settlementGrossRevenue = toMoney(lines.reduce((sum, line) => sum + toMoney(line.lineRevenue || 0), 0));
-  if (settlementGrossRevenue > 0) return settlementGrossRevenue;
+  const settlementNetProfit = toMoney(lines.reduce((sum, line) => sum + toMoney(line.lineRevenue || 0), 0));
+  if (settlementNetProfit > 0) return settlementNetProfit;
+
+  const storedProfit = Number(row?.profit);
+  if (Number.isFinite(storedProfit) && storedProfit > 0) {
+    return Math.max(0, toMoney(storedProfit));
+  }
 
   const storedEffectiveSell = Number(row?.effective_sell);
   if (Number.isFinite(storedEffectiveSell) && storedEffectiveSell > 0) {
@@ -246,7 +243,48 @@ function grossRevenueForVoyage(row, settlementLines = []) {
     return Math.max(0, toMoney(legacyRevenue));
   }
 
-  return Math.max(0, toMoney(row?.profit || 0));
+  return 0;
+}
+
+function companyShareForVoyage(row, settlementLines = [], netProfit = null) {
+  const derivedNetProfit = Number.isFinite(Number(netProfit)) ? Number(netProfit) : netProfitForVoyage(row, settlementLines);
+  const derivedShare = Math.max(0, toMoney(derivedNetProfit * COMPANY_SHARE_RATE));
+  if (derivedShare > 0) return derivedShare;
+
+  const stored = Number(row?.company_share_amount);
+  if (Number.isFinite(stored) && stored > 0) return Math.max(0, toMoney(stored));
+  const legacy = Number(row?.company_share);
+  if (Number.isFinite(legacy) && legacy > 0) return Math.max(0, toMoney(legacy));
+  return 0;
+}
+
+function grossRevenueForVoyage(row, settlementLines = [], netProfit = null, freightLossValue = null) {
+  const derivedNetProfit = Number.isFinite(Number(netProfit)) ? Number(netProfit) : netProfitForVoyage(row, settlementLines);
+  const derivedLoss = Number.isFinite(Number(freightLossValue))
+    ? Math.max(0, toMoney(freightLossValue))
+    : Math.max(
+        0,
+        toMoney(
+          (Array.isArray(settlementLines) ? settlementLines : []).reduce((sum, line) => {
+            const lostQty = Math.max(0, Number(line?.lostQuantity || 0));
+            const unit = toMoney(line?.trueSellUnitPrice ?? line?.lostValue ?? 0);
+            return sum + toMoney(lostQty * unit);
+          }, 0)
+        )
+      );
+  if (derivedNetProfit > 0 || derivedLoss > 0) return toMoney(derivedNetProfit + derivedLoss);
+
+  const legacyRevenue = Number(row?.legacy_revenue_florins);
+  if (Number.isFinite(legacyRevenue) && legacyRevenue > 0) {
+    return Math.max(0, toMoney(legacyRevenue));
+  }
+
+  const storedEffectiveSell = Number(row?.effective_sell);
+  if (Number.isFinite(storedEffectiveSell) && storedEffectiveSell > 0) {
+    return Math.max(0, toMoney(storedEffectiveSell));
+  }
+
+  return Math.max(0, toMoney(derivedNetProfit));
 }
 
 async function hasLegacyHistoryTable(env) {
@@ -574,14 +612,8 @@ export async function onRequestGet(context) {
     const target = buckets.get(bucket.key);
     if (!target) return;
 
-    const netProfit = toMoney(voyage.profit || 0);
-    const companyShare = companyShareForVoyage(voyage);
     const settlementLines = parseSettlementLines(voyage.settlement_lines_json);
-    const grossRevenue = grossRevenueForVoyage(voyage, settlementLines);
-    const crewShare = grossRevenue > 0 ? Math.max(0, toMoney(grossRevenue - companyShare)) : 0;
-    const settlementFreightCost = toMoney(settlementLines.reduce((sum, line) => sum + toMoney(line.lineCost || 0), 0));
-    const freightCost =
-      settlementFreightCost > 0 ? settlementFreightCost : Math.max(0, toMoney(grossRevenue - Number(voyage.profit || 0)));
+    const netProfit = netProfitForVoyage(voyage, settlementLines);
     const inferredLoss = Math.max(
       0,
       toMoney(
@@ -593,6 +625,11 @@ export async function onRequestGet(context) {
       )
     );
     const freightLossValue = Math.max(inferredLoss, Math.max(0, toMoney(voyage.legacy_freight_loss_value || 0)));
+    const grossRevenue = grossRevenueForVoyage(voyage, settlementLines, netProfit, freightLossValue);
+    const companyShare = companyShareForVoyage(voyage, settlementLines, netProfit);
+    const crewShare = netProfit > 0 ? Math.max(0, toMoney(netProfit - companyShare)) : 0;
+    const settlementFreightCost = toMoney(settlementLines.reduce((sum, line) => sum + toMoney(line.lineCost || 0), 0));
+    const freightCost = settlementFreightCost > 0 ? settlementFreightCost : Math.max(0, toMoney(freightLossValue));
 
     settlementLines.forEach((line) => {
       const soldQty = Math.max(
@@ -639,13 +676,13 @@ export async function onRequestGet(context) {
     addProfit(sellLocationProfit, sellLocationLabel, netProfit);
     addProfit(vesselProfit, vesselLabel, netProfit);
     addProfit(ootwProfit, officerLabel, netProfit);
-    addProfit(sellLocationEarnings, sellLocationLabel, grossRevenue);
-    addProfit(vesselEarnings, vesselLabel, grossRevenue);
+    addProfit(sellLocationEarnings, sellLocationLabel, netProfit);
+    addProfit(vesselEarnings, vesselLabel, netProfit);
     const fleetKey = `${String(voyage.vessel_name || '').trim().toLowerCase()}::${String(voyage.vessel_class || '').trim().toLowerCase()}`;
     const fleetLabel = fleetShipLabels.get(fleetKey);
     if (fleetLabel) {
       addProfit(fleetVesselProfit, fleetLabel, netProfit);
-      addProfit(fleetVesselEarnings, fleetLabel, grossRevenue);
+      addProfit(fleetVesselEarnings, fleetLabel, netProfit);
     }
     if (settlementLines.length) {
       settlementLines.forEach((line) => {
@@ -654,8 +691,8 @@ export async function onRequestGet(context) {
         if (ownerRevenue <= 0) return;
         addProfit(employeeEarnings, owner, ownerRevenue);
       });
-    } else if (grossRevenue > 0) {
-      addProfit(employeeEarnings, officerLabel, grossRevenue);
+    } else if (netProfit > 0) {
+      addProfit(employeeEarnings, officerLabel, netProfit);
     }
 
     const liveVoyageId = Number(voyage.id || 0);
@@ -666,7 +703,7 @@ export async function onRequestGet(context) {
         : legacyVoyageId > 0
         ? `Voyage #${legacyVoyageId}`
         : `Legacy Voyage #${Math.abs(Number(voyage.id || 0)) || 0}`;
-    addProfit(voyageEarnings, voyageLabel, grossRevenue);
+    addProfit(voyageEarnings, voyageLabel, netProfit);
   });
 
   const [fishKilledResult, legacySalaryRowsResult] = await Promise.all([
@@ -776,8 +813,10 @@ export async function onRequestGet(context) {
            v.id,
            ${VOYAGE_EVENT_AT_SQL} AS ended_at,
            v.profit,
+           v.effective_sell,
            v.company_share,
            v.company_share_amount,
+           v.settlement_lines_json,
            v.officer_of_watch_employee_id,
            e.roblox_username AS officer_name,
            e.serial_number AS officer_serial

@@ -1277,10 +1277,8 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
     el.textContent = formatInteger(value || 0);
   };
 
-  const totalEarnings = Number.isFinite(Number(kpis.grossRevenue)) ? Number(kpis.grossRevenue) : Number(kpis.netProfit || 0);
-  const previousTotalEarnings = Number.isFinite(Number(previousKpis.grossRevenue))
-    ? Number(previousKpis.grossRevenue)
-    : Number(previousKpis.netProfit || 0);
+  const totalEarnings = Number(kpis.netProfit || 0);
+  const previousTotalEarnings = Number(previousKpis.netProfit || 0);
 
   writeMoney('#kpiNetProfit', totalEarnings);
   writeMoney('#kpiCompanyShare', kpis.companyShareEarnings || 0);
@@ -1308,7 +1306,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   setDelta('#kpiDeltaEmissions', toDelta(totalEmissionsValue, previousEmissionsValue, range));
   setDelta('#kpiDeltaLossValue', toDelta(kpis.freightLossesValue, previousKpis.freightLossesValue, range, true));
   const hasVoyages = !isAllZeroSeries(charts.voyageCountTrend || []);
-  renderProfitLossChart($('#chartNetProfit'), charts.grossRevenueTrend || charts.netProfitTrend || [], charts.freightLossValueTrend || [], {
+  renderProfitLossChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.freightLossValueTrend || [], {
     primaryLabel: 'Total Earnings'
   });
 

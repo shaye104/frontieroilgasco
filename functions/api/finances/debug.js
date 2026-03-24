@@ -1,7 +1,7 @@
 import { json } from '../auth/_lib/auth.js';
 import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, toMoney } from '../_lib/finances.js';
 
-const COMPANY_SHARE_RATE = 0.2;
+const COMPANY_SHARE_RATE = 0.1;
 const VOYAGE_EVENT_AT_SQL = `COALESCE(NULLIF(TRIM(v.ended_at), ''), NULLIF(TRIM(v.updated_at), ''), NULLIF(TRIM(v.created_at), ''))`;
 
 function normalizeCargoName(value) {
@@ -207,16 +207,14 @@ export async function onRequestGet(context) {
 
   rangeVoyages.forEach((voyage) => {
     const lines = parseSettlementLines(voyage.settlement_lines_json);
-    const netProfit = toMoney(voyage.profit || 0);
-    const companyShare = Math.max(0, toMoney(voyage.company_share_amount ?? voyage.company_share ?? toMoney(netProfit * COMPANY_SHARE_RATE)));
-    const settlementGrossRevenue = toMoney(lines.reduce((sum, line) => sum + Number(line.lineRevenue || 0), 0));
-    const grossRevenue = Math.max(0, toMoney(settlementGrossRevenue || voyage.effective_sell || voyage.profit || 0));
+    const netProfit = Math.max(0, toMoney(lines.reduce((sum, line) => sum + Number(line.lineRevenue || 0), 0) || voyage.profit || voyage.effective_sell || 0));
+    const companyShare = Math.max(0, toMoney((netProfit > 0 ? netProfit : Number(voyage.company_share_amount ?? voyage.company_share ?? 0)) * (netProfit > 0 ? COMPANY_SHARE_RATE : 1)));
     const routeLabel = normalizeSellLocationLabel(voyage.sell_location_name || voyage.destination_port || voyage.departure_port);
     const voyageLabel = `Voyage #${Number(voyage.id || 0)}`;
     const officerLabel = String(voyage.officer_name || '').trim() || 'Unknown';
     const vesselLabel = `${String(voyage.vessel_name || '').trim() || 'Unknown'} | ${String(voyage.vessel_callsign || '').trim() || 'N/A'}`;
-    addProfit(sellLocationEarnings, routeLabel, grossRevenue);
-    addProfit(voyageEarnings, voyageLabel, grossRevenue);
+    addProfit(sellLocationEarnings, routeLabel, netProfit);
+    addProfit(voyageEarnings, voyageLabel, netProfit);
     addProfit(routeProfit, routeLabel, netProfit);
     addProfit(vesselProfit, vesselLabel, netProfit);
     addProfit(ootwProfit, officerLabel, netProfit);
@@ -231,6 +229,7 @@ export async function onRequestGet(context) {
         }, 0)
       )
     );
+    const grossRevenue = toMoney(netProfit + voyageFreightLoss);
     const pointKey = String(voyage.ended_at || `voyage-${Number(voyage.id || 0)}`);
     netProfitTrend.push({ key: pointKey, label: pointKey, value: netProfit });
     companyShareTrend.push({ key: pointKey, label: pointKey, value: companyShare });
@@ -253,8 +252,8 @@ export async function onRequestGet(context) {
         if (isCrudeOilCargo(line.cargoName)) crudeSold += soldQty;
         else if (isGasolineCargo(line.cargoName)) gasSold += soldQty;
       });
-    } else if (grossRevenue > 0) {
-      addProfit(employeeEarnings, officerLabel, grossRevenue);
+    } else if (netProfit > 0) {
+      addProfit(employeeEarnings, officerLabel, netProfit);
     }
   });
 
@@ -300,7 +299,7 @@ export async function onRequestGet(context) {
 
   const fallbackOverview = {
     kpis: {
-      netProfit: toMoney(rangeStats?.range_profit_total || 0),
+      netProfit: toMoney(netProfitTrend.reduce((sum, point) => sum + Number(point.value || 0), 0)),
       grossRevenue: toMoney(grossRevenueTotal),
       companyShareEarnings: Math.max(0, toMoney(rangeStats?.range_company_share_total || 0)),
       crewShare: Math.max(0, toMoney(grossRevenueTotal - Number(rangeStats?.range_company_share_total || 0))),

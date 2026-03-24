@@ -182,7 +182,7 @@ export function parseSettlementLines(settlementLinesJson) {
         ),
         isLost: Boolean(line?.isLost),
         netQuantity: Math.max(0, Math.floor(Number(line?.netQuantity ?? line?.quantity ?? 0))),
-        trueSellUnitPrice: toMoney(line?.trueSellUnitPrice ?? line?.unitPrice ?? 0),
+        trueSellUnitPrice: toMoney(line?.trueSellUnitPrice ?? line?.baseSellPrice ?? line?.unitPrice ?? 0),
         lineCost: toMoney(line?.lineCost ?? line?.rowBaseTotal ?? 0),
         lineRevenue: toMoney(line?.lineRevenue ?? line?.rowNetFinalTotal ?? line?.rowFinalTotal ?? 0),
         lineProfit: toMoney(

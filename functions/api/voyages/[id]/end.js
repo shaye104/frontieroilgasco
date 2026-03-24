@@ -1,7 +1,7 @@
 import { json } from '../../auth/_lib/auth.js';
 import { canManageVoyage, getVoyageBase, requireVoyagePermission, toMoney } from '../../_lib/voyages.js';
 
-const COMPANY_SHARE_RATE = 0.2;
+const COMPANY_SHARE_RATE = 0.1;
 const CREW_DUE_TO_SKIPPER_RATE = 0.1;
 
 function toPositiveInt(value) {
@@ -150,6 +150,7 @@ export async function onRequestPost(context) {
         lostReimbursement,
         buyUnitPrice,
         baseSellPrice,
+        trueSellUnitPrice: baseSellPrice,
         sellMultiplier: Number(sellMultiplier),
         rowBuyTotal,
         rowFinalTotal,
@@ -200,7 +201,7 @@ export async function onRequestPost(context) {
   const totalReimbursements = toMoney(settlementLines.reduce((sum, line) => sum + Number(line.lostReimbursement || 0), 0));
   const totalGrossEarnings = toMoney(settlementLines.reduce((sum, line) => sum + Number(line.rowNetFinalTotal || 0), 0));
   const totalCrewDuesToSkipper = toMoney(ownerSettlements.reduce((sum, owner) => sum + Number(owner.payableTotal || 0), 0));
-  const voyageProfit = toMoney(totalGrossEarnings - totalReimbursements);
+  const voyageProfit = toMoney(totalGrossEarnings);
   const companyShareAmount = Math.max(0, toMoney(totalGrossEarnings * COMPANY_SHARE_RATE));
 
   await env.DB.batch([

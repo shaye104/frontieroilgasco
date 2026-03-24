@@ -2,7 +2,7 @@ import { cachedJson } from '../auth/_lib/auth.js';
 import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, toMoney } from '../_lib/finances.js';
 import { hasPermission } from '../_lib/permissions.js';
 
-const COMPANY_SHARE_RATE = 0.2;
+const COMPANY_SHARE_RATE = 0.1;
 
 function normalizeSearch(value) {
   return String(value || '').trim().toLowerCase();
@@ -21,23 +21,23 @@ function normalizeBool(value, fallback = true) {
 
 function mapDebtRow(row) {
   const settlementLines = parseSettlementLines(row.settlement_lines_json);
-  const settlementCutAmount = toMoney(settlementLines.reduce((sum, line) => sum + Number(line.lineRevenue || 0), 0));
+  const settlementNetProfit = toMoney(settlementLines.reduce((sum, line) => sum + Number(line.lineRevenue || 0), 0));
   const storedEffectiveSell = Number(row.effective_sell);
   const storedPayableAmount = Number(row.total_payable_amount);
   const voyageProfit = toMoney(row.profit || 0);
   const storedShare = Number(row.company_share_amount);
   const legacyShare = Number(row.company_share);
   const derivedCompanyShare =
-    settlementCutAmount > 0
-      ? Math.max(0, toMoney(settlementCutAmount))
-      : Number.isFinite(storedEffectiveSell) && storedEffectiveSell > 0
-      ? Math.max(0, toMoney(storedEffectiveSell))
-      : Number.isFinite(storedPayableAmount) && storedPayableAmount > 0
-      ? Math.max(0, toMoney(storedPayableAmount))
+    settlementNetProfit > 0
+      ? Math.max(0, toMoney(settlementNetProfit * COMPANY_SHARE_RATE))
       : Number.isFinite(storedShare) && storedShare > 0
       ? Math.max(0, toMoney(storedShare))
+      : Number.isFinite(storedPayableAmount) && storedPayableAmount > 0
+      ? Math.max(0, toMoney(storedPayableAmount))
       : Number.isFinite(legacyShare) && legacyShare > 0
       ? Math.max(0, toMoney(legacyShare))
+      : Number.isFinite(storedEffectiveSell) && storedEffectiveSell > 0
+      ? Math.max(0, toMoney(storedEffectiveSell * COMPANY_SHARE_RATE))
       : Math.max(0, toMoney(voyageProfit * COMPANY_SHARE_RATE));
   const serialRaw = String(row.officer_serial || '').trim();
   const officerSerial = serialRaw.toUpperCase() === 'N/A' ? '' : serialRaw;
