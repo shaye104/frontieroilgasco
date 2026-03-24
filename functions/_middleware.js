@@ -449,6 +449,23 @@ export async function onRequest(context) {
         }
       }
 
+      if ((pathname === '/api/finances/overview' || pathname === '/api/finances/overview/') && requestMethod === 'GET') {
+        const { onRequestGet } = await import('./api/finances/overview.js');
+        const apiResponse = await onRequestGet(context);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_finances_overview' }
+            })
+          );
+        }
+        return apiResponse;
+      }
       if (coreOnlyMode && !isCoreAllowedApiPath(pathname)) {
         const blockedResponse = new Response(JSON.stringify({ error: 'Not found.' }), {
           status: 404,
@@ -656,3 +673,4 @@ export async function onRequest(context) {
     return context.next();
   }
 }
+
