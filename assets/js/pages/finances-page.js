@@ -1672,7 +1672,7 @@ function renderCollectorRemittances(state) {
             ? canMove
               ? `<div class="finance-transfer-actions">
                    <select id="${targetSelectId}" class="finance-transfer-target" data-transfer-target="${sourceId}">
-                     <option value="">Move to...</option>
+                     <option value="">Target...</option>
                      ${targets
                        .map(
                          (target) =>

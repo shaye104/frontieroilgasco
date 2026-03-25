@@ -9402,15 +9402,15 @@ body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-d
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-manager {
-  width: 40% !important;
+  width: 34% !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-amount {
-  width: 22% !important;
+  width: 20% !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-actions {
-  width: 38% !important;
+  width: 46% !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table th,
@@ -9425,20 +9425,21 @@ body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-d
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-cell {
-  text-align: right !important;
+  text-align: left !important;
+  overflow: visible !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-shell {
   display: flex !important;
-  justify-content: flex-end !important;
+  justify-content: flex-start !important;
   width: 100% !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-actions {
   display: block !important;
-  width: min(100%, 156px) !important;
-  max-width: 156px !important;
-  margin-left: auto !important;
+  width: min(100%, 132px) !important;
+  max-width: 132px !important;
+  margin-left: 0 !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-target {
@@ -9450,8 +9451,8 @@ body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-t
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-note {
   display: inline-block !important;
-  width: min(100%, 156px) !important;
-  max-width: 156px !important;
-  margin-left: auto !important;
+  width: min(100%, 132px) !important;
+  max-width: 132px !important;
+  margin-left: 0 !important;
   text-align: left !important;
 }
