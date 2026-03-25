@@ -53,6 +53,12 @@ function getInitials(value) {
     .join('');
 }
 
+function getGroupColumnLabel(group) {
+  const explicit = String(group?.shortLabel || group?.label || '').trim();
+  if (explicit) return explicit.slice(0, 24);
+  return getInitials(group?.name || 'RG');
+}
+
 function formatDate(value, withTime = false) {
   if (!value) return 'N/A';
   if (withTime) return formatLocalDateTime(value, { fallback: String(value) });
@@ -333,7 +339,10 @@ function renderScanTableHead(target, requiredGroups = []) {
   if (!target) return;
   const groups = Array.isArray(requiredGroups) ? requiredGroups : [];
   const groupHeaders = groups
-    .map((group) => `<th class="employee-scan-status-head" title="${escapeHtml(text(group?.name || 'Required group'))}">${escapeHtml(getInitials(group?.name || 'RG'))}</th>`)
+    .map((group) => {
+      const titleParts = [text(group?.name), text(group?.id) ? `ID ${text(group.id)}` : ''].filter(Boolean);
+      return `<th class="employee-scan-status-head" title="${escapeHtml(titleParts.join(' • ') || 'Required group')}">${escapeHtml(getGroupColumnLabel(group))}</th>`;
+    })
     .join('');
   target.innerHTML = `<th>Employee</th><th class="employee-scan-status-head">Discord</th>${groupHeaders}<th class="align-right">Action</th>`;
 }

@@ -40,8 +40,29 @@
         <section id="siteSettingsContent" class="panel hidden">
           <form id="siteSettingsForm" class="finance-cashflow-entry-form">
             <div class="finance-cashflow-entry-wide">
-              <label for="settingsRequiredRobloxGroupIds">Required Roblox Group IDs</label>
-              <textarea id="settingsRequiredRobloxGroupIds" name="requiredRobloxGroupIds" rows="6" placeholder="One or more Roblox group IDs, separated by commas or new lines"></textarea>
+              <div class="admin-employees-table-header">
+                <div>
+                  <label>Required Roblox Groups</label>
+                  <p class="finance-inline-caption">Add each group with its Roblox ID and the short label you want to appear as a scan column.</p>
+                </div>
+                <button id="addRequiredRobloxGroupBtn" class="btn btn-secondary" type="button">Add Group</button>
+              </div>
+              <div class="table-wrap">
+                <table class="data-table employee-scan-table">
+                  <thead>
+                    <tr>
+                      <th>Group ID</th>
+                      <th>Full Name</th>
+                      <th>Short Label</th>
+                      <th class="align-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="settingsRequiredRobloxGroupsBody">
+                    <tr><td colspan="4">No required Roblox groups configured.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <input id="settingsRequiredRobloxGroupsJson" name="requiredRobloxGroups" type="hidden" />
               <p class="finance-inline-caption">Run Scan will flag employees who are not in the Discord guild from <code>DISCORD_GUILD_ID</code> or are missing every configured Roblox group ID.</p>
             </div>
             <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
@@ -52,6 +73,6 @@
         </section>
       </div>
     </main>
-    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260325144816"></script>
+    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260325200500"></script>
   </body>
 </html>

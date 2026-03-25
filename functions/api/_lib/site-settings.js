@@ -12,7 +12,8 @@ const DEFAULT_SITE_SETTINGS = {
   notificationSoundStandardUrl: '/MorseAlert.mp3',
   notificationSoundUrgentUrl: '/MorseAlert.mp3',
   requiredDiscordRoleIds: '',
-  requiredRobloxGroupIds: ''
+  requiredRobloxGroupIds: '',
+  requiredRobloxGroups: []
 };
 
 let settingsCache = null;
@@ -57,6 +58,54 @@ function normalizeRobloxGroupIdsSetting(value) {
   if (!raw) return '';
   const ids = [...new Set(raw.split(/[\s,;]+/).map((part) => String(part || '').trim()).filter((part) => /^\d{1,30}$/.test(part)))];
   return ids.join(', ');
+}
+
+function normalizeRobloxGroupLabel(value) {
+  return String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24);
+}
+
+function parseRobloxGroupsSetting(value) {
+  if (Array.isArray(value)) {
+    return normalizeRobloxGroupsSetting(value);
+  }
+  const raw = String(value ?? '').trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return normalizeRobloxGroupsSetting(parsed);
+  } catch {
+    return [];
+  }
+}
+
+function normalizeRobloxGroupsSetting(value) {
+  const rows = Array.isArray(value) ? value : [];
+  const seen = new Set();
+  const normalized = [];
+  for (const row of rows) {
+    const id = String(row?.id ?? row?.groupId ?? '').trim();
+    if (!/^\d{1,30}$/.test(id) || seen.has(id)) continue;
+    seen.add(id);
+    normalized.push({
+      id,
+      name: normalizeRobloxGroupLabel(row?.name || ''),
+      shortLabel: normalizeRobloxGroupLabel(row?.shortLabel || row?.label || '')
+    });
+  }
+  return normalized;
+}
+
+function deriveRobloxGroupsFromIds(value) {
+  const ids = normalizeRobloxGroupIdsSetting(value);
+  if (!ids) return [];
+  return ids.split(',').map((part) => String(part || '').trim()).filter(Boolean).map((id) => ({ id, name: '', shortLabel: '' }));
+}
+
+function stringifyRobloxGroupsSetting(value) {
+  return JSON.stringify(normalizeRobloxGroupsSetting(value));
 }
 
 export function getDefaultSiteSettings() {
@@ -107,8 +156,12 @@ export async function readSiteSettings(env, { bypassCache = false } = {}) {
     ),
     notificationSoundUrgentUrl: normalizeUrlValue(map.notificationSoundUrgentUrl, DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl),
     requiredDiscordRoleIds: normalizeDiscordRoleIdsSetting(map.requiredDiscordRoleIds),
-    requiredRobloxGroupIds: normalizeRobloxGroupIdsSetting(map.requiredRobloxGroupIds)
+    requiredRobloxGroups: (() => {
+      const parsed = parseRobloxGroupsSetting(map.requiredRobloxGroups);
+      return parsed.length ? parsed : deriveRobloxGroupsFromIds(map.requiredRobloxGroupIds);
+    })()
   };
+  next.requiredRobloxGroupIds = normalizeRobloxGroupIdsSetting(next.requiredRobloxGroups.map((row) => row.id).join(', '));
 
   settingsCache = { ...next };
   settingsCacheAt = now;
@@ -142,10 +195,17 @@ export async function writeSiteSettings(env, updates, updatedBy = '') {
       DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl
     ),
     requiredDiscordRoleIds: normalizeDiscordRoleIdsSetting(merged.requiredDiscordRoleIds),
-    requiredRobloxGroupIds: normalizeRobloxGroupIdsSetting(merged.requiredRobloxGroupIds)
+    requiredRobloxGroups: (() => {
+      const parsed = normalizeRobloxGroupsSetting(merged.requiredRobloxGroups);
+      return parsed.length ? parsed : deriveRobloxGroupsFromIds(merged.requiredRobloxGroupIds);
+    })()
   };
+  normalized.requiredRobloxGroupIds = normalizeRobloxGroupIdsSetting(normalized.requiredRobloxGroups.map((row) => row.id).join(', '));
 
-  const entries = Object.entries(normalized);
+  const entries = [
+    ...Object.entries(normalized).filter(([key]) => key !== 'requiredRobloxGroups'),
+    ['requiredRobloxGroups', stringifyRobloxGroupsSetting(normalized.requiredRobloxGroups)]
+  ];
   const actor = String(updatedBy || '').trim() || null;
   for (const [key, value] of entries) {
     await env.DB

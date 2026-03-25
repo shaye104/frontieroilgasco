@@ -16,6 +16,21 @@ function parseRequiredGroupIds(raw) {
     .filter((part) => /^\d{1,30}$/.test(part)))];
 }
 
+function normalizeConfiguredGroups(rawGroups, fallbackIds) {
+  const configured = Array.isArray(rawGroups) ? rawGroups : [];
+  const byId = new Map();
+  for (const row of configured) {
+    const id = text(row?.id);
+    if (!/^\d{1,30}$/.test(id) || byId.has(id)) continue;
+    byId.set(id, {
+      id,
+      name: text(row?.name),
+      shortLabel: text(row?.shortLabel || row?.label)
+    });
+  }
+  return fallbackIds.map((id) => byId.get(id) || { id, name: '', shortLabel: '' });
+}
+
 const ROBLOX_CACHE_OK_TTL_MS = 24 * 60 * 60 * 1000;
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
@@ -458,6 +473,7 @@ export async function onRequestPost(context) {
 
   const settings = await readSiteSettings(env, { bypassCache: true });
   const requiredGroupIds = parseRequiredGroupIds(settings?.requiredRobloxGroupIds);
+  const configuredRequiredGroups = normalizeConfiguredGroups(settings?.requiredRobloxGroups, requiredGroupIds);
   const robloxConfig = requireRobloxGroupConfig(env);
   if (!requiredGroupIds.length) {
     return json({
@@ -485,7 +501,11 @@ export async function onRequestPost(context) {
   }
 
   const [requiredGroups, guildIndex, , rows] = await Promise.all([
-    mapWithConcurrency(requiredGroupIds, 4, async (groupId) => ({ id: groupId, name: await fetchRobloxGroupName(groupId) })),
+    mapWithConcurrency(configuredRequiredGroups, 4, async (group) => ({
+      id: group.id,
+      name: group.name || await fetchRobloxGroupName(group.id),
+      shortLabel: group.shortLabel
+    })),
     fetchGuildMemberIndex(env),
     ensureRobloxMembershipCacheSchema(env),
     env.DB.prepare(
