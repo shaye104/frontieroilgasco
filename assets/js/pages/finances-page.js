@@ -1414,7 +1414,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   writeMoney('#kpiLossValue', kpis.freightLossesValue || 0);
 
   const avgDays = $('#kpiAvgDaysToSettle');
-  if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? 'â€”' : `${formatInteger(kpis.avgDaysToSettle)}d`;
+  if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? '\u2014' : `${formatInteger(kpis.avgDaysToSettle)}d`;
 
   const avgDaysHint = $('#kpiAvgDaysHint');
   if (avgDaysHint) avgDaysHint.textContent = kpis.avgDaysToSettle == null ? 'No settled voyages in range' : 'Settled voyages only';
@@ -1461,7 +1461,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   const overviewCompletedVoyages = $('#overviewCompletedVoyages');
   if (overviewCompletedVoyages) overviewCompletedVoyages.textContent = formatInteger(kpis.completedVoyages || 0);
   const overviewAvgDays = $('#overviewAvgDaysToSettle');
-  if (overviewAvgDays) overviewAvgDays.textContent = kpis.avgDaysToSettle == null ? 'â€”' : `${formatInteger(kpis.avgDaysToSettle)}d`;
+  if (overviewAvgDays) overviewAvgDays.textContent = kpis.avgDaysToSettle == null ? '\u2014' : `${formatInteger(kpis.avgDaysToSettle)}d`;
   const overviewOverdue = $('#overviewOverdueUnsettled');
   if (overviewOverdue) overviewOverdue.textContent = formatInteger(unsettled.overdueVoyages || 0);
 
@@ -1617,7 +1617,7 @@ function renderCashflowRows(state) {
         <td colspan="8">
           <div class="finance-table-empty-state">
             <strong>No cashflow entries yet.</strong>
-            <span>Create your first ledger record using â€œNew Cashflow Entryâ€.</span>
+            <span>Create your first ledger record using "New Cashflow Entry".</span>
           </div>
         </td>
       </tr>`;
@@ -1902,7 +1902,7 @@ function renderReimbursementList(state) {
         <td>${
           canSettle
             ? `<button type="button" class="btn btn-primary btn-compact" data-settle-reimbursement-owner="${Number(row.ownerEmployeeId || 0)}">Settle</button>`
-            : '<span class="muted">â€”</span>'
+            : '<span class="muted">\u2014</span>'
         }</td>
       </tr>`;
     })
@@ -1957,7 +1957,7 @@ function renderDebtsRows(state) {
             ? canSettle
               ? `<button type="button" class="btn btn-primary btn-compact" data-settle-group="${text(group.groupKey)}">Settle All</button>`
               : '<span class="muted">Settled</span>'
-            : '<span class="muted">â€”</span>'
+            : '<span class="muted">\u2014</span>'
         }</td>
       </tr>`;
     })
