@@ -1,4 +1,4 @@
-import { hasPermission, performLogout, renderIntranetNavbar } from '../modules/nav.js?v=20260222a';
+﻿import { hasPermission, performLogout, renderIntranetNavbar } from '../modules/nav.js?v=20260222a';
 import { dateInputToUtcIso, formatLocalDateTime, getClientTimezoneOffsetMinutes } from '../modules/local-datetime.js';
 
 function $(selector) {
@@ -466,18 +466,18 @@ function toDelta(current, previous, range, invertDirection = false) {
   const label = previousRangeLabel(range);
 
   if (prev === 0 && now === 0) {
-    return { text: `• 0% vs ${label}`, tone: 'neutral' };
+    return { text: `â€¢ 0% vs ${label}`, tone: 'neutral' };
   }
 
   if (prev === 0) {
     const tone = invertDirection ? 'negative' : 'positive';
-    const icon = '▲';
+    const icon = 'â–²';
     return { text: `${icon} New vs ${label}`, tone };
   }
 
   const percent = Math.round((diff / Math.abs(prev)) * 100);
   const value = Math.abs(percent);
-  const icon = percent > 0 ? '▲' : percent < 0 ? '▼' : '•';
+  const icon = percent > 0 ? 'â–²' : percent < 0 ? 'â–¼' : 'â€¢';
   let tone = percent > 0 ? 'positive' : percent < 0 ? 'negative' : 'neutral';
   if (invertDirection && tone !== 'neutral') {
     tone = tone === 'positive' ? 'negative' : 'positive';
@@ -1405,7 +1405,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   writeMoney('#kpiLossValue', kpis.freightLossesValue || 0);
 
   const avgDays = $('#kpiAvgDaysToSettle');
-  if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
+  if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? 'â€”' : `${formatInteger(kpis.avgDaysToSettle)}d`;
 
   const avgDaysHint = $('#kpiAvgDaysHint');
   if (avgDaysHint) avgDaysHint.textContent = kpis.avgDaysToSettle == null ? 'No settled voyages in range' : 'Settled voyages only';
@@ -1452,7 +1452,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   const overviewCompletedVoyages = $('#overviewCompletedVoyages');
   if (overviewCompletedVoyages) overviewCompletedVoyages.textContent = formatInteger(kpis.completedVoyages || 0);
   const overviewAvgDays = $('#overviewAvgDaysToSettle');
-  if (overviewAvgDays) overviewAvgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
+  if (overviewAvgDays) overviewAvgDays.textContent = kpis.avgDaysToSettle == null ? 'â€”' : `${formatInteger(kpis.avgDaysToSettle)}d`;
   const overviewOverdue = $('#overviewOverdueUnsettled');
   if (overviewOverdue) overviewOverdue.textContent = formatInteger(unsettled.overdueVoyages || 0);
 
@@ -1608,7 +1608,7 @@ function renderCashflowRows(state) {
         <td colspan="8">
           <div class="finance-table-empty-state">
             <strong>No cashflow entries yet.</strong>
-            <span>Create your first ledger record using “New Cashflow Entry”.</span>
+            <span>Create your first ledger record using â€œNew Cashflow Entryâ€.</span>
           </div>
         </td>
       </tr>`;
@@ -1640,9 +1640,10 @@ function renderCollectorRemittances(state) {
   const card = document.querySelector('#financeTabCashflow .finance-remittance-table-card');
   if (!tbody) return;
   const rows = Array.isArray(state.collectorRemittances) ? state.collectorRemittances : [];
+  const managerOptions = Array.isArray(state.collectorManagerOptions) ? state.collectorManagerOptions : [];
   if (!rows.length) {
     if (card) card.classList.add('is-empty');
-    tbody.innerHTML = '<tr class="finance-empty-row"><td colspan="3">No pending manager transfers.</td></tr>';
+    tbody.innerHTML = '<tr class="finance-empty-row"><td colspan="3">No manager balances currently held.</td></tr>';
     return;
   }
   if (card) card.classList.remove('is-empty');
@@ -1650,40 +1651,68 @@ function renderCollectorRemittances(state) {
   tbody.innerHTML = rows
     .map((row) => {
       const canSettle = Boolean(state.canSettleCollectorRemittances) && Number(row.totalAmount || 0) > 0;
+      const sourceId = Number(row.collectorEmployeeId || 0);
+      const targets = managerOptions.filter((option) => Number(option.employeeId || 0) > 0 && Number(option.employeeId || 0) !== sourceId);
+      const targetSelectId = `collectorTransferTarget_${sourceId}`;
+      const canMove = canSettle && targets.length > 0;
       return `<tr>
         <td>${text(row.collectorName)}</td>
         <td class="align-right"><strong>${formatGuilders(row.totalAmount || 0)}</strong></td>
-        <td>${
+        <td class="finance-transfer-cell">${
           canSettle
-            ? `<button type="button" class="btn btn-primary btn-compact" data-settle-collector-remittance="${Number(
-                row.collectorEmployeeId || 0
-              )}">Settle</button>`
-            : '<span class="muted">CEO only</span>'
+            ? `<div class="finance-transfer-actions">
+                 <select id="${targetSelectId}" class="finance-transfer-target" data-transfer-target="${sourceId}">
+                   <option value="">${canMove ? `Move ${formatGuilders(row.totalAmount || 0)} to...` : 'No manager targets available'}</option>
+                   ${targets
+                     .map(
+                       (target) =>
+                         `<option value="${Number(target.employeeId || 0)}">${escapeHtml(
+                           text(target.name || `Employee #${Number(target.employeeId || 0)}`)
+                         )}</option>`
+                     )
+                     .join('')}
+                 </select>
+                 <div class="finance-transfer-buttons">
+                   <button type="button" class="btn btn-secondary btn-compact" data-transfer-collector-remittance="${sourceId}" ${
+                     canMove ? '' : 'disabled'
+                   }>Move</button>
+                 </div>
+               </div>`
+            : '<span class="muted">Bookkeeper only</span>'
         }</td>
       </tr>`;
     })
     .join('');
 
   if (!state.canSettleCollectorRemittances) return;
-  tbody.querySelectorAll('[data-settle-collector-remittance]').forEach((button) => {
+  tbody.querySelectorAll('[data-transfer-collector-remittance]').forEach((button) => {
     button.addEventListener('click', () => {
-      const collectorEmployeeId = Number(button.getAttribute('data-settle-collector-remittance') || 0);
-      if (!Number.isInteger(collectorEmployeeId) || collectorEmployeeId <= 0) return;
-      const target = rows.find((row) => Number(row.collectorEmployeeId || 0) === collectorEmployeeId);
-      if (!target) return;
+      const sourceCollectorEmployeeId = Number(button.getAttribute('data-transfer-collector-remittance') || 0);
+      if (!Number.isInteger(sourceCollectorEmployeeId) || sourceCollectorEmployeeId <= 0) return;
+      const select = tbody.querySelector(`[data-transfer-target="${sourceCollectorEmployeeId}"]`);
+      if (!(select instanceof HTMLSelectElement)) return;
+      const targetCollectorEmployeeId = Number(select.value || 0);
+      if (!Number.isInteger(targetCollectorEmployeeId) || targetCollectorEmployeeId <= 0) {
+        setFeedback('Select a target manager before moving held funds.', 'error');
+        return;
+      }
+      const source = rows.find((row) => Number(row.collectorEmployeeId || 0) === sourceCollectorEmployeeId);
+      const target = managerOptions.find((option) => Number(option.employeeId || 0) === targetCollectorEmployeeId);
+      if (!source || !target) return;
       openSettleModal(state, {
-        kind: 'collector-remittance',
-        title: 'Confirm Manager Transfer',
-        confirmLabel: 'Transfer To CEO',
-        message: `Confirm ${formatGuilders(target.totalAmount || 0)} transfer from ${text(target.collectorName)} to CEO?`,
-        collectorEmployeeId,
-        collectorName: text(target.collectorName),
-        amount: toMoney(target.totalAmount || 0)
+        kind: 'collector-transfer',
+        title: 'Confirm Manager Balance Transfer',
+        confirmLabel: 'Confirm Move',
+        message: `Move ${formatGuilders(source.totalAmount || 0)} from ${text(source.collectorName)} to ${text(target.name)}?`,
+        sourceCollectorEmployeeId,
+        sourceCollectorName: text(source.collectorName),
+        targetCollectorEmployeeId,
+        targetCollectorName: text(target.name),
+        amount: toMoney(source.totalAmount || 0)
       });
     });
   });
 }
-
 function renderCashflowPanel(state) {
   const kpis = state.cashflowKpis || {};
   const cashIn = $('#cashflowKpiIn');
@@ -1740,6 +1769,7 @@ async function loadCashflow(state) {
     state.cashflowRows = Array.isArray(payload?.rows) ? payload.rows : [];
     state.cashflowVoyageOptions = Array.isArray(payload?.voyageOptions) ? payload.voyageOptions : [];
     state.collectorRemittances = Array.isArray(payload?.collectorRemittances) ? payload.collectorRemittances : [];
+    state.collectorManagerOptions = Array.isArray(payload?.managerOptions) ? payload.managerOptions : [];
     state.cashflowPage = Math.max(1, Number(payload?.pagination?.page || 1));
     state.cashflowTotalPages = Math.max(1, Number(payload?.pagination?.totalPages || 1));
     state.cashflowCanManage = Boolean(payload?.permissions?.canManage);
@@ -1870,7 +1900,7 @@ function renderReimbursementList(state) {
         <td>${
           canSettle
             ? `<button type="button" class="btn btn-primary btn-compact" data-settle-reimbursement-owner="${Number(row.ownerEmployeeId || 0)}">Settle</button>`
-            : '<span class="muted">—</span>'
+            : '<span class="muted">â€”</span>'
         }</td>
       </tr>`;
     })
@@ -1925,7 +1955,7 @@ function renderDebtsRows(state) {
             ? canSettle
               ? `<button type="button" class="btn btn-primary btn-compact" data-settle-group="${text(group.groupKey)}">Settle All</button>`
               : '<span class="muted">Settled</span>'
-            : '<span class="muted">—</span>'
+            : '<span class="muted">â€”</span>'
         }</td>
       </tr>`;
     })
@@ -2418,6 +2448,50 @@ async function confirmSettlePendingVoyage(state) {
     return;
   }
 
+  if (pending.kind === 'collector-transfer') {
+    const sourceCollectorEmployeeId = Number(pending.sourceCollectorEmployeeId || 0);
+    const targetCollectorEmployeeId = Number(pending.targetCollectorEmployeeId || 0);
+    if (!sourceCollectorEmployeeId || !targetCollectorEmployeeId) {
+      closeSettleModal(state);
+      return;
+    }
+
+    const previousRows = Array.isArray(state.collectorRemittances) ? [...state.collectorRemittances] : [];
+
+    try {
+      await fetchJson(`/api/finances/collector-remittances/${sourceCollectorEmployeeId}/transfer`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          toCollectorEmployeeId: targetCollectorEmployeeId
+        })
+      });
+      closeSettleModal(state);
+      setFeedback('Manager transfer balance moved successfully.', 'success');
+
+      const reloads = [];
+      if (state.activeTab === 'cashflow' || state.cashflowLoaded) {
+        state.cashflowPage = 1;
+        reloads.push(loadCashflow(state));
+      }
+      if (state.activeTab === 'debts' || state.debtsLoaded) {
+        state.debtPage = 1;
+        state.debtCacheBust += 1;
+        reloads.push(loadDebts(state));
+      }
+      reloads.push(loadOverview(state));
+      await Promise.all(reloads);
+    } catch (error) {
+      state.collectorRemittances = previousRows;
+      renderCollectorRemittances(state);
+      console.error('collector remittance transfer error', error);
+      setFeedback(error.message || 'Failed to transfer manager balance.', 'error');
+      closeSettleModal(state);
+    }
+    return;
+  }
   const voyageIds = Array.isArray(pending?.voyageIds) ? pending.voyageIds : [];
   if (!voyageIds.length) {
     closeSettleModal(state);
@@ -2522,6 +2596,7 @@ async function init() {
     cashflowKpis: {},
     cashflowRows: [],
     collectorRemittances: [],
+    collectorManagerOptions: [],
     canSettleCollectorRemittances: false,
     cashflowVoyageOptions: [],
     cashflowVoyageLookup: new Map(),
@@ -2836,6 +2911,8 @@ init().catch((error) => {
   console.error('finances init error', error);
   setFeedback(`Failed to load finance module: ${error.message || 'Unknown error'}`, 'error');
 });
+
+
 
 
 

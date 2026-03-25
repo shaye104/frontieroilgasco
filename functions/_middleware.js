@@ -1,4 +1,4 @@
-import { readSessionFromRequest } from './api/auth/_lib/auth.js';
+﻿import { readSessionFromRequest } from './api/auth/_lib/auth.js';
 import { ensureCoreSchema, getEmployeeByDiscordUserId } from './api/_lib/db.js';
 import { isCoreAllowedApiPath, isCoreAllowedPagePath, isCoreOnly } from './api/_lib/app-mode.js';
 import { readSiteSettings, toAbsoluteUrl } from './api/_lib/site-settings.js';
@@ -253,17 +253,9 @@ function buildBrandMetaTags({ settings, requestUrl, title, description }) {
   const canonicalUrl = requestUrl.toString();
   const ogTitle = title || settings.ogTitle || FRONTIER_BRAND_NAME;
   const ogDescription = description || settings.ogDescription;
-  const defaultFaviconPath = '/assets/brand/favicon.svg?v=20260314c';
-  const configuredFaviconPath = String(settings?.faviconUrl || '').trim();
-  const configuredAppleTouchPath = String(settings?.appleTouchIconUrl || '').trim();
-  const faviconPath =
-    configuredFaviconPath && configuredFaviconPath !== '/assets/brand/favicon.svg' ? configuredFaviconPath : defaultFaviconPath;
-  const appleTouchPath =
-    configuredAppleTouchPath && configuredAppleTouchPath !== '/assets/brand/favicon.svg'
-      ? configuredAppleTouchPath
-      : faviconPath;
-  const faviconUrl = toAbsoluteUrl(requestUrl.origin, faviconPath);
-  const appleTouchIconUrl = toAbsoluteUrl(requestUrl.origin, appleTouchPath);
+  const forcedBrandIcon = '/assets/brand/favicon.svg?v=20260325fix';
+  const faviconUrl = toAbsoluteUrl(requestUrl.origin, forcedBrandIcon);
+  const appleTouchIconUrl = faviconUrl;
   const ogImageUrl = toAbsoluteUrl(requestUrl.origin, settings.ogImageUrl);
   const twitterCard = settings.twitterCard || 'summary_large_image';
   const themeColor = settings.themeColor || '#112d72';
@@ -288,9 +280,7 @@ function buildBrandMetaTags({ settings, requestUrl, title, description }) {
 }
 
 function buildHeaderBrandMark(settings) {
-  const defaultLogoPath = '/assets/brand/frontierlogo.svg?v=20260314c';
-  const configuredLogo = String(settings?.headerLogoUrl || '').trim();
-  const logoUrl = configuredLogo && configuredLogo !== '/assets/brand/frontierlogo.svg' ? configuredLogo : defaultLogoPath;
+  const logoUrl = '/assets/brand/frontierlogo.svg?v=20260325fix';
   return `<span class="brand-mark brand-mark-image" aria-hidden="true"><img src="${escapeHtml(logoUrl)}" alt="" loading="eager" decoding="async" /></span>`;
 }
 
@@ -673,4 +663,6 @@ export async function onRequest(context) {
     return context.next();
   }
 }
+
+
 

@@ -1,8 +1,8 @@
-const DEFAULT_SITE_SETTINGS = {
+﻿const DEFAULT_SITE_SETTINGS = {
   brandName: 'Frontier Oil & Gas Company',
   siteTagline: 'Internal Operations Portal',
   themeColor: '#3794ff',
-  headerLogoUrl: '',
+  headerLogoUrl: '/assets/brand/frontierlogo.svg',
   faviconUrl: '/assets/brand/favicon.svg',
   appleTouchIconUrl: '/assets/brand/favicon.svg',
   ogTitle: 'Frontier Oil & Gas Company',
@@ -156,3 +156,4 @@ export function toAbsoluteUrl(origin, value, fallback = '') {
     return normalized;
   }
 }
+

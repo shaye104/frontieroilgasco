@@ -1,4 +1,4 @@
-import { cachedJson, json } from '../../auth/_lib/auth.js';
+﻿import { cachedJson, json } from '../../auth/_lib/auth.js';
 import { getCashflowPeriodSnapshot, getCurrentCashBalance, normalizeCashflowCategory, normalizeCashflowReason, normalizeCashflowType, toOptionalInteger, toPositiveInteger } from '../../_lib/cashflow.js';
 import { getFinanceRangeWindow, normalizeTzOffsetMinutes, requireFinancePermission, toMoney, toUtcBoundaryFromLocalDateInput } from '../../_lib/finances.js';
 import { BOOKKEEPER_PERMISSION, hasPermission } from '../../_lib/permissions.js';
@@ -137,7 +137,7 @@ export async function onRequestGet(context) {
   const kpiFromIso = null;
   const kpiToIso = null;
 
-  const [balanceSnapshot, periodSnapshotBase, legacyPeriodSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult] = await Promise.all([
+  const [balanceSnapshot, periodSnapshotBase, legacyPeriodSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult, reimbursementSettledByResult] = await Promise.all([
     getCurrentCashBalance(env),
     getCashflowPeriodSnapshot(env, kpiFromIso, kpiToIso),
     getLegacySolvedCashflowTotals(env, kpiFromIso, kpiToIso, tzOffsetMinutes),
@@ -203,10 +203,39 @@ export async function onRequestGet(context) {
            SUM(r.amount) AS total_amount,
            MIN(r.created_at) AS first_collected_at
          FROM finance_collector_remittances r
+         INNER JOIN voyages v ON v.id = r.voyage_id
          LEFT JOIN employees e ON e.id = r.collector_employee_id
          WHERE COALESCE(r.status, 'PENDING') = 'PENDING'
+           AND v.deleted_at IS NULL
          GROUP BY r.collector_employee_id, e.roblox_username
          ORDER BY total_amount DESC, voyage_count DESC`
+      )
+      .all()
+    ,
+    env.DB
+      .prepare(
+        `SELECT
+           e.id,
+           e.roblox_username
+         FROM employees e
+         WHERE UPPER(COALESCE(e.rank, '')) = 'GENERAL MANAGER'
+         ORDER BY LOWER(COALESCE(e.roblox_username, '')) ASC, e.id ASC`
+      )
+      .all()
+    ,
+    env.DB
+      .prepare(
+        `SELECT
+           settled_by_employee_id,
+           SUM(amount) AS total_settled
+         FROM finance_reimbursement_settlements
+         WHERE voyage_id IN (
+           SELECT id
+           FROM voyages
+           WHERE deleted_at IS NULL
+         )
+           AND settled_by_employee_id IS NOT NULL
+         GROUP BY settled_by_employee_id`
       )
       .all()
   ]);
@@ -247,15 +276,41 @@ export async function onRequestGet(context) {
     id: Number(row.id || 0),
     label: buildVoyageLabel(row)
   }));
+  const reimbursementSettledBy = new Map(
+    (reimbursementSettledByResult?.results || [])
+      .map((row) => [Number(row.settled_by_employee_id || 0), Math.max(0, toMoney(row.total_settled || 0))])
+      .filter(([employeeId]) => Number.isInteger(employeeId) && employeeId > 0)
+  );
   const collectorRemittances = (collectorRemittancesResult?.results || [])
     .map((row) => ({
       collectorEmployeeId: Number(row.collector_employee_id || 0),
       collectorName: String(row.collector_name || '').trim() || `Employee #${Number(row.collector_employee_id || 0)}`,
       voyageCount: Number(row.voyage_count || 0),
-      totalAmount: Math.max(0, toMoney(row.total_amount || 0)),
+      totalAmount: Math.max(
+        0,
+        toMoney(Number(row.total_amount || 0) - Number(reimbursementSettledBy.get(Number(row.collector_employee_id || 0)) || 0))
+      ),
       firstCollectedAt: row.first_collected_at || null
     }))
     .filter((row) => row.collectorEmployeeId > 0 && row.totalAmount > 0);
+  const managerOptionsById = new Map(
+    (managerOptionsResult?.results || [])
+      .map((row) => ({
+        employeeId: Number(row.id || 0),
+        name: String(row.roblox_username || '').trim() || `Employee #${Number(row.id || 0)}`
+      }))
+      .filter((row) => row.employeeId > 0)
+      .map((row) => [row.employeeId, row])
+  );
+  collectorRemittances.forEach((row) => {
+    if (!managerOptionsById.has(Number(row.collectorEmployeeId || 0))) {
+      managerOptionsById.set(Number(row.collectorEmployeeId || 0), {
+        employeeId: Number(row.collectorEmployeeId || 0),
+        name: String(row.collectorName || '').trim() || `Employee #${Number(row.collectorEmployeeId || 0)}`
+      });
+    }
+  });
+  const managerOptions = [...managerOptionsById.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
 
   const total = Number(totalRow?.total || 0);
 
@@ -274,6 +329,7 @@ export async function onRequestGet(context) {
       rows,
       voyageOptions,
       collectorRemittances,
+      managerOptions,
       pagination: {
         page,
         pageSize,
@@ -389,3 +445,6 @@ export async function onRequestPost(context) {
     }
   });
 }
+
+
+
