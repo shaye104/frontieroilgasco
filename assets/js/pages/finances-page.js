@@ -1673,9 +1673,7 @@ function renderCollectorRemittances(state) {
                        )
                        .join('')}
                    </select>
-                   <div class="finance-transfer-buttons">
-                     <button type="button" class="btn btn-secondary btn-compact" data-transfer-collector-remittance="${sourceId}">Move</button>
-                   </div>
+                   <button type="button" class="btn btn-secondary btn-compact finance-transfer-move-btn" data-transfer-collector-remittance="${sourceId}">Move</button>
                  </div>`
               : '<span class="muted finance-transfer-note">No other managers available</span>'
             : '<span class="muted finance-transfer-note">Bookkeeper only</span>'
