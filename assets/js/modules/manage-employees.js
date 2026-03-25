@@ -294,7 +294,7 @@ function renderScanResults(target, rows = []) {
         <td>${escapeHtml(text(row.rank))}</td>
         <td><span class="badge badge-status ${statusClass(row.employeeStatus)}">${escapeHtml(text(row.employeeStatus))}</span></td>
         <td>
-          <strong>${escapeHtml(text(row.issueLabel))}</strong><br />
+          <strong>${escapeHtml(text(row.issueLabel))}</strong>${row.verificationOnly ? ' <span class="finance-inline-caption">(temporary verification failure)</span>' : ''}<br />
           ${checksMarkup}
         </td>
         <td class="align-right">
@@ -1201,7 +1201,7 @@ export async function initManageEmployees(config) {
             diagnostics?.robloxAuthMode || 'unknown'
           )}. Group: ${text(diagnostics?.robloxGroupId || 'unknown')}.${robloxFailureSamples ? ` Sample failures: ${robloxFailureSamples}.` : ''}`
         : '';
-      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing Roblox ID: ${Number(summary.missingRobloxId || 0)}. Missing required Roblox groups: ${Number(summary.missingRequiredGroups || 0)}. Discord lookup failures: ${Number(summary.discordLookupFailed || 0)}. Roblox lookup failures: ${Number(summary.robloxLookupFailed || 0)}.${required}${robloxErrorSummary}${robloxFailureSummary}`;
+      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Confirmed access issues: ${Number(summary.confirmedIssues || 0)}. Temporary verification failures: ${Number(summary.verificationFailures || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing Roblox ID: ${Number(summary.missingRobloxId || 0)}. Missing required Roblox groups: ${Number(summary.missingRequiredGroups || 0)}. Discord lookup failures: ${Number(summary.discordLookupFailed || 0)}. Roblox lookup failures: ${Number(summary.robloxLookupFailed || 0)}.${required}${robloxErrorSummary}${robloxFailureSummary}`;
       showMessage(scanFeedback, rows.length ? 'Scan completed. Review flagged employees below.' : 'Scan completed. No flagged employees found.', rows.length ? 'info' : 'success');
     } catch (error) {
       state.employeeScanRows = [];

@@ -266,6 +266,8 @@ async function fetchRobloxGroupName(groupId) {
 }
 
 function buildFlagRow(employee, issues, checks) {
+  const issueCodes = issues.map((issue) => issue.code);
+  const verificationOnly = issueCodes.length > 0 && issueCodes.every((code) => code.endsWith('_LOOKUP_FAILED'));
   return {
     employeeId: Number(employee.id || 0),
     discordUserId: text(employee.discord_user_id),
@@ -273,9 +275,10 @@ function buildFlagRow(employee, issues, checks) {
     robloxUserId: text(employee.roblox_user_id),
     rank: text(employee.rank),
     employeeStatus: text(employee.employee_status || employee.activation_status),
-    issueCode: issues.map((issue) => issue.code).join(','),
+    issueCode: issueCodes.join(','),
     issueLabel: issues.map((issue) => issue.label).join(', '),
     issueDetail: issues.map((issue) => issue.detail).join(' | '),
+    verificationOnly,
     checks
   };
 }
@@ -365,6 +368,8 @@ export async function onRequestPost(context) {
   let missingRequiredGroups = 0;
   let discordLookupFailed = 0;
   let robloxLookupFailed = 0;
+  let confirmedIssues = 0;
+  let verificationFailures = 0;
   const robloxErrorCounts = new Map();
   const robloxLookupFailedEmployees = [];
   const discordLookupFailedEmployees = [];
@@ -550,7 +555,12 @@ export async function onRequestPost(context) {
       }
     }
 
-    if (issues.length) flagged.push(buildFlagRow(employee, issues, checks));
+    if (issues.length) {
+      const row = buildFlagRow(employee, issues, checks);
+      if (row.verificationOnly) verificationFailures += 1;
+      else confirmedIssues += 1;
+      flagged.push(row);
+    }
   }
 
   await writeAdminActivityEvent(env, {
@@ -563,6 +573,8 @@ export async function onRequestPost(context) {
     metadata: {
       total: employees.length,
       flagged: flagged.length,
+      confirmedIssues,
+      verificationFailures,
       missingDiscordId,
       missingGuild,
       missingRobloxId,
@@ -590,6 +602,8 @@ export async function onRequestPost(context) {
     summary: {
       total: employees.length,
       flagged: flagged.length,
+      confirmedIssues,
+      verificationFailures,
       missingDiscordId,
       missingGuild,
       missingRobloxId,
