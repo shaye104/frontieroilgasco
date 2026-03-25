@@ -27,7 +27,7 @@ function toMoney(value) {
 }
 
 function formatMoney(value) {
-  return `ƒ ${toMoney(value).toLocaleString()}`;
+  return `\u0192 ${toMoney(value).toLocaleString()}`;
 }
 
 function formatWhen(value) {
@@ -581,11 +581,21 @@ export async function initVoyageDetails(config) {
       setInlineMessage(toteFeedback, '');
 
       const lostFingerprints = new Map();
+      const baseSellByFingerprint = new Map();
       editableTotes.forEach((row) => {
         const toteId = Number(row.toteId || 0);
         const lostQty = toteId > 0 ? Math.max(0, toInt(lostQtyByToteId.get(toteId))) : 0;
-        if (toteId <= 0 || lostQty <= 0) return;
         const key = toteFingerprint(row);
+        const baseSellKey = settlementRowKey(row);
+        const configuredBaseSell = settlementBaseSellByKey.has(baseSellKey)
+          ? Math.max(0, Number(settlementBaseSellByKey.get(baseSellKey)) || 0)
+          : null;
+        if (configuredBaseSell !== null) {
+          const priceEntries = Array.isArray(baseSellByFingerprint.get(key)) ? baseSellByFingerprint.get(key) : [];
+          priceEntries.push(configuredBaseSell);
+          baseSellByFingerprint.set(key, priceEntries);
+        }
+        if (toteId <= 0 || lostQty <= 0) return;
         const entries = Array.isArray(lostFingerprints.get(key)) ? lostFingerprints.get(key) : [];
         entries.push(lostQty);
         lostFingerprints.set(key, entries);
@@ -619,6 +629,17 @@ export async function initVoyageDetails(config) {
         } else {
           lostQtyByToteId = new Map();
         }
+
+        const remappedBaseSellByKey = new Map();
+        editableTotes.forEach((row, idx) => {
+          const key = toteFingerprint(row);
+          const queue = Array.isArray(baseSellByFingerprint.get(key)) ? baseSellByFingerprint.get(key) : [];
+          if (!queue.length) return;
+          const configuredBaseSell = Math.max(0, Number(queue.shift()) || 0);
+          remappedBaseSellByKey.set(settlementRowKey(row, idx), configuredBaseSell);
+          baseSellByFingerprint.set(key, queue);
+        });
+        settlementBaseSellByKey = remappedBaseSellByKey;
 
         renderToteRows();
         renderEndPreview();
