@@ -55,6 +55,7 @@ function applyForm(settings) {
   setValue('#settingsOgImageUrl', settings.ogImageUrl);
   setValue('#settingsNotificationSoundStandardUrl', settings.notificationSoundStandardUrl);
   setValue('#settingsNotificationSoundUrgentUrl', settings.notificationSoundUrgentUrl);
+  setValue('#settingsRequiredDiscordRoleIds', settings.requiredDiscordRoleIds);
 }
 
 function collectForm() {
@@ -70,7 +71,8 @@ function collectForm() {
     ogDescription: readValue('#settingsOgDescription'),
     ogImageUrl: readValue('#settingsOgImageUrl'),
     notificationSoundStandardUrl: readValue('#settingsNotificationSoundStandardUrl'),
-    notificationSoundUrgentUrl: readValue('#settingsNotificationSoundUrgentUrl')
+    notificationSoundUrgentUrl: readValue('#settingsNotificationSoundUrgentUrl'),
+    requiredDiscordRoleIds: readValue('#settingsRequiredDiscordRoleIds')
   };
 }
 
@@ -92,6 +94,7 @@ function updatePreview(settings) {
   if (soundStandard) soundStandard.textContent = settings.notificationSoundStandardUrl || '-';
   if (soundUrgent) soundUrgent.textContent = settings.notificationSoundUrgentUrl || '-';
 }
+
 
 function wireAudioUpload(uploadSelector, targetSelector) {
   const uploadInput = document.querySelector(uploadSelector);

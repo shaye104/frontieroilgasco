@@ -14,7 +14,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260325125832" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260325131114" />
   </head>
   <body class="page page-intranet">
     <header class="site-header">
@@ -94,6 +94,11 @@
               <label for="settingsNotificationSoundUrgentUrl">Notification Sound (Urgent) URL</label>
               <input id="settingsNotificationSoundUrgentUrl" name="notificationSoundUrgentUrl" type="text" placeholder="https://..." />
               <input id="settingsNotificationSoundUrgentUpload" type="file" accept="audio/*" />
+            </div>
+            <div class="finance-cashflow-entry-wide">
+              <label for="settingsRequiredDiscordRoleIds">Required Discord Group IDs</label>
+              <textarea id="settingsRequiredDiscordRoleIds" name="requiredDiscordRoleIds" rows="3" placeholder="One or more Discord role IDs, separated by commas or new lines"></textarea>
+              <p class="finance-inline-caption">Employees will be flagged by Run Scan if they are no longer in the Discord server or they do not have at least one of these role IDs.</p>
             </div>
             <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
               <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
@@ -219,7 +224,7 @@
         </section>
       </div>
     </main>
-    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260325125832"></script>
+    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260325131114"></script>
   </body>
 </html>
 

@@ -16,7 +16,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260325125832" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260325131114" />
   </head>
   <body class="page page-intranet page-manage-employees">
     <header class="site-header">
@@ -39,6 +39,7 @@
           <div class="admin-employees-header-actions">
             <div class="button-row admin-employees-header-actions-secondary">
               <a class="btn btn-secondary" href="/admin/activity">Activity Tracker</a>
+              <button id="runEmployeeScanBtn" class="btn btn-secondary" type="button">Run Scan</button>
               <button id="openJoinRequestsBtn" class="btn btn-secondary" type="button">Join Requests</button>
             </div>
             <div class="button-row admin-employees-header-actions-primary">
@@ -110,6 +111,35 @@
                 <label for="filterHireDateTo">Hire Date To</label>
                 <input id="filterHireDateTo" type="date" />
               </div>
+            </div>
+          </article>
+
+          <article id="employeeScanPanel" class="panel hidden">
+            <div class="admin-employees-table-header">
+              <h2>Scan Results</h2>
+              <div class="admin-employees-table-actions">
+                <button id="rerunEmployeeScanBtn" type="button" class="btn btn-secondary">Run Again</button>
+              </div>
+            </div>
+            <div id="employeeScanFeedback" class="feedback" role="status" aria-live="polite"></div>
+            <p id="employeeScanSummary" class="finance-inline-caption">No scan run yet.</p>
+            <div class="table-wrap">
+              <table class="data-table admin-employees-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Roblox Username</th>
+                    <th>Roblox User ID</th>
+                    <th>Rank</th>
+                    <th>Status</th>
+                    <th>Issue</th>
+                    <th class="align-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="employeeScanTableBody">
+                  <tr><td colspan="7">No issues found.</td></tr>
+                </tbody>
+              </table>
             </div>
           </article>
 
@@ -394,7 +424,7 @@
       </div>
     </section>
 
-    <script type="module" src="/assets/dist/js/manage-employees-page.bundle.js?v=20260325125832"></script>
+    <script type="module" src="/assets/dist/js/manage-employees-page.bundle.js?v=20260325131114"></script>
   </body>
 </html>
 

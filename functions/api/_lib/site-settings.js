@@ -10,7 +10,8 @@
   ogImageUrl: '/assets/brand/og-default.svg',
   twitterCard: 'summary_large_image',
   notificationSoundStandardUrl: '/MorseAlert.mp3',
-  notificationSoundUrgentUrl: '/MorseAlert.mp3'
+  notificationSoundUrgentUrl: '/MorseAlert.mp3',
+  requiredDiscordRoleIds: ''
 };
 
 let settingsCache = null;
@@ -41,6 +42,13 @@ function normalizeOptionalUrlValue(value) {
   if (normalized.startsWith('/')) return normalized;
   if (/^https?:\/\//i.test(normalized)) return normalized;
   return '';
+}
+
+function normalizeDiscordRoleIdsSetting(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const ids = [...new Set(raw.split(/[\s,;]+/).map((part) => String(part || '').trim()).filter((part) => /^\d{6,30}$/.test(part)))];
+  return ids.join(', ');
 }
 
 export function getDefaultSiteSettings() {
@@ -89,7 +97,8 @@ export async function readSiteSettings(env, { bypassCache = false } = {}) {
       map.notificationSoundStandardUrl,
       DEFAULT_SITE_SETTINGS.notificationSoundStandardUrl
     ),
-    notificationSoundUrgentUrl: normalizeUrlValue(map.notificationSoundUrgentUrl, DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl)
+    notificationSoundUrgentUrl: normalizeUrlValue(map.notificationSoundUrgentUrl, DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl),
+    requiredDiscordRoleIds: normalizeDiscordRoleIdsSetting(map.requiredDiscordRoleIds)
   };
 
   settingsCache = { ...next };
@@ -122,7 +131,8 @@ export async function writeSiteSettings(env, updates, updatedBy = '') {
     notificationSoundUrgentUrl: normalizeUrlValue(
       merged.notificationSoundUrgentUrl,
       DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl
-    )
+    ),
+    requiredDiscordRoleIds: normalizeDiscordRoleIdsSetting(merged.requiredDiscordRoleIds)
   };
 
   const entries = Object.entries(normalized);

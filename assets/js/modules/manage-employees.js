@@ -14,6 +14,7 @@ import {
   declineRobloxGroupJoinRequest,
   listEmployees,
   purgeUserByDiscord,
+  runEmployeeComplianceScan,
   updateDisciplinary,
   updateEmployee
 } from './admin-api.js';
@@ -265,6 +266,33 @@ function renderTable(target, employees, visibleColumns) {
     const col = String(cell.getAttribute('data-col') || '');
     if (col && !visibleColumns.has(col)) cell.classList.add('hidden');
   });
+}
+
+function renderScanResults(target, rows = []) {
+  if (!target) return;
+  const safeRows = Array.isArray(rows) ? rows : [];
+  if (!safeRows.length) {
+    target.innerHTML = '<tr><td colspan="7">No flagged employees found.</td></tr>';
+    return;
+  }
+
+  target.innerHTML = safeRows
+    .map((row) => `
+      <tr>
+        <td>${Number(row.employeeId || 0)}</td>
+        <td>${escapeHtml(text(row.robloxUsername))}</td>
+        <td>${escapeHtml(text(row.robloxUserId))}</td>
+        <td>${escapeHtml(text(row.rank))}</td>
+        <td><span class="badge badge-status ${statusClass(row.employeeStatus)}">${escapeHtml(text(row.employeeStatus))}</span></td>
+        <td>
+          <strong>${escapeHtml(text(row.issueLabel))}</strong><br />
+          <small>${escapeHtml(text(row.issueDetail))}</small>
+        </td>
+        <td class="align-right">
+          <button type="button" class="btn btn-secondary btn-compact" data-open-scan-drawer="${Number(row.employeeId || 0)}">Open Drawer</button>
+        </td>
+      </tr>`)
+    .join('');
 }
 
 function renderDrawerUserGroupsSection(payload, options = {}) {
@@ -861,6 +889,12 @@ export async function initManageEmployees(config) {
   const clearFiltersBtn = document.querySelector(config.clearFiltersBtnSelector);
   const toggleMoreFiltersBtn = document.querySelector(config.toggleMoreFiltersBtnSelector);
   const moreFiltersPanel = document.querySelector(config.moreFiltersPanelSelector);
+  const runScanBtn = document.querySelector(config.runScanBtnSelector);
+  const rerunScanBtn = document.querySelector(config.rerunScanBtnSelector);
+  const scanPanel = document.querySelector(config.scanPanelSelector);
+  const scanFeedback = document.querySelector(config.scanFeedbackSelector);
+  const scanSummary = document.querySelector(config.scanSummarySelector);
+  const scanTableBody = document.querySelector(config.scanTableBodySelector);
 
   const paginationInfo = document.querySelector(config.paginationInfoSelector);
   const prevPageBtn = document.querySelector(config.prevPageBtnSelector);
@@ -913,7 +947,9 @@ export async function initManageEmployees(config) {
       statuses: []
     },
     joinRequests: [],
-    joinRequestsLoading: false
+    joinRequestsLoading: false,
+    employeeScanRows: [],
+    employeeScanLoading: false
   };
   const drawerCache = new Map();
   let debounceTimer = null;
@@ -1114,6 +1150,38 @@ export async function initManageEmployees(config) {
     }
   }
 
+  async function runScan() {
+    if (!scanTableBody || !scanSummary) return;
+    state.employeeScanLoading = true;
+    scanPanel?.classList.remove('hidden');
+    if (runScanBtn) runScanBtn.disabled = true;
+    if (rerunScanBtn) rerunScanBtn.disabled = true;
+    clearMessage(scanFeedback);
+    scanSummary.textContent = 'Running Discord compliance scan...';
+    scanTableBody.innerHTML = '<tr><td colspan="7">Running scan...</td></tr>';
+    try {
+      const payload = await runEmployeeComplianceScan();
+      const summary = payload?.summary || {};
+      const rows = Array.isArray(payload?.flaggedEmployees) ? payload.flaggedEmployees : [];
+      state.employeeScanRows = rows;
+      renderScanResults(scanTableBody, rows);
+      const required = Array.isArray(payload?.requiredRoleIds) && payload.requiredRoleIds.length
+        ? ` Required Discord group IDs: ${payload.requiredRoleIds.join(', ')}.`
+        : '';
+      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing required groups: ${Number(summary.missingRequiredRoles || 0)}. Lookup failures: ${Number(summary.lookupFailed || 0)}.${required}`;
+      showMessage(scanFeedback, rows.length ? 'Scan completed. Review flagged employees below.' : 'Scan completed. No flagged employees found.', rows.length ? 'info' : 'success');
+    } catch (error) {
+      state.employeeScanRows = [];
+      scanTableBody.innerHTML = '<tr><td colspan="7">Unable to run scan.</td></tr>';
+      scanSummary.textContent = 'Scan failed.';
+      showMessage(scanFeedback, error.message || 'Unable to run employee scan.', 'error');
+    } finally {
+      state.employeeScanLoading = false;
+      if (runScanBtn) runScanBtn.disabled = false;
+      if (rerunScanBtn) rerunScanBtn.disabled = false;
+    }
+  }
+
   async function refreshConfig() {
     if (state.configBootstrapped) return;
     let statusesItems = [];
@@ -1270,6 +1338,12 @@ export async function initManageEmployees(config) {
   }
 
   openCreateEmployeeBtn?.addEventListener('click', () => openModal('createEmployeeModal'));
+  runScanBtn?.addEventListener('click', () => {
+    void runScan();
+  });
+  rerunScanBtn?.addEventListener('click', () => {
+    void runScan();
+  });
   openJoinRequestsBtn?.addEventListener('click', async () => {
     openModal('joinRequestsModal');
     await loadJoinRequests();
@@ -1601,6 +1675,13 @@ export async function initManageEmployees(config) {
     if (!row) return;
     const employeeId = Number(row.getAttribute('data-employee-id'));
     if (Number.isInteger(employeeId) && employeeId > 0) openDrawer(employeeId);
+  });
+
+  scanTableBody?.addEventListener('click', (event) => {
+    const button = event.target instanceof HTMLElement ? event.target.closest('[data-open-scan-drawer]') : null;
+    if (!button) return;
+    const employeeId = Number(button.getAttribute('data-open-scan-drawer'));
+    if (Number.isInteger(employeeId) && employeeId > 0) void openDrawer(employeeId);
   });
 
   const scheduleReload = () => {

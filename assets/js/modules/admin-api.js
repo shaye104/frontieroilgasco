@@ -352,6 +352,13 @@ export function saveSiteSettings(payload) {
   });
 }
 
+export function runEmployeeComplianceScan() {
+  return requestJson('/api/admin/employees/scan', {
+    method: 'POST',
+    timeoutMs: 30000
+  });
+}
+
 export function listEmployees(options = {}) {
   const params = new URLSearchParams();
   if (options.page) params.set('page', String(options.page));

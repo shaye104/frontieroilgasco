@@ -15,7 +15,7 @@ export async function fetchGuildMemberRoleIds(env, discordUserId) {
   const userId = normalizeDiscordUserId(discordUserId);
 
   if (!guildId || !botToken || !userId) {
-    return { ok: false, roleIds: [], error: 'Discord guild/bot configuration is missing.' };
+    return { ok: false, inGuild: false, status: 0, roleIds: [], error: 'Discord guild/bot configuration is missing.' };
   }
 
   const response = await fetch(
@@ -23,12 +23,21 @@ export async function fetchGuildMemberRoleIds(env, discordUserId) {
     { headers: { Authorization: `Bot ${botToken}` } }
   );
   if (!response.ok) {
+    if (response.status === 404) {
+      return { ok: false, inGuild: false, status: 404, roleIds: [], error: 'User is not in the configured Discord guild.' };
+    }
     const errorText = text(await response.text().catch(() => ''));
-    return { ok: false, roleIds: [], error: `Discord role lookup failed (${response.status}). ${errorText.slice(0, 120)}`.trim() };
+    return {
+      ok: false,
+      inGuild: false,
+      status: response.status,
+      roleIds: [],
+      error: `Discord role lookup failed (${response.status}). ${errorText.slice(0, 120)}`.trim()
+    };
   }
 
   const payload = await response.json().catch(() => null);
   const roleIds = Array.isArray(payload?.roles) ? payload.roles.map((roleId) => text(roleId)).filter(Boolean) : [];
-  return { ok: true, roleIds };
+  return { ok: true, inGuild: true, status: response.status, roleIds };
 }
 
