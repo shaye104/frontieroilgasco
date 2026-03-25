@@ -125,11 +125,8 @@ export async function onRequestGet(context) {
   const [result, totalRow, statsRow, configBootstrap] = await Promise.all([
     env.DB
       .prepare(
-        `SELECT e.id, e.discord_user_id, e.discord_display_name, e.roblox_username, e.roblox_user_id, e.rank, e.employee_status, e.activation_status, e.hire_date, e.updated_at,
-                COALESCE(ces.restrict_intranet, 0) AS status_restrict_intranet,
-                COALESCE(ces.exclude_from_stats, 0) AS status_exclude_from_stats
+        `SELECT e.id, e.discord_user_id, e.discord_display_name, e.roblox_username, e.roblox_user_id, e.rank, e.employee_status, e.activation_status, e.hire_date, e.updated_at
          FROM employees e
-         LEFT JOIN config_employee_statuses ces ON LOWER(COALESCE(ces.value, '')) = LOWER(COALESCE(e.employee_status, ''))
          ${rankJoinSql}
          ${whereSql}
          ORDER BY ${sortBySql} ${sortDir}, e.id DESC
@@ -141,13 +138,12 @@ export async function onRequestGet(context) {
     env.DB
       .prepare(
         `SELECT
-           SUM(CASE WHEN COALESCE(ces.exclude_from_stats, 0) = 0 THEN 1 ELSE 0 END) AS total_employees,
-           SUM(CASE WHEN COALESCE(ces.exclude_from_stats, 0) = 0 AND UPPER(COALESCE(e.employee_status, '')) IN ('ACTIVE', 'ON LEAVE') THEN 1 ELSE 0 END) AS active_employees,
-           SUM(CASE WHEN COALESCE(ces.exclude_from_stats, 0) = 0 AND UPPER(COALESCE(e.employee_status, '')) IN ('SUSPENDED', 'DEACTIVATED') THEN 1 ELSE 0 END) AS inactive_employees,
-           SUM(CASE WHEN COALESCE(ces.exclude_from_stats, 0) = 0 AND DATE(COALESCE(e.hire_date, '')) >= DATE('now', '-30 day') THEN 1 ELSE 0 END) AS new_hires_30d,
-           SUM(CASE WHEN COALESCE(ces.exclude_from_stats, 0) = 0 AND UPPER(COALESCE(e.employee_status, '')) = 'DEACTIVATED' THEN 1 ELSE 0 END) AS pending_activation
+           COUNT(*) AS total_employees,
+           SUM(CASE WHEN UPPER(COALESCE(employee_status, '')) IN ('ACTIVE', 'ON LEAVE') THEN 1 ELSE 0 END) AS active_employees,
+           SUM(CASE WHEN UPPER(COALESCE(employee_status, '')) IN ('SUSPENDED', 'DEACTIVATED') THEN 1 ELSE 0 END) AS inactive_employees,
+           SUM(CASE WHEN DATE(COALESCE(hire_date, '')) >= DATE('now', '-30 day') THEN 1 ELSE 0 END) AS new_hires_30d,
+           SUM(CASE WHEN UPPER(COALESCE(employee_status, '')) = 'DEACTIVATED' THEN 1 ELSE 0 END) AS pending_activation
          FROM employees e
-         LEFT JOIN config_employee_statuses ces ON LOWER(COALESCE(ces.value, '')) = LOWER(COALESCE(e.employee_status, ''))
          ${rankJoinSql}
          ${visibilityWhereParts.length ? `WHERE ${visibilityWhereParts.join(' AND ')}` : ''}`
       )
@@ -155,7 +151,7 @@ export async function onRequestGet(context) {
       .first(),
     includeConfig
       ? Promise.all([
-          env.DB.prepare('SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC').all(),
+          env.DB.prepare('SELECT id, value, created_at FROM config_employee_statuses ORDER BY value ASC').all(),
           env.DB
             .prepare('SELECT id, value, level, description, updated_at, created_at FROM config_ranks ORDER BY level DESC, value ASC, id ASC')
             .all()

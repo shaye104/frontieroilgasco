@@ -11,9 +11,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260325194944" />
+    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260325193331" />
   </head>
-  <body class="page page-intranet page-site-settings">
+  <body class="page page-intranet">
     <header class="site-header">
       <div class="container header-row">
         <a class="brand" href="/">
@@ -40,7 +40,7 @@
         <section id="siteSettingsContent" class="panel hidden">
           <form id="siteSettingsForm" class="finance-cashflow-entry-form">
             <div class="finance-cashflow-entry-wide">
-              <div class="admin-employees-table-header site-settings-section-head">
+              <div class="admin-employees-table-header">
                 <div>
                   <label>Required Roblox Groups</label>
                   <p class="finance-inline-caption">Add each group with its Roblox ID and the short label you want to appear as a scan column.</p>
@@ -71,124 +71,114 @@
             </div>
           </form>
         </section>
-        <div class="site-settings-admin-grid">
-          <section id="statusConfigSection" class="panel hidden site-settings-admin-card">
-            <div class="admin-employees-table-header site-settings-section-head">
-              <div>
-                <h2>Employee Statuses</h2>
-                <p class="finance-inline-caption">Define status values and how they affect access and reporting.</p>
-              </div>
+
+        <section id="disciplinaryConfigSection" class="panel hidden">
+          <div class="admin-employees-table-header">
+            <div>
+              <h2>Disciplinary Types</h2>
+              <p class="finance-inline-caption">Manage the disciplinary types used in employee records and suspension logic.</p>
             </div>
+          </div>
 
-            <form id="statusConfigForm" class="site-settings-compact-form">
-              <div class="site-settings-compact-main">
-                <div>
-                  <label for="statusConfigValue">Status Value</label>
-                  <input id="statusConfigValue" name="value" type="text" placeholder="Active" required />
-                </div>
-              </div>
-              <div class="site-settings-toggle-grid site-settings-toggle-grid-compact">
-                <label><input id="statusConfigRestrictIntranet" name="restrictIntranet" type="checkbox" /> Remove Intranet Access</label>
-                <label><input id="statusConfigExcludeFromStats" name="excludeFromStats" type="checkbox" /> No Longer Employee / Exclude From Stats</label>
-              </div>
-              <div class="finance-cashflow-entry-actions site-settings-compact-actions">
-                <button id="statusConfigSaveBtn" class="btn btn-primary" type="submit">Add Status</button>
-              </div>
-            </form>
-
-            <div id="statusConfigFeedback" class="feedback" role="status" aria-live="polite"></div>
-
-            <div class="table-wrap">
-              <table class="data-table employee-scan-table">
-                <thead>
-                  <tr>
-                    <th>Status</th>
-                    <th>Behavior</th>
-                    <th class="align-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="statusConfigTableBody">
-                  <tr><td colspan="3">Loading...</td></tr>
-                </tbody>
-              </table>
+          <form id="disciplinaryTypeForm" class="finance-cashflow-entry-form">
+            <div>
+              <label for="disciplinaryTypeKey">Key</label>
+              <input id="disciplinaryTypeKey" name="key" type="text" placeholder="WARNING" required />
             </div>
-          </section>
-
-          <section id="disciplinaryConfigSection" class="panel hidden site-settings-admin-card">
-            <div class="admin-employees-table-header site-settings-section-head">
-              <div>
-                <h2>Disciplinary Types</h2>
-                <p class="finance-inline-caption">Manage the disciplinary types used in employee records and suspension logic.</p>
-              </div>
+            <div>
+              <label for="disciplinaryTypeLabel">Label</label>
+              <input id="disciplinaryTypeLabel" name="label" type="text" placeholder="Warning" required />
             </div>
-
-            <form id="disciplinaryTypeForm" class="site-settings-compact-form">
-              <div class="site-settings-compact-grid">
-                <div>
-                  <label for="disciplinaryTypeKey">Key</label>
-                  <input id="disciplinaryTypeKey" name="key" type="text" placeholder="WARNING" required />
-                </div>
-                <div>
-                  <label for="disciplinaryTypeLabel">Label</label>
-                  <input id="disciplinaryTypeLabel" name="label" type="text" placeholder="Warning" required />
-                </div>
-                <div>
-                  <label for="disciplinaryTypeSeverity">Severity</label>
-                  <input id="disciplinaryTypeSeverity" name="severity" type="number" min="1" step="1" value="1" />
-                </div>
-                <div>
-                  <label for="disciplinaryTypeDefaultStatus">Default Status</label>
-                  <select id="disciplinaryTypeDefaultStatus" name="defaultStatus">
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="OPEN">OPEN</option>
-                    <option value="CLOSED">CLOSED</option>
-                    <option value="REVOKED">REVOKED</option>
-                    <option value="EXPIRED">EXPIRED</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="disciplinaryTypeDuration">Default Duration Days</label>
-                  <input id="disciplinaryTypeDuration" name="defaultDurationDays" type="number" min="1" step="1" placeholder="Optional" />
-                </div>
-                <div>
-                  <label for="disciplinaryTypeSetStatus">Employee Status Override</label>
-                  <input id="disciplinaryTypeSetStatus" name="setEmployeeStatus" type="text" placeholder="Optional, e.g. Suspended" />
-                </div>
-              </div>
-              <div class="site-settings-toggle-grid">
-                <label><input id="disciplinaryTypeActive" name="isActive" type="checkbox" checked /> Active</label>
-                <label><input id="disciplinaryTypeRequiresEnd" name="requiresEndDate" type="checkbox" /> Requires End Date</label>
-                <label><input id="disciplinaryTypeSuspension" name="applySuspensionRank" type="checkbox" /> Apply Suspension Rank</label>
-                <label><input id="disciplinaryTypeRestrictIntranet" name="restrictIntranet" type="checkbox" /> Restrict Intranet</label>
-                <label><input id="disciplinaryTypeRestrictVoyages" name="restrictVoyages" type="checkbox" /> Restrict Voyages</label>
-                <label><input id="disciplinaryTypeRestrictFinance" name="restrictFinance" type="checkbox" /> Restrict Finance</label>
-              </div>
-              <div class="finance-cashflow-entry-actions site-settings-compact-actions">
-                <button id="disciplinaryTypeSaveBtn" class="btn btn-primary" type="submit">Add Type</button>
-              </div>
-            </form>
-
-            <div id="disciplinaryTypesFeedback" class="feedback" role="status" aria-live="polite"></div>
-
-            <div class="table-wrap">
-              <table class="data-table employee-scan-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Rules</th>
-                    <th>Restrictions</th>
-                    <th class="align-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="disciplinaryTypesTableBody">
-                  <tr><td colspan="4">Loading...</td></tr>
-                </tbody>
-              </table>
+            <div>
+              <label for="disciplinaryTypeSeverity">Severity</label>
+              <input id="disciplinaryTypeSeverity" name="severity" type="number" min="1" step="1" value="1" />
             </div>
-          </section>
-        </div>
+            <div>
+              <label for="disciplinaryTypeDefaultStatus">Default Status</label>
+              <select id="disciplinaryTypeDefaultStatus" name="defaultStatus">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="OPEN">OPEN</option>
+                <option value="CLOSED">CLOSED</option>
+                <option value="REVOKED">REVOKED</option>
+                <option value="EXPIRED">EXPIRED</option>
+              </select>
+            </div>
+            <div>
+              <label for="disciplinaryTypeDuration">Default Duration Days</label>
+              <input id="disciplinaryTypeDuration" name="defaultDurationDays" type="number" min="1" step="1" placeholder="Optional" />
+            </div>
+            <div>
+              <label for="disciplinaryTypeSetStatus">Employee Status Override</label>
+              <input id="disciplinaryTypeSetStatus" name="setEmployeeStatus" type="text" placeholder="Optional, e.g. Suspended" />
+            </div>
+            <div class="finance-cashflow-entry-wide site-settings-toggle-grid">
+              <label><input id="disciplinaryTypeActive" name="isActive" type="checkbox" checked /> Active</label>
+              <label><input id="disciplinaryTypeRequiresEnd" name="requiresEndDate" type="checkbox" /> Requires End Date</label>
+              <label><input id="disciplinaryTypeSuspension" name="applySuspensionRank" type="checkbox" /> Apply Suspension Rank</label>
+              <label><input id="disciplinaryTypeRestrictIntranet" name="restrictIntranet" type="checkbox" /> Restrict Intranet</label>
+              <label><input id="disciplinaryTypeRestrictVoyages" name="restrictVoyages" type="checkbox" /> Restrict Voyages</label>
+              <label><input id="disciplinaryTypeRestrictFinance" name="restrictFinance" type="checkbox" /> Restrict Finance</label>
+            </div>
+            <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+              <button id="disciplinaryTypeSaveBtn" class="btn btn-primary" type="submit">Add Type</button>
+            </div>
+          </form>
+
+          <div id="disciplinaryTypesFeedback" class="feedback" role="status" aria-live="polite"></div>
+
+          <div class="table-wrap">
+            <table class="data-table employee-scan-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Rules</th>
+                  <th>Restrictions</th>
+                  <th class="align-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="disciplinaryTypesTableBody">
+                <tr><td colspan="4">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="statusConfigSection" class="panel hidden">
+          <div class="admin-employees-table-header">
+            <div>
+              <h2>Employee Statuses</h2>
+              <p class="finance-inline-caption">Manage the selectable employee status values used across the employee admin flows.</p>
+            </div>
+          </div>
+
+          <form id="statusConfigForm" class="finance-cashflow-entry-form">
+            <div class="finance-cashflow-entry-wide">
+              <label for="statusConfigValue">Status Value</label>
+              <input id="statusConfigValue" name="value" type="text" placeholder="Active" required />
+            </div>
+            <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
+              <button id="statusConfigSaveBtn" class="btn btn-primary" type="submit">Add Status</button>
+            </div>
+          </form>
+
+          <div id="statusConfigFeedback" class="feedback" role="status" aria-live="polite"></div>
+
+          <div class="table-wrap">
+            <table class="data-table employee-scan-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th class="align-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="statusConfigTableBody">
+                <tr><td colspan="2">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </main>
-    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260325223500"></script>
+    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260325220500"></script>
   </body>
 </html>
