@@ -277,7 +277,16 @@ function renderScanResults(target, rows = []) {
   }
 
   target.innerHTML = safeRows
-    .map((row) => `
+    .map((row) => {
+      const checks = Array.isArray(row.checks) ? row.checks : [];
+      const checksMarkup = checks.length
+        ? `<ul class="role-list">${checks
+            .map(
+              (check) => `<li class="role-item"><div><strong>${check.ok ? '&#10003;' : '&#10007;'}</strong> ${escapeHtml(text(check.label))}<p class="finance-inline-caption">${escapeHtml(text(check.detail))}</p></div></li>`
+            )
+            .join('')}</ul>`
+        : `<small>${escapeHtml(text(row.issueDetail))}</small>`;
+      return `
       <tr>
         <td>${Number(row.employeeId || 0)}</td>
         <td>${escapeHtml(text(row.robloxUsername))}</td>
@@ -286,12 +295,13 @@ function renderScanResults(target, rows = []) {
         <td><span class="badge badge-status ${statusClass(row.employeeStatus)}">${escapeHtml(text(row.employeeStatus))}</span></td>
         <td>
           <strong>${escapeHtml(text(row.issueLabel))}</strong><br />
-          <small>${escapeHtml(text(row.issueDetail))}</small>
+          ${checksMarkup}
         </td>
         <td class="align-right">
           <button type="button" class="btn btn-secondary btn-compact" data-open-scan-drawer="${Number(row.employeeId || 0)}">Open Drawer</button>
         </td>
-      </tr>`)
+      </tr>`;
+    })
     .join('');
 }
 
@@ -1157,7 +1167,7 @@ export async function initManageEmployees(config) {
     if (runScanBtn) runScanBtn.disabled = true;
     if (rerunScanBtn) rerunScanBtn.disabled = true;
     clearMessage(scanFeedback);
-    scanSummary.textContent = 'Running Discord compliance scan...';
+    scanSummary.textContent = 'Running access scan...';
     scanTableBody.innerHTML = '<tr><td colspan="7">Running scan...</td></tr>';
     try {
       const payload = await runEmployeeComplianceScan();
@@ -1165,10 +1175,10 @@ export async function initManageEmployees(config) {
       const rows = Array.isArray(payload?.flaggedEmployees) ? payload.flaggedEmployees : [];
       state.employeeScanRows = rows;
       renderScanResults(scanTableBody, rows);
-      const required = Array.isArray(payload?.requiredRoleIds) && payload.requiredRoleIds.length
-        ? ` Required Discord group IDs: ${payload.requiredRoleIds.join(', ')}.`
+      const required = Array.isArray(payload?.requiredGroupIds) && payload.requiredGroupIds.length
+        ? ` Required Roblox group IDs: ${payload.requiredGroupIds.join(', ')}.`
         : '';
-      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing required groups: ${Number(summary.missingRequiredRoles || 0)}. Lookup failures: ${Number(summary.lookupFailed || 0)}.${required}`;
+      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing Roblox ID: ${Number(summary.missingRobloxId || 0)}. Missing required Roblox groups: ${Number(summary.missingRequiredGroups || 0)}. Discord lookup failures: ${Number(summary.discordLookupFailed || 0)}. Roblox lookup failures: ${Number(summary.robloxLookupFailed || 0)}.${required}`;
       showMessage(scanFeedback, rows.length ? 'Scan completed. Review flagged employees below.' : 'Scan completed. No flagged employees found.', rows.length ? 'info' : 'success');
     } catch (error) {
       state.employeeScanRows = [];

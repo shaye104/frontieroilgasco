@@ -8,11 +8,81 @@ function text(value) {
   return String(value || '').trim();
 }
 
-function parseRequiredRoleIds(raw) {
+function parseRequiredGroupIds(raw) {
   return [...new Set(String(raw || '')
     .split(/[\s,;]+/)
     .map((part) => text(part))
-    .filter((part) => /^\d{6,30}$/.test(part)))];
+    .filter((part) => /^\d{1,30}$/.test(part)))];
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort('timeout'), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchRobloxUserGroupIds(robloxUserId) {
+  const userId = text(robloxUserId);
+  if (!/^\d{1,30}$/.test(userId)) {
+    return { ok: false, groupIds: [], error: 'Missing Roblox user ID.' };
+  }
+  try {
+    const response = await fetchWithTimeout(
+      `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
+      {},
+      8000
+    );
+    if (!response.ok) {
+      const errorText = text(await response.text().catch(() => ''));
+      return {
+        ok: false,
+        groupIds: [],
+        error: `Roblox lookup failed (${response.status}). ${errorText.slice(0, 120)}`.trim()
+      };
+    }
+    const payload = await response.json().catch(() => ({}));
+    const rows = Array.isArray(payload?.data) ? payload.data : [];
+    const groupIds = [...new Set(rows.map((row) => text(row?.group?.id)).filter((value) => /^\d{1,30}$/.test(value)))];
+    return { ok: true, groupIds, error: '' };
+  } catch (error) {
+    return {
+      ok: false,
+      groupIds: [],
+      error: error?.name === 'AbortError' ? 'Roblox lookup timed out.' : 'Roblox lookup failed.'
+    };
+  }
+}
+
+async function fetchRobloxGroupName(groupId) {
+  const id = text(groupId);
+  if (!/^\d{1,30}$/.test(id)) return `Group ${id || '?'}`;
+  try {
+    const response = await fetchWithTimeout(`https://groups.roblox.com/v1/groups/${encodeURIComponent(id)}`, {}, 8000);
+    if (!response.ok) return `Group ${id}`;
+    const payload = await response.json().catch(() => ({}));
+    return text(payload?.name) || `Group ${id}`;
+  } catch {
+    return `Group ${id}`;
+  }
+}
+
+function buildFlagRow(employee, issues, checks) {
+  return {
+    employeeId: Number(employee.id || 0),
+    discordUserId: text(employee.discord_user_id),
+    robloxUsername: text(employee.roblox_username),
+    robloxUserId: text(employee.roblox_user_id),
+    rank: text(employee.rank),
+    employeeStatus: text(employee.employee_status || employee.activation_status),
+    issueCode: issues.map((issue) => issue.code).join(','),
+    issueLabel: issues.map((issue) => issue.label).join(', '),
+    issueDetail: issues.map((issue) => issue.detail).join(' | '),
+    checks
+  };
 }
 
 export async function onRequestPost(context) {
@@ -21,14 +91,29 @@ export async function onRequestPost(context) {
   if (errorResponse) return errorResponse;
 
   const settings = await readSiteSettings(env, { bypassCache: true });
-  const requiredRoleIds = parseRequiredRoleIds(settings?.requiredDiscordRoleIds);
-  if (!requiredRoleIds.length) {
+  const requiredGroupIds = parseRequiredGroupIds(settings?.requiredRobloxGroupIds);
+  if (!requiredGroupIds.length) {
     return json({
       ok: false,
-      error: 'No required Discord group IDs are configured in Site Settings.',
-      summary: { total: 0, flagged: 0, missingDiscordId: 0, missingGuild: 0, missingRequiredRoles: 0, lookupFailed: 0 },
-      requiredRoleIds: []
+      error: 'No required Roblox group IDs are configured in Site Settings.',
+      summary: {
+        total: 0,
+        flagged: 0,
+        missingDiscordId: 0,
+        missingGuild: 0,
+        missingRobloxId: 0,
+        missingRequiredGroups: 0,
+        discordLookupFailed: 0,
+        robloxLookupFailed: 0
+      },
+      requiredGroupIds: [],
+      requiredGroups: []
     }, 400);
+  }
+
+  const requiredGroups = [];
+  for (const groupId of requiredGroupIds) {
+    requiredGroups.push({ id: groupId, name: await fetchRobloxGroupName(groupId) });
   }
 
   const rows = await env.DB.prepare(
@@ -41,79 +126,102 @@ export async function onRequestPost(context) {
   const flagged = [];
   let missingDiscordId = 0;
   let missingGuild = 0;
-  let missingRequiredRoles = 0;
-  let lookupFailed = 0;
+  let missingRobloxId = 0;
+  let missingRequiredGroups = 0;
+  let discordLookupFailed = 0;
+  let robloxLookupFailed = 0;
+
+  const robloxMembershipCache = new Map();
 
   for (const employee of employees) {
     const employeeId = Number(employee.id || 0);
-    const discordUserId = text(employee.discord_user_id);
     if (!employeeId) continue;
+
+    const issues = [];
+    const checks = [];
+
+    const discordUserId = text(employee.discord_user_id);
     if (!discordUserId) {
       missingDiscordId += 1;
-      flagged.push({
-        employeeId,
-        discordUserId: '',
-        robloxUsername: text(employee.roblox_username),
-        robloxUserId: text(employee.roblox_user_id),
-        rank: text(employee.rank),
-        employeeStatus: text(employee.employee_status || employee.activation_status),
-        issueCode: 'MISSING_DISCORD_ID',
-        issueLabel: 'Missing Discord ID',
-        issueDetail: 'Employee record has no Discord user ID, so guild membership cannot be verified.'
+      issues.push({
+        code: 'MISSING_DISCORD_ID',
+        label: 'Missing Discord ID',
+        detail: 'Employee record has no Discord user ID, so guild membership cannot be verified.'
       });
-      continue;
-    }
-
-    const lookup = await fetchGuildMemberRoleIds(env, discordUserId);
-    if (!lookup.ok) {
-      if (lookup.status === 404) {
-        missingGuild += 1;
-        flagged.push({
-          employeeId,
-          discordUserId,
-          robloxUsername: text(employee.roblox_username),
-          robloxUserId: text(employee.roblox_user_id),
-          rank: text(employee.rank),
-          employeeStatus: text(employee.employee_status || employee.activation_status),
-          issueCode: 'NOT_IN_DISCORD',
-          issueLabel: 'Not in Discord',
-          issueDetail: 'User is no longer in the configured Discord guild.'
-        });
+      checks.push({ label: 'Discord guild', ok: false, detail: 'Missing Discord user ID.' });
+    } else {
+      const lookup = await fetchGuildMemberRoleIds(env, discordUserId);
+      if (!lookup.ok) {
+        if (lookup.status === 404) {
+          missingGuild += 1;
+          issues.push({
+            code: 'NOT_IN_DISCORD',
+            label: 'Not in Discord',
+            detail: 'User is no longer in the configured Discord guild.'
+          });
+          checks.push({ label: 'Discord guild', ok: false, detail: 'Not in configured guild.' });
+        } else {
+          discordLookupFailed += 1;
+          issues.push({
+            code: 'DISCORD_LOOKUP_FAILED',
+            label: 'Discord lookup failed',
+            detail: text(lookup.error || 'Discord lookup failed.')
+          });
+          checks.push({ label: 'Discord guild', ok: false, detail: text(lookup.error || 'Lookup failed.') });
+        }
       } else {
-        lookupFailed += 1;
-        flagged.push({
-          employeeId,
-          discordUserId,
-          robloxUsername: text(employee.roblox_username),
-          robloxUserId: text(employee.roblox_user_id),
-          rank: text(employee.rank),
-          employeeStatus: text(employee.employee_status || employee.activation_status),
-          issueCode: 'LOOKUP_FAILED',
-          issueLabel: 'Lookup failed',
-          issueDetail: text(lookup.error || 'Discord lookup failed.')
-        });
+        checks.push({ label: 'Discord guild', ok: true, detail: 'In configured guild.' });
       }
-      continue;
     }
 
-    const memberRoleIds = Array.isArray(lookup.roleIds) ? lookup.roleIds.map((value) => text(value)).filter(Boolean) : [];
-    const matchedRequiredRoleIds = requiredRoleIds.filter((roleId) => memberRoleIds.includes(roleId));
-    if (!matchedRequiredRoleIds.length) {
-      missingRequiredRoles += 1;
-      flagged.push({
-        employeeId,
-        discordUserId,
-        robloxUsername: text(employee.roblox_username),
-        robloxUserId: text(employee.roblox_user_id),
-        rank: text(employee.rank),
-        employeeStatus: text(employee.employee_status || employee.activation_status),
-        issueCode: 'MISSING_REQUIRED_GROUPS',
-        issueLabel: 'Missing required groups',
-        issueDetail: 'User is in Discord but missing every required Discord group ID.',
-        requiredRoleIds,
-        matchedRequiredRoleIds
+    const robloxUserId = text(employee.roblox_user_id);
+    if (!robloxUserId) {
+      missingRobloxId += 1;
+      issues.push({
+        code: 'MISSING_ROBLOX_ID',
+        label: 'Missing Roblox ID',
+        detail: 'Employee record has no Roblox user ID, so group membership cannot be verified.'
       });
+      for (const group of requiredGroups) {
+        checks.push({ label: group.name, ok: false, detail: 'Missing Roblox user ID.' });
+      }
+    } else {
+      if (!robloxMembershipCache.has(robloxUserId)) {
+        robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(robloxUserId));
+      }
+      const membership = robloxMembershipCache.get(robloxUserId);
+      if (!membership?.ok) {
+        robloxLookupFailed += 1;
+        issues.push({
+          code: 'ROBLOX_LOOKUP_FAILED',
+          label: 'Roblox lookup failed',
+          detail: text(membership?.error || 'Roblox lookup failed.')
+        });
+        for (const group of requiredGroups) {
+          checks.push({ label: group.name, ok: false, detail: text(membership?.error || 'Lookup failed.') });
+        }
+      } else {
+        const matchedGroupIds = requiredGroupIds.filter((groupId) => membership.groupIds.includes(groupId));
+        if (!matchedGroupIds.length) {
+          missingRequiredGroups += 1;
+          issues.push({
+            code: 'MISSING_REQUIRED_GROUPS',
+            label: 'Missing required Roblox groups',
+            detail: 'User is missing every configured Roblox group ID.'
+          });
+        }
+        for (const group of requiredGroups) {
+          const isMember = membership.groupIds.includes(group.id);
+          checks.push({
+            label: group.name,
+            ok: isMember,
+            detail: isMember ? 'Member' : 'Not in group'
+          });
+        }
+      }
     }
+
+    if (issues.length) flagged.push(buildFlagRow(employee, issues, checks));
   }
 
   await writeAdminActivityEvent(env, {
@@ -122,28 +230,34 @@ export async function onRequestPost(context) {
     actorDiscordUserId: session.userId,
     actionType: 'EMPLOYEE_COMPLIANCE_SCAN',
     targetEmployeeId: null,
-    summary: `Ran employee Discord compliance scan for ${employees.length} employees.`,
+    summary: `Ran employee access compliance scan for ${employees.length} employees.`,
     metadata: {
       total: employees.length,
       flagged: flagged.length,
       missingDiscordId,
       missingGuild,
-      missingRequiredRoles,
-      lookupFailed,
-      requiredRoleIds
+      missingRobloxId,
+      missingRequiredGroups,
+      discordLookupFailed,
+      robloxLookupFailed,
+      requiredGroupIds,
+      requiredGroups
     }
   });
 
   return json({
     ok: true,
-    requiredRoleIds,
+    requiredGroupIds,
+    requiredGroups,
     summary: {
       total: employees.length,
       flagged: flagged.length,
       missingDiscordId,
       missingGuild,
-      missingRequiredRoles,
-      lookupFailed
+      missingRobloxId,
+      missingRequiredGroups,
+      discordLookupFailed,
+      robloxLookupFailed
     },
     flaggedEmployees: flagged
   });

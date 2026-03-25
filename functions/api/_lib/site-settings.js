@@ -1,4 +1,4 @@
-﻿const DEFAULT_SITE_SETTINGS = {
+const DEFAULT_SITE_SETTINGS = {
   brandName: 'Frontier Oil & Gas Company',
   siteTagline: 'Internal Operations Portal',
   themeColor: '#3794ff',
@@ -11,7 +11,8 @@
   twitterCard: 'summary_large_image',
   notificationSoundStandardUrl: '/MorseAlert.mp3',
   notificationSoundUrgentUrl: '/MorseAlert.mp3',
-  requiredDiscordRoleIds: ''
+  requiredDiscordRoleIds: '',
+  requiredRobloxGroupIds: ''
 };
 
 let settingsCache = null;
@@ -48,6 +49,13 @@ function normalizeDiscordRoleIdsSetting(value) {
   const raw = String(value ?? '').trim();
   if (!raw) return '';
   const ids = [...new Set(raw.split(/[\s,;]+/).map((part) => String(part || '').trim()).filter((part) => /^\d{6,30}$/.test(part)))];
+  return ids.join(', ');
+}
+
+function normalizeRobloxGroupIdsSetting(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const ids = [...new Set(raw.split(/[\s,;]+/).map((part) => String(part || '').trim()).filter((part) => /^\d{1,30}$/.test(part)))];
   return ids.join(', ');
 }
 
@@ -98,7 +106,8 @@ export async function readSiteSettings(env, { bypassCache = false } = {}) {
       DEFAULT_SITE_SETTINGS.notificationSoundStandardUrl
     ),
     notificationSoundUrgentUrl: normalizeUrlValue(map.notificationSoundUrgentUrl, DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl),
-    requiredDiscordRoleIds: normalizeDiscordRoleIdsSetting(map.requiredDiscordRoleIds)
+    requiredDiscordRoleIds: normalizeDiscordRoleIdsSetting(map.requiredDiscordRoleIds),
+    requiredRobloxGroupIds: normalizeRobloxGroupIdsSetting(map.requiredRobloxGroupIds)
   };
 
   settingsCache = { ...next };
@@ -132,7 +141,8 @@ export async function writeSiteSettings(env, updates, updatedBy = '') {
       merged.notificationSoundUrgentUrl,
       DEFAULT_SITE_SETTINGS.notificationSoundUrgentUrl
     ),
-    requiredDiscordRoleIds: normalizeDiscordRoleIdsSetting(merged.requiredDiscordRoleIds)
+    requiredDiscordRoleIds: normalizeDiscordRoleIdsSetting(merged.requiredDiscordRoleIds),
+    requiredRobloxGroupIds: normalizeRobloxGroupIdsSetting(merged.requiredRobloxGroupIds)
   };
 
   const entries = Object.entries(normalized);
@@ -166,4 +176,3 @@ export function toAbsoluteUrl(origin, value, fallback = '') {
     return normalized;
   }
 }
-
