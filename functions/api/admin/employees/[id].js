@@ -582,73 +582,46 @@ export async function onRequestDelete(context) {
     return json({ error: 'Removal reason is required.' }, 400);
   }
 
-  await env.DB.batch([
-    env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Removed'),
-    env.DB
-      .prepare(
-        `INSERT OR IGNORE INTO config_disciplinary_types
-           (key, label, value, severity, is_active, default_status, requires_end_date, apply_suspension_rank, set_employee_status, updated_at, created_at)
-         VALUES ('TERMINATION', 'Termination', 'Termination', 5, 1, 'ACTIVE', 0, 0, 'Removed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-      ),
-    env.DB
-      .prepare(
-        `UPDATE config_disciplinary_types
-         SET is_active = 1,
-             set_employee_status = COALESCE(NULLIF(TRIM(set_employee_status), ''), 'Removed'),
-             updated_at = CURRENT_TIMESTAMP
-         WHERE UPPER(COALESCE(key, '')) = 'TERMINATION'`
-      )
-  ]);
-
-  const disciplinaryResult = await createDisciplinaryRecord(env, {
-    employeeId,
-    actorEmployeeId: actorEmployee?.id || null,
-    actorName: session.displayName || session.userId,
-    actorDiscordUserId: session.userId,
-    payload: {
-      typeKey: 'TERMINATION',
-      reasonText: reason,
-      internalNotes: `Employee removed by ${session.displayName || session.userId}.`,
-      status: 'ACTIVE'
-    }
-  });
-
-  await env.DB
-    .prepare(
-      `UPDATE employees
-       SET employee_status = 'REMOVED',
-           user_status = 'REMOVED',
-           activation_status = 'DISABLED',
-           suspension_rank_before = NULL,
-           suspension_active_record_id = NULL,
-           suspension_started_at = NULL,
-           suspension_ends_at = NULL,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?`
-    )
-    .bind(employeeId)
-    .run();
+  const blocking = await getBlockingReferenceSummary(env, employeeId);
+  if (Number(blocking?.total || 0) > 0) {
+    return json(
+      {
+        error: 'This employee cannot be permanently deleted because they have voyage or finance history. Use a removal workflow instead.',
+        blockingReferences: blocking.references
+      },
+      409
+    );
+  }
 
   const robloxKick = await removeRobloxGroupMemberForEmployee(env, {
     robloxUserId: existing?.roblox_user_id
   });
 
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM employee_role_assignments WHERE employee_id = ?').bind(employeeId),
+    env.DB.prepare('DELETE FROM employee_notes WHERE employee_id = ?').bind(employeeId),
+    env.DB.prepare('DELETE FROM disciplinary_records WHERE employee_id = ?').bind(employeeId),
+    env.DB.prepare('DELETE FROM employee_vessel_assignments WHERE employee_id = ?').bind(employeeId),
+    env.DB.prepare('DELETE FROM admin_activity_events WHERE target_employee_id = ? OR actor_employee_id = ?').bind(employeeId, employeeId),
+    env.DB.prepare('DELETE FROM access_requests WHERE discord_user_id = ?').bind(String(existing.discord_user_id || '').trim()),
+    env.DB.prepare('DELETE FROM employees WHERE id = ?').bind(employeeId)
+  ]);
+
   await writeAdminActivityEvent(env, {
     actorEmployeeId: actorEmployee?.id || null,
     actorName: session.displayName || session.userId,
     actorDiscordUserId: session.userId,
-    actionType: 'EMPLOYEE_REMOVED',
-    targetEmployeeId: employeeId,
-    summary: `Removed employee ${existing.roblox_username || `#${employeeId}`}.`,
+    actionType: 'EMPLOYEE_DELETED',
+    targetEmployeeId: null,
+    summary: `Deleted employee ${existing.roblox_username || `#${employeeId}`}.`,
     metadata: {
-      removedEmployee: {
+      deletedEmployee: {
         id: Number(employeeId),
         discordUserId: String(existing.discord_user_id || '').trim() || null,
         robloxUserId: String(existing.roblox_user_id || '').trim() || null,
         robloxUsername: String(existing.roblox_username || '').trim() || null,
         rank: String(existing.rank || '').trim() || null
       },
-      disciplinaryRecordId: Number(disciplinaryResult?.record?.id || 0) || null,
       robloxGroupKick: robloxKick,
       reason
     }
@@ -656,9 +629,8 @@ export async function onRequestDelete(context) {
 
   return json({
     ok: true,
-    removed: true,
+    deleted: true,
     employeeId,
-    disciplinaryRecordId: Number(disciplinaryResult?.record?.id || 0) || null,
     robloxGroupKick: robloxKick
   });
 }
