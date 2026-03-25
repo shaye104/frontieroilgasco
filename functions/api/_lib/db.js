@@ -1217,6 +1217,28 @@ export async function ensureCoreSchema(env) {
       )
   ]);
 
+  const configuredEmployeeStatuses = await env.DB.prepare(`SELECT value FROM config_employee_statuses`).all();
+  const configuredEmployeeStatusNames = new Set(
+    (configuredEmployeeStatuses?.results || []).map((row) => String(row?.value || '').trim().toLowerCase()).filter(Boolean)
+  );
+  const liveEmployeeStatuses = await env.DB
+    .prepare(
+      `SELECT DISTINCT TRIM(COALESCE(employee_status, '')) AS value
+       FROM employees
+       WHERE TRIM(COALESCE(employee_status, '')) != ''`
+    )
+    .all();
+  const missingEmployeeStatusSeeds = (liveEmployeeStatuses?.results || [])
+    .map((row) => String(row?.value || '').trim())
+    .filter((value) => value && !configuredEmployeeStatusNames.has(value.toLowerCase()));
+  if (missingEmployeeStatusSeeds.length) {
+    await env.DB.batch(
+      missingEmployeeStatusSeeds.map((value) =>
+        env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind(value)
+      )
+    );
+  }
+
   await env.DB
     .prepare(
       `INSERT INTO app_runtime_meta (meta_key, meta_value, updated_at)
