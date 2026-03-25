@@ -355,7 +355,7 @@ export function saveSiteSettings(payload) {
 export function runEmployeeComplianceScan() {
   return requestJson('/api/admin/employees/scan', {
     method: 'POST',
-    timeoutMs: 30000
+    timeoutMs: 120000
   });
 }
 

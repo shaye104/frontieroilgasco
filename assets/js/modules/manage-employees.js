@@ -1184,7 +1184,12 @@ export async function initManageEmployees(config) {
       state.employeeScanRows = [];
       scanTableBody.innerHTML = '<tr><td colspan="7">Unable to run scan.</td></tr>';
       scanSummary.textContent = 'Scan failed.';
-      showMessage(scanFeedback, error.message || 'Unable to run employee scan.', 'error');
+      const errorMessage = String(error?.message || '').trim();
+      const friendlyMessage =
+        errorMessage === 'timeout'
+          ? 'Employee scan timed out. Please try again; this scan can take a while.'
+          : errorMessage || 'Unable to run employee scan.';
+      showMessage(scanFeedback, friendlyMessage, 'error');
     } finally {
       state.employeeScanLoading = false;
       if (runScanBtn) runScanBtn.disabled = false;
