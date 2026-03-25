@@ -214,11 +214,18 @@ export async function onRequestGet(context) {
     ,
     env.DB
       .prepare(
-        `SELECT
+        `SELECT DISTINCT
            e.id,
            e.roblox_username
          FROM employees e
-         WHERE UPPER(COALESCE(e.rank, '')) = 'GENERAL MANAGER'
+         LEFT JOIN employee_role_assignments era ON era.employee_id = e.id
+         LEFT JOIN app_role_permissions arp ON arp.role_id = era.role_id
+         LEFT JOIN rank_permission_mappings rpm ON LOWER(rpm.rank_value) = LOWER(COALESCE(e.rank, ''))
+         WHERE COALESCE(NULLIF(TRIM(e.roblox_username), ''), '') <> ''
+           AND (
+             arp.permission_key IN ('finances.debts.settle', 'admin.override', 'super.admin')
+             OR rpm.permission_key IN ('finances.debts.settle', 'admin.override', 'super.admin')
+           )
          ORDER BY LOWER(COALESCE(e.roblox_username, '')) ASC, e.id ASC`
       )
       .all()

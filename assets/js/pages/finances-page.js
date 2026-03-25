@@ -466,18 +466,18 @@ function toDelta(current, previous, range, invertDirection = false) {
   const label = previousRangeLabel(range);
 
   if (prev === 0 && now === 0) {
-    return { text: `â€¢ 0% vs ${label}`, tone: 'neutral' };
+    return { text: `\u2022 0% vs ${label}`, tone: 'neutral' };
   }
 
   if (prev === 0) {
     const tone = invertDirection ? 'negative' : 'positive';
-    const icon = 'â–²';
+    const icon = '\u25B2';
     return { text: `${icon} New vs ${label}`, tone };
   }
 
   const percent = Math.round((diff / Math.abs(prev)) * 100);
   const value = Math.abs(percent);
-  const icon = percent > 0 ? 'â–²' : percent < 0 ? 'â–¼' : 'â€¢';
+  const icon = percent > 0 ? '\u25B2' : percent < 0 ? '\u25BC' : '\u2022';
   let tone = percent > 0 ? 'positive' : percent < 0 ? 'negative' : 'neutral';
   if (invertDirection && tone !== 'neutral') {
     tone = tone === 'positive' ? 'negative' : 'positive';
