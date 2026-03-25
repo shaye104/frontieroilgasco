@@ -1178,7 +1178,13 @@ export async function initManageEmployees(config) {
       const required = Array.isArray(payload?.requiredGroupIds) && payload.requiredGroupIds.length
         ? ` Required Roblox group IDs: ${payload.requiredGroupIds.join(', ')}.`
         : '';
-      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing Roblox ID: ${Number(summary.missingRobloxId || 0)}. Missing required Roblox groups: ${Number(summary.missingRequiredGroups || 0)}. Discord lookup failures: ${Number(summary.discordLookupFailed || 0)}. Roblox lookup failures: ${Number(summary.robloxLookupFailed || 0)}.${required}`;
+      const robloxErrorCounts = summary?.robloxErrorCounts && typeof summary.robloxErrorCounts === 'object'
+        ? Object.entries(summary.robloxErrorCounts)
+            .map(([label, count]) => `${label} x${Number(count || 0)}`)
+            .join(', ')
+        : '';
+      const robloxErrorSummary = robloxErrorCounts ? ` Roblox errors: ${robloxErrorCounts}.` : '';
+      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing Roblox ID: ${Number(summary.missingRobloxId || 0)}. Missing required Roblox groups: ${Number(summary.missingRequiredGroups || 0)}. Discord lookup failures: ${Number(summary.discordLookupFailed || 0)}. Roblox lookup failures: ${Number(summary.robloxLookupFailed || 0)}.${required}${robloxErrorSummary}`;
       showMessage(scanFeedback, rows.length ? 'Scan completed. Review flagged employees below.' : 'Scan completed. No flagged employees found.', rows.length ? 'info' : 'success');
     } catch (error) {
       state.employeeScanRows = [];

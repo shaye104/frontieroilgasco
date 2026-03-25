@@ -196,6 +196,16 @@ function buildFlagRow(employee, issues, checks) {
   };
 }
 
+
+function incrementCounter(map, key) {
+  const label = text(key) || 'unknown';
+  map.set(label, Number(map.get(label) || 0) + 1);
+}
+
+function serializeCounter(map) {
+  return Object.fromEntries([...map.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+}
+
 async function mapWithConcurrency(items, limit, worker) {
   const rows = Array.isArray(items) ? items : [];
   const max = Math.max(1, Math.min(12, Number(limit) || 1));
@@ -259,6 +269,7 @@ export async function onRequestPost(context) {
   let missingRequiredGroups = 0;
   let discordLookupFailed = 0;
   let robloxLookupFailed = 0;
+  const robloxErrorCounts = new Map();
 
   const robloxMembershipCache = new Map();
   const robloxUserResolveCache = new Map();
@@ -385,6 +396,7 @@ export async function onRequestPost(context) {
 
       if (!membership?.ok) {
         robloxLookupFailed += 1;
+        incrementCounter(robloxErrorCounts, membership?.error || `status_${Number(membership?.status || 0) || 'unknown'}`);
         issues.push({
           code: 'ROBLOX_LOOKUP_FAILED',
           label: 'Roblox lookup failed',
@@ -441,6 +453,7 @@ export async function onRequestPost(context) {
       missingRequiredGroups,
       discordLookupFailed,
       robloxLookupFailed,
+      robloxErrorCounts: serializeCounter(robloxErrorCounts),
       requiredGroupIds,
       requiredGroups,
       guildIndexOk: guildIndex.ok,
@@ -460,7 +473,8 @@ export async function onRequestPost(context) {
       missingRobloxId,
       missingRequiredGroups,
       discordLookupFailed,
-      robloxLookupFailed
+      robloxLookupFailed,
+      robloxErrorCounts: serializeCounter(robloxErrorCounts)
     },
     flaggedEmployees: flagged
   });
