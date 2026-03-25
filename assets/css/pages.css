@@ -1356,6 +1356,112 @@
   margin-left: 0.28rem;
 }
 
+.page-manage-employees .employee-scan-modal-card {
+  width: min(980px, 100%);
+  max-height: min(88vh, 920px);
+  padding: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-manage-employees .employee-scan-modal-header {
+  margin-bottom: 0.42rem;
+  align-items: flex-start;
+}
+
+.page-manage-employees .employee-scan-modal-header h2 {
+  margin: 0;
+}
+
+.page-manage-employees .employee-scan-modal-header .finance-inline-caption {
+  margin: 0.18rem 0 0;
+  max-width: 72ch;
+}
+
+.page-manage-employees .employee-scan-modal-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  flex-wrap: wrap;
+}
+
+.page-manage-employees .employee-scan-modal-controls .btn {
+  min-height: 34px;
+  padding: 0.34rem 0.72rem;
+  font-size: 0.86rem;
+}
+
+.page-manage-employees #employeeScanFeedback {
+  margin-top: 0.3rem;
+  margin-bottom: 0.5rem;
+  padding: 0.52rem 0.65rem;
+}
+
+.page-manage-employees .employee-scan-modal-card .table-wrap {
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+}
+
+.page-manage-employees .employee-scan-table {
+  min-width: 640px;
+}
+
+.page-manage-employees .employee-scan-table th,
+.page-manage-employees .employee-scan-table td {
+  padding: 0.44rem 0.56rem;
+  vertical-align: middle;
+}
+
+.page-manage-employees .employee-scan-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.page-manage-employees .employee-scan-status-head,
+.page-manage-employees .employee-scan-status-cell {
+  width: 72px;
+  text-align: center;
+}
+
+.page-manage-employees .employee-scan-employee-cell strong,
+.page-manage-employees .employee-scan-employee-cell small {
+  display: block;
+}
+
+.page-manage-employees .employee-scan-employee-cell small {
+  margin-top: 0.18rem;
+  color: #64748b;
+}
+
+.page-manage-employees .employee-scan-status-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  border: 1px solid #d8e1ee;
+  background: #f8fafc;
+}
+
+.page-manage-employees .employee-scan-status-dot.is-pass {
+  border-color: #b7dfca;
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.page-manage-employees .employee-scan-status-dot.is-fail {
+  border-color: #f2c1c1;
+  background: #fff1f2;
+  color: #b91c1c;
+}
+
 @media (max-width: 1080px) {
   .page-manage-employees .my-details-page-header {
     grid-template-columns: 1fr;
@@ -1381,12 +1487,30 @@
     width: min(840px, 100%);
     padding: 0.72rem;
   }
+
+  .page-manage-employees .employee-scan-modal-card {
+    width: min(980px, 100%);
+    padding: 0.72rem;
+  }
 }
 
 @media (max-width: 760px) {
   .page-manage-employees .join-requests-table .join-request-requester,
   .page-manage-employees .join-requests-table .join-request-created-at {
     white-space: normal;
+  }
+
+  .page-manage-employees .employee-scan-modal-header {
+    gap: 0.55rem;
+  }
+
+  .page-manage-employees .employee-scan-modal-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .page-manage-employees .employee-scan-table {
+    min-width: 560px;
   }
 }
 

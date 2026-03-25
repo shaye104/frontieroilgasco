@@ -37,6 +37,22 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function getInitials(value) {
+  const cleaned = String(value || '')
+    .replace(/\[[^\]]*]/g, ' ')
+    .replace(/&/g, ' ')
+    .replace(/[^A-Za-z0-9\s]+/g, ' ')
+    .trim();
+  if (!cleaned) return 'RG';
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  if (!tokens.length) return 'RG';
+  if (tokens.length === 1) return tokens[0].slice(0, 2).toUpperCase();
+  return tokens
+    .slice(0, 3)
+    .map((token) => token.charAt(0).toUpperCase())
+    .join('');
+}
+
 function formatDate(value, withTime = false) {
   if (!value) return 'N/A';
   if (withTime) return formatLocalDateTime(value, { fallback: String(value) });
@@ -268,41 +284,58 @@ function renderTable(target, employees, visibleColumns) {
   });
 }
 
-function renderScanResults(target, rows = []) {
+function renderScanResults(target, rows = [], requiredGroups = []) {
   if (!target) return;
   const safeRows = Array.isArray(rows) ? rows : [];
+  const groups = Array.isArray(requiredGroups) ? requiredGroups : [];
   if (!safeRows.length) {
-    target.innerHTML = '<tr><td colspan="7">No flagged employees found.</td></tr>';
+    target.innerHTML = `<tr><td colspan="${3 + groups.length}">No flagged employees found.</td></tr>`;
     return;
   }
 
   target.innerHTML = safeRows
     .map((row) => {
       const checks = Array.isArray(row.checks) ? row.checks : [];
-      const checksMarkup = checks.length
-        ? `<ul class="role-list">${checks
-            .map(
-              (check) => `<li class="role-item"><div><strong>${check.ok ? '&#10003;' : '&#10007;'}</strong> ${escapeHtml(text(check.label))}<p class="finance-inline-caption">${escapeHtml(text(check.detail))}</p></div></li>`
-            )
-            .join('')}</ul>`
-        : `<small>${escapeHtml(text(row.issueDetail))}</small>`;
+      const discordCheck = checks.find((check) => String(check?.label || '').trim().toLowerCase() === 'discord guild');
+      const nameParts = [text(row.robloxUsername), text(row.rank)].filter((value) => value && value !== 'N/A');
+      const issueLabel = text(row.issueLabel);
+      const issueDetail = text(row.issueDetail);
+      const employeeMeta = [text(row.robloxUserId), issueLabel].filter((value) => value && value !== 'N/A').join(' • ');
+      const groupCells = groups
+        .map((group) => {
+          const groupCheck = checks.find((check) => String(check?.label || '').trim() === String(group?.name || '').trim());
+          const ok = Boolean(groupCheck?.ok);
+          const detail = text(groupCheck?.detail || (!groupCheck ? 'Not checked.' : ''));
+          return `<td class="employee-scan-status-cell" title="${escapeHtml(`${text(group?.name)}: ${detail || issueDetail || 'Not checked.'}`)}">
+            <span class="employee-scan-status-dot ${ok ? 'is-pass' : 'is-fail'}" aria-label="${ok ? 'Pass' : 'Fail'}">${ok ? '&#10003;' : '&#10007;'}</span>
+          </td>`;
+        })
+        .join('');
       return `
       <tr>
-        <td>${Number(row.employeeId || 0)}</td>
-        <td>${escapeHtml(text(row.robloxUsername))}</td>
-        <td>${escapeHtml(text(row.robloxUserId))}</td>
-        <td>${escapeHtml(text(row.rank))}</td>
-        <td><span class="badge badge-status ${statusClass(row.employeeStatus)}">${escapeHtml(text(row.employeeStatus))}</span></td>
-        <td>
-          <strong>${escapeHtml(text(row.issueLabel))}</strong>${row.verificationOnly ? ' <span class="finance-inline-caption">(temporary verification failure)</span>' : ''}<br />
-          ${checksMarkup}
+        <td class="employee-scan-employee-cell">
+          <strong>${escapeHtml(nameParts[0] || `Employee #${Number(row.employeeId || 0)}`)}</strong>
+          <small>${escapeHtml(employeeMeta || issueDetail || 'Flagged during scan.')}</small>
         </td>
+        <td class="employee-scan-status-cell" title="${escapeHtml(`Discord: ${text(discordCheck?.detail || issueDetail || 'Not checked.')}`)}">
+          <span class="employee-scan-status-dot ${discordCheck?.ok ? 'is-pass' : 'is-fail'}" aria-label="${discordCheck?.ok ? 'Pass' : 'Fail'}">${discordCheck?.ok ? '&#10003;' : '&#10007;'}</span>
+        </td>
+        ${groupCells}
         <td class="align-right">
           <button type="button" class="btn btn-secondary btn-compact" data-open-scan-drawer="${Number(row.employeeId || 0)}">Open Drawer</button>
         </td>
       </tr>`;
     })
     .join('');
+}
+
+function renderScanTableHead(target, requiredGroups = []) {
+  if (!target) return;
+  const groups = Array.isArray(requiredGroups) ? requiredGroups : [];
+  const groupHeaders = groups
+    .map((group) => `<th class="employee-scan-status-head" title="${escapeHtml(text(group?.name || 'Required group'))}">${escapeHtml(getInitials(group?.name || 'RG'))}</th>`)
+    .join('');
+  target.innerHTML = `<th>Employee</th><th class="employee-scan-status-head">Discord</th>${groupHeaders}<th class="align-right">Action</th>`;
 }
 
 function renderDrawerUserGroupsSection(payload, options = {}) {
@@ -901,9 +934,10 @@ export async function initManageEmployees(config) {
   const moreFiltersPanel = document.querySelector(config.moreFiltersPanelSelector);
   const runScanBtn = document.querySelector(config.runScanBtnSelector);
   const rerunScanBtn = document.querySelector(config.rerunScanBtnSelector);
-  const scanPanel = document.querySelector(config.scanPanelSelector);
+  const scanModal = document.querySelector(config.scanModalSelector);
   const scanFeedback = document.querySelector(config.scanFeedbackSelector);
   const scanSummary = document.querySelector(config.scanSummarySelector);
+  const scanTableHeadRow = document.querySelector(config.scanTableHeadRowSelector);
   const scanTableBody = document.querySelector(config.scanTableBodySelector);
 
   const paginationInfo = document.querySelector(config.paginationInfoSelector);
@@ -959,7 +993,8 @@ export async function initManageEmployees(config) {
     joinRequests: [],
     joinRequestsLoading: false,
     employeeScanRows: [],
-    employeeScanLoading: false
+    employeeScanLoading: false,
+    employeeScanGroups: []
   };
   const drawerCache = new Map();
   let debounceTimer = null;
@@ -1161,21 +1196,25 @@ export async function initManageEmployees(config) {
   }
 
   async function runScan() {
-    if (!scanTableBody || !scanSummary) return;
+    if (!scanModal || !scanTableBody || !scanSummary) return;
     state.employeeScanLoading = true;
-    scanPanel?.classList.remove('hidden');
+    openModal('employeeScanModal');
     if (runScanBtn) runScanBtn.disabled = true;
     if (rerunScanBtn) rerunScanBtn.disabled = true;
     clearMessage(scanFeedback);
     scanSummary.textContent = 'Running access scan...';
-    scanTableBody.innerHTML = '<tr><td colspan="7">Running scan...</td></tr>';
+    renderScanTableHead(scanTableHeadRow, state.employeeScanGroups);
+    scanTableBody.innerHTML = `<tr><td colspan="${3 + state.employeeScanGroups.length}">Running scan...</td></tr>`;
     try {
       const payload = await runEmployeeComplianceScan();
       const summary = payload?.summary || {};
       const diagnostics = payload?.diagnostics || {};
       const rows = Array.isArray(payload?.flaggedEmployees) ? payload.flaggedEmployees : [];
+      const requiredGroups = Array.isArray(payload?.requiredGroups) ? payload.requiredGroups : [];
+      state.employeeScanGroups = requiredGroups;
       state.employeeScanRows = rows;
-      renderScanResults(scanTableBody, rows);
+      renderScanTableHead(scanTableHeadRow, requiredGroups);
+      renderScanResults(scanTableBody, rows, requiredGroups);
       const required = Array.isArray(payload?.requiredGroupIds) && payload.requiredGroupIds.length
         ? ` Required Roblox group IDs: ${payload.requiredGroupIds.join(', ')}.`
         : '';
@@ -1209,7 +1248,8 @@ export async function initManageEmployees(config) {
       showMessage(scanFeedback, rows.length ? 'Scan completed. Review flagged employees below.' : 'Scan completed. No flagged employees found.', rows.length ? 'info' : 'success');
     } catch (error) {
       state.employeeScanRows = [];
-      scanTableBody.innerHTML = '<tr><td colspan="7">Unable to run scan.</td></tr>';
+      renderScanTableHead(scanTableHeadRow, state.employeeScanGroups);
+      scanTableBody.innerHTML = `<tr><td colspan="${3 + state.employeeScanGroups.length}">Unable to run scan.</td></tr>`;
       scanSummary.textContent = 'Scan failed.';
       const errorMessage = String(error?.message || '').trim();
       const friendlyMessage =

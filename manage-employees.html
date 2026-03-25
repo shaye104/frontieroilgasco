@@ -114,35 +114,6 @@
             </div>
           </article>
 
-          <article id="employeeScanPanel" class="panel hidden">
-            <div class="admin-employees-table-header">
-              <h2>Scan Results</h2>
-              <div class="admin-employees-table-actions">
-                <button id="rerunEmployeeScanBtn" type="button" class="btn btn-secondary">Run Again</button>
-              </div>
-            </div>
-            <div id="employeeScanFeedback" class="feedback" role="status" aria-live="polite"></div>
-            <p id="employeeScanSummary" class="finance-inline-caption">No scan run yet.</p>
-            <div class="table-wrap">
-              <table class="data-table admin-employees-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Roblox Username</th>
-                    <th>Roblox User ID</th>
-                    <th>Rank</th>
-                    <th>Status</th>
-                    <th>Issue</th>
-                    <th class="align-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="employeeScanTableBody">
-                  <tr><td colspan="7">No issues found.</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-
           <article class="panel">
             <div class="admin-employees-table-header">
               <h2>Employees</h2>
@@ -418,6 +389,36 @@
             </thead>
             <tbody id="joinRequestsTableBody">
               <tr><td colspan="3">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="employeeScanModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card employee-scan-modal-card">
+        <div class="modal-header employee-scan-modal-header">
+          <div>
+            <h2>Scan Results</h2>
+            <p id="employeeScanSummary" class="finance-inline-caption">No scan run yet.</p>
+          </div>
+          <div class="employee-scan-modal-controls">
+            <button id="rerunEmployeeScanBtn" class="btn btn-secondary" type="button">Run Again</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="employeeScanModal">Close</button>
+          </div>
+        </div>
+        <div id="employeeScanFeedback" class="feedback" role="status" aria-live="polite"></div>
+        <div class="table-wrap">
+          <table class="data-table employee-scan-table">
+            <thead>
+              <tr id="employeeScanTableHeadRow">
+                <th>Employee</th>
+                <th>Discord</th>
+                <th class="align-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="employeeScanTableBody">
+              <tr><td colspan="3">No flagged employees found.</td></tr>
             </tbody>
           </table>
         </div>
