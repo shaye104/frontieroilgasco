@@ -37,10 +37,86 @@ function retryDelayMs(response, fallbackMs = 1500) {
   return fallbackMs;
 }
 
+function normalizeRobloxUserId(value) {
+  return text(value).replace(/\D+/g, '');
+}
+
+function normalizeRobloxUsername(value) {
+  return text(value).replace(/^@+/, '').trim();
+}
+
+async function resolveRobloxUserByUsername(robloxUsername) {
+  const username = normalizeRobloxUsername(robloxUsername);
+  if (!username) {
+    return { ok: false, userId: '', username: '', error: 'Missing Roblox username.' };
+  }
+
+  let response = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      response = await fetchWithTimeout(
+        'https://users.roblox.com/v1/usernames/users',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            usernames: [username],
+            excludeBannedUsers: false
+          })
+        },
+        12000
+      );
+    } catch (error) {
+      if (attempt < 2) {
+        await delay(1500 * (attempt + 1));
+        continue;
+      }
+      return {
+        ok: false,
+        userId: '',
+        username,
+        error: error?.name === 'AbortError' ? 'Roblox username lookup timed out.' : 'Roblox username lookup failed.'
+      };
+    }
+
+    if (response.ok) break;
+    if (attempt < 2 && (response.status === 429 || response.status >= 500)) {
+      await delay(retryDelayMs(response, 1500 * (attempt + 1)));
+      continue;
+    }
+    break;
+  }
+
+  if (!response?.ok) {
+    const errorText = text(await response?.text?.().catch(() => '') || '');
+    return {
+      ok: false,
+      userId: '',
+      username,
+      error: `Roblox username lookup failed (${Number(response?.status || 0)}). ${errorText.slice(0, 120)}`.trim()
+    };
+  }
+
+  const payload = await response.json().catch(() => ({}));
+  const first = payload?.data?.[0];
+  const resolvedUserId = normalizeRobloxUserId(first?.id);
+  const resolvedUsername = normalizeRobloxUsername(first?.name || username);
+  if (!resolvedUserId) {
+    return {
+      ok: false,
+      userId: '',
+      username,
+      error: 'Roblox username did not resolve to a user.'
+    };
+  }
+
+  return { ok: true, userId: resolvedUserId, username: resolvedUsername, error: '' };
+}
+
 async function fetchRobloxUserGroupIds(robloxUserId) {
-  const userId = text(robloxUserId);
+  const userId = normalizeRobloxUserId(robloxUserId);
   if (!/^\d{1,30}$/.test(userId)) {
-    return { ok: false, groupIds: [], error: 'Missing Roblox user ID.' };
+    return { ok: false, groupIds: [], status: 0, error: 'Missing Roblox user ID.' };
   }
 
   let response = null;
@@ -59,6 +135,7 @@ async function fetchRobloxUserGroupIds(robloxUserId) {
       return {
         ok: false,
         groupIds: [],
+        status: 0,
         error: error?.name === 'AbortError' ? 'Roblox lookup timed out.' : 'Roblox lookup failed.'
       };
     }
@@ -76,6 +153,7 @@ async function fetchRobloxUserGroupIds(robloxUserId) {
     return {
       ok: false,
       groupIds: [],
+      status: Number(response?.status || 0),
       error: `Roblox lookup failed (${Number(response?.status || 0)}). ${errorText.slice(0, 120)}`.trim()
     };
   }
@@ -83,7 +161,7 @@ async function fetchRobloxUserGroupIds(robloxUserId) {
   const payload = await response.json().catch(() => ({}));
   const rows = Array.isArray(payload?.data) ? payload.data : [];
   const groupIds = [...new Set(rows.map((row) => text(row?.group?.id)).filter((value) => /^\d{1,30}$/.test(value)))];
-  return { ok: true, groupIds, error: '' };
+  return { ok: true, groupIds, status: Number(response?.status || 200), error: '' };
 }
 
 async function fetchRobloxGroupName(groupId) {
@@ -163,6 +241,7 @@ export async function onRequestPost(context) {
   let robloxLookupFailed = 0;
 
   const robloxMembershipCache = new Map();
+  const robloxUserResolveCache = new Map();
 
   for (const employee of employees) {
     const employeeId = Number(employee.id || 0);
@@ -228,7 +307,8 @@ export async function onRequestPost(context) {
       }
     }
 
-    const robloxUserId = text(employee.roblox_user_id);
+    const robloxUserId = normalizeRobloxUserId(employee.roblox_user_id);
+    const robloxUsername = normalizeRobloxUsername(employee.roblox_username);
     if (!robloxUserId) {
       missingRobloxId += 1;
       issues.push({
@@ -240,10 +320,38 @@ export async function onRequestPost(context) {
         checks.push({ label: group.name, ok: false, detail: 'Missing Roblox user ID.' });
       }
     } else {
+      let membership = null;
       if (!robloxMembershipCache.has(robloxUserId)) {
         robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(robloxUserId));
       }
-      const membership = robloxMembershipCache.get(robloxUserId);
+      membership = robloxMembershipCache.get(robloxUserId);
+
+      let resolvedRobloxUserId = robloxUserId;
+      let resolvedRobloxUsername = robloxUsername;
+      if (!membership?.ok && robloxUsername) {
+        if (!robloxUserResolveCache.has(robloxUsername)) {
+          robloxUserResolveCache.set(robloxUsername, await resolveRobloxUserByUsername(robloxUsername));
+        }
+        const resolvedProfile = robloxUserResolveCache.get(robloxUsername);
+        if (resolvedProfile?.ok && resolvedProfile.userId && resolvedProfile.userId !== robloxUserId) {
+          resolvedRobloxUserId = resolvedProfile.userId;
+          resolvedRobloxUsername = resolvedProfile.username || robloxUsername;
+          if (!robloxMembershipCache.has(resolvedRobloxUserId)) {
+            robloxMembershipCache.set(resolvedRobloxUserId, await fetchRobloxUserGroupIds(resolvedRobloxUserId));
+          }
+          membership = robloxMembershipCache.get(resolvedRobloxUserId);
+        } else if (!resolvedProfile?.ok && Number(membership?.status || 0) === 404) {
+          membership = {
+            ok: true,
+            groupIds: [],
+            status: 404,
+            error: '',
+            profileMissing: true,
+            profileError: text(resolvedProfile?.error || 'Roblox profile could not be resolved.')
+          };
+        }
+      }
+
       if (!membership?.ok) {
         robloxLookupFailed += 1;
         issues.push({
@@ -259,17 +367,25 @@ export async function onRequestPost(context) {
         if (!matchedGroupIds.length) {
           missingRequiredGroups += 1;
           issues.push({
-            code: 'MISSING_REQUIRED_GROUPS',
-            label: 'Missing required Roblox groups',
-            detail: 'User is missing every configured Roblox group ID.'
+            code: membership.profileMissing ? 'ROBLOX_PROFILE_MISMATCH' : 'MISSING_REQUIRED_GROUPS',
+            label: membership.profileMissing ? 'Roblox profile mismatch' : 'Missing required Roblox groups',
+            detail: membership.profileMissing
+              ? `Saved Roblox ID/username could not be confirmed. ${text(membership.profileError || 'Verify the employee Roblox profile.')}`
+              : 'User is missing every configured Roblox group ID.'
           });
         }
         for (const group of requiredGroups) {
           const isMember = membership.groupIds.includes(group.id);
+          let detail = isMember ? 'Member' : 'Not in group';
+          if (!isMember && membership.profileMissing) {
+            detail = 'Roblox profile could not be verified.';
+          } else if (!isMember && resolvedRobloxUserId !== robloxUserId) {
+            detail = `Checked using refreshed Roblox ID ${resolvedRobloxUserId}${resolvedRobloxUsername ? ` (${resolvedRobloxUsername})` : ''}.`;
+          }
           checks.push({
             label: group.name,
             ok: isMember,
-            detail: isMember ? 'Member' : 'Not in group'
+            detail
           });
         }
       }
