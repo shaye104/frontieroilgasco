@@ -9435,35 +9435,32 @@ body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-t
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-actions {
-  display: inline-flex !important;
-  align-items: stretch !important;
-  justify-content: flex-end !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
   gap: 0.35rem !important;
-  width: auto !important;
-  max-width: 100% !important;
+  width: min(100%, 176px) !important;
+  max-width: 176px !important;
   margin-left: auto !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-target {
-  flex: 1 1 0 !important;
+  width: 100% !important;
   min-width: 0 !important;
-  max-width: 200px !important;
-  width: 200px !important;
+  max-width: 100% !important;
   border-radius: 10px !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-move-btn {
-  flex: 0 0 auto !important;
-  width: auto !important;
-  min-width: 64px !important;
+  width: 100% !important;
+  min-width: 0 !important;
   margin-left: 0 !important;
   border-radius: 10px !important;
 }
 
 body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-note {
   display: inline-block !important;
-  width: auto !important;
-  max-width: 220px !important;
+  width: min(100%, 176px) !important;
+  max-width: 176px !important;
   margin-left: auto !important;
   text-align: left !important;
 }
