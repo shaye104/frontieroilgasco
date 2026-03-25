@@ -16,6 +16,8 @@ function parseRequiredGroupIds(raw) {
     .filter((part) => /^\d{1,30}$/.test(part)))];
 }
 
+const ROBLOX_CACHE_OK_TTL_MS = 24 * 60 * 60 * 1000;
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort('timeout'), timeoutMs);
@@ -351,6 +353,85 @@ function pushSample(list, value, limit = 8) {
   list.push(value);
 }
 
+async function ensureRobloxMembershipCacheSchema(env) {
+  await env.DB.batch([
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS roblox_group_scan_cache (
+      roblox_user_id TEXT PRIMARY KEY,
+      roblox_username TEXT,
+      group_ids_json TEXT NOT NULL DEFAULT '[]',
+      status INTEGER NOT NULL DEFAULT 0,
+      error TEXT,
+      source TEXT NOT NULL DEFAULT 'live',
+      checked_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      checked_at_ms INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+    env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_roblox_group_scan_cache_checked_at_ms ON roblox_group_scan_cache(checked_at_ms DESC)`)
+  ]);
+}
+
+function normalizeRobloxMembershipCacheRow(row) {
+  if (!row) return null;
+  let groupIds = [];
+  try {
+    const parsed = JSON.parse(String(row.group_ids_json || '[]'));
+    if (Array.isArray(parsed)) {
+      groupIds = parsed.map((value) => text(value)).filter((value) => /^\d{1,30}$/.test(value));
+    }
+  } catch {
+    groupIds = [];
+  }
+  return {
+    ok: Number(row.status || 0) >= 200 && Number(row.status || 0) < 300,
+    groupIds: [...new Set(groupIds)],
+    status: Number(row.status || 0),
+    error: text(row.error || ''),
+    username: text(row.roblox_username || ''),
+    source: text(row.source || 'cache'),
+    checkedAtMs: Number(row.checked_at_ms || 0)
+  };
+}
+
+async function readRobloxMembershipCache(env, robloxUserId) {
+  const row = await env.DB
+    .prepare(
+      `SELECT roblox_user_id, roblox_username, group_ids_json, status, error, source, checked_at_ms
+         FROM roblox_group_scan_cache
+        WHERE roblox_user_id = ?`
+    )
+    .bind(String(robloxUserId || ''))
+    .first();
+  return normalizeRobloxMembershipCacheRow(row);
+}
+
+async function writeRobloxMembershipCache(env, robloxUserId, username, membership, source = 'live') {
+  await env.DB
+    .prepare(
+      `INSERT INTO roblox_group_scan_cache (
+         roblox_user_id, roblox_username, group_ids_json, status, error, source, checked_at, checked_at_ms, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(roblox_user_id) DO UPDATE SET
+         roblox_username = excluded.roblox_username,
+         group_ids_json = excluded.group_ids_json,
+         status = excluded.status,
+         error = excluded.error,
+         source = excluded.source,
+         checked_at = CURRENT_TIMESTAMP,
+         checked_at_ms = excluded.checked_at_ms,
+         updated_at = CURRENT_TIMESTAMP`
+    )
+    .bind(
+      String(robloxUserId || ''),
+      text(username || ''),
+      JSON.stringify(Array.isArray(membership?.groupIds) ? membership.groupIds : []),
+      Number(membership?.status || 0),
+      text(membership?.error || ''),
+      text(source || 'live'),
+      Date.now()
+    )
+    .run();
+}
+
 async function mapWithConcurrency(items, limit, worker) {
   const rows = Array.isArray(items) ? items : [];
   const max = Math.max(1, Math.min(12, Number(limit) || 1));
@@ -403,9 +484,10 @@ export async function onRequestPost(context) {
     }, 400);
   }
 
-  const [requiredGroups, guildIndex, rows] = await Promise.all([
+  const [requiredGroups, guildIndex, , rows] = await Promise.all([
     mapWithConcurrency(requiredGroupIds, 4, async (groupId) => ({ id: groupId, name: await fetchRobloxGroupName(groupId) })),
     fetchGuildMemberIndex(env),
+    ensureRobloxMembershipCacheSchema(env),
     env.DB.prepare(
       `SELECT id, discord_user_id, roblox_username, roblox_user_id, rank, employee_status, activation_status, hire_date
          FROM employees
@@ -423,6 +505,8 @@ export async function onRequestPost(context) {
   let robloxLookupFailed = 0;
   let confirmedIssues = 0;
   let verificationFailures = 0;
+  let robloxCacheHits = 0;
+  let robloxCacheFallbacks = 0;
   const robloxErrorCounts = new Map();
   const robloxLookupFailedEmployees = [];
   const discordLookupFailedEmployees = [];
@@ -437,7 +521,34 @@ export async function onRequestPost(context) {
   )];
 
   await mapWithConcurrency(uniqueRobloxUserIds, 2, async (robloxUserId) => {
-    robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(env, robloxUserId));
+    const cached = await readRobloxMembershipCache(env, robloxUserId);
+    const now = Date.now();
+    if (cached?.ok && cached.checkedAtMs > 0 && now - cached.checkedAtMs <= ROBLOX_CACHE_OK_TTL_MS) {
+      robloxMembershipCache.set(robloxUserId, { ...cached, cacheState: 'hit' });
+      robloxCacheHits += 1;
+      return;
+    }
+
+    const live = await fetchRobloxUserGroupIds(env, robloxUserId);
+    if (live?.ok) {
+      await writeRobloxMembershipCache(env, robloxUserId, cached?.username || '', live, 'live');
+      robloxMembershipCache.set(robloxUserId, { ...live, cacheState: 'live' });
+      return;
+    }
+
+    if (cached?.ok && cached.checkedAtMs > 0) {
+      robloxMembershipCache.set(robloxUserId, {
+        ...cached,
+        cacheState: 'fallback',
+        liveStatus: Number(live?.status || 0),
+        liveError: text(live?.error || '')
+      });
+      robloxCacheFallbacks += 1;
+      return;
+    }
+
+    await writeRobloxMembershipCache(env, robloxUserId, cached?.username || '', live, 'live_failed');
+    robloxMembershipCache.set(robloxUserId, live);
   });
 
   for (const employee of employees) {
@@ -646,6 +757,8 @@ export async function onRequestPost(context) {
       flagged: flagged.length,
       confirmedIssues,
       verificationFailures,
+      robloxCacheHits,
+      robloxCacheFallbacks,
       missingDiscordId,
       missingGuild,
       missingRobloxId,
@@ -675,6 +788,8 @@ export async function onRequestPost(context) {
       flagged: flagged.length,
       confirmedIssues,
       verificationFailures,
+      robloxCacheHits,
+      robloxCacheFallbacks,
       missingDiscordId,
       missingGuild,
       missingRobloxId,
