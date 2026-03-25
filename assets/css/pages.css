@@ -9205,3 +9205,43 @@ body.page-finances .finance-cartesian-svg {
     max-height: 214px !important;
   }
 }
+
+
+/* Manager pending transfers: authoritative overflow fix */
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table th:first-child,
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table td:first-child {
+  width: 30% !important;
+}
+
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table th:nth-child(2),
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table td:nth-child(2) {
+  width: 18% !important;
+  white-space: nowrap !important;
+}
+
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table th:last-child,
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table td:last-child {
+  width: 52% !important;
+  text-align: left !important;
+  overflow: visible !important;
+}
+
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-cell,
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-note {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-note {
+  display: block !important;
+  font-size: 0.78rem !important;
+  line-height: 1.25 !important;
+}
