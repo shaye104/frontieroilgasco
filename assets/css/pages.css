@@ -1462,20 +1462,6 @@
   color: #b91c1c;
 }
 
-.site-settings-toggle-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.55rem;
-}
-
-.site-settings-toggle-grid label {
-  display: flex;
-  align-items: center;
-  gap: 0.42rem;
-  margin: 0;
-  font-weight: 500;
-}
-
 @media (max-width: 1080px) {
   .page-manage-employees .my-details-page-header {
     grid-template-columns: 1fr;
