@@ -150,7 +150,17 @@ export async function onRequestPost(context) {
       });
       checks.push({ label: 'Discord guild', ok: false, detail: 'Missing Discord user ID.' });
     } else {
-      const lookup = await fetchGuildMemberRoleIds(env, discordUserId);
+      let lookup;
+      try {
+        lookup = await fetchGuildMemberRoleIds(env, discordUserId);
+      } catch (error) {
+        lookup = {
+          ok: false,
+          status: 0,
+          roleIds: [],
+          error: error?.name === 'AbortError' ? 'Discord lookup timed out.' : 'Discord lookup failed.'
+        };
+      }
       if (!lookup.ok) {
         if (lookup.status === 404) {
           missingGuild += 1;
