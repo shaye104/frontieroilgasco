@@ -137,7 +137,7 @@ export async function onRequestGet(context) {
   const kpiFromIso = null;
   const kpiToIso = null;
 
-  const [balanceSnapshot, periodSnapshotBase, legacyPeriodSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult, reimbursementSettledByResult] = await Promise.all([
+  const [balanceSnapshot, periodSnapshotBase, legacyPeriodSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult] = await Promise.all([
     getCurrentCashBalance(env),
     getCashflowPeriodSnapshot(env, kpiFromIso, kpiToIso),
     getLegacySolvedCashflowTotals(env, kpiFromIso, kpiToIso, tzOffsetMinutes),
@@ -229,22 +229,6 @@ export async function onRequestGet(context) {
          ORDER BY LOWER(COALESCE(e.roblox_username, '')) ASC, e.id ASC`
       )
       .all()
-    ,
-    env.DB
-      .prepare(
-        `SELECT
-           settled_by_employee_id,
-           SUM(amount) AS total_settled
-         FROM finance_reimbursement_settlements
-         WHERE voyage_id IN (
-           SELECT id
-           FROM voyages
-           WHERE deleted_at IS NULL
-         )
-           AND settled_by_employee_id IS NOT NULL
-         GROUP BY settled_by_employee_id`
-      )
-      .all()
   ]);
   const periodSnapshot = {
     cashIn: toMoney(Number(periodSnapshotBase.cashIn || 0) + Number(legacyPeriodSnapshot.cashIn || 0)),
@@ -283,20 +267,12 @@ export async function onRequestGet(context) {
     id: Number(row.id || 0),
     label: buildVoyageLabel(row)
   }));
-  const reimbursementSettledBy = new Map(
-    (reimbursementSettledByResult?.results || [])
-      .map((row) => [Number(row.settled_by_employee_id || 0), Math.max(0, toMoney(row.total_settled || 0))])
-      .filter(([employeeId]) => Number.isInteger(employeeId) && employeeId > 0)
-  );
   const collectorRemittances = (collectorRemittancesResult?.results || [])
     .map((row) => ({
       collectorEmployeeId: Number(row.collector_employee_id || 0),
       collectorName: String(row.collector_name || '').trim() || `Employee #${Number(row.collector_employee_id || 0)}`,
       voyageCount: Number(row.voyage_count || 0),
-      totalAmount: Math.max(
-        0,
-        toMoney(Number(row.total_amount || 0) - Number(reimbursementSettledBy.get(Number(row.collector_employee_id || 0)) || 0))
-      ),
+      totalAmount: Math.max(0, toMoney(Number(row.total_amount || 0))),
       firstCollectedAt: row.first_collected_at || null
     }))
     .filter((row) => row.collectorEmployeeId > 0 && row.totalAmount > 0);
