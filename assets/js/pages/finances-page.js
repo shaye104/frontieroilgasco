@@ -59,6 +59,15 @@ function text(value) {
   return output || 'N/A';
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function cleanSerial(value) {
   const output = String(value ?? '').trim();
   if (!output) return '';
