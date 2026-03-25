@@ -128,20 +128,30 @@ async function fetchRobloxUserGroupIds(env, robloxUserId) {
 
   if (cfg.mode === 'cookie') {
     let response = null;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
         response = await fetchWithTimeout(
           `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
-          {
-            method: 'GET',
-            headers: {
-              cookie: `.ROBLOSECURITY=${cfg.securityCookie}`
-            }
-          },
+          { method: 'GET' },
           12000
         );
       } catch (error) {
-        if (attempt < 1) {
+        if (attempt < 2) {
+          try {
+            response = await fetchWithTimeout(
+              `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
+              {
+                method: 'GET',
+                headers: {
+                  cookie: `.ROBLOSECURITY=${cfg.securityCookie}`
+                }
+              },
+              12000
+            );
+            if (response.ok) break;
+          } catch {
+            // Fall through to retry delay below.
+          }
           await delay(1500 * (attempt + 1));
           continue;
         }
@@ -154,7 +164,24 @@ async function fetchRobloxUserGroupIds(env, robloxUserId) {
       }
 
       if (response.ok) break;
-      if (attempt < 1 && [429, 500, 502, 503, 504].includes(Number(response.status || 0))) {
+      if (attempt < 2 && [401, 403, 429, 500, 502, 503, 504].includes(Number(response.status || 0))) {
+        if ([401, 403].includes(Number(response.status || 0))) {
+          try {
+            response = await fetchWithTimeout(
+              `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
+              {
+                method: 'GET',
+                headers: {
+                  cookie: `.ROBLOSECURITY=${cfg.securityCookie}`
+                }
+              },
+              12000
+            );
+            if (response.ok) break;
+          } catch {
+            // Fall through to retry delay below.
+          }
+        }
         await delay(retryDelayMs(response, 1500 * (attempt + 1)));
         continue;
       }
@@ -351,7 +378,7 @@ export async function onRequestPost(context) {
       .filter((value) => /^\d{1,30}$/.test(value))
   )];
 
-  await mapWithConcurrency(uniqueRobloxUserIds, 4, async (robloxUserId) => {
+  await mapWithConcurrency(uniqueRobloxUserIds, 2, async (robloxUserId) => {
     robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(env, robloxUserId));
   });
 
