@@ -4,6 +4,7 @@ import { enrichSessionWithPermissions, hasPermission } from './permissions.js';
 import { canUseVoyageAndFinance, deriveLifecycleStatusFromEmployee } from './lifecycle.js';
 
 const RANGE_KEYS = new Set(['week', 'month', '3m', '6m', 'year', 'all']);
+const LEGACY_COMPANY_SHARE_ONLY_FROM_UTC = Date.UTC(2026, 2, 14, 0, 0, 0, 0);
 
 export function normalizeTzOffsetMinutes(value) {
   const num = Number(value);
@@ -211,10 +212,19 @@ function parseFinanceTimestamp(value) {
   return parsed.getTime();
 }
 
+function usesCompanyShareOnlyEarnings(row) {
+  const eventAt =
+    parseFinanceTimestamp(row?.ended_at) ||
+    parseFinanceTimestamp(row?.updated_at) ||
+    parseFinanceTimestamp(row?.created_at);
+  return Number.isFinite(eventAt) && eventAt >= LEGACY_COMPANY_SHARE_ONLY_FROM_UTC;
+}
+
 export function resolveVoyageEarnings(row, settlementLines = []) {
-  const settlementRevenue = Math.max(0, sumSettlementLineRevenue(settlementLines));
-  const storedProfit = Math.max(0, toMoney(row?.profit || 0));
-  const storedEffectiveSell = Math.max(0, toMoney(row?.effective_sell || 0));
+  const multiplier = usesCompanyShareOnlyEarnings(row) ? 10 : 1;
+  const settlementRevenue = Math.max(0, toMoney(sumSettlementLineRevenue(settlementLines) * multiplier));
+  const storedProfit = Math.max(0, toMoney(toMoney(row?.profit || 0) * multiplier));
+  const storedEffectiveSell = Math.max(0, toMoney(toMoney(row?.effective_sell || 0) * multiplier));
   const legacyRevenue = Math.max(0, toMoney(row?.legacy_revenue_florins || 0));
   return Math.max(settlementRevenue, storedProfit, storedEffectiveSell, legacyRevenue);
 }
