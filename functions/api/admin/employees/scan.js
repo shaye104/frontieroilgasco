@@ -328,7 +328,8 @@ export async function onRequestPost(context) {
 
       let resolvedRobloxUserId = robloxUserId;
       let resolvedRobloxUsername = robloxUsername;
-      if (!membership?.ok && robloxUsername) {
+      const shouldResolveByUsername = !membership?.ok && robloxUsername && [400, 404].includes(Number(membership?.status || 0));
+      if (shouldResolveByUsername) {
         if (!robloxUserResolveCache.has(robloxUsername)) {
           robloxUserResolveCache.set(robloxUsername, await resolveRobloxUserByUsername(robloxUsername));
         }
