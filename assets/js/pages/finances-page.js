@@ -1672,7 +1672,7 @@ function renderCollectorRemittances(state) {
             ? canMove
               ? `<div class="finance-transfer-actions">
                    <select id="${targetSelectId}" class="finance-transfer-target" data-transfer-target="${sourceId}">
-                     <option value="">Select target</option>
+                     <option value="">Move to...</option>
                      ${targets
                        .map(
                          (target) =>
@@ -1682,7 +1682,6 @@ function renderCollectorRemittances(state) {
                        )
                        .join('')}
                    </select>
-                   <button type="button" class="btn btn-secondary btn-compact finance-transfer-move-btn" data-transfer-collector-remittance="${sourceId}">Move</button>
                  </div>`
               : '<span class="muted finance-transfer-note">No other managers available</span>'
             : '<span class="muted finance-transfer-note">Bookkeeper only</span>'
@@ -1692,17 +1691,13 @@ function renderCollectorRemittances(state) {
     .join('');
 
   if (!state.canSettleCollectorRemittances) return;
-  tbody.querySelectorAll('[data-transfer-collector-remittance]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const sourceCollectorEmployeeId = Number(button.getAttribute('data-transfer-collector-remittance') || 0);
+  tbody.querySelectorAll('[data-transfer-target]').forEach((select) => {
+    if (!(select instanceof HTMLSelectElement)) return;
+    select.addEventListener('change', () => {
+      const sourceCollectorEmployeeId = Number(select.getAttribute('data-transfer-target') || 0);
       if (!Number.isInteger(sourceCollectorEmployeeId) || sourceCollectorEmployeeId <= 0) return;
-      const select = tbody.querySelector(`[data-transfer-target="${sourceCollectorEmployeeId}"]`);
-      if (!(select instanceof HTMLSelectElement)) return;
       const targetCollectorEmployeeId = Number(select.value || 0);
-      if (!Number.isInteger(targetCollectorEmployeeId) || targetCollectorEmployeeId <= 0) {
-        setFeedback('Select a target manager before moving held funds.', 'error');
-        return;
-      }
+      if (!Number.isInteger(targetCollectorEmployeeId) || targetCollectorEmployeeId <= 0) return;
       const source = rows.find((row) => Number(row.collectorEmployeeId || 0) === sourceCollectorEmployeeId);
       const target = managerOptions.find((option) => Number(option.employeeId || 0) === targetCollectorEmployeeId);
       if (!source || !target) return;
