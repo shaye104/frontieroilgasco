@@ -717,7 +717,7 @@ export async function initVoyageDetails(config) {
             }</td>
             <td>
               ${saveStateHtml}
-              ${canEdit ? `<button class="btn btn-icon-remove" type="button" data-remove="${idx}" aria-label="Remove tote" title="Remove tote">x</button>` : '<span class="muted">-</span>'}
+              ${canEdit ? `<button class="btn btn-icon-remove" type="button" data-remove="${idx}" aria-label="Remove cargo" title="Remove cargo">x</button>` : '<span class="muted">-</span>'}
             </td>
           </tr>
         `;
@@ -750,7 +750,7 @@ export async function initVoyageDetails(config) {
     }
     settlementSection.classList.remove('hidden');
     const totals = {
-      fish: ownerRows.reduce((sum, row) => sum + Number(row.totalQuantity || 0), 0),
+      cargo: ownerRows.reduce((sum, row) => sum + Number(row.totalQuantity || 0), 0),
       earnings: toMoney(ownerRows.reduce((sum, row) => sum + Number(row.grossTotal || 0), 0)),
       payable: toMoney(ownerRows.reduce((sum, row) => sum + Number(row.payableTotal || 0), 0))
     };
@@ -761,7 +761,7 @@ export async function initVoyageDetails(config) {
             <tr>
               <th>Owner</th>
               <th class="align-right">Freight/Cargo entries</th>
-              <th class="align-right">Fish</th>
+              <th class="align-right">Cargo</th>
               <th class="align-right">Earnings</th>
               <th class="align-right">To Pay</th>
             </tr>
@@ -782,7 +782,7 @@ export async function initVoyageDetails(config) {
           </tbody>
         </table>
       </div>
-      <p class="muted" style="margin-top:.5rem;">Totals: Fish ${totals.fish} | Earnings ${formatMoney(totals.earnings)} | To Pay ${formatMoney(totals.payable)}</p>
+      <p class="muted" style="margin-top:.5rem;">Totals: Cargo ${totals.cargo} | Earnings ${formatMoney(totals.earnings)} | To Pay ${formatMoney(totals.payable)}</p>
     `;
   }
 
@@ -903,13 +903,13 @@ export async function initVoyageDetails(config) {
       finaliseVoyageBtn.disabled = !canFinalize || !canEndVoyage();
       finaliseVoyageBtn.title = canFinalize
         ? 'Press and hold for 1 second to finalise voyage'
-        : 'All Freight/Cargo entries must have owner, fish, and quantity before finalizing';
+        : 'All Freight/Cargo entries must have owner, cargo, and quantity before finalizing';
     }
     if (cancelVoyageBtn) {
       cancelVoyageBtn.disabled = !canCancelWithCurrentState || !canEndVoyage();
       cancelVoyageBtn.title = canCancelWithCurrentState
         ? 'Press and hold for 1 second to cancel voyage'
-        : 'Cancel is allowed only when current tote earnings are zero';
+        : 'Cancel is allowed only when current cargo earnings are zero';
     }
   }
 
@@ -1195,7 +1195,7 @@ export async function initVoyageDetails(config) {
   endForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!editableTotes.length) {
-      return setInlineMessage(endFeedback, 'Add at least one tote before finalizing.');
+      return setInlineMessage(endFeedback, 'Add at least one cargo entry before finalizing.');
     }
     if (!editableTotes.every(isRowComplete)) {
       return setInlineMessage(endFeedback, 'All Freight/Cargo rows must include owner, cargo, and qty (>0) before finalizing.');
@@ -1284,7 +1284,7 @@ export async function initVoyageDetails(config) {
         Number(detail?.voyage?.officer_of_watch_employee_id || 0)
       );
       if (settlement.totalEarnings > 0) {
-        setInlineMessage(endFeedback, 'Cancel is only allowed when total tote earnings are zero.');
+        setInlineMessage(endFeedback, 'Cancel is only allowed when total cargo earnings are zero.');
         return;
       }
 
@@ -1360,3 +1360,4 @@ export async function initVoyageDetails(config) {
     if (!document.hidden) void refreshPassively();
   });
 }
+

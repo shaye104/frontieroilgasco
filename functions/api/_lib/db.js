@@ -57,7 +57,7 @@ export async function ensureCoreSchema(env) {
     ['voyages.end', 'voyages', 'End Voyages', 'End voyages and finalise voyage accounting.'],
     ['voyages.delete', 'voyages', 'Delete Voyages', 'Delete archived voyages with financial reversal and audit trail.'],
     ['voyages.override', 'voyages', 'Voyage Override', 'Allow force edit/end/delete actions for voyages without Officer of the Watch (OOTW) assignment.'],
-    ['voyages.config.manage', 'voyages', 'Manage Voyage Config', 'Manage fish types, sell locations, and voyage config lists.'],
+    ['voyages.config.manage', 'voyages', 'Manage Voyage Config', 'Manage cargo types, sell locations, and voyage config lists.'],
     ['finances.view', 'finances', 'View Finances', 'View the finance dashboard and debt summaries.'],
     ['finances.debts.settle', 'finances', 'Settle Finance Debts', 'Settle outstanding company share debts.'],
     ['finances.bookkeeper', 'finances', 'Bookkeeper', 'Settle collector pending transfers into company cashflow.'],
@@ -866,7 +866,7 @@ export async function ensureCoreSchema(env) {
   }
 
   try {
-    // Backfill tote rows from legacy manifest rows for finance and voyage analytics.
+    // Backfill cargo rows from legacy manifest rows for finance and voyage analytics.
     await env.DB
       .prepare(
         `INSERT INTO voyage_tote_lines (
@@ -1696,3 +1696,4 @@ export async function getShipyardShipById(env, shipId) {
       .first()) || null
   );
 }
+

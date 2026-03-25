@@ -244,17 +244,6 @@ function aggregateTrendForRange(series, range, mode = 'sum') {
     }));
 }
 
-function upscalePostMarchEarningsSeries(series) {
-  const cutoff = Date.parse('2026-03-14T00:00:00Z');
-  const rows = Array.isArray(series) ? series : [];
-  return rows.map((point) => {
-    const parsed = parseFinanceDate(point?.key || point?.label || '');
-    const value = Number(point?.value || 0);
-    if (!Number.isFinite(parsed) || parsed < cutoff) return { ...point, value: toMoney(value) };
-    return { ...point, value: toMoney(value * 10) };
-  });
-}
-
 function sumSeriesValues(series) {
   return toMoney((Array.isArray(series) ? series : []).reduce((sum, point) => sum + Number(point?.value || 0), 0));
 }
@@ -262,13 +251,11 @@ function sumSeriesValues(series) {
 function normalizeOverviewChartsForRange(data, range) {
   if (!data || typeof data !== 'object') return data;
   const charts = data.charts || {};
-  const correctedNetProfitRaw = upscalePostMarchEarningsSeries(charts.netProfitTrend || []);
-  const correctedGrossRevenueRaw = upscalePostMarchEarningsSeries(charts.grossRevenueTrend || []);
-  const netProfitTrend = aggregateTrendForRange(correctedNetProfitRaw, range, 'sum');
+  const netProfitTrend = aggregateTrendForRange(charts.netProfitTrend || [], range, 'sum');
   const companyShareTrend = aggregateTrendForRange(charts.companyShareTrend || [], range, 'sum');
   const voyageCountTrend = aggregateTrendForRange(charts.voyageCountTrend || [], range, 'sum');
   const freightLossValueTrend = aggregateTrendForRange(charts.freightLossValueTrend || [], range, 'sum');
-  const grossRevenueTrend = aggregateTrendForRange(correctedGrossRevenueRaw, range, 'sum');
+  const grossRevenueTrend = aggregateTrendForRange(charts.grossRevenueTrend || [], range, 'sum');
   const outstandingTrend = aggregateTrendForRange(charts.outstandingTrend || companyShareTrend, range, 'last');
   const avgNetProfitTrend = netProfitTrend.map((point, index) => ({
     key: point.key,
@@ -2849,6 +2836,8 @@ init().catch((error) => {
   console.error('finances init error', error);
   setFeedback(`Failed to load finance module: ${error.message || 'Unknown error'}`, 'error');
 });
+
+
 
 
 

@@ -97,7 +97,7 @@ export async function onRequestPut(context) {
   if (String(voyage.status) !== 'ONGOING') return json({ error: 'Only ongoing voyages can be edited.' }, 400);
 
   if (!canManageVoyage(session, employee, voyage, 'voyages.edit')) {
-    return json({ error: 'Only the voyage Officer of the Watch (OOTW) (or voyage override) can edit tote log.' }, 403);
+    return json({ error: 'Only the voyage Officer of the Watch (OOTW) (or voyage override) can edit cargo log.' }, 403);
   }
 
   let payload;
@@ -154,11 +154,11 @@ export async function onRequestPut(context) {
   allowedOwnerIds.add(Number(voyage.officer_of_watch_employee_id));
 
   for (const row of rows) {
-    if (!ownerSet.has(Number(row.ownerEmployeeId))) return json({ error: 'Every tote owner must be a valid employee.' }, 400);
+    if (!ownerSet.has(Number(row.ownerEmployeeId))) return json({ error: 'Every cargo owner must be a valid employee.' }, 400);
     if (!allowedOwnerIds.has(Number(row.ownerEmployeeId))) {
-      return json({ error: 'Tote owner must be assigned as Officer of the Watch (OOTW) or crew on this voyage.' }, 400);
+      return json({ error: 'Cargo owner must be assigned as Officer of the Watch (OOTW) or crew on this voyage.' }, 400);
     }
-    if (!fishById.has(Number(row.fishTypeId))) return json({ error: 'Every tote fish type must be an active configured fish type.' }, 400);
+    if (!fishById.has(Number(row.fishTypeId))) return json({ error: 'Every cargo type must be an active configured cargo type.' }, 400);
   }
 
   const sellMultiplier = Number(voyage.sell_multiplier || 1) || 1;
@@ -176,7 +176,7 @@ export async function onRequestPut(context) {
              (voyage_id, owner_employee_id, fish_type_id, fish_name_snapshot, quantity, unit_price_snapshot, sell_multiplier_snapshot, row_base_total, row_final_total, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
         )
-        .bind(voyageId, row.ownerEmployeeId, row.fishTypeId, String(fish?.name || `Fish #${row.fishTypeId}`), quantity, unitPrice, sellMultiplier, rowBaseTotal, rowFinalTotal)
+        .bind(voyageId, row.ownerEmployeeId, row.fishTypeId, String(fish?.name || `Cargo #${row.fishTypeId}`), quantity, unitPrice, sellMultiplier, rowBaseTotal, rowFinalTotal)
     );
   });
   await env.DB.batch(statements);
@@ -189,3 +189,4 @@ export async function onRequestPut(context) {
     buyTotal: next.totals.totalBase
   });
 }
+

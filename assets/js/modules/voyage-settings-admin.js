@@ -9,7 +9,7 @@ import { clearMessage, showMessage } from './notice.js';
 
 const CONFIG_TYPES = [
   { key: 'ports', label: 'Ports', placeholder: 'Add port name', numeric: null },
-  { key: 'fish_types', label: 'Fish Types', placeholder: 'Add fish type name', numeric: { key: 'unitPrice', label: 'Buy Price', step: '0.01', min: '0' } },
+  { key: 'fish_types', label: 'Cargo Types', placeholder: 'Add cargo type name', numeric: { key: 'unitPrice', label: 'Buy Price', step: '0.01', min: '0' } },
   {
     key: 'sell_locations',
     label: 'Sell Locations',
@@ -254,3 +254,4 @@ export async function initVoyageSettingsAdmin(config) {
     showMessage(feedback, error.message || 'Unable to load voyage settings.', 'error');
   }
 }
+

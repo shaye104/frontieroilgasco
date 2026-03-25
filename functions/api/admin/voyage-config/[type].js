@@ -71,7 +71,7 @@ export async function onRequestPost(context) {
   try {
     if (table === 'config_fish_types') {
       if (!Number.isFinite(numericValue) || numericValue < 0) {
-        return json({ error: 'Fish buy price must be a number >= 0.' }, 400);
+        return json({ error: 'Cargo buy price must be a number >= 0.' }, 400);
       }
       await env.DB
         .prepare(`INSERT INTO config_fish_types (name, unit_price, active, updated_at) VALUES (?, ?, 1, CURRENT_TIMESTAMP)`)
@@ -125,7 +125,7 @@ export async function onRequestPut(context) {
   try {
     if (table === 'config_fish_types') {
       if (!Number.isFinite(numericValue) || numericValue < 0) {
-        return json({ error: 'Fish buy price must be a number >= 0.' }, 400);
+        return json({ error: 'Cargo buy price must be a number >= 0.' }, 400);
       }
       await env.DB
         .prepare(
@@ -181,3 +181,4 @@ export async function onRequestDelete(context) {
   }
   return json({ ok: true });
 }
+

@@ -168,7 +168,7 @@ async function handleCancel(context, payload = null) {
         ownerEmployeeId,
         ownerName: String(row.owner_name || '').trim() || `Employee #${ownerEmployeeId}`,
         fishTypeId,
-        fishName: String(row.fish_name || '').trim() || `Fish #${fishTypeId}`,
+        fishName: String(row.fish_name || '').trim() || `Cargo #${fishTypeId}`,
         quantity,
         netQuantity: isLost ? 0 : quantity,
         isLost,
@@ -186,7 +186,7 @@ async function handleCancel(context, payload = null) {
 
   const totalGrossEarnings = toMoney(settlementLines.reduce((sum, line) => sum + Number(line.rowNetFinalTotal || 0), 0));
   if (totalGrossEarnings > 0) {
-    return json({ error: 'Voyage can only be cancelled when tote earnings are zero. Mark Freight/Cargo rows as lost first if needed.' }, 400);
+    return json({ error: 'Voyage can only be cancelled when cargo earnings are zero. Mark Freight/Cargo rows as lost first if needed.' }, 400);
   }
 
   const skipperEmployeeId = Number(voyage.officer_of_watch_employee_id || 0);
@@ -308,3 +308,4 @@ export async function onRequestPost(context) {
   }
   return handleCancel(context, payload || null);
 }
+

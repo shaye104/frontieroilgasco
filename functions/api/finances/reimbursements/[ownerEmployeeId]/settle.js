@@ -204,7 +204,7 @@ export async function onRequestPost(context) {
         createdByName,
         String(session.userId || ''),
         totalOutstanding,
-        `Lost tote reimbursement settlement - ${ownerName}`,
+        `Lost cargo reimbursement settlement - ${ownerName}`,
         balanceAfter
       ),
     env.DB
@@ -220,7 +220,7 @@ export async function onRequestPost(context) {
         JSON.stringify({
           type: 'OUT',
           amount: totalOutstanding,
-          reason: `Lost tote reimbursement settlement - ${ownerName}`,
+          reason: `Lost cargo reimbursement settlement - ${ownerName}`,
           category: 'Operational Expense',
           ownerEmployeeId,
           ownerName,
@@ -276,3 +276,4 @@ export async function onRequestPost(context) {
     }
   });
 }
+

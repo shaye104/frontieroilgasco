@@ -112,7 +112,7 @@ export async function onRequestPost(context) {
     .bind(voyageId)
     .all();
   const toteEntries = toteRows?.results || [];
-  if (!toteEntries.length) return json({ error: 'At least one tote entry is required to end the voyage.' }, 400);
+  if (!toteEntries.length) return json({ error: 'At least one cargo entry is required to end the voyage.' }, 400);
 
   const settlementLines = toteEntries
     .map((row) => {
@@ -141,7 +141,7 @@ export async function onRequestPost(context) {
         ownerEmployeeId,
         ownerName: String(row.owner_name || '').trim() || `Employee #${ownerEmployeeId}`,
         fishTypeId,
-        fishName: String(row.fish_name || '').trim() || `Fish #${fishTypeId}`,
+        fishName: String(row.fish_name || '').trim() || `Cargo #${fishTypeId}`,
         quantity,
         netQuantity,
         isLost,
@@ -159,7 +159,7 @@ export async function onRequestPost(context) {
     })
     .filter((line) => line.ownerEmployeeId > 0 && line.fishTypeId > 0 && line.quantity > 0);
   if (!settlementLines.length) {
-    return json({ error: 'At least one completed tote (owner, fish, qty > 0) is required to end the voyage.' }, 400);
+    return json({ error: 'At least one completed cargo entry (owner, cargo, qty > 0) is required to end the voyage.' }, 400);
   }
 
   const ownerSummaryMap = new Map();
@@ -275,3 +275,4 @@ export async function onRequestPost(context) {
     settlementLines
   });
 }
+
