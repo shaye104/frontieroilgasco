@@ -9580,3 +9580,104 @@ body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-t
   margin-left: 0 !important;
   text-align: left !important;
 }
+
+.page-site-settings .panel {
+  min-width: 0;
+}
+
+.page-site-settings .site-settings-section-head {
+  margin-bottom: 0.8rem;
+}
+
+.page-site-settings .site-settings-section-head label,
+.page-site-settings .site-settings-section-head h2 {
+  margin: 0;
+}
+
+.page-site-settings .site-settings-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.page-site-settings .site-settings-admin-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.page-site-settings .site-settings-compact-form {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+  border: 1px solid #dce6f3;
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.page-site-settings .site-settings-compact-main,
+.page-site-settings .site-settings-compact-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.page-site-settings .site-settings-compact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page-site-settings .site-settings-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem 0.9rem;
+}
+
+.page-site-settings .site-settings-toggle-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page-site-settings .site-settings-toggle-grid label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #dce6f3;
+  border-radius: 12px;
+  background: #ffffff;
+  font-weight: 600;
+  color: #22314d;
+}
+
+.page-site-settings .site-settings-toggle-grid input[type='checkbox'] {
+  margin: 0.15rem 0 0;
+}
+
+.page-site-settings .site-settings-compact-actions {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+.page-site-settings #statusConfigTableBody td:nth-child(2),
+.page-site-settings #disciplinaryTypesTableBody td:nth-child(2),
+.page-site-settings #disciplinaryTypesTableBody td:nth-child(3) {
+  color: #4e6385;
+}
+
+.page-site-settings #disciplinaryTypesTableBody small {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 1100px) {
+  .page-site-settings .site-settings-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-site-settings .site-settings-compact-grid,
+  .page-site-settings .site-settings-toggle-grid,
+  .page-site-settings .site-settings-toggle-grid-compact {
+    grid-template-columns: 1fr;
+  }
+}

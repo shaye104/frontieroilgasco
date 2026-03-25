@@ -139,6 +139,8 @@ export async function ensureCoreSchema(env) {
     `CREATE TABLE IF NOT EXISTS config_employee_statuses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       value TEXT NOT NULL UNIQUE,
+      restrict_intranet INTEGER NOT NULL DEFAULT 0,
+      exclude_from_stats INTEGER NOT NULL DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS config_disciplinary_types (
@@ -573,6 +575,15 @@ export async function ensureCoreSchema(env) {
   }
   if (!employeeColumnNames.has('suspension_ends_at')) {
     await env.DB.prepare(`ALTER TABLE employees ADD COLUMN suspension_ends_at TEXT`).run();
+  }
+
+  const employeeStatusColumns = await env.DB.prepare(`PRAGMA table_info(config_employee_statuses)`).all();
+  const employeeStatusColumnNames = new Set((employeeStatusColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!employeeStatusColumnNames.has('restrict_intranet')) {
+    await env.DB.prepare(`ALTER TABLE config_employee_statuses ADD COLUMN restrict_intranet INTEGER NOT NULL DEFAULT 0`).run();
+  }
+  if (!employeeStatusColumnNames.has('exclude_from_stats')) {
+    await env.DB.prepare(`ALTER TABLE config_employee_statuses ADD COLUMN exclude_from_stats INTEGER NOT NULL DEFAULT 0`).run();
   }
 
   const disciplinaryTypeColumns = await env.DB.prepare(`PRAGMA table_info(config_disciplinary_types)`).all();

@@ -1,5 +1,5 @@
 import { initIntranetPageGuard } from '../modules/intranet-page-guard.js?v=20260304b';
-import { getSiteSettings, saveSiteSettings } from '../modules/admin-api.js';
+import { createConfigValue, deleteConfigValue, getEmployeeConfigBootstrap, getSiteSettings, saveSiteSettings, updateConfigValue } from '../modules/admin-api.js';
 import { showMessage } from '../modules/notice.js';
 
 function escapeHtml(value) {
@@ -51,8 +51,7 @@ function renderGroupRows(target, rows) {
 
 function setHiddenInputValue(rows) {
   const hidden = document.querySelector('#settingsRequiredRobloxGroupsJson');
-  if (!hidden) return;
-  hidden.value = JSON.stringify(normalizeGroupRows(rows));
+  if (hidden) hidden.value = JSON.stringify(normalizeGroupRows(rows));
 }
 
 function syncHiddenInput(target, rows) {
@@ -70,28 +69,203 @@ function readRowsFromDom(target) {
   }));
 }
 
-function applyForm(settings) {
-  const body = document.querySelector('#settingsRequiredRobloxGroupsBody');
-  const rows = normalizeGroupRows(settings.requiredRobloxGroups);
-  syncHiddenInput(body, rows);
+function boolLabel(enabled, label) {
+  return enabled ? label : '';
 }
 
-function collectForm() {
-  const body = document.querySelector('#settingsRequiredRobloxGroupsBody');
-  const rows = normalizeGroupRows(readRowsFromDom(body));
-  setHiddenInputValue(rows);
+function ruleSummary(row) {
+  const items = [
+    `Severity ${Number(row?.severity || 1)}`,
+    String(row?.default_status || 'ACTIVE').trim().toUpperCase() || 'ACTIVE',
+    Number(row?.requires_end_date || 0) ? 'End date required' : '',
+    Number(row?.default_duration_days || 0) > 0 ? `${Number(row.default_duration_days)} days` : '',
+    String(row?.set_employee_status || '').trim() ? `Status: ${String(row.set_employee_status).trim()}` : '',
+    Number(row?.apply_suspension_rank || 0) ? 'Applies suspension rank' : ''
+  ].filter(Boolean);
+  return items.join(' • ');
+}
+
+function restrictionSummary(row) {
+  const items = [
+    boolLabel(Number(row?.restrict_intranet || 0), 'Intranet'),
+    boolLabel(Number(row?.restrict_voyages || 0), 'Voyages'),
+    boolLabel(Number(row?.restrict_finance || 0), 'Finance')
+  ].filter(Boolean);
+  return items.length ? items.join(', ') : 'None';
+}
+
+function renderDisciplinaryTypes(target, rows = []) {
+  if (!target) return;
+  if (!rows.length) {
+    target.innerHTML = '<tr><td colspan="4">No disciplinary types configured.</td></tr>';
+    return;
+  }
+  target.innerHTML = rows
+    .map(
+      (row) => `<tr>
+        <td>
+          <strong>${escapeHtml(String(row?.label || row?.value || row?.key || 'Unnamed').trim())}</strong>
+          <small class="finance-inline-caption">${escapeHtml(String(row?.key || '').trim() || 'No key')}</small>
+        </td>
+        <td>${escapeHtml(ruleSummary(row))}</td>
+        <td>${escapeHtml(restrictionSummary(row))}</td>
+        <td class="align-right">
+          <button class="btn btn-secondary btn-compact" type="button" data-edit-disciplinary-type="${Number(row?.id || 0)}">Edit</button>
+          <button class="btn btn-danger btn-compact" type="button" data-delete-disciplinary-type="${Number(row?.id || 0)}">Delete</button>
+        </td>
+      </tr>`
+    )
+    .join('');
+}
+
+function renderStatuses(target, rows = []) {
+  if (!target) return;
+  if (!rows.length) {
+    target.innerHTML = '<tr><td colspan="3">No employee statuses configured.</td></tr>';
+    return;
+  }
+  target.innerHTML = rows
+    .map(
+      (row) => `<tr>
+        <td><strong>${escapeHtml(String(row?.value || '').trim() || 'Unnamed')}</strong></td>
+        <td>${escapeHtml(
+          [
+            Number(row?.restrict_intranet || 0) ? 'Removes intranet access' : '',
+            Number(row?.exclude_from_stats || 0) ? 'Excluded from employee stats' : ''
+          ].filter(Boolean).join(' • ') || 'Standard status'
+        )}</td>
+        <td class="align-right">
+          <button class="btn btn-secondary btn-compact" type="button" data-edit-status="${Number(row?.id || 0)}">Edit</button>
+          <button class="btn btn-danger btn-compact" type="button" data-delete-status="${Number(row?.id || 0)}">Delete</button>
+        </td>
+      </tr>`
+    )
+    .join('');
+}
+
+function readCheckbox(selector) {
+  return Boolean(document.querySelector(selector)?.checked);
+}
+
+function setCheckbox(selector, value) {
+  const node = document.querySelector(selector);
+  if (node) node.checked = Boolean(value);
+}
+
+function readInput(selector) {
+  return String(document.querySelector(selector)?.value ?? '').trim();
+}
+
+function setInput(selector, value) {
+  const node = document.querySelector(selector);
+  if (node) node.value = String(value ?? '');
+}
+
+function normalizeTypePayload(payload = {}) {
+  const key = String(payload?.key || '').trim().replace(/[^A-Za-z0-9 _-]/g, '').replace(/[\s-]+/g, '_').toUpperCase();
+  const label = String(payload?.label || '').trim();
+  const severity = Number(payload?.severity || 1);
+  const defaultDurationDays = Number(payload?.defaultDurationDays || 0);
   return {
-    requiredRobloxGroups: rows
+    key,
+    label,
+    value: label,
+    severity: Number.isFinite(severity) && severity > 0 ? Math.floor(severity) : 1,
+    defaultStatus: String(payload?.defaultStatus || 'ACTIVE').trim().toUpperCase() || 'ACTIVE',
+    defaultDurationDays: Number.isFinite(defaultDurationDays) && defaultDurationDays > 0 ? Math.floor(defaultDurationDays) : null,
+    setEmployeeStatus: String(payload?.setEmployeeStatus || '').trim(),
+    isActive: Boolean(payload?.isActive),
+    requiresEndDate: Boolean(payload?.requiresEndDate),
+    applySuspensionRank: Boolean(payload?.applySuspensionRank),
+    restrictIntranet: Boolean(payload?.restrictIntranet),
+    restrictVoyages: Boolean(payload?.restrictVoyages),
+    restrictFinance: Boolean(payload?.restrictFinance)
   };
 }
 
-async function loadSettings(feedback) {
-  const payload = await getSiteSettings();
-  const settings = payload?.settings || {};
+function collectDisciplinaryForm() {
+  return normalizeTypePayload({
+    key: readInput('#disciplinaryTypeKey'),
+    label: readInput('#disciplinaryTypeLabel'),
+    severity: readInput('#disciplinaryTypeSeverity'),
+    defaultStatus: readInput('#disciplinaryTypeDefaultStatus'),
+    defaultDurationDays: readInput('#disciplinaryTypeDuration'),
+    setEmployeeStatus: readInput('#disciplinaryTypeSetStatus'),
+    isActive: readCheckbox('#disciplinaryTypeActive'),
+    requiresEndDate: readCheckbox('#disciplinaryTypeRequiresEnd'),
+    applySuspensionRank: readCheckbox('#disciplinaryTypeSuspension'),
+    restrictIntranet: readCheckbox('#disciplinaryTypeRestrictIntranet'),
+    restrictVoyages: readCheckbox('#disciplinaryTypeRestrictVoyages'),
+    restrictFinance: readCheckbox('#disciplinaryTypeRestrictFinance')
+  });
+}
+
+function fillDisciplinaryForm(row = null) {
+  setInput('#disciplinaryTypeKey', row?.key || '');
+  setInput('#disciplinaryTypeLabel', row?.label || row?.value || '');
+  setInput('#disciplinaryTypeSeverity', Number(row?.severity || 1));
+  setInput('#disciplinaryTypeDefaultStatus', row?.default_status || 'ACTIVE');
+  setInput('#disciplinaryTypeDuration', row?.default_duration_days || '');
+  setInput('#disciplinaryTypeSetStatus', row?.set_employee_status || '');
+  setCheckbox('#disciplinaryTypeActive', Number(row?.is_active ?? 1));
+  setCheckbox('#disciplinaryTypeRequiresEnd', Number(row?.requires_end_date || 0));
+  setCheckbox('#disciplinaryTypeSuspension', Number(row?.apply_suspension_rank || 0));
+  setCheckbox('#disciplinaryTypeRestrictIntranet', Number(row?.restrict_intranet || 0));
+  setCheckbox('#disciplinaryTypeRestrictVoyages', Number(row?.restrict_voyages || 0));
+  setCheckbox('#disciplinaryTypeRestrictFinance', Number(row?.restrict_finance || 0));
+}
+
+function setDisciplinaryEditingState(editingId = null) {
+  const form = document.querySelector('#disciplinaryTypeForm');
+  if (form) form.dataset.editingId = editingId ? String(editingId) : '';
+  const saveBtn = document.querySelector('#disciplinaryTypeSaveBtn');
+  if (saveBtn) saveBtn.textContent = editingId ? 'Save Changes' : 'Add Type';
+}
+
+function resetDisciplinaryForm() {
+  fillDisciplinaryForm(null);
+  setDisciplinaryEditingState(null);
+}
+
+function setStatusEditingState(editingId = null) {
+  const form = document.querySelector('#statusConfigForm');
+  if (form) form.dataset.editingId = editingId ? String(editingId) : '';
+  const saveBtn = document.querySelector('#statusConfigSaveBtn');
+  if (saveBtn) saveBtn.textContent = editingId ? 'Save Changes' : 'Add Status';
+}
+
+function resetStatusForm() {
+  setInput('#statusConfigValue', '');
+  setCheckbox('#statusConfigRestrictIntranet', false);
+  setCheckbox('#statusConfigExcludeFromStats', false);
+  setStatusEditingState(null);
+}
+
+function applyForm(settings) {
+  const body = document.querySelector('#settingsRequiredRobloxGroupsBody');
+  syncHiddenInput(body, normalizeGroupRows(settings.requiredRobloxGroups));
+}
+
+function collectSiteSettingsForm() {
+  const body = document.querySelector('#settingsRequiredRobloxGroupsBody');
+  const rows = normalizeGroupRows(readRowsFromDom(body));
+  setHiddenInputValue(rows);
+  return { requiredRobloxGroups: rows };
+}
+
+async function loadPageData(feedback) {
+  const [sitePayload, configPayload] = await Promise.all([getSiteSettings(), getEmployeeConfigBootstrap()]);
+  const settings = sitePayload?.settings || {};
+  const disciplinaryTypes = Array.isArray(configPayload?.disciplinaryTypes) ? configPayload.disciplinaryTypes : [];
+  const statuses = Array.isArray(configPayload?.statuses) ? configPayload.statuses : [];
   applyForm(settings);
+  renderDisciplinaryTypes(document.querySelector('#disciplinaryTypesTableBody'), disciplinaryTypes);
+  renderStatuses(document.querySelector('#statusConfigTableBody'), statuses);
   document.querySelector('#siteSettingsContent')?.classList.remove('hidden');
+  document.querySelector('#disciplinaryConfigSection')?.classList.remove('hidden');
+  document.querySelector('#statusConfigSection')?.classList.remove('hidden');
   if (feedback) feedback.innerHTML = '';
-  return settings;
+  return { settings, disciplinaryTypes, statuses };
 }
 
 initIntranetPageGuard({
@@ -107,19 +281,33 @@ initIntranetPageGuard({
   const saveBtn = document.querySelector('#siteSettingsSaveBtn');
   const addGroupBtn = document.querySelector('#addRequiredRobloxGroupBtn');
   const groupsBody = document.querySelector('#settingsRequiredRobloxGroupsBody');
+  const disciplinaryFeedback = document.querySelector('#disciplinaryTypesFeedback');
+  const disciplinaryForm = document.querySelector('#disciplinaryTypeForm');
+  const disciplinaryTableBody = document.querySelector('#disciplinaryTypesTableBody');
+  const statusFeedback = document.querySelector('#statusConfigFeedback');
+  const statusForm = document.querySelector('#statusConfigForm');
+  const statusTableBody = document.querySelector('#statusConfigTableBody');
 
-  let lastLoaded = null;
+  const state = {
+    siteSettings: null,
+    disciplinaryTypes: [],
+    statuses: []
+  };
 
   try {
-    lastLoaded = await loadSettings(feedback);
+    const loaded = await loadPageData(feedback);
+    state.siteSettings = loaded.settings;
+    state.disciplinaryTypes = loaded.disciplinaryTypes;
+    state.statuses = loaded.statuses;
+    resetDisciplinaryForm();
+    resetStatusForm();
   } catch (error) {
     showMessage(feedback, error.message || 'Unable to load site settings.', 'error');
     return;
   }
 
   addGroupBtn?.addEventListener('click', () => {
-    const nextRows = [...readRowsFromDom(groupsBody), { id: '', name: '', shortLabel: '' }];
-    syncHiddenInput(groupsBody, nextRows);
+    syncHiddenInput(groupsBody, [...readRowsFromDom(groupsBody), { id: '', name: '', shortLabel: '' }]);
   });
 
   groupsBody?.addEventListener('click', (event) => {
@@ -128,18 +316,16 @@ initIntranetPageGuard({
     const button = target.closest('[data-remove-group]');
     if (!button) return;
     const index = Number(button.getAttribute('data-remove-group'));
-    const rows = readRowsFromDom(groupsBody).filter((_, rowIndex) => rowIndex !== index);
-    syncHiddenInput(groupsBody, rows);
+    syncHiddenInput(groupsBody, readRowsFromDom(groupsBody).filter((_, rowIndex) => rowIndex !== index));
   });
 
   groupsBody?.addEventListener('input', () => {
-    const rows = readRowsFromDom(groupsBody);
-    setHiddenInputValue(rows);
+    setHiddenInputValue(readRowsFromDom(groupsBody));
   });
 
   resetBtn?.addEventListener('click', () => {
-    if (!lastLoaded) return;
-    applyForm(lastLoaded);
+    if (!state.siteSettings) return;
+    applyForm(state.siteSettings);
     showMessage(feedback, 'Form reset.', 'info');
   });
 
@@ -149,15 +335,134 @@ initIntranetPageGuard({
     saveBtn.disabled = true;
     showMessage(feedback, 'Saving settings...', 'info');
     try {
-      const payload = collectForm();
-      const response = await saveSiteSettings(payload);
-      lastLoaded = response?.settings || payload;
-      applyForm(lastLoaded);
+      const response = await saveSiteSettings(collectSiteSettingsForm());
+      state.siteSettings = response?.settings || state.siteSettings;
+      applyForm(state.siteSettings);
       showMessage(feedback, 'Roblox group scan settings saved.', 'success');
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to save site settings.', 'error');
     } finally {
       saveBtn.disabled = false;
     }
+  });
+
+  disciplinaryForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const saveTypeBtn = document.querySelector('#disciplinaryTypeSaveBtn');
+    if (!saveTypeBtn) return;
+    saveTypeBtn.disabled = true;
+    showMessage(disciplinaryFeedback, 'Saving disciplinary type...', 'info');
+    try {
+      const payload = collectDisciplinaryForm();
+      if (!payload.key || !payload.label) throw new Error('Key and label are required.');
+      const editingId = Number(disciplinaryForm.dataset.editingId || 0);
+      const response = editingId
+        ? await updateConfigValue('disciplinary_types', editingId, payload)
+        : await createConfigValue('disciplinary_types', payload);
+      state.disciplinaryTypes = Array.isArray(response?.items) ? response.items : [];
+      renderDisciplinaryTypes(disciplinaryTableBody, state.disciplinaryTypes);
+      resetDisciplinaryForm();
+      showMessage(disciplinaryFeedback, editingId ? 'Disciplinary type updated.' : 'Disciplinary type added.', 'success');
+    } catch (error) {
+      showMessage(disciplinaryFeedback, error.message || 'Unable to save disciplinary type.', 'error');
+    } finally {
+      saveTypeBtn.disabled = false;
+    }
+  });
+
+  disciplinaryTableBody?.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const editButton = target.closest('[data-edit-disciplinary-type]');
+    if (editButton) {
+      const id = Number(editButton.getAttribute('data-edit-disciplinary-type'));
+      const row = state.disciplinaryTypes.find((item) => Number(item?.id) === id);
+      if (!row) return;
+      setDisciplinaryEditingState(id);
+      fillDisciplinaryForm(row);
+      showMessage(disciplinaryFeedback, `Editing ${String(row?.label || row?.value || row?.key).trim()}.`, 'info');
+      return;
+    }
+
+    const deleteButton = target.closest('[data-delete-disciplinary-type]');
+    if (!deleteButton) return;
+    const id = Number(deleteButton.getAttribute('data-delete-disciplinary-type'));
+    if (!Number.isInteger(id) || id <= 0 || !window.confirm('Delete this disciplinary type?')) return;
+
+    void (async () => {
+      try {
+        const response = await deleteConfigValue('disciplinary_types', id);
+        state.disciplinaryTypes = Array.isArray(response?.items) ? response.items : [];
+        renderDisciplinaryTypes(disciplinaryTableBody, state.disciplinaryTypes);
+        resetDisciplinaryForm();
+        showMessage(disciplinaryFeedback, 'Disciplinary type deleted.', 'success');
+      } catch (error) {
+        showMessage(disciplinaryFeedback, error.message || 'Unable to delete disciplinary type.', 'error');
+      }
+    })();
+  });
+
+  statusForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const saveStatusBtn = document.querySelector('#statusConfigSaveBtn');
+    if (!saveStatusBtn) return;
+    saveStatusBtn.disabled = true;
+    showMessage(statusFeedback, 'Saving status...', 'info');
+    try {
+      const payload = {
+        value: readInput('#statusConfigValue'),
+        restrictIntranet: readCheckbox('#statusConfigRestrictIntranet'),
+        excludeFromStats: readCheckbox('#statusConfigExcludeFromStats')
+      };
+      if (!payload.value) throw new Error('Status value is required.');
+      const editingId = Number(statusForm.dataset.editingId || 0);
+      const response = editingId
+        ? await updateConfigValue('statuses', editingId, payload)
+        : await createConfigValue('statuses', payload);
+      state.statuses = Array.isArray(response?.items) ? response.items : [];
+      renderStatuses(statusTableBody, state.statuses);
+      resetStatusForm();
+      showMessage(statusFeedback, editingId ? 'Status updated.' : 'Status added.', 'success');
+    } catch (error) {
+      showMessage(statusFeedback, error.message || 'Unable to save status.', 'error');
+    } finally {
+      saveStatusBtn.disabled = false;
+    }
+  });
+
+  statusTableBody?.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const editButton = target.closest('[data-edit-status]');
+    if (editButton) {
+      const id = Number(editButton.getAttribute('data-edit-status'));
+      const row = state.statuses.find((item) => Number(item?.id) === id);
+      if (!row) return;
+      setStatusEditingState(id);
+      setInput('#statusConfigValue', row?.value || '');
+      setCheckbox('#statusConfigRestrictIntranet', Number(row?.restrict_intranet || 0));
+      setCheckbox('#statusConfigExcludeFromStats', Number(row?.exclude_from_stats || 0));
+      showMessage(statusFeedback, `Editing ${String(row?.value || '').trim()}.`, 'info');
+      return;
+    }
+
+    const deleteButton = target.closest('[data-delete-status]');
+    if (!deleteButton) return;
+    const id = Number(deleteButton.getAttribute('data-delete-status'));
+    if (!Number.isInteger(id) || id <= 0 || !window.confirm('Delete this status?')) return;
+
+    void (async () => {
+      try {
+        const response = await deleteConfigValue('statuses', id);
+        state.statuses = Array.isArray(response?.items) ? response.items : [];
+        renderStatuses(statusTableBody, state.statuses);
+        resetStatusForm();
+        showMessage(statusFeedback, 'Status deleted.', 'success');
+      } catch (error) {
+        showMessage(statusFeedback, error.message || 'Unable to delete status.', 'error');
+      }
+    })();
   });
 });
