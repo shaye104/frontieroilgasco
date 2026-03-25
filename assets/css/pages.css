@@ -1476,6 +1476,87 @@
   font-weight: 500;
 }
 
+.page-site-settings .site-settings-section-head {
+  align-items: flex-start;
+}
+
+.page-site-settings .site-settings-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.88fr) minmax(420px, 1.12fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.page-site-settings .site-settings-admin-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.page-site-settings .site-settings-compact-form {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem;
+  border: 1px solid #dbe6f6;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
+}
+
+.page-site-settings .site-settings-compact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem 0.85rem;
+}
+
+.page-site-settings .site-settings-compact-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.7rem;
+}
+
+.page-site-settings .site-settings-toggle-grid-compact {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+}
+
+.page-site-settings .site-settings-compact-actions {
+  justify-content: flex-end;
+  margin-top: -0.1rem;
+}
+
+.page-site-settings #statusConfigSection .table-wrap,
+.page-site-settings #disciplinaryConfigSection .table-wrap {
+  border: 1px solid #dbe6f6;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.page-site-settings #statusConfigSection .employee-scan-table,
+.page-site-settings #disciplinaryConfigSection .employee-scan-table {
+  min-width: 0;
+}
+
+.page-site-settings #statusConfigSection .employee-scan-table td strong,
+.page-site-settings #disciplinaryConfigSection .employee-scan-table td strong {
+  display: block;
+}
+
+.page-site-settings #statusConfigSection .employee-scan-table .finance-inline-caption,
+.page-site-settings #disciplinaryConfigSection .employee-scan-table .finance-inline-caption {
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 1080px) {
+  .page-site-settings .site-settings-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-site-settings .site-settings-compact-grid,
+  .page-site-settings .site-settings-toggle-grid-compact {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1080px) {
   .page-manage-employees .my-details-page-header {
     grid-template-columns: 1fr;

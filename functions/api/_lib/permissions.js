@@ -279,6 +279,9 @@ export async function buildPermissionContext(env, { discordUserId, discordRoleId
   );
 
   const restrictions = await getDisciplinaryRestrictionFlags(env, Number(employee?.id || 0));
+  if (Number(employee?.status_restrict_intranet || 0) === 1) {
+    restrictions.restrictIntranet = true;
+  }
   if (!effectiveSuperAdmin) {
     if (restrictions.restrictIntranet) {
       normalizedPermissions = [];

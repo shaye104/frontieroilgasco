@@ -7,7 +7,7 @@ export async function onRequestGet(context) {
   if (errorResponse) return errorResponse;
 
   const [statuses, ranks, grades, disciplinaryTypes, settingsRows] = await Promise.all([
-    env.DB.prepare('SELECT id, value, created_at FROM config_employee_statuses ORDER BY value ASC').all(),
+    env.DB.prepare('SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC').all(),
     env.DB
       .prepare('SELECT id, value, level, description, updated_at, created_at FROM config_ranks ORDER BY level DESC, value ASC, id ASC')
       .all(),

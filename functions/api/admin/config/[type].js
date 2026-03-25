@@ -20,6 +20,10 @@ function isDisciplinaryTypes(type) {
   return String(type || '').trim() === 'disciplinary_types';
 }
 
+function isStatusesType(type) {
+  return String(type || '').trim() === 'statuses';
+}
+
 function rankOrderSql() {
   return 'ORDER BY level DESC, value ASC, id ASC';
 }
@@ -35,6 +39,8 @@ export async function onRequestGet(context) {
   let query = `SELECT id, value, created_at FROM ${table} ORDER BY value ASC`;
   if (isRanksType(params.type)) {
     query = `SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`;
+  } else if (isStatusesType(params.type)) {
+    query = `SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM ${table} ORDER BY value ASC, id ASC`;
   } else if (isDisciplinaryTypes(params.type)) {
     query = `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
                     apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at
@@ -68,6 +74,13 @@ export async function onRequestPost(context) {
     await env.DB
       .prepare(`INSERT OR IGNORE INTO ${table} (value, level, description, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`)
       .bind(value, Number.isFinite(level) ? Math.floor(level) : 0, description)
+      .run();
+  } else if (isStatusesType(params.type)) {
+    const restrictIntranet = Number(payload?.restrict_intranet ?? payload?.restrictIntranet ?? 0) ? 1 : 0;
+    const excludeFromStats = Number(payload?.exclude_from_stats ?? payload?.excludeFromStats ?? 0) ? 1 : 0;
+    await env.DB
+      .prepare(`INSERT OR IGNORE INTO ${table} (value, restrict_intranet, exclude_from_stats) VALUES (?, ?, ?)`)
+      .bind(value, restrictIntranet, excludeFromStats)
       .run();
   } else if (isDisciplinaryTypes(params.type)) {
     const key = String(payload?.key || value).trim();
@@ -113,6 +126,8 @@ export async function onRequestPost(context) {
   let query = `SELECT id, value, created_at FROM ${table} ORDER BY value ASC`;
   if (isRanksType(params.type)) {
     query = `SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`;
+  } else if (isStatusesType(params.type)) {
+    query = `SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM ${table} ORDER BY value ASC, id ASC`;
   } else if (isDisciplinaryTypes(params.type)) {
     query = `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
                     apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at
@@ -148,6 +163,13 @@ export async function onRequestPut(context) {
     await env.DB
       .prepare(`UPDATE ${table} SET value = ?, level = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
       .bind(value, Number.isFinite(level) ? Math.floor(level) : 0, description, id)
+      .run();
+  } else if (isStatusesType(params.type)) {
+    const restrictIntranet = Number(payload?.restrict_intranet ?? payload?.restrictIntranet ?? 0) ? 1 : 0;
+    const excludeFromStats = Number(payload?.exclude_from_stats ?? payload?.excludeFromStats ?? 0) ? 1 : 0;
+    await env.DB
+      .prepare(`UPDATE ${table} SET value = ?, restrict_intranet = ?, exclude_from_stats = ? WHERE id = ?`)
+      .bind(value, restrictIntranet, excludeFromStats, id)
       .run();
   } else if (isDisciplinaryTypes(params.type)) {
     const key = String(payload?.key || value).trim();
@@ -195,6 +217,8 @@ export async function onRequestPut(context) {
   let query = `SELECT id, value, created_at FROM ${table} ORDER BY value ASC`;
   if (isRanksType(params.type)) {
     query = `SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`;
+  } else if (isStatusesType(params.type)) {
+    query = `SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM ${table} ORDER BY value ASC, id ASC`;
   } else if (isDisciplinaryTypes(params.type)) {
     query = `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
                     apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at
@@ -221,6 +245,8 @@ export async function onRequestDelete(context) {
   let query = `SELECT id, value, created_at FROM ${table} ORDER BY value ASC`;
   if (isRanksType(params.type)) {
     query = `SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`;
+  } else if (isStatusesType(params.type)) {
+    query = `SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM ${table} ORDER BY value ASC, id ASC`;
   } else if (isDisciplinaryTypes(params.type)) {
     query = `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
                     apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at

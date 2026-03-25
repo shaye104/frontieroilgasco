@@ -121,13 +121,19 @@ function renderDisciplinaryTypes(target, rows = []) {
 function renderStatuses(target, rows = []) {
   if (!target) return;
   if (!rows.length) {
-    target.innerHTML = '<tr><td colspan="2">No employee statuses configured.</td></tr>';
+    target.innerHTML = '<tr><td colspan="3">No employee statuses configured.</td></tr>';
     return;
   }
   target.innerHTML = rows
     .map(
       (row) => `<tr>
         <td><strong>${escapeHtml(String(row?.value || '').trim() || 'Unnamed')}</strong></td>
+        <td>${escapeHtml(
+          [
+            Number(row?.restrict_intranet || 0) ? 'Removes intranet access' : '',
+            Number(row?.exclude_from_stats || 0) ? 'Excluded from employee stats' : ''
+          ].filter(Boolean).join(' • ') || 'Standard status'
+        )}</td>
         <td class="align-right">
           <button class="btn btn-secondary btn-compact" type="button" data-edit-status="${Number(row?.id || 0)}">Edit</button>
           <button class="btn btn-danger btn-compact" type="button" data-delete-status="${Number(row?.id || 0)}">Delete</button>
@@ -230,6 +236,8 @@ function setStatusEditingState(editingId = null) {
 
 function resetStatusForm() {
   setInput('#statusConfigValue', '');
+  setCheckbox('#statusConfigRestrictIntranet', false);
+  setCheckbox('#statusConfigExcludeFromStats', false);
   setStatusEditingState(null);
 }
 
@@ -404,10 +412,15 @@ initIntranetPageGuard({
     try {
       const value = readInput('#statusConfigValue');
       if (!value) throw new Error('Status value is required.');
+      const payload = {
+        value,
+        restrictIntranet: readCheckbox('#statusConfigRestrictIntranet'),
+        excludeFromStats: readCheckbox('#statusConfigExcludeFromStats')
+      };
       const editingId = Number(statusForm.dataset.editingId || 0);
       const response = editingId
-        ? await updateConfigValue('statuses', editingId, value)
-        : await createConfigValue('statuses', value);
+        ? await updateConfigValue('statuses', editingId, payload)
+        : await createConfigValue('statuses', payload);
       state.statuses = Array.isArray(response?.items) ? response.items : [];
       renderStatuses(statusTableBody, state.statuses);
       resetStatusForm();
@@ -430,6 +443,8 @@ initIntranetPageGuard({
       if (!row) return;
       setStatusEditingState(id);
       setInput('#statusConfigValue', row?.value || '');
+      setCheckbox('#statusConfigRestrictIntranet', Number(row?.restrict_intranet || 0));
+      setCheckbox('#statusConfigExcludeFromStats', Number(row?.exclude_from_stats || 0));
       showMessage(statusFeedback, `Editing ${String(row?.value || '').trim()}.`, 'info');
       return;
     }
