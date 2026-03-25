@@ -25,36 +25,65 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   }
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function retryDelayMs(response, fallbackMs = 1200) {
+  const retryAfter = Number(response?.headers?.get('retry-after') || 0);
+  if (Number.isFinite(retryAfter) && retryAfter > 0) {
+    return Math.max(250, Math.min(5000, retryAfter * 1000));
+  }
+  return fallbackMs;
+}
+
 async function fetchRobloxUserGroupIds(robloxUserId) {
   const userId = text(robloxUserId);
   if (!/^\d{1,30}$/.test(userId)) {
     return { ok: false, groupIds: [], error: 'Missing Roblox user ID.' };
   }
-  try {
-    const response = await fetchWithTimeout(
-      `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
-      {},
-      8000
-    );
-    if (!response.ok) {
-      const errorText = text(await response.text().catch(() => ''));
+
+  let response = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      response = await fetchWithTimeout(
+        `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
+        {},
+        8000
+      );
+    } catch (error) {
+      if (attempt === 0) {
+        await delay(1200);
+        continue;
+      }
       return {
         ok: false,
         groupIds: [],
-        error: `Roblox lookup failed (${response.status}). ${errorText.slice(0, 120)}`.trim()
+        error: error?.name === 'AbortError' ? 'Roblox lookup timed out.' : 'Roblox lookup failed.'
       };
     }
-    const payload = await response.json().catch(() => ({}));
-    const rows = Array.isArray(payload?.data) ? payload.data : [];
-    const groupIds = [...new Set(rows.map((row) => text(row?.group?.id)).filter((value) => /^\d{1,30}$/.test(value)))];
-    return { ok: true, groupIds, error: '' };
-  } catch (error) {
+
+    if (response.ok) break;
+    if (attempt === 0 && (response.status === 429 || response.status >= 500)) {
+      await delay(retryDelayMs(response));
+      continue;
+    }
+    break;
+  }
+
+  if (!response?.ok) {
+    const errorText = text(await response?.text?.().catch(() => '') || '');
     return {
       ok: false,
       groupIds: [],
-      error: error?.name === 'AbortError' ? 'Roblox lookup timed out.' : 'Roblox lookup failed.'
+      error: `Roblox lookup failed (${Number(response?.status || 0)}). ${errorText.slice(0, 120)}`.trim()
     };
   }
+
+  const payload = await response.json().catch(() => ({}));
+  const rows = Array.isArray(payload?.data) ? payload.data : [];
+  const groupIds = [...new Set(rows.map((row) => text(row?.group?.id)).filter((value) => /^\d{1,30}$/.test(value)))];
+  return { ok: true, groupIds, error: '' };
 }
 
 async function fetchRobloxGroupName(groupId) {

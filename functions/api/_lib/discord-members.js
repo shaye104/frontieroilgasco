@@ -9,6 +9,18 @@ function normalizeDiscordUserId(value) {
   return /^\d{6,30}$/.test(digits) ? digits : '';
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function retryDelayMs(response, fallbackMs = 1200) {
+  const retryAfter = Number(response?.headers?.get('retry-after') || 0);
+  if (Number.isFinite(retryAfter) && retryAfter > 0) {
+    return Math.max(250, Math.min(5000, retryAfter * 1000));
+  }
+  return fallbackMs;
+}
+
 export async function fetchGuildMemberRoleIds(env, discordUserId) {
   const guildId = text(env?.DISCORD_GUILD_ID);
   const botToken = text(env?.DISCORD_BOT_TOKEN);
@@ -18,10 +30,38 @@ export async function fetchGuildMemberRoleIds(env, discordUserId) {
     return { ok: false, inGuild: false, status: 0, roleIds: [], error: 'Discord guild/bot configuration is missing.' };
   }
 
-  const response = await fetch(
-    `https://discord.com/api/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}`,
-    { headers: { Authorization: `Bot ${botToken}` } }
-  );
+  const url = `https://discord.com/api/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}`;
+  let response = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      response = await fetch(url, { headers: { Authorization: `Bot ${botToken}` } });
+    } catch (error) {
+      if (attempt === 0) {
+        await delay(1200);
+        continue;
+      }
+      return {
+        ok: false,
+        inGuild: false,
+        status: 0,
+        roleIds: [],
+        error: error?.name === 'AbortError' ? 'Discord lookup timed out.' : 'Discord lookup failed.'
+      };
+    }
+
+    if (response.ok || response.status === 404) break;
+    if (attempt === 0 && (response.status === 429 || response.status >= 500)) {
+      await delay(retryDelayMs(response));
+      continue;
+    }
+    break;
+  }
+
+  if (!response) {
+    return { ok: false, inGuild: false, status: 0, roleIds: [], error: 'Discord lookup failed.' };
+  }
+
   if (!response.ok) {
     if (response.status === 404) {
       return { ok: false, inGuild: false, status: 404, roleIds: [], error: 'User is not in the configured Discord guild.' };
@@ -40,4 +80,3 @@ export async function fetchGuildMemberRoleIds(env, discordUserId) {
   const roleIds = Array.isArray(payload?.roles) ? payload.roles.map((roleId) => text(roleId)).filter(Boolean) : [];
   return { ok: true, inGuild: true, status: response.status, roleIds };
 }
-
