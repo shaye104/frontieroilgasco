@@ -1667,7 +1667,7 @@ function renderCollectorRemittances(state) {
       return `<tr>
         <td>${text(row.collectorName)}</td>
         <td class="align-right"><strong>${formatGuilders(row.totalAmount || 0)}</strong></td>
-        <td class="finance-transfer-cell">${
+        <td class="finance-transfer-cell"><div class="finance-transfer-shell">${
           canSettle
             ? canMove
               ? `<div class="finance-transfer-actions">
@@ -1686,7 +1686,7 @@ function renderCollectorRemittances(state) {
                  </div>`
               : '<span class="muted finance-transfer-note">No other managers available</span>'
             : '<span class="muted finance-transfer-note">Bookkeeper only</span>'
-        }</td>
+        }</div></td>
       </tr>`;
     })
     .join('');

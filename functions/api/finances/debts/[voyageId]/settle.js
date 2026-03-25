@@ -1,7 +1,6 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { getCurrentCashBalance, toOptionalInteger } from '../../../_lib/cashflow.js';
 import { parseSettlementLines, requireFinancePermission, resolveVoyageCompanyShare, resolveVoyageEarnings, toMoney } from '../../../_lib/finances.js';
-import { BOOKKEEPER_PERMISSION } from '../../../_lib/permissions.js';
 
 const COMPANY_SHARE_RATE = 0.1;
 
@@ -20,10 +19,6 @@ function toInt(value) {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-function hasExplicitPermission(session, permissionKey) {
-  const permissions = Array.isArray(session?.permissions) ? session.permissions.map((value) => String(value || '').trim()) : [];
-  return permissions.includes(String(permissionKey || '').trim());
-}
 
 export async function onRequestPost(context) {
   const { env, params } = context;
@@ -46,8 +41,10 @@ export async function onRequestPost(context) {
          v.company_share_amount,
          v.settlement_lines_json,
          COALESCE(v.company_share_status, 'UNSETTLED') AS company_share_status,
-         v.officer_of_watch_employee_id
+         v.officer_of_watch_employee_id,
+         ow.roblox_username AS officer_name
        FROM voyages v
+       LEFT JOIN employees ow ON ow.id = v.officer_of_watch_employee_id
        WHERE v.id = ? AND v.deleted_at IS NULL`
     )
     .bind(voyageId)
@@ -84,12 +81,16 @@ export async function onRequestPost(context) {
     .run();
 
   const amount = deriveSettlementAmount(row);
-  const settledWithBookkeeper = hasExplicitPermission(session, BOOKKEEPER_PERMISSION);
   const createdByName =
     String(session?.employee?.robloxUsername || '').trim() ||
     String(session?.displayName || '').trim() ||
     String(session?.userId || '').trim() ||
     'Unknown';
+  const collectorEmployeeId = toOptionalInteger(row.officer_of_watch_employee_id) || Number(session.employee.id);
+  const collectorName =
+    String(row?.officer_name || '').trim() ||
+    String(session?.employee?.robloxUsername || '').trim() ||
+    createdByName;
   const statements = [];
 
   statements.push(
@@ -120,12 +121,12 @@ export async function onRequestPost(context) {
         JSON.stringify({
           previousStatus: currentStatus,
           nextStatus: 'SETTLED',
-          settlementMode: settledWithBookkeeper ? 'DIRECT_CASHFLOW' : 'COLLECTOR_PENDING_REMITTANCE'
+          settlementMode: 'DIRECT_CASHFLOW_AND_MANAGER_BALANCE'
         })
       )
   );
 
-  if (amount > 0 && settledWithBookkeeper) {
+  if (amount > 0) {
     const currentBalance = await getCurrentCashBalance(env);
     const balanceAfter = toMoney(currentBalance.currentBalance + amount);
     statements.push(
@@ -161,12 +162,11 @@ export async function onRequestPost(context) {
             reason: `Company share settlement - Voyage ${voyageId}`,
             voyageId,
             balanceAfter,
+            collectorEmployeeId,
+            collectorName,
             source: 'company_share_settlement'
           })
-        )
-    );
-  } else if (amount > 0) {
-    statements.push(
+        ),
       env.DB
         .prepare(
           `INSERT INTO finance_collector_remittances
@@ -186,12 +186,14 @@ export async function onRequestPost(context) {
         )
         .bind(
           voyageId,
-          Number(session.employee.id),
+          collectorEmployeeId,
           amount,
           JSON.stringify({
             voyageId,
-            collectorEmployeeId: Number(session.employee.id),
-            collectorName: createdByName,
+            collectorEmployeeId,
+            collectorName,
+            settledByEmployeeId: Number(session.employee.id),
+            settledByName: createdByName,
             source: 'company_share_settlement_pending_remittance'
           })
         )
@@ -205,7 +207,7 @@ export async function onRequestPost(context) {
     voyageId,
     amount,
     companyShareStatus: 'SETTLED',
-    remittancePending: amount > 0 && !settledWithBookkeeper
+    remittancePending: amount > 0
   });
 }
 
