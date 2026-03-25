@@ -50,6 +50,8 @@ function isProtectedPath(pathname) {
     '/user-ranks.html',
     '/manage-employees',
     '/manage-employees.html',
+    '/site-settings',
+    '/site-settings.html',
     '/activity-tracker',
     '/activity-tracker.html',
     '/audit-log',
@@ -163,7 +165,9 @@ function isAdminLikePath(pathname) {
     '/user-ranks',
     '/user-ranks.html',
     '/manage-employees',
-    '/manage-employees.html'
+    '/manage-employees.html',
+    '/site-settings',
+    '/site-settings.html'
   ]);
   return legacyAdminPaths.has(pathname);
 }
@@ -213,6 +217,8 @@ function requiredAnyPermissionsForPage(pathname) {
     return ['user_ranks.manage'];
   if (path === '/admin/voyages' || path === '/voyage-settings' || path === '/voyage-settings.html' || path.startsWith('/admin/voyages/'))
     return ['voyages.config.manage'];
+  if (path === '/admin/site-settings' || path === '/site-settings' || path === '/site-settings.html' || path.startsWith('/admin/site-settings/'))
+    return ['config.manage'];
   return [];
 }
 
