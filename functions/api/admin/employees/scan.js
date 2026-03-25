@@ -530,13 +530,23 @@ export async function onRequestPost(context) {
 
       let resolvedRobloxUserId = robloxUserId;
       let resolvedRobloxUsername = robloxUsername;
-      const shouldResolveByUsername = !membership?.ok && robloxUsername && [400, 404].includes(Number(membership?.status || 0));
+      const membershipStatus = Number(membership?.status || 0);
+      const membershipError = text(membership?.error || '').toLowerCase();
+      const shouldResolveByUsername =
+        !membership?.ok &&
+        robloxUsername &&
+        (membershipStatus === 0 ||
+          membershipStatus === 400 ||
+          membershipStatus === 404 ||
+          membershipStatus === 502 ||
+          membershipError.includes('unreachable') ||
+          membershipError.includes('timeout'));
       if (shouldResolveByUsername) {
         if (!robloxUserResolveCache.has(robloxUsername)) {
           robloxUserResolveCache.set(robloxUsername, await resolveRobloxUserByUsername(robloxUsername));
         }
         const resolvedProfile = robloxUserResolveCache.get(robloxUsername);
-        if (resolvedProfile?.ok && resolvedProfile.userId && resolvedProfile.userId !== robloxUserId) {
+        if (resolvedProfile?.ok && resolvedProfile.userId) {
           resolvedRobloxUserId = resolvedProfile.userId;
           resolvedRobloxUsername = resolvedProfile.username || robloxUsername;
           if (!robloxMembershipCache.has(resolvedRobloxUserId)) {
