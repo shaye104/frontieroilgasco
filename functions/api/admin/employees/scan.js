@@ -51,6 +51,7 @@ async function resolveRobloxUserByUsername(robloxUsername) {
     return { ok: false, userId: '', username: '', error: 'Missing Roblox username.' };
   }
 
+
   let response = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
@@ -113,18 +114,21 @@ async function resolveRobloxUserByUsername(robloxUsername) {
   return { ok: true, userId: resolvedUserId, username: resolvedUsername, error: '' };
 }
 
-async function fetchRobloxUserGroupIds(robloxUserId) {
+async function fetchRobloxUserGroupIds(env, robloxUserId) {
   const userId = normalizeRobloxUserId(robloxUserId);
   if (!/^\d{1,30}$/.test(userId)) {
     return { ok: false, groupIds: [], status: 0, error: 'Missing Roblox user ID.' };
   }
+
+  const securityCookie = text(env?.ROBLOX_SECURITY_COOKIE);
+  const headers = securityCookie ? { cookie: `.ROBLOSECURITY=${securityCookie}`, accept: 'application/json' } : { accept: 'application/json' };
 
   let response = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       response = await fetchWithTimeout(
         `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
-        {},
+        { headers },
         12000
       );
     } catch (error) {
@@ -266,7 +270,7 @@ export async function onRequestPost(context) {
   )];
 
   await mapWithConcurrency(uniqueRobloxUserIds, 8, async (robloxUserId) => {
-    robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(robloxUserId));
+    robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(env, robloxUserId));
   });
 
   for (const employee of employees) {
@@ -348,7 +352,7 @@ export async function onRequestPost(context) {
     } else {
       let membership = null;
       if (!robloxMembershipCache.has(robloxUserId)) {
-        robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(robloxUserId));
+        robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(env, robloxUserId));
       }
       membership = robloxMembershipCache.get(robloxUserId);
 
@@ -364,7 +368,7 @@ export async function onRequestPost(context) {
           resolvedRobloxUserId = resolvedProfile.userId;
           resolvedRobloxUsername = resolvedProfile.username || robloxUsername;
           if (!robloxMembershipCache.has(resolvedRobloxUserId)) {
-            robloxMembershipCache.set(resolvedRobloxUserId, await fetchRobloxUserGroupIds(resolvedRobloxUserId));
+            robloxMembershipCache.set(resolvedRobloxUserId, await fetchRobloxUserGroupIds(env, resolvedRobloxUserId));
           }
           membership = robloxMembershipCache.get(resolvedRobloxUserId);
         } else if (!resolvedProfile?.ok && Number(membership?.status || 0) === 404) {
