@@ -205,6 +205,11 @@ function serializeCounter(map) {
   return Object.fromEntries([...map.entries()].sort((a, b) => a[0].localeCompare(b[0])));
 }
 
+function pushSample(list, value, limit = 8) {
+  if (!Array.isArray(list) || list.length >= limit) return;
+  list.push(value);
+}
+
 async function mapWithConcurrency(items, limit, worker) {
   const rows = Array.isArray(items) ? items : [];
   const max = Math.max(1, Math.min(12, Number(limit) || 1));
@@ -231,6 +236,7 @@ export async function onRequestPost(context) {
 
   const settings = await readSiteSettings(env, { bypassCache: true });
   const requiredGroupIds = parseRequiredGroupIds(settings?.requiredRobloxGroupIds);
+  const robloxConfig = requireRobloxGroupConfig(env);
   if (!requiredGroupIds.length) {
     return json({
       ok: false,
@@ -246,7 +252,13 @@ export async function onRequestPost(context) {
         robloxLookupFailed: 0
       },
       requiredGroupIds: [],
-      requiredGroups: []
+      requiredGroups: [],
+      diagnostics: {
+        robloxConfigOk: robloxConfig.ok,
+        robloxAuthMode: robloxConfig.ok ? robloxConfig.mode : '',
+        robloxGroupId: robloxConfig.ok ? String(robloxConfig.groupId) : '',
+        robloxConfigError: robloxConfig.ok ? '' : 'missing_required_group_ids'
+      }
     }, 400);
   }
 
@@ -269,6 +281,8 @@ export async function onRequestPost(context) {
   let discordLookupFailed = 0;
   let robloxLookupFailed = 0;
   const robloxErrorCounts = new Map();
+  const robloxLookupFailedEmployees = [];
+  const discordLookupFailedEmployees = [];
 
   const robloxMembershipCache = new Map();
   const robloxUserResolveCache = new Map();
@@ -279,7 +293,7 @@ export async function onRequestPost(context) {
       .filter((value) => /^\d{1,30}$/.test(value))
   )];
 
-  await mapWithConcurrency(uniqueRobloxUserIds, 8, async (robloxUserId) => {
+  await mapWithConcurrency(uniqueRobloxUserIds, 4, async (robloxUserId) => {
     robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(env, robloxUserId));
   });
 
@@ -335,6 +349,11 @@ export async function onRequestPost(context) {
           checks.push({ label: 'Discord guild', ok: false, detail: 'Not in configured guild.' });
         } else {
           discordLookupFailed += 1;
+          pushSample(discordLookupFailedEmployees, {
+            employeeId,
+            discordUserId,
+            error: text(lookup.error || guildIndex.error || 'Discord lookup failed.')
+          });
           issues.push({
             code: 'DISCORD_LOOKUP_FAILED',
             label: 'Discord lookup failed',
@@ -396,13 +415,26 @@ export async function onRequestPost(context) {
       if (!membership?.ok) {
         robloxLookupFailed += 1;
         incrementCounter(robloxErrorCounts, membership?.error || `status_${Number(membership?.status || 0) || 'unknown'}`);
+        pushSample(robloxLookupFailedEmployees, {
+          employeeId,
+          robloxUserId,
+          robloxUsername,
+          status: Number(membership?.status || 0),
+          error: text(membership?.error || 'Roblox lookup failed.')
+        });
         issues.push({
           code: 'ROBLOX_LOOKUP_FAILED',
           label: 'Roblox lookup failed',
-          detail: text(membership?.error || 'Roblox lookup failed.')
+          detail: `${text(membership?.error || 'Roblox lookup failed.')} (status ${Number(membership?.status || 0) || 0}, auth ${
+            robloxConfig.ok ? robloxConfig.mode : 'unconfigured'
+          })`
         });
         for (const group of requiredGroups) {
-          checks.push({ label: group.name, ok: false, detail: text(membership?.error || 'Lookup failed.') });
+          checks.push({
+            label: group.name,
+            ok: false,
+            detail: `${text(membership?.error || 'Lookup failed.')} (status ${Number(membership?.status || 0) || 0})`
+          });
         }
       } else {
         const matchedGroupIds = requiredGroupIds.filter((groupId) => membership.groupIds.includes(groupId));
@@ -453,8 +485,14 @@ export async function onRequestPost(context) {
       discordLookupFailed,
       robloxLookupFailed,
       robloxErrorCounts: serializeCounter(robloxErrorCounts),
+      discordLookupFailedEmployees,
+      robloxLookupFailedEmployees,
       requiredGroupIds,
       requiredGroups,
+      robloxConfigOk: robloxConfig.ok,
+      robloxAuthMode: robloxConfig.ok ? robloxConfig.mode : '',
+      robloxGroupId: robloxConfig.ok ? String(robloxConfig.groupId) : '',
+      robloxConfigError: robloxConfig.ok ? '' : 'roblox_group_integration_unconfigured',
       guildIndexOk: guildIndex.ok,
       guildIndexError: guildIndex.error || ''
     }
@@ -474,6 +512,16 @@ export async function onRequestPost(context) {
       discordLookupFailed,
       robloxLookupFailed,
       robloxErrorCounts: serializeCounter(robloxErrorCounts)
+    },
+    diagnostics: {
+      robloxConfigOk: robloxConfig.ok,
+      robloxAuthMode: robloxConfig.ok ? robloxConfig.mode : '',
+      robloxGroupId: robloxConfig.ok ? String(robloxConfig.groupId) : '',
+      robloxConfigError: robloxConfig.ok ? '' : 'roblox_group_integration_unconfigured',
+      guildIndexOk: guildIndex.ok,
+      guildIndexError: guildIndex.error || '',
+      discordLookupFailedEmployees,
+      robloxLookupFailedEmployees
     },
     flaggedEmployees: flagged
   });

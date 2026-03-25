@@ -1172,6 +1172,7 @@ export async function initManageEmployees(config) {
     try {
       const payload = await runEmployeeComplianceScan();
       const summary = payload?.summary || {};
+      const diagnostics = payload?.diagnostics || {};
       const rows = Array.isArray(payload?.flaggedEmployees) ? payload.flaggedEmployees : [];
       state.employeeScanRows = rows;
       renderScanResults(scanTableBody, rows);
@@ -1184,7 +1185,23 @@ export async function initManageEmployees(config) {
             .join(', ')
         : '';
       const robloxErrorSummary = robloxErrorCounts ? ` Roblox errors: ${robloxErrorCounts}.` : '';
-      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing Roblox ID: ${Number(summary.missingRobloxId || 0)}. Missing required Roblox groups: ${Number(summary.missingRequiredGroups || 0)}. Discord lookup failures: ${Number(summary.discordLookupFailed || 0)}. Roblox lookup failures: ${Number(summary.robloxLookupFailed || 0)}.${required}${robloxErrorSummary}`;
+      const robloxFailureSamples = Array.isArray(diagnostics?.robloxLookupFailedEmployees)
+        ? diagnostics.robloxLookupFailedEmployees
+            .slice(0, 5)
+            .map((row) => {
+              const username = text(row?.robloxUsername);
+              const userId = text(row?.robloxUserId);
+              const label = username || userId || `Employee #${Number(row?.employeeId || 0)}`;
+              return `${label}: ${text(row?.error) || 'lookup failed'}${Number(row?.status || 0) ? ` (status ${Number(row.status)})` : ''}`;
+            })
+            .join('; ')
+        : '';
+      const robloxFailureSummary = Number(summary.robloxLookupFailed || 0)
+        ? ` Roblox lookup failures are temporary verification failures, not confirmed access issues. Auth mode: ${text(
+            diagnostics?.robloxAuthMode || 'unknown'
+          )}. Group: ${text(diagnostics?.robloxGroupId || 'unknown')}.${robloxFailureSamples ? ` Sample failures: ${robloxFailureSamples}.` : ''}`
+        : '';
+      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing Roblox ID: ${Number(summary.missingRobloxId || 0)}. Missing required Roblox groups: ${Number(summary.missingRequiredGroups || 0)}. Discord lookup failures: ${Number(summary.discordLookupFailed || 0)}. Roblox lookup failures: ${Number(summary.robloxLookupFailed || 0)}.${required}${robloxErrorSummary}${robloxFailureSummary}`;
       showMessage(scanFeedback, rows.length ? 'Scan completed. Review flagged employees below.' : 'Scan completed. No flagged employees found.', rows.length ? 'info' : 'success');
     } catch (error) {
       state.employeeScanRows = [];
