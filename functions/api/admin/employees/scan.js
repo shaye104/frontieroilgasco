@@ -3,6 +3,7 @@ import { requirePermission } from '../_lib/admin-auth.js';
 import { readSiteSettings } from '../../_lib/site-settings.js';
 import { writeAdminActivityEvent } from '../../_lib/db.js';
 import { fetchGuildMemberIndex, fetchGuildMemberRoleIds } from '../../_lib/discord-members.js';
+import { callRobloxGroupApi, requireRobloxGroupConfig } from '../_lib/roblox-group.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -120,52 +121,50 @@ async function fetchRobloxUserGroupIds(env, robloxUserId) {
     return { ok: false, groupIds: [], status: 0, error: 'Missing Roblox user ID.' };
   }
 
-  const securityCookie = text(env?.ROBLOX_SECURITY_COOKIE);
-  const headers = securityCookie ? { cookie: `.ROBLOSECURITY=${securityCookie}`, accept: 'application/json' } : { accept: 'application/json' };
-
-  let response = null;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      response = await fetchWithTimeout(
-        `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
-        { headers },
-        12000
-      );
-    } catch (error) {
-      if (attempt < 2) {
-        await delay(1500 * (attempt + 1));
-        continue;
-      }
-      return {
-        ok: false,
-        groupIds: [],
-        status: 0,
-        error: error?.name === 'AbortError' ? 'Roblox lookup timed out.' : 'Roblox lookup failed.'
-      };
-    }
-
-    if (response.ok) break;
-    if (attempt < 2 && (response.status === 429 || response.status >= 500)) {
-      await delay(retryDelayMs(response, 1500 * (attempt + 1)));
-      continue;
-    }
-    break;
+  const cfg = requireRobloxGroupConfig(env);
+  if (!cfg.ok) {
+    return { ok: false, groupIds: [], status: 503, error: 'Roblox group integration is not configured.' };
   }
 
-  if (!response?.ok) {
-    const errorText = text(await response?.text?.().catch(() => '') || '');
+  let result = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    result = await callRobloxGroupApi(env, `/groups/${cfg.groupId}/memberships`, {
+      method: 'GET',
+      query: {
+        filter: `user == 'users/${userId}'`,
+        maxPageSize: '10'
+      }
+    });
+    if (result?.ok || ![429, 500, 502, 503, 504].includes(Number(result?.status || 0)) || attempt > 0) {
+      break;
+    }
+    await delay(retryDelayMs({ headers: { get: () => '' } }, 1500 * (attempt + 1)));
+  }
+
+  if (!result?.ok) {
     return {
       ok: false,
       groupIds: [],
-      status: Number(response?.status || 0),
-      error: `Roblox lookup failed (${Number(response?.status || 0)}). ${errorText.slice(0, 120)}`.trim()
+      status: Number(result?.status || 0),
+      error: text(result?.error || 'Roblox lookup failed.')
     };
   }
 
-  const payload = await response.json().catch(() => ({}));
-  const rows = Array.isArray(payload?.data) ? payload.data : [];
-  const groupIds = [...new Set(rows.map((row) => text(row?.group?.id)).filter((value) => /^\d{1,30}$/.test(value)))];
-  return { ok: true, groupIds, status: Number(response?.status || 200), error: '' };
+  const memberships = Array.isArray(result?.payload?.groupMemberships) ? result.payload.groupMemberships : [];
+  const groupIds = memberships
+    .map((row) => {
+      const pathValue = text(row?.path || '');
+      const match = pathValue.match(/^groups\/(\d{1,30})\/memberships\/(\d{1,30})$/i);
+      return match?.[1] || '';
+    })
+    .filter((value) => /^\d{1,30}$/.test(value));
+
+  return {
+    ok: true,
+    groupIds: [...new Set(groupIds)],
+    status: Number(result?.status || 200),
+    error: ''
+  };
 }
 
 async function fetchRobloxGroupName(groupId) {
