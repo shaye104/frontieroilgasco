@@ -8,7 +8,7 @@ let schemaBootstrapPromise = null;
 let schemaCheckedAtMs = 0;
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
 const CORE_DATA_SEED_VERSION = '2026-02-28-core-v3';
-const SCHEMA_BOOTSTRAP_VERSION = '2026-03-14-schema-v12';
+const SCHEMA_BOOTSTRAP_VERSION = '2026-03-25-schema-v13';
 
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
@@ -841,78 +841,19 @@ export async function ensureCoreSchema(env) {
     // Keep bootstrap non-fatal.
   }
 
-  try {
-    // Backfill config cargo types if older tables only have cargo_types.
-    await env.DB
-      .prepare(
-        `INSERT INTO config_fish_types (name, unit_price, active, created_at, updated_at)
-         SELECT
-           c.name,
-           ROUND(COALESCE(NULLIF(AVG(CASE WHEN ml.buy_price > 0 THEN ml.buy_price END), 0), c.default_price, 0)),
-           COALESCE(c.active, 1),
-           COALESCE(c.created_at, CURRENT_TIMESTAMP),
-           CURRENT_TIMESTAMP
-         FROM cargo_types c
-         LEFT JOIN voyage_manifest_lines ml ON ml.cargo_type_id = c.id
-         WHERE COALESCE(NULLIF(TRIM(c.name), ''), '') <> ''
-           AND NOT EXISTS (
-             SELECT 1 FROM config_fish_types f WHERE LOWER(f.name) = LOWER(c.name)
-           )
-         GROUP BY c.id, c.name, c.default_price, c.active, c.created_at`
-      )
-      .run();
-  } catch {
-    // Keep bootstrap non-fatal.
-  }
-
-  try {
-    // Backfill cargo rows from legacy manifest rows for finance and voyage analytics.
-    await env.DB
-      .prepare(
-        `INSERT INTO voyage_tote_lines (
-           voyage_id,
-           owner_employee_id,
-           fish_type_id,
-           fish_name_snapshot,
-           quantity,
-           unit_price_snapshot,
-           sell_multiplier_snapshot,
-           row_base_total,
-           row_final_total,
-           created_at,
-           updated_at
-         )
-         SELECT
-           ml.voyage_id,
-           COALESCE(NULLIF(v.officer_of_watch_employee_id, 0), v.owner_employee_id),
-           COALESCE(ft.id, 0),
-           COALESCE(ft.name, c.name, 'Cargo'),
-           CASE WHEN COALESCE(ml.quantity, 0) < 0 THEN 0 ELSE CAST(COALESCE(ml.quantity, 0) AS INTEGER) END,
-           ROUND(COALESCE(ml.buy_price, 0)),
-           COALESCE(NULLIF(v.sell_multiplier, 0), 1),
-           ROUND(COALESCE(ml.line_total, COALESCE(ml.quantity, 0) * COALESCE(ml.buy_price, 0))),
-           ROUND(COALESCE(ml.line_total, COALESCE(ml.quantity, 0) * COALESCE(ml.buy_price, 0)) * COALESCE(NULLIF(v.sell_multiplier, 0), 1)),
-           COALESCE(ml.created_at, CURRENT_TIMESTAMP),
-           COALESCE(ml.updated_at, CURRENT_TIMESTAMP)
-         FROM voyage_manifest_lines ml
-         INNER JOIN voyages v ON v.id = ml.voyage_id
-         LEFT JOIN cargo_types c ON c.id = ml.cargo_type_id
-         LEFT JOIN config_fish_types ft ON LOWER(ft.name) = LOWER(COALESCE(c.name, ''))
-         WHERE COALESCE(NULLIF(v.officer_of_watch_employee_id, 0), v.owner_employee_id) IS NOT NULL
-           AND NOT EXISTS (
-             SELECT 1
-             FROM voyage_tote_lines tl
-             WHERE tl.voyage_id = ml.voyage_id
-               AND tl.owner_employee_id = COALESCE(NULLIF(v.officer_of_watch_employee_id, 0), v.owner_employee_id)
-               AND tl.fish_name_snapshot = COALESCE(ft.name, c.name, 'Cargo')
-               AND tl.quantity = CASE WHEN COALESCE(ml.quantity, 0) < 0 THEN 0 ELSE CAST(COALESCE(ml.quantity, 0) AS INTEGER) END
-               AND ROUND(COALESCE(tl.unit_price_snapshot, 0)) = ROUND(COALESCE(ml.buy_price, 0))
-               AND ROUND(COALESCE(tl.row_base_total, 0)) = ROUND(COALESCE(ml.line_total, COALESCE(ml.quantity, 0) * COALESCE(ml.buy_price, 0)))
-           )`
-      )
-      .run();
-  } catch {
-    // Keep bootstrap non-fatal.
+  const legacyTablesToDrop = [
+    'voyage_manifest_lines',
+    'cargo_types',
+    'config_vessel_callsigns',
+    'config_vessel_classes',
+    'config_vessel_names'
+  ];
+  for (const tableName of legacyTablesToDrop) {
+    try {
+      await env.DB.prepare(`DROP TABLE IF EXISTS ${tableName}`).run();
+    } catch {
+      // Keep bootstrap non-fatal.
+    }
   }
   try {
     await env.DB.prepare(`DROP INDEX IF EXISTS ux_shipyard_ship_name_class`).run();

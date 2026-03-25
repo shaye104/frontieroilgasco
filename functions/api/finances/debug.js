@@ -181,7 +181,6 @@ export async function onRequestGet(context) {
       .prepare(
         `SELECT
            (SELECT COUNT(*) FROM voyage_tote_lines) AS tote_lines,
-           (SELECT COUNT(*) FROM voyage_manifest_lines) AS manifest_lines,
            (SELECT COUNT(*) FROM finance_cash_ledger_entries) AS cashflow_entries`
       )
       .first()
@@ -382,7 +381,6 @@ export async function onRequestGet(context) {
     },
     tableStats: {
       toteLines: Number(tableStats?.tote_lines || 0),
-      manifestLines: Number(tableStats?.manifest_lines || 0),
       cashflowEntries: Number(tableStats?.cashflow_entries || 0)
     },
     fallbackOverview,
