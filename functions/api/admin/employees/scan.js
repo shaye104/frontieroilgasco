@@ -115,6 +115,59 @@ async function resolveRobloxUserByUsername(robloxUsername) {
   return { ok: true, userId: resolvedUserId, username: resolvedUsername, error: '' };
 }
 
+async function fetchRobloxUserProfileById(robloxUserId) {
+  const userId = normalizeRobloxUserId(robloxUserId);
+  if (!userId) {
+    return { ok: false, status: 0, error: 'Missing Roblox user ID.', username: '', userId: '' };
+  }
+
+  let response = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      response = await fetchWithTimeout(`https://users.roblox.com/v1/users/${encodeURIComponent(userId)}`, { method: 'GET' }, 12000);
+    } catch (error) {
+      if (attempt < 1) {
+        await delay(1500 * (attempt + 1));
+        continue;
+      }
+      return {
+        ok: false,
+        status: 502,
+        error: error?.name === 'AbortError' ? 'roblox_profile_timeout' : 'roblox_profile_unreachable',
+        username: '',
+        userId
+      };
+    }
+
+    if (response.ok) break;
+    if (attempt < 1 && [429, 500, 502, 503, 504].includes(Number(response.status || 0))) {
+      await delay(retryDelayMs(response, 1500 * (attempt + 1)));
+      continue;
+    }
+    break;
+  }
+
+  if (!response?.ok) {
+    const errorText = text(await response?.text?.().catch(() => '') || '');
+    return {
+      ok: false,
+      status: Number(response?.status || 0),
+      error: errorText || `roblox_profile_http_${Number(response?.status || 0) || 0}`,
+      username: '',
+      userId
+    };
+  }
+
+  const payload = await response.json().catch(() => ({}));
+  return {
+    ok: true,
+    status: Number(response?.status || 200),
+    error: '',
+    username: normalizeRobloxUsername(payload?.name || ''),
+    userId: normalizeRobloxUserId(payload?.id || userId)
+  };
+}
+
 async function fetchRobloxUserGroupIds(env, robloxUserId) {
   const userId = normalizeRobloxUserId(robloxUserId);
   if (!/^\d{1,30}$/.test(userId)) {
@@ -503,6 +556,7 @@ export async function onRequestPost(context) {
       }
 
       if (!membership?.ok) {
+        const profileCheck = await fetchRobloxUserProfileById(robloxUserId);
         robloxLookupFailed += 1;
         incrementCounter(robloxErrorCounts, membership?.error || `status_${Number(membership?.status || 0) || 'unknown'}`);
         pushSample(robloxLookupFailedEmployees, {
@@ -510,14 +564,21 @@ export async function onRequestPost(context) {
           robloxUserId,
           robloxUsername,
           status: Number(membership?.status || 0),
-          error: text(membership?.error || 'Roblox lookup failed.')
+          error: text(membership?.error || 'Roblox lookup failed.'),
+          profileStatus: Number(profileCheck?.status || 0),
+          profileError: text(profileCheck?.error || ''),
+          profileUsername: text(profileCheck?.username || '')
         });
         issues.push({
           code: 'ROBLOX_LOOKUP_FAILED',
           label: 'Roblox lookup failed',
           detail: `${text(membership?.error || 'Roblox lookup failed.')} (status ${Number(membership?.status || 0) || 0}, auth ${
             robloxConfig.ok ? robloxConfig.mode : 'unconfigured'
-          })`
+          }). Profile check: ${
+            profileCheck?.ok
+              ? `resolved as ${text(profileCheck.username || robloxUsername || robloxUserId)}`
+              : `${text(profileCheck?.error || 'profile lookup failed')} (status ${Number(profileCheck?.status || 0) || 0})`
+          }`
         });
         for (const group of requiredGroups) {
           checks.push({
