@@ -6673,6 +6673,7 @@ body.page-intranet.intranet-no-scroll .voyage-console-sections {
 
 .page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-cell {
   min-width: 0 !important;
+  overflow: hidden !important;
 }
 
 .page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-actions {
@@ -6680,6 +6681,7 @@ body.page-intranet.intranet-no-scroll .voyage-console-sections {
   grid-template-columns: minmax(0, 1fr) !important;
   gap: 0.45rem !important;
   align-items: stretch !important;
+  width: 100% !important;
 }
 
 .page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-target,
@@ -6687,10 +6689,20 @@ body.page-intranet.intranet-no-scroll .voyage-console-sections {
 .page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-buttons .btn {
   width: 100% !important;
   min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-target {
+  margin-bottom: 0 !important;
+  padding: 0.52rem 0.65rem !important;
+  font-size: 0.84rem !important;
+}
+
+.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-note {
+  display: inline-block !important;
   max-width: 100% !important;
+  line-height: 1.35 !important;
 }
 
 @media (max-width: 1200px) {

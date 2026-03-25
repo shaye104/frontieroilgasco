@@ -1660,25 +1660,25 @@ function renderCollectorRemittances(state) {
         <td class="align-right"><strong>${formatGuilders(row.totalAmount || 0)}</strong></td>
         <td class="finance-transfer-cell">${
           canSettle
-            ? `<div class="finance-transfer-actions">
-                 <select id="${targetSelectId}" class="finance-transfer-target" data-transfer-target="${sourceId}">
-                   <option value="">${canMove ? `Move ${formatGuilders(row.totalAmount || 0)} to...` : 'No manager targets available'}</option>
-                   ${targets
-                     .map(
-                       (target) =>
-                         `<option value="${Number(target.employeeId || 0)}">${escapeHtml(
-                           text(target.name || `Employee #${Number(target.employeeId || 0)}`)
-                         )}</option>`
-                     )
-                     .join('')}
-                 </select>
-                 <div class="finance-transfer-buttons">
-                   <button type="button" class="btn btn-secondary btn-compact" data-transfer-collector-remittance="${sourceId}" ${
-                     canMove ? '' : 'disabled'
-                   }>Move</button>
-                 </div>
-               </div>`
-            : '<span class="muted">Bookkeeper only</span>'
+            ? canMove
+              ? `<div class="finance-transfer-actions">
+                   <select id="${targetSelectId}" class="finance-transfer-target" data-transfer-target="${sourceId}">
+                     <option value="">Move ${formatGuilders(row.totalAmount || 0)} to...</option>
+                     ${targets
+                       .map(
+                         (target) =>
+                           `<option value="${Number(target.employeeId || 0)}">${escapeHtml(
+                             text(target.name || `Employee #${Number(target.employeeId || 0)}`)
+                           )}</option>`
+                       )
+                       .join('')}
+                   </select>
+                   <div class="finance-transfer-buttons">
+                     <button type="button" class="btn btn-secondary btn-compact" data-transfer-collector-remittance="${sourceId}">Move</button>
+                   </div>
+                 </div>`
+              : '<span class="muted finance-transfer-note">No other managers available</span>'
+            : '<span class="muted finance-transfer-note">Bookkeeper only</span>'
         }</td>
       </tr>`;
     })
