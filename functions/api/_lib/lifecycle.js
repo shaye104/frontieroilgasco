@@ -11,7 +11,6 @@ export function normalizeLifecycleStatus(value, fallback = 'ACTIVE') {
 }
 
 export function deriveLifecycleStatusFromEmployee(employee, fallback = 'ACTIVE') {
-  if (Number(employee?.status_restrict_intranet || 0) === 1) return 'REMOVED';
   const employeeStatus = normalizeLifecycleStatus(employee?.employee_status, '');
   if (employeeStatus) return employeeStatus;
 
