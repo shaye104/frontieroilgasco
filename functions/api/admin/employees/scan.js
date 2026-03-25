@@ -126,6 +126,64 @@ async function fetchRobloxUserGroupIds(env, robloxUserId) {
     return { ok: false, groupIds: [], status: 503, error: 'Roblox group integration is not configured.' };
   }
 
+  if (cfg.mode === 'cookie') {
+    let response = null;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        response = await fetchWithTimeout(
+          `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
+          {
+            method: 'GET',
+            headers: {
+              cookie: `.ROBLOSECURITY=${cfg.securityCookie}`
+            }
+          },
+          12000
+        );
+      } catch (error) {
+        if (attempt < 1) {
+          await delay(1500 * (attempt + 1));
+          continue;
+        }
+        return {
+          ok: false,
+          groupIds: [],
+          status: 502,
+          error: error?.name === 'AbortError' ? 'roblox_timeout' : 'roblox_unreachable'
+        };
+      }
+
+      if (response.ok) break;
+      if (attempt < 1 && [429, 500, 502, 503, 504].includes(Number(response.status || 0))) {
+        await delay(retryDelayMs(response, 1500 * (attempt + 1)));
+        continue;
+      }
+      break;
+    }
+
+    if (!response?.ok) {
+      const errorText = text(await response?.text?.().catch(() => '') || '');
+      return {
+        ok: false,
+        groupIds: [],
+        status: Number(response?.status || 0),
+        error: errorText || `roblox_http_${Number(response?.status || 0) || 0}`
+      };
+    }
+
+    const payload = await response.json().catch(() => ({}));
+    const groupIds = (Array.isArray(payload?.data) ? payload.data : [])
+      .map((row) => text(row?.group?.id || ''))
+      .filter((value) => /^\d{1,30}$/.test(value));
+
+    return {
+      ok: true,
+      groupIds: [...new Set(groupIds)],
+      status: Number(response?.status || 200),
+      error: ''
+    };
+  }
+
   let result = null;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     result = await callRobloxGroupApi(env, `/groups/${cfg.groupId}/memberships`, {
