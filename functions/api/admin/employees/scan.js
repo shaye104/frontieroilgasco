@@ -192,6 +192,25 @@ function buildFlagRow(employee, issues, checks) {
   };
 }
 
+async function mapWithConcurrency(items, limit, worker) {
+  const rows = Array.isArray(items) ? items : [];
+  const max = Math.max(1, Math.min(12, Number(limit) || 1));
+  const results = new Array(rows.length);
+  let index = 0;
+
+  async function runWorker() {
+    while (index < rows.length) {
+      const currentIndex = index;
+      index += 1;
+      results[currentIndex] = await worker(rows[currentIndex], currentIndex);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(max, rows.length || 1) }, () => runWorker());
+  await Promise.all(workers);
+  return results;
+}
+
 export async function onRequestPost(context) {
   const { env } = context;
   const { errorResponse, session } = await requirePermission(context, ['employees.read']);
@@ -218,18 +237,15 @@ export async function onRequestPost(context) {
     }, 400);
   }
 
-  const requiredGroups = [];
-  for (const groupId of requiredGroupIds) {
-    requiredGroups.push({ id: groupId, name: await fetchRobloxGroupName(groupId) });
-  }
-
-  const guildIndex = await fetchGuildMemberIndex(env);
-
-  const rows = await env.DB.prepare(
-    `SELECT id, discord_user_id, roblox_username, roblox_user_id, rank, employee_status, activation_status, hire_date
-       FROM employees
-      ORDER BY id ASC`
-  ).all();
+  const [requiredGroups, guildIndex, rows] = await Promise.all([
+    mapWithConcurrency(requiredGroupIds, 4, async (groupId) => ({ id: groupId, name: await fetchRobloxGroupName(groupId) })),
+    fetchGuildMemberIndex(env),
+    env.DB.prepare(
+      `SELECT id, discord_user_id, roblox_username, roblox_user_id, rank, employee_status, activation_status, hire_date
+         FROM employees
+        ORDER BY id ASC`
+    ).all()
+  ]);
   const employees = rows?.results || [];
 
   const flagged = [];
@@ -242,6 +258,16 @@ export async function onRequestPost(context) {
 
   const robloxMembershipCache = new Map();
   const robloxUserResolveCache = new Map();
+
+  const uniqueRobloxUserIds = [...new Set(
+    employees
+      .map((employee) => normalizeRobloxUserId(employee?.roblox_user_id))
+      .filter((value) => /^\d{1,30}$/.test(value))
+  )];
+
+  await mapWithConcurrency(uniqueRobloxUserIds, 8, async (robloxUserId) => {
+    robloxMembershipCache.set(robloxUserId, await fetchRobloxUserGroupIds(robloxUserId));
+  });
 
   for (const employee of employees) {
     const employeeId = Number(employee.id || 0);
