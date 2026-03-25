@@ -64,6 +64,13 @@ export async function onRequestPost(context) {
   const statements = [
     env.DB
       .prepare(
+        `DELETE FROM finance_settlement_audit
+         WHERE voyage_id = ?
+           AND action <> 'VOYAGE_DELETED'`
+      )
+      .bind(voyageId),
+    env.DB
+      .prepare(
         `UPDATE voyages
          SET deleted_at = CURRENT_TIMESTAMP,
              deleted_by_employee_id = ?,
