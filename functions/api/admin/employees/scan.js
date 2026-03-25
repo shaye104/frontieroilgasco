@@ -2,7 +2,7 @@ import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
 import { readSiteSettings } from '../../_lib/site-settings.js';
 import { writeAdminActivityEvent } from '../../_lib/db.js';
-import { fetchGuildMemberRoleIds } from '../../_lib/discord-members.js';
+import { fetchGuildMemberIndex, fetchGuildMemberRoleIds } from '../../_lib/discord-members.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -15,7 +15,7 @@ function parseRequiredGroupIds(raw) {
     .filter((part) => /^\d{1,30}$/.test(part)))];
 }
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort('timeout'), timeoutMs);
   try {
@@ -29,10 +29,10 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function retryDelayMs(response, fallbackMs = 1200) {
+function retryDelayMs(response, fallbackMs = 1500) {
   const retryAfter = Number(response?.headers?.get('retry-after') || 0);
   if (Number.isFinite(retryAfter) && retryAfter > 0) {
-    return Math.max(250, Math.min(5000, retryAfter * 1000));
+    return Math.max(250, Math.min(6000, retryAfter * 1000));
   }
   return fallbackMs;
 }
@@ -44,16 +44,16 @@ async function fetchRobloxUserGroupIds(robloxUserId) {
   }
 
   let response = null;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       response = await fetchWithTimeout(
         `https://groups.roblox.com/v2/users/${encodeURIComponent(userId)}/groups/roles`,
         {},
-        8000
+        12000
       );
     } catch (error) {
-      if (attempt === 0) {
-        await delay(1200);
+      if (attempt < 2) {
+        await delay(1500 * (attempt + 1));
         continue;
       }
       return {
@@ -64,8 +64,8 @@ async function fetchRobloxUserGroupIds(robloxUserId) {
     }
 
     if (response.ok) break;
-    if (attempt === 0 && (response.status === 429 || response.status >= 500)) {
-      await delay(retryDelayMs(response));
+    if (attempt < 2 && (response.status === 429 || response.status >= 500)) {
+      await delay(retryDelayMs(response, 1500 * (attempt + 1)));
       continue;
     }
     break;
@@ -90,7 +90,7 @@ async function fetchRobloxGroupName(groupId) {
   const id = text(groupId);
   if (!/^\d{1,30}$/.test(id)) return `Group ${id || '?'}`;
   try {
-    const response = await fetchWithTimeout(`https://groups.roblox.com/v1/groups/${encodeURIComponent(id)}`, {}, 8000);
+    const response = await fetchWithTimeout(`https://groups.roblox.com/v1/groups/${encodeURIComponent(id)}`, {}, 12000);
     if (!response.ok) return `Group ${id}`;
     const payload = await response.json().catch(() => ({}));
     return text(payload?.name) || `Group ${id}`;
@@ -145,6 +145,8 @@ export async function onRequestPost(context) {
     requiredGroups.push({ id: groupId, name: await fetchRobloxGroupName(groupId) });
   }
 
+  const guildIndex = await fetchGuildMemberIndex(env);
+
   const rows = await env.DB.prepare(
     `SELECT id, discord_user_id, roblox_username, roblox_user_id, rank, employee_status, activation_status, hire_date
        FROM employees
@@ -178,6 +180,19 @@ export async function onRequestPost(context) {
         detail: 'Employee record has no Discord user ID, so guild membership cannot be verified.'
       });
       checks.push({ label: 'Discord guild', ok: false, detail: 'Missing Discord user ID.' });
+    } else if (guildIndex.ok) {
+      const roleIds = guildIndex.members.get(discordUserId);
+      if (!roleIds) {
+        missingGuild += 1;
+        issues.push({
+          code: 'NOT_IN_DISCORD',
+          label: 'Not in Discord',
+          detail: 'User is no longer in the configured Discord guild.'
+        });
+        checks.push({ label: 'Discord guild', ok: false, detail: 'Not in configured guild.' });
+      } else {
+        checks.push({ label: 'Discord guild', ok: true, detail: 'In configured guild.' });
+      }
     } else {
       let lookup;
       try {
@@ -204,9 +219,9 @@ export async function onRequestPost(context) {
           issues.push({
             code: 'DISCORD_LOOKUP_FAILED',
             label: 'Discord lookup failed',
-            detail: text(lookup.error || 'Discord lookup failed.')
+            detail: text(lookup.error || guildIndex.error || 'Discord lookup failed.')
           });
-          checks.push({ label: 'Discord guild', ok: false, detail: text(lookup.error || 'Lookup failed.') });
+          checks.push({ label: 'Discord guild', ok: false, detail: text(lookup.error || guildIndex.error || 'Lookup failed.') });
         }
       } else {
         checks.push({ label: 'Discord guild', ok: true, detail: 'In configured guild.' });
@@ -280,7 +295,9 @@ export async function onRequestPost(context) {
       discordLookupFailed,
       robloxLookupFailed,
       requiredGroupIds,
-      requiredGroups
+      requiredGroups,
+      guildIndexOk: guildIndex.ok,
+      guildIndexError: guildIndex.error || ''
     }
   });
 
