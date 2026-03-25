@@ -53,6 +53,8 @@ const CORE_ALLOWED_PAGE_EXACT = new Set([
   '/activity-tracker.html',
   '/audit-log',
   '/audit-log.html',
+  '/site-settings',
+  '/site-settings.html',
   '/voyage-settings',
   '/voyage-settings.html',
   '/access-setup',
@@ -75,6 +77,7 @@ const CORE_ALLOWED_PAGE_PREFIXES = [
   '/admin/voyages/',
   '/admin/user-groups/',
   '/admin/user-ranks/',
+  '/admin/site-settings/',
   '/activity-tracker/',
   '/audit-log/',
   '/roles/',
@@ -190,7 +193,8 @@ function isAdminLikePath(pathname) {
     '/audit-log',
     '/roles',
     '/user-ranks',
-    '/manage-employees'
+    '/manage-employees',
+    '/site-settings'
   ]);
   return legacyAdminPages.has(path);
 }
