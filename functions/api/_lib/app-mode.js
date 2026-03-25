@@ -88,6 +88,7 @@ const CORE_ALLOWED_API_PREFIXES = [
   '/api/admin/roles',
   '/api/admin/user-ranks',
   '/api/admin/config',
+  '/api/admin/site-settings',
   '/api/admin/activity',
   '/api/admin/audit-log',
   '/api/admin/activity-tracker',
