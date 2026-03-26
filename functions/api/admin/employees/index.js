@@ -15,6 +15,18 @@ function normalizeLifecycleInput(value, fallback = 'ACTIVE') {
   return normalizeLifecycleStatus(upper, fallback);
 }
 
+async function listEmployeeStatuses(env) {
+  try {
+    return await env.DB
+      .prepare('SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC')
+      .all();
+  } catch (error) {
+    if (!String(error?.message || '').includes('no such column')) throw error;
+    return env.DB
+      .prepare('SELECT id, value, 0 AS restrict_intranet, 0 AS exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC')
+      .all();
+  }
+}
 async function findDuplicateEmployee(env, { robloxUsername, robloxUserId }, excludeEmployeeId = null) {
   const username = normalizeText(robloxUsername);
   const userId = normalizeText(robloxUserId);
@@ -154,9 +166,7 @@ export async function onRequestGet(context) {
       .first(),
     includeConfig
       ? Promise.all([
-          env.DB
-            .prepare('SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC')
-            .all(),
+          listEmployeeStatuses(env),
           env.DB
             .prepare('SELECT id, value, level, description, updated_at, created_at FROM config_ranks ORDER BY level DESC, value ASC, id ASC')
             .all()
@@ -345,5 +355,6 @@ export async function onRequestPost(context) {
   const created = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(discordUserId).first();
   return json({ employee: created }, 201);
 }
+
 
 
