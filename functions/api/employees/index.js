@@ -1,1 +1,2 @@
-export { onRequestGet } from '../admin/employees.js';
+export { onRequestGet } from '../admin/employees/index.js';
+

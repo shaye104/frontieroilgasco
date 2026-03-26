@@ -1,9 +1,9 @@
-import { json } from '../auth/_lib/auth.js';
-import { requirePermission } from './_lib/admin-auth.js';
-import { hasPermission } from '../_lib/permissions.js';
-import { normalizeDiscordUserId, writeAdminActivityEvent } from '../_lib/db.js';
-import { getActorAccessScope, hasHierarchyBypass, validateRoleSetManageable } from './_lib/access-scope.js';
-import { normalizeLifecycleStatus, toLegacyActivationStatus } from '../_lib/lifecycle.js';
+import { json } from '../../auth/_lib/auth.js';
+import { requirePermission } from '../_lib/admin-auth.js';
+import { hasPermission } from '../../_lib/permissions.js';
+import { normalizeDiscordUserId, writeAdminActivityEvent } from '../../_lib/db.js';
+import { getActorAccessScope, hasHierarchyBypass, validateRoleSetManageable } from '../_lib/access-scope.js';
+import { normalizeLifecycleStatus, toLegacyActivationStatus } from '../../_lib/lifecycle.js';
 
 function normalizeText(value) {
   return String(value || '').trim();
@@ -345,4 +345,5 @@ export async function onRequestPost(context) {
   const created = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(discordUserId).first();
   return json({ employee: created }, 201);
 }
+
 

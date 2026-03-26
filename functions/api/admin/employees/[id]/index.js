@@ -1,23 +1,23 @@
-import { json } from '../../auth/_lib/auth.js';
-import { requirePermission } from '../_lib/admin-auth.js';
-import { hasPermission } from '../../_lib/permissions.js';
-import { canEditEmployeeByRank, writeAdminActivityEvent } from '../../_lib/db.js';
-import { normalizeLifecycleStatus, toLegacyActivationStatus } from '../../_lib/lifecycle.js';
+import { json } from '../../../auth/_lib/auth.js';
+import { requirePermission } from '../../_lib/admin-auth.js';
+import { hasPermission } from '../../../_lib/permissions.js';
+import { canEditEmployeeByRank, writeAdminActivityEvent } from '../../../_lib/db.js';
+import { normalizeLifecycleStatus, toLegacyActivationStatus } from '../../../_lib/lifecycle.js';
 import {
   createDisciplinaryRecord,
   expireDisciplinaryRecordsForEmployee,
   listDisciplinaryRecordsForEmployee,
   reconcileEmployeeSuspensionState
-} from '../../_lib/disciplinary.js';
-import { sendRankSyncWebhook } from '../../_lib/rank-sync.js';
-import { removeRobloxGroupMemberForEmployee, syncRobloxRoleForEmployee } from '../_lib/roblox-group-sync.js';
+} from '../../../_lib/disciplinary.js';
+import { sendRankSyncWebhook } from '../../../_lib/rank-sync.js';
+import { removeRobloxGroupMemberForEmployee, syncRobloxRoleForEmployee } from '../../_lib/roblox-group-sync.js';
 import {
   canManageRoleRowByHierarchy,
   canViewEmployeeByHierarchy,
   getActorAccessScope,
   hasHierarchyBypass,
   validateRoleSetManageable
-} from '../_lib/access-scope.js';
+} from '../../_lib/access-scope.js';
 
 function valueText(value) {
   const text = String(value ?? '').trim();
@@ -634,3 +634,4 @@ export async function onRequestDelete(context) {
     robloxGroupKick: robloxKick
   });
 }
+
