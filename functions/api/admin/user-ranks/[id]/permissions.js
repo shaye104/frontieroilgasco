@@ -17,6 +17,23 @@ function canManageAdminOverride(env, session) {
   return Boolean(ownerId) && String(session?.userId || '') === ownerId;
 }
 
+async function syncPermissionCatalog(env) {
+  const catalog = getPermissionCatalog();
+  if (!catalog.length) return;
+  await env.DB.batch(
+    catalog.map((permission) =>
+      env.DB
+        .prepare('INSERT OR IGNORE INTO app_permissions (permission_key, permission_group, label, description) VALUES (?, ?, ?, ?)')
+        .bind(
+          String(permission.key || '').trim(),
+          String(permission.group || '').trim(),
+          String(permission.label || '').trim(),
+          String(permission.description || '').trim()
+        )
+    )
+  );
+}
+
 export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse, session } = await requirePermission(context, ['user_ranks.manage']);
@@ -74,6 +91,8 @@ export async function onRequestPut(context) {
   if (!isOwner && (permissionKeys.includes(ADMIN_OVERRIDE_PERMISSION) || existing.has(ADMIN_OVERRIDE_PERMISSION))) {
     return json({ error: 'Only OWNER_DISCORD_ID can grant or revoke admin.override.' }, 403);
   }
+
+  await syncPermissionCatalog(env);
 
   await env.DB.batch([
     env.DB.prepare('DELETE FROM rank_permission_mappings WHERE LOWER(rank_value) = LOWER(?)').bind(rankValue),
