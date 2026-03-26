@@ -510,6 +510,32 @@ export async function onRequest(context) {
         }
         return apiResponse;
       }
+      const userRankPermissionsMatch = pathname.match(/^\/api\/admin\/user-ranks\/(\d+)\/permissions$/);
+      if (userRankPermissionsMatch && (requestMethod === 'GET' || requestMethod === 'PUT' || requestMethod === 'PATCH')) {
+        const id = String(userRankPermissionsMatch[1] || '').trim();
+        const routeContext = {
+          ...context,
+          params: {
+            ...(context.params || {}),
+            id
+          }
+        };
+        const routeModule = await import('./api/admin/user-ranks/[id]/permissions.js');
+        const apiResponse = requestMethod === 'GET' ? await routeModule.onRequestGet(routeContext) : requestMethod === 'PATCH' ? await routeModule.onRequestPatch(routeContext) : await routeModule.onRequestPut(routeContext);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_user_rank_permissions' }
+            })
+          );
+        }
+        return apiResponse;
+      }
       if (coreOnlyMode && !isCoreAllowedApiPath(pathname)) {
         const blockedResponse = new Response(JSON.stringify({ error: 'Not found.' }), {
           status: 404,
