@@ -1,4 +1,4 @@
-﻿import { readSessionFromRequest } from './api/auth/_lib/auth.js';
+import { readSessionFromRequest } from './api/auth/_lib/auth.js';
 import { ensureCoreSchema, getEmployeeByDiscordUserId } from './api/_lib/db.js';
 import { isCoreAllowedApiPath, isCoreAllowedPagePath, isCoreOnly } from './api/_lib/app-mode.js';
 import { readSiteSettings, toAbsoluteUrl } from './api/_lib/site-settings.js';
@@ -461,6 +461,25 @@ export async function onRequest(context) {
           );
         }
         return apiResponse;
+      }
+      if (pathname === '/api/admin/employees' || pathname === '/api/admin/employees/') {
+        const { onRequestGet, onRequestPost } = await import('./api/admin/employees/index.js');
+        const apiResponse = requestMethod === 'POST' ? await onRequestPost(context) : requestMethod === 'GET' ? await onRequestGet(context) : null;
+        if (apiResponse) {
+          if (isLoggedIn) {
+            context.waitUntil(
+              logWebsiteAction(context.env, {
+                session,
+                pathname,
+                method: requestMethod,
+                responseStatus: apiResponse.status,
+                isApiPath,
+                metadata: { routedBy: 'middleware_admin_employees' }
+              })
+            );
+          }
+          return apiResponse;
+        }
       }
       if (coreOnlyMode && !isCoreAllowedApiPath(pathname)) {
         const blockedResponse = new Response(JSON.stringify({ error: 'Not found.' }), {
