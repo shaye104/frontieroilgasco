@@ -76,12 +76,15 @@ export async function onRequestGet(context) {
 
   const actorScope = await getActorAccessScope(env, session);
   const requiresRankJoin = !actorScope.bypassHierarchy;
+  const canFallbackToAdminView = Boolean(session?.isAdmin || hasPermission(session, 'admin.read_only') || hasPermission(session, 'employees.read'));
   const rankJoinSql = requiresRankJoin ? `LEFT JOIN config_ranks cr ON LOWER(cr.value) = LOWER(COALESCE(e.rank, ''))` : '';
   const visibilityWhereParts = [];
   const visibilityBindings = [];
   if (requiresRankJoin) {
     if (!actorScope.actorEmployee?.id) {
-      visibilityWhereParts.push('1 = 0');
+      if (!canFallbackToAdminView) {
+        visibilityWhereParts.push('1 = 0');
+      }
     } else {
       visibilityWhereParts.push('(e.id = ? OR COALESCE(cr.level, 0) < ?)');
       visibilityBindings.push(Number(actorScope.actorEmployee.id), Number(actorScope.actorRankLevel || 0));
@@ -342,3 +345,4 @@ export async function onRequestPost(context) {
   const created = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(discordUserId).first();
   return json({ employee: created }, 201);
 }
+
