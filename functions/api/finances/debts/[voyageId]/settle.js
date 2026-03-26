@@ -86,9 +86,8 @@ export async function onRequestPost(context) {
     String(session?.displayName || '').trim() ||
     String(session?.userId || '').trim() ||
     'Unknown';
-  const collectorEmployeeId = toOptionalInteger(row.officer_of_watch_employee_id) || Number(session.employee.id);
+  const collectorEmployeeId = Number(session.employee.id);
   const collectorName =
-    String(row?.officer_name || '').trim() ||
     String(session?.employee?.robloxUsername || '').trim() ||
     createdByName;
   const statements = [];
@@ -210,4 +209,5 @@ export async function onRequestPost(context) {
     remittancePending: amount > 0
   });
 }
+
 

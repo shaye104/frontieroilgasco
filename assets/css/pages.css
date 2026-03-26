@@ -9681,3 +9681,81 @@ body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-t
     grid-template-columns: 1fr;
   }
 }
+
+/* Responsive GM balance table override */
+body.page-finances #financeTabCashflow .finance-remittance-table-card .table-wrap {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed !important;
+}
+
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-manager {
+  width: 32% !important;
+}
+
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-amount {
+  width: 18% !important;
+}
+
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-actions {
+  width: 50% !important;
+}
+
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table th:first-child,
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table td:first-child {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-shell,
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-actions {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-target,
+body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-transfer-note {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 1180px) {
+  body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-manager {
+    width: 36% !important;
+  }
+
+  body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-amount {
+    width: 20% !important;
+  }
+
+  body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-actions {
+    width: 44% !important;
+  }
+}
+
+@media (max-width: 900px) {
+  body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table th,
+  body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table td {
+    padding: 0.45rem 0.4rem !important;
+  }
+
+  body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-manager {
+    width: 40% !important;
+  }
+
+  body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-amount {
+    width: 22% !important;
+  }
+
+  body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-remittance-col-actions {
+    width: 38% !important;
+  }
+}
