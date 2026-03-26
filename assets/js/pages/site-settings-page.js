@@ -19,12 +19,17 @@ function normalizeGroupRow(row = {}) {
   };
 }
 
-function normalizeGroupRows(rows) {
+function normalizeGroupRows(rows, options = {}) {
   const safeRows = Array.isArray(rows) ? rows : [];
+  const preserveIncomplete = Boolean(options?.preserveIncomplete);
   const deduped = [];
   const seen = new Set();
   for (const row of safeRows.map(normalizeGroupRow)) {
-    if (!row.id || seen.has(row.id)) continue;
+    if (!row.id) {
+      if (preserveIncomplete) deduped.push(row);
+      continue;
+    }
+    if (seen.has(row.id)) continue;
     seen.add(row.id);
     deduped.push(row);
   }
@@ -55,9 +60,9 @@ function setHiddenInputValue(rows) {
 }
 
 function syncHiddenInput(target, rows) {
-  const normalized = normalizeGroupRows(rows);
-  setHiddenInputValue(normalized);
-  renderGroupRows(target, normalized);
+  const draftRows = normalizeGroupRows(rows, { preserveIncomplete: true });
+  setHiddenInputValue(draftRows);
+  renderGroupRows(target, draftRows);
 }
 
 function readRowsFromDom(target) {
@@ -466,3 +471,4 @@ initIntranetPageGuard({
     })();
   });
 });
+
