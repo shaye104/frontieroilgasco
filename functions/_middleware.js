@@ -481,6 +481,35 @@ export async function onRequest(context) {
           return apiResponse;
         }
       }
+      const collectorRemittanceMatch = pathname.match(/^\/api\/finances\/collector-remittances\/(\d+)\/(transfer|settle)$/);
+      if (collectorRemittanceMatch && requestMethod === 'POST') {
+        const collectorEmployeeId = String(collectorRemittanceMatch[1] || '').trim();
+        const action = String(collectorRemittanceMatch[2] || '').trim().toLowerCase();
+        const routeContext = {
+          ...context,
+          params: {
+            ...(context.params || {}),
+            collectorEmployeeId
+          }
+        };
+        const routeModule = action === 'transfer'
+          ? await import('./api/finances/collector-remittances/[collectorEmployeeId]/transfer.js')
+          : await import('./api/finances/collector-remittances/[collectorEmployeeId]/settle.js');
+        const apiResponse = await routeModule.onRequestPost(routeContext);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_collector_remittances_' + action }
+            })
+          );
+        }
+        return apiResponse;
+      }
       if (coreOnlyMode && !isCoreAllowedApiPath(pathname)) {
         const blockedResponse = new Response(JSON.stringify({ error: 'Not found.' }), {
           status: 404,
