@@ -12,7 +12,7 @@ export function isOwnerSession(env, session) {
 }
 
 export function hasHierarchyBypass(env, session) {
-  return isOwnerSession(env, session) || hasPermission(session, SUPER_ADMIN_PERMISSION);
+  return isOwnerSession(env, session) || hasPermission(session, SUPER_ADMIN_PERMISSION) || hasPermission(session, ADMIN_OVERRIDE_PERMISSION);
 }
 
 export async function getActorAccessScope(env, session) {
@@ -111,3 +111,4 @@ export function canGrantPermissionKey(env, session, permissionKey) {
   };
   return hasPermission(strippedSession, permissionKey);
 }
+
