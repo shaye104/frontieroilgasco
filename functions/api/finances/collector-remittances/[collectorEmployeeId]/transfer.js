@@ -36,8 +36,8 @@ export async function onRequestPost(context) {
   if (targetCollectorEmployeeId === sourceCollectorEmployeeId) return json({ error: 'Source and target manager must differ.' }, 400);
 
   const [sourceEmployee, targetEmployee] = await Promise.all([
-    env.DB.prepare(`SELECT id, roblox_username FROM employees WHERE id = ? AND deleted_at IS NULL`).bind(sourceCollectorEmployeeId).first(),
-    env.DB.prepare(`SELECT id, roblox_username FROM employees WHERE id = ? AND deleted_at IS NULL`).bind(targetCollectorEmployeeId).first()
+    env.DB.prepare(`SELECT id, roblox_username FROM employees WHERE id = ?`).bind(sourceCollectorEmployeeId).first(),
+    env.DB.prepare(`SELECT id, roblox_username FROM employees WHERE id = ?`).bind(targetCollectorEmployeeId).first()
   ]);
   if (!sourceEmployee) return json({ error: 'Source manager not found.' }, 404);
   if (!targetEmployee) return json({ error: 'Target manager not found.' }, 404);
