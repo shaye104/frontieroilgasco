@@ -312,9 +312,20 @@ export async function onRequestPut(context) {
   }
   const rankChanged = String(existing?.rank || '').trim() !== String(nextRank || '').trim();
   const becameDeactivated = isDeactivatedStatus(nextLifecycleStatus) && !isDeactivatedStatus(existing?.employee_status);
+  let statusExcludesFromStats = false;
+  try {
+    const statusConfig = await env.DB
+      .prepare('SELECT exclude_from_stats FROM config_employee_statuses WHERE LOWER(value) = LOWER(?) LIMIT 1')
+      .bind(nextLifecycleStatus)
+      .first();
+    statusExcludesFromStats = Number(statusConfig?.exclude_from_stats || 0) === 1;
+  } catch {
+    statusExcludesFromStats = false;
+  }
+  const shouldRemoveFromGroup = becameDeactivated || statusExcludesFromStats;
 
   let rankRoleSyncPrecheck = null;
-  if (rankChanged && !becameDeactivated) {
+  if (rankChanged && !shouldRemoveFromGroup) {
     rankRoleSyncPrecheck = await syncRobloxRoleForEmployee(env, {
       robloxUserId: nextRobloxUserId,
       rankValue: nextRank
@@ -424,7 +435,7 @@ export async function onRequestPut(context) {
 
   let rankSyncDebug = null;
   let robloxGroupSync = null;
-  if (becameDeactivated) {
+  if (shouldRemoveFromGroup) {
     const kickResult = await removeRobloxGroupMemberForEmployee(env, {
       robloxUserId: employee?.roblox_user_id
     });
@@ -634,4 +645,5 @@ export async function onRequestDelete(context) {
     robloxGroupKick: robloxKick
   });
 }
+
 

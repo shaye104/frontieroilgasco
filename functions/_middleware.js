@@ -510,6 +510,39 @@ export async function onRequest(context) {
         }
         return apiResponse;
       }
+      const adminConfigMatch = pathname.match(/^\/api\/admin\/config\/([^\/]+)$/);
+      if (adminConfigMatch && (requestMethod === 'GET' || requestMethod === 'POST' || requestMethod === 'PUT' || requestMethod === 'DELETE')) {
+        const type = String(adminConfigMatch[1] || '').trim();
+        const routeContext = {
+          ...context,
+          params: {
+            ...(context.params || {}),
+            type
+          }
+        };
+        const routeModule = await import('./api/admin/config/[type].js');
+        const apiResponse = requestMethod === 'GET'
+          ? await routeModule.onRequestGet(routeContext)
+          : requestMethod === 'POST'
+          ? await routeModule.onRequestPost(routeContext)
+          : requestMethod === 'PUT'
+          ? await routeModule.onRequestPut(routeContext)
+          : await routeModule.onRequestDelete(routeContext);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_admin_config' }
+            })
+          );
+        }
+        return apiResponse;
+      }
+      
       const userRankPermissionsMatch = pathname.match(/^\/api\/admin\/user-ranks\/(\d+)\/permissions$/);
       if (userRankPermissionsMatch && (requestMethod === 'GET' || requestMethod === 'PUT' || requestMethod === 'PATCH')) {
         const id = String(userRankPermissionsMatch[1] || '').trim();
@@ -743,6 +776,7 @@ export async function onRequest(context) {
     return context.next();
   }
 }
+
 
 
 
