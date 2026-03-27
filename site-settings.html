@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327025451" />
+    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327030931" />
   </head>
   <body class="page page-intranet page-site-settings">
     <header class="site-header">
@@ -92,13 +92,10 @@
                   <strong>Maintenance safety lock</strong>
                   <span class="site-settings-maintenance-inline-note">Hold to apply</span>
                 </div>
-                <label class="site-settings-maintenance-toggle" for="settingsMaintenanceMode">
-                  <input id="settingsMaintenanceMode" name="maintenanceMode" type="checkbox" />
-                  <span>
-                    <strong>Enable maintenance mode</strong>
-                    <small id="maintenanceModeHint">Public visitors stay on the normal website until this is enabled.</small>
-                  </span>
-                </label>
+                <div class="site-settings-maintenance-summary">
+                  <strong id="maintenanceModeTitle">Maintenance mode is currently disabled.</strong>
+                  <small id="maintenanceModeHint">Public visitors stay on the normal website until this is enabled.</small>
+                </div>
                 <button
                   id="toggleMaintenanceModeBtn"
                   class="btn btn-warning btn-hold-confirm btn-hold-warning site-settings-maintenance-button"
@@ -240,7 +237,10 @@
         </div>
       </div>
     </main>
-    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260327025451"></script>
+    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260327031231"></script>
   </body>
 </html>
+
+
+
 
