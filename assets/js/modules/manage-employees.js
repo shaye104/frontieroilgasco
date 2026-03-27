@@ -197,6 +197,30 @@ function saveVisibleColumns(columns) {
   }
 }
 
+function fillOptions(select, items = [], placeholder = 'Select') {
+  if (!select) return;
+  const current = String(select.value || '').trim();
+  const normalizedItems = (Array.isArray(items) ? items : [])
+    .map((item) => {
+      if (typeof item === 'string') return { value: item, label: item };
+      const value = String(item?.value ?? item?.label ?? item?.name ?? '').trim();
+      const label = String(item?.label ?? item?.value ?? item?.name ?? '').trim();
+      return value ? { value, label: label || value } : null;
+    })
+    .filter(Boolean);
+
+  select.innerHTML = [
+    `<option value="">${escapeHtml(placeholder)}</option>`,
+    ...normalizedItems.map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>`)
+  ].join('');
+
+  const exactMatch = normalizedItems.find((item) => item.value === current);
+  const caseInsensitiveMatch = normalizedItems.find((item) => item.value.toLowerCase() === current.toLowerCase());
+  if (exactMatch) select.value = exactMatch.value;
+  else if (caseInsensitiveMatch) select.value = caseInsensitiveMatch.value;
+  else select.value = '';
+}
+
 function employeeRowSkeleton() {
   return `<tr>
     <td><span class="skeleton-line skeleton-w-55"></span></td>

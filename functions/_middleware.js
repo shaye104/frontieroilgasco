@@ -79,13 +79,7 @@ function isMaintenanceBypassPagePath(pathname) {
     isMaintenancePath(path) ||
     path.startsWith('/assets/') ||
     path.startsWith('/cdn-cgi/') ||
-    path === '/favicon.ico' ||
-    path === '/login' ||
-    path === '/login.html' ||
-    path === '/not-permitted' ||
-    path === '/not-permitted.html' ||
-    path === '/access-denied' ||
-    path === '/access-denied.html'
+    path === '/favicon.ico'
   );
 }
 
@@ -388,13 +382,21 @@ export async function onRequest(context) {
 
     const session = await readSessionFromRequest(context.env, context.request);
     const isLoggedIn = Boolean(session);
+    const sessionWithPermissions = isLoggedIn ? await enrichSessionWithPermissions(context.env, session) : null;
     const maintenanceDiscordUserId = String(
       context.env?.DISCORD_USER_ID || context.env?.MAINTENANCE_DISCORD_USER_ID || context.env?.ADMIN_DISCORD_USER_ID || ''
     ).trim();
     const siteSettings = await readSiteSettings(context.env);
     const maintenanceEnabled = Boolean(siteSettings?.maintenanceMode);
     const isApiPath = pathname.startsWith('/api/');
-    const hasMaintenanceAccess = isLoggedIn && (Boolean(session?.isAdmin) || String(session?.userId || '').trim() === maintenanceDiscordUserId);
+    const maintenancePermissions = new Set(
+      Array.isArray(sessionWithPermissions?.permissions) ? sessionWithPermissions.permissions.map((value) => String(value || '').trim()) : []
+    );
+    const hasMaintenanceAccess = isLoggedIn && (
+      maintenancePermissions.has('super.admin') ||
+      maintenancePermissions.has('admin.override') ||
+      String(sessionWithPermissions?.userId || '').trim() === maintenanceDiscordUserId
+    );
     if (maintenanceEnabled && !hasMaintenanceAccess) {
       if (isApiPath && !isMaintenanceBypassApiPath(pathname)) {
         return new Response(JSON.stringify({ error: 'Site is currently under maintenance.' }), {
@@ -402,8 +404,12 @@ export async function onRequest(context) {
           headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
         });
       }
-      if (!isApiPath && !isMaintenanceBypassPagePath(pathname)) {
-        return Response.redirect(new URL('/maintenance', url.origin).toString(), 302);
+      if (!isApiPath) {
+        if (!isMaintenanceBypassPagePath(pathname)) {
+          return Response.redirect(new URL('/maintenance', url.origin).toString(), 302);
+        }
+        const maintenanceResponse = await context.next();
+        return await applySiteBranding(context.env, context.request, maintenanceResponse);
       }
     }
 
@@ -801,8 +807,8 @@ export async function onRequest(context) {
     if (isLoggedIn && !session?.isAdmin) {
       const pagePermissionAny = requiredAnyPermissionsForPage(pathname);
       if (pagePermissionAny.length) {
-        const sessionWithPermissions = await enrichSessionWithPermissions(context.env, session);
-        const isAllowed = pagePermissionAny.some((permissionKey) => hasEffectivePermission(sessionWithPermissions, permissionKey));
+        const accessCheckedSession = sessionWithPermissions || (await enrichSessionWithPermissions(context.env, session));
+        const isAllowed = pagePermissionAny.some((permissionKey) => hasEffectivePermission(accessCheckedSession, permissionKey));
         if (!isAllowed) {
           const denied = new URL('/access-denied', url.origin);
           denied.searchParams.set('reason', 'missing_permissions');
