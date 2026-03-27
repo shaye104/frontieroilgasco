@@ -77,6 +77,9 @@ function isMaintenanceBypassPagePath(pathname) {
   const path = normalizePath(pathname);
   return (
     isMaintenancePath(path) ||
+    path.startsWith('/assets/') ||
+    path.startsWith('/cdn-cgi/') ||
+    path === '/favicon.ico' ||
     path === '/login' ||
     path === '/login.html' ||
     path === '/not-permitted' ||
@@ -98,6 +101,7 @@ function isMaintenanceBypassApiPath(pathname) {
 function isPublicPagePath(pathname) {
   const path = normalizePath(pathname);
   return (
+    isMaintenancePath(path) ||
     path === '/login' ||
     path === '/login.html' ||
     path === '/not-permitted' ||
@@ -828,6 +832,8 @@ export async function onRequest(context) {
     return context.next();
   }
 }
+
+
 
 
 
