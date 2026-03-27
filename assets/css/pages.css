@@ -10114,3 +10114,209 @@ body.page-intranet.is-suspended-view .suspended-status-banner {
   }
 }
 
+
+.page-site-settings .site-settings-hero-panel-compact {
+  padding: 1rem 1.25rem;
+}
+
+.page-site-settings .site-settings-hero-row-compact {
+  align-items: start;
+}
+
+.page-site-settings .site-settings-main-stack {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.page-site-settings .site-settings-maintenance-bar {
+  padding: 0.95rem 1.05rem;
+  border-color: #ecd37c;
+  background: linear-gradient(180deg, #fff7d9 0%, #fff2c1 100%);
+}
+
+.page-site-settings .site-settings-maintenance-bar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.page-site-settings .site-settings-maintenance-bar-head h2 {
+  margin: 0.12rem 0 0;
+}
+
+.page-site-settings .site-settings-maintenance-bar-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.page-site-settings .site-settings-maintenance-copy {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid rgba(178, 137, 0, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.page-site-settings .site-settings-maintenance-copy p {
+  margin: 0;
+}
+
+.page-site-settings .site-settings-maintenance-button {
+  min-height: 52px;
+}
+
+.page-site-settings .site-settings-groups-card {
+  padding-bottom: 1rem;
+}
+
+.page-site-settings .site-settings-groups-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.page-site-settings .site-settings-groups-footer .site-settings-form-note {
+  margin: 0;
+}
+
+.page-site-settings .site-settings-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.page-site-settings .site-settings-admin-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.page-site-settings .site-settings-admin-card {
+  padding: 1rem 1rem 0.95rem;
+}
+
+.page-site-settings .site-settings-admin-card .site-settings-section-head {
+  margin-bottom: 0.45rem;
+}
+
+.page-site-settings .site-settings-admin-table-wrap {
+  overflow: auto;
+}
+
+.page-site-settings .site-settings-status-table,
+.page-site-settings .site-settings-disciplinary-table {
+  min-width: 0;
+}
+
+.page-site-settings .site-settings-status-table td,
+.page-site-settings .site-settings-disciplinary-table td {
+  vertical-align: top;
+}
+
+.page-site-settings .site-settings-table-actions-cell {
+  white-space: nowrap;
+}
+
+.page-site-settings .site-settings-table-actions-cell .btn {
+  margin-left: 0.35rem;
+}
+
+.page-site-settings .site-settings-config-modal-card {
+  width: min(760px, 96vw);
+  max-height: min(88vh, 900px);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-site-settings .site-settings-config-modal-card-wide {
+  width: min(920px, 96vw);
+}
+
+.page-site-settings .site-settings-config-modal-card .modal-header {
+  margin-bottom: 0.7rem;
+}
+
+.page-site-settings .site-settings-config-modal-card .modal-header h3 {
+  margin: 0 0 0.25rem;
+}
+
+.page-site-settings .site-settings-modal-form {
+  display: grid;
+  gap: 0.7rem;
+  overflow: auto;
+  min-height: 0;
+}
+
+.page-site-settings .site-settings-modal-form .site-settings-compact-grid,
+.page-site-settings .site-settings-modal-form .site-settings-compact-main {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page-site-settings .site-settings-modal-form .site-settings-toggle-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.page-site-settings .site-settings-modal-form .site-settings-toggle-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page-site-settings .site-settings-modal-form input,
+.page-site-settings .site-settings-modal-form select {
+  margin-bottom: 0;
+}
+
+.page-site-settings .site-settings-modal-form .site-settings-compact-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 1180px) {
+  .page-site-settings .site-settings-maintenance-bar-body,
+  .page-site-settings .site-settings-groups-footer,
+  .page-site-settings .site-settings-admin-grid-compact {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .page-site-settings .site-settings-maintenance-bar-head,
+  .page-site-settings .site-settings-groups-footer,
+  .page-site-settings .site-settings-hero-row-compact {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+  }
+
+  .page-site-settings .site-settings-inline-actions,
+  .page-site-settings .site-settings-primary-actions,
+  .page-site-settings .site-settings-hero-actions {
+    width: 100%;
+  }
+
+  .page-site-settings .site-settings-inline-actions .btn,
+  .page-site-settings .site-settings-primary-actions .btn,
+  .page-site-settings .site-settings-hero-actions .btn,
+  .page-site-settings .site-settings-maintenance-button {
+    width: 100%;
+  }
+
+  .page-site-settings .site-settings-config-modal-card,
+  .page-site-settings .site-settings-config-modal-card-wide {
+    width: min(96vw, 96vw);
+    max-height: min(90vh, 960px);
+  }
+
+  .page-site-settings .site-settings-modal-form .site-settings-compact-grid,
+  .page-site-settings .site-settings-modal-form .site-settings-compact-main,
+  .page-site-settings .site-settings-modal-form .site-settings-toggle-grid,
+  .page-site-settings .site-settings-modal-form .site-settings-toggle-grid-compact {
+    grid-template-columns: 1fr;
+  }
+}

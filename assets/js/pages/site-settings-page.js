@@ -91,6 +91,20 @@ function bindHoldToConfirm(button, onConfirm, holdMs = 1000) {
   };
 }
 
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden', 'true');
+}
+
 function normalizeGroupRow(row = {}) {
   return {
     id: String(row?.id ?? '').trim().replace(/\D+/g, ''),
@@ -194,7 +208,7 @@ function renderDisciplinaryTypes(target, rows = []) {
         </td>
         <td>${escapeHtml(ruleSummary(row))}</td>
         <td>${escapeHtml(restrictionSummary(row))}</td>
-        <td class="align-right">
+        <td class="align-right site-settings-table-actions-cell">
           <button class="btn btn-secondary btn-compact" type="button" data-edit-disciplinary-type="${Number(row?.id || 0)}">Edit</button>
           <button class="btn btn-danger btn-compact" type="button" data-delete-disciplinary-type="${Number(row?.id || 0)}">Delete</button>
         </td>
@@ -241,7 +255,7 @@ function renderStatuses(target, rows = []) {
       (row) => `<tr>
         <td><strong>${escapeHtml(String(row?.value || '').trim() || 'Unnamed')}</strong></td>
         <td>${escapeHtml(summarizeStatusBehavior(row))}</td>
-        <td class="align-right">
+        <td class="align-right site-settings-table-actions-cell">
           <button class="btn btn-secondary btn-compact" type="button" data-edit-status="${Number(row?.id || 0)}">Edit</button>
           <button class="btn btn-danger btn-compact" type="button" data-delete-status="${Number(row?.id || 0)}">Delete</button>
         </td>
@@ -326,7 +340,9 @@ function setDisciplinaryEditingState(editingId = null) {
   const form = document.querySelector('#disciplinaryTypeForm');
   if (form) form.dataset.editingId = editingId ? String(editingId) : '';
   const saveBtn = document.querySelector('#disciplinaryTypeSaveBtn');
+  const title = document.querySelector('#disciplinaryTypeModalTitle');
   if (saveBtn) saveBtn.textContent = editingId ? 'Save Changes' : 'Add Type';
+  if (title) title.textContent = editingId ? 'Edit Disciplinary Type' : 'Add Disciplinary Type';
 }
 
 function resetDisciplinaryForm() {
@@ -338,7 +354,9 @@ function setStatusEditingState(editingId = null) {
   const form = document.querySelector('#statusConfigForm');
   if (form) form.dataset.editingId = editingId ? String(editingId) : '';
   const saveBtn = document.querySelector('#statusConfigSaveBtn');
+  const title = document.querySelector('#statusConfigModalTitle');
   if (saveBtn) saveBtn.textContent = editingId ? 'Save Changes' : 'Add Status';
+  if (title) title.textContent = editingId ? 'Edit Status' : 'Add Status';
 }
 
 function resetStatusForm() {
@@ -418,6 +436,8 @@ initIntranetPageGuard({
   const saveBtn = document.querySelector('#siteSettingsSaveBtn');
   const toggleMaintenanceModeBtn = document.querySelector('#toggleMaintenanceModeBtn');
   const addGroupBtn = document.querySelector('#addRequiredRobloxGroupBtn');
+  const openStatusModalBtn = document.querySelector('#openStatusModalBtn');
+  const openDisciplinaryModalBtn = document.querySelector('#openDisciplinaryModalBtn');
   const groupsBody = document.querySelector('#settingsRequiredRobloxGroupsBody');
   const disciplinaryFeedback = document.querySelector('#disciplinaryTypesFeedback');
   const disciplinaryForm = document.querySelector('#disciplinaryTypeForm');
@@ -444,6 +464,36 @@ initIntranetPageGuard({
     return;
   }
 
+  document.querySelectorAll('[data-close-modal]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const modalId = button.getAttribute('data-close-modal');
+      if (modalId) closeModal(modalId);
+    });
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) closeModal(overlay.id);
+    });
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach((overlay) => closeModal(overlay.id));
+  });
+
+  openStatusModalBtn?.addEventListener('click', () => {
+    resetStatusForm();
+    closeModal('disciplinaryTypeModal');
+    openModal('statusConfigModal');
+  });
+
+  openDisciplinaryModalBtn?.addEventListener('click', () => {
+    resetDisciplinaryForm();
+    closeModal('statusConfigModal');
+    openModal('disciplinaryTypeModal');
+  });
+
   addGroupBtn?.addEventListener('click', () => {
     syncHiddenInput(groupsBody, [...readRowsFromDom(groupsBody), { id: '', name: '', shortLabel: '' }]);
   });
@@ -460,8 +510,6 @@ initIntranetPageGuard({
   groupsBody?.addEventListener('input', () => {
     setHiddenInputValue(readRowsFromDom(groupsBody));
   });
-
-
 
   resetBtn?.addEventListener('click', () => {
     if (!state.siteSettings) return;
@@ -502,6 +550,7 @@ initIntranetPageGuard({
       state.disciplinaryTypes = Array.isArray(response?.items) ? response.items : [];
       renderDisciplinaryTypes(disciplinaryTableBody, state.disciplinaryTypes);
       resetDisciplinaryForm();
+      closeModal('disciplinaryTypeModal');
       showMessage(disciplinaryFeedback, editingId ? 'Disciplinary type updated.' : 'Disciplinary type added.', 'success');
     } catch (error) {
       showMessage(disciplinaryFeedback, error.message || 'Unable to save disciplinary type.', 'error');
@@ -521,6 +570,7 @@ initIntranetPageGuard({
       if (!row) return;
       setDisciplinaryEditingState(id);
       fillDisciplinaryForm(row);
+      openModal('disciplinaryTypeModal');
       showMessage(disciplinaryFeedback, `Editing ${String(row?.label || row?.value || row?.key).trim()}.`, 'info');
       return;
     }
@@ -536,6 +586,7 @@ initIntranetPageGuard({
         state.disciplinaryTypes = Array.isArray(response?.items) ? response.items : [];
         renderDisciplinaryTypes(disciplinaryTableBody, state.disciplinaryTypes);
         resetDisciplinaryForm();
+        closeModal('disciplinaryTypeModal');
         showMessage(disciplinaryFeedback, 'Disciplinary type deleted.', 'success');
       } catch (error) {
         showMessage(disciplinaryFeedback, error.message || 'Unable to delete disciplinary type.', 'error');
@@ -565,6 +616,7 @@ initIntranetPageGuard({
       state.statuses = Array.isArray(response?.items) ? response.items : [];
       renderStatuses(statusTableBody, state.statuses);
       resetStatusForm();
+      closeModal('statusConfigModal');
       showMessage(statusFeedback, editingId ? 'Status updated.' : 'Status added.', 'success');
     } catch (error) {
       showMessage(statusFeedback, error.message || 'Unable to save status.', 'error');
@@ -612,6 +664,7 @@ initIntranetPageGuard({
       setCheckbox('#statusConfigShowNotice', Number(row?.show_notice || 0));
       setCheckbox('#statusConfigExcludeFromStats', Number(row?.exclude_from_stats || 0));
       setCheckbox('#statusConfigRemoveFromGroup', Number(row?.remove_from_group || 0));
+      openModal('statusConfigModal');
       showMessage(statusFeedback, `Editing ${String(row?.value || '').trim()}.`, 'info');
       return;
     }
@@ -627,6 +680,7 @@ initIntranetPageGuard({
         state.statuses = Array.isArray(response?.items) ? response.items : [];
         renderStatuses(statusTableBody, state.statuses);
         resetStatusForm();
+        closeModal('statusConfigModal');
         showMessage(statusFeedback, 'Status deleted.', 'success');
       } catch (error) {
         showMessage(statusFeedback, error.message || 'Unable to delete status.', 'error');
@@ -634,6 +688,3 @@ initIntranetPageGuard({
     })();
   });
 });
-
-
-

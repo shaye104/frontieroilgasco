@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327030931" />
+    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327032844" />
   </head>
   <body class="page page-intranet page-site-settings">
     <header class="site-header">
@@ -26,8 +26,8 @@
 
     <main class="section">
       <div class="container intranet-layout">
-        <section class="panel site-settings-hero-panel">
-          <div class="site-settings-hero-row">
+        <section class="panel site-settings-hero-panel site-settings-hero-panel-compact">
+          <div class="site-settings-hero-row site-settings-hero-row-compact">
             <div class="site-settings-hero-copy">
               <p class="eyebrow">Admin Controls</p>
               <h1>Site Settings</h1>
@@ -40,19 +40,45 @@
           <div id="siteSettingsFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="siteSettingsContent" class="hidden site-settings-top-grid">
-          <section class="panel site-settings-primary-card">
+        <section id="siteSettingsContent" class="hidden site-settings-main-stack">
+          <section class="panel site-settings-maintenance-bar">
+            <div class="site-settings-maintenance-bar-head">
+              <div>
+                <p class="eyebrow">Live Site Control</p>
+                <h2>Maintenance Mode</h2>
+              </div>
+              <span id="maintenanceModeStateBadge" class="site-settings-state-pill">Inactive</span>
+            </div>
+            <div class="site-settings-maintenance-bar-body">
+              <div class="site-settings-maintenance-copy">
+                <strong id="maintenanceModeTitle">Maintenance mode is currently disabled.</strong>
+                <p id="maintenanceModeHint" class="finance-inline-caption">Public visitors stay on the normal website until this is enabled.</p>
+              </div>
+              <button
+                id="toggleMaintenanceModeBtn"
+                class="btn btn-warning btn-hold-confirm btn-hold-warning site-settings-maintenance-button"
+                type="button"
+                data-hold-confirm-ms="1200"
+              >
+                Hold To Enable Maintenance
+              </button>
+            </div>
+          </section>
+
+          <section class="panel site-settings-primary-card site-settings-groups-card">
             <form id="siteSettingsForm" class="site-settings-primary-form">
               <div class="admin-employees-table-header site-settings-section-head">
                 <div>
-                  <label>Required Roblox Groups</label>
+                  <h2>Required Roblox Groups</h2>
                   <p class="finance-inline-caption">Add each group with its Roblox ID and the short label you want to appear as a scan column.</p>
                 </div>
-                <button id="addRequiredRobloxGroupBtn" class="btn btn-secondary" type="button">Add Group</button>
+                <div class="site-settings-inline-actions">
+                  <button id="addRequiredRobloxGroupBtn" class="btn btn-secondary" type="button">Add Group</button>
+                </div>
               </div>
 
               <div class="table-wrap site-settings-table-wrap">
-                <table class="data-table employee-scan-table site-settings-data-table">
+                <table class="data-table employee-scan-table site-settings-data-table site-settings-groups-table">
                   <thead>
                     <tr>
                       <th>Group ID</th>
@@ -67,180 +93,173 @@
                 </table>
               </div>
               <input id="settingsRequiredRobloxGroupsJson" name="requiredRobloxGroups" type="hidden" />
-              <p class="finance-inline-caption site-settings-form-note">Run Scan will flag employees who are not in the Discord guild from <code>DISCORD_GUILD_ID</code> or are missing every configured Roblox group ID.</p>
-
-              <div class="finance-cashflow-entry-actions site-settings-primary-actions">
-                <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
-                <button id="siteSettingsResetBtn" class="btn btn-secondary" type="button">Reset Form</button>
+              <div class="site-settings-groups-footer">
+                <p class="finance-inline-caption site-settings-form-note">Run Scan will flag employees who are not in the Discord guild from <code>DISCORD_GUILD_ID</code> or are missing every configured Roblox group ID.</p>
+                <div class="finance-cashflow-entry-actions site-settings-primary-actions">
+                  <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
+                  <button id="siteSettingsResetBtn" class="btn btn-secondary" type="button">Reset Form</button>
+                </div>
               </div>
             </form>
           </section>
 
-          <aside class="panel site-settings-maintenance-panel">
-            <div class="site-settings-maintenance-shell">
-              <div class="site-settings-maintenance-head">
+          <div class="site-settings-admin-grid site-settings-admin-grid-compact">
+            <section id="statusConfigSection" class="panel hidden site-settings-admin-card">
+              <div class="admin-employees-table-header site-settings-section-head">
                 <div>
-                  <p class="eyebrow">Live Site Control</p>
-                  <h2>Maintenance Mode</h2>
-                  <p class="finance-inline-caption">Temporarily redirect public traffic to the maintenance page while still allowing admins back in.</p>
+                  <h2>Employee Statuses</h2>
+                  <p class="finance-inline-caption">Review how each status affects login, intranet access, and employment visibility.</p>
                 </div>
-                <span id="maintenanceModeStateBadge" class="site-settings-state-pill">Inactive</span>
+                <div class="site-settings-inline-actions">
+                  <button id="openStatusModalBtn" class="btn btn-primary" type="button">Add Status</button>
+                </div>
               </div>
+              <div id="statusConfigFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap site-settings-table-wrap site-settings-admin-table-wrap">
+                <table class="data-table employee-scan-table site-settings-data-table site-settings-status-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Behavior</th>
+                      <th class="align-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="statusConfigTableBody">
+                    <tr><td colspan="3">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
-              <div class="site-settings-maintenance-box">
-                <div class="site-settings-maintenance-box-head">
-                  <strong>Maintenance safety lock</strong>
-                  <span class="site-settings-maintenance-inline-note">Hold to apply</span>
+            <section id="disciplinaryConfigSection" class="panel hidden site-settings-admin-card">
+              <div class="admin-employees-table-header site-settings-section-head">
+                <div>
+                  <h2>Disciplinary Types</h2>
+                  <p class="finance-inline-caption">Manage disciplinary presets used in employee records and suspension logic.</p>
                 </div>
-                <div class="site-settings-maintenance-summary">
-                  <strong id="maintenanceModeTitle">Maintenance mode is currently disabled.</strong>
-                  <small id="maintenanceModeHint">Public visitors stay on the normal website until this is enabled.</small>
+                <div class="site-settings-inline-actions">
+                  <button id="openDisciplinaryModalBtn" class="btn btn-primary" type="button">Add Type</button>
                 </div>
-                <button
-                  id="toggleMaintenanceModeBtn"
-                  class="btn btn-warning btn-hold-confirm btn-hold-warning site-settings-maintenance-button"
-                  type="button"
-                  data-hold-confirm-ms="1200"
-                >
-                  Hold To Enable Maintenance
-                </button>
               </div>
-            </div>
-          </aside>
+              <div id="disciplinaryTypesFeedback" class="feedback" role="status" aria-live="polite"></div>
+              <div class="table-wrap site-settings-table-wrap site-settings-admin-table-wrap">
+                <table class="data-table employee-scan-table site-settings-data-table site-settings-disciplinary-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Rules</th>
+                      <th>Restrictions</th>
+                      <th class="align-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="disciplinaryTypesTableBody">
+                    <tr><td colspan="4">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
         </section>
-
-        <div class="site-settings-admin-grid">
-          <section id="statusConfigSection" class="panel hidden site-settings-admin-card">
-            <div class="admin-employees-table-header site-settings-section-head">
-              <div>
-                <h2>Employee Statuses</h2>
-                <p class="finance-inline-caption">Define status values and how each one affects login, intranet access, and employment visibility.</p>
-              </div>
-            </div>
-
-            <form id="statusConfigForm" class="site-settings-compact-form site-settings-status-form">
-              <div class="site-settings-compact-main">
-                <div>
-                  <label for="statusConfigValue">Status Value</label>
-                  <input id="statusConfigValue" name="value" type="text" placeholder="Active" required />
-                </div>
-                <div>
-                  <label for="statusConfigAccessMode">Access Mode</label>
-                  <select id="statusConfigAccessMode" name="accessMode">
-                    <option value="normal">Normal Access</option>
-                    <option value="my_details_only">My Details Only</option>
-                    <option value="removed_page">Redirect To Removed Page</option>
-                    <option value="blocked">Block Login</option>
-                  </select>
-                </div>
-              </div>
-              <div class="site-settings-toggle-grid site-settings-toggle-grid-compact site-settings-toggle-grid-tight">
-                <label><input id="statusConfigShowNotice" name="showNotice" type="checkbox" /> <span>Show Notice</span></label>
-                <label><input id="statusConfigExcludeFromStats" name="excludeFromStats" type="checkbox" /> <span>No Longer Employee / Exclude From Stats</span></label>
-                <label><input id="statusConfigRemoveFromGroup" name="removeFromGroup" type="checkbox" /> <span>Remove From Roblox Group</span></label>
-              </div>
-              <div class="finance-cashflow-entry-actions site-settings-compact-actions">
-                <button id="statusConfigSaveBtn" class="btn btn-primary" type="submit">Add Status</button>
-              </div>
-            </form>
-
-            <div id="statusConfigFeedback" class="feedback" role="status" aria-live="polite"></div>
-
-            <div class="table-wrap site-settings-table-wrap site-settings-admin-table-wrap">
-              <table class="data-table employee-scan-table site-settings-data-table site-settings-status-table">
-                <thead>
-                  <tr>
-                    <th>Status</th>
-                    <th>Behavior</th>
-                    <th class="align-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="statusConfigTableBody">
-                  <tr><td colspan="3">Loading...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section id="disciplinaryConfigSection" class="panel hidden site-settings-admin-card">
-            <div class="admin-employees-table-header site-settings-section-head">
-              <div>
-                <h2>Disciplinary Types</h2>
-                <p class="finance-inline-caption">Manage the disciplinary types used in employee records and suspension logic.</p>
-              </div>
-            </div>
-
-            <form id="disciplinaryTypeForm" class="site-settings-compact-form">
-              <div class="site-settings-compact-grid">
-                <div>
-                  <label for="disciplinaryTypeKey">Key</label>
-                  <input id="disciplinaryTypeKey" name="key" type="text" placeholder="WARNING" required />
-                </div>
-                <div>
-                  <label for="disciplinaryTypeLabel">Label</label>
-                  <input id="disciplinaryTypeLabel" name="label" type="text" placeholder="Warning" required />
-                </div>
-                <div>
-                  <label for="disciplinaryTypeSeverity">Severity</label>
-                  <input id="disciplinaryTypeSeverity" name="severity" type="number" min="1" step="1" value="1" />
-                </div>
-                <div>
-                  <label for="disciplinaryTypeDefaultStatus">Default Status</label>
-                  <select id="disciplinaryTypeDefaultStatus" name="defaultStatus">
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="OPEN">OPEN</option>
-                    <option value="CLOSED">CLOSED</option>
-                    <option value="REVOKED">REVOKED</option>
-                    <option value="EXPIRED">EXPIRED</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="disciplinaryTypeDuration">Default Duration Days</label>
-                  <input id="disciplinaryTypeDuration" name="defaultDurationDays" type="number" min="1" step="1" placeholder="Optional" />
-                </div>
-                <div>
-                  <label for="disciplinaryTypeSetStatus">Employee Status Override</label>
-                  <input id="disciplinaryTypeSetStatus" name="setEmployeeStatus" type="text" placeholder="Optional, e.g. Suspended" />
-                </div>
-              </div>
-              <div class="site-settings-toggle-grid site-settings-toggle-grid-tight">
-                <label><input id="disciplinaryTypeActive" name="isActive" type="checkbox" checked /> <span>Active</span></label>
-                <label><input id="disciplinaryTypeRequiresEnd" name="requiresEndDate" type="checkbox" /> <span>Requires End Date</span></label>
-                <label><input id="disciplinaryTypeSuspension" name="applySuspensionRank" type="checkbox" /> <span>Apply Suspension Rank</span></label>
-                <label><input id="disciplinaryTypeRestrictIntranet" name="restrictIntranet" type="checkbox" /> <span>Restrict Intranet</span></label>
-                <label><input id="disciplinaryTypeRestrictVoyages" name="restrictVoyages" type="checkbox" /> <span>Restrict Voyages</span></label>
-                <label><input id="disciplinaryTypeRestrictFinance" name="restrictFinance" type="checkbox" /> <span>Restrict Finance</span></label>
-              </div>
-              <div class="finance-cashflow-entry-actions site-settings-compact-actions">
-                <button id="disciplinaryTypeSaveBtn" class="btn btn-primary" type="submit">Add Type</button>
-              </div>
-            </form>
-
-            <div id="disciplinaryTypesFeedback" class="feedback" role="status" aria-live="polite"></div>
-
-            <div class="table-wrap site-settings-table-wrap site-settings-admin-table-wrap">
-              <table class="data-table employee-scan-table site-settings-data-table site-settings-disciplinary-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Rules</th>
-                    <th>Restrictions</th>
-                    <th class="align-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="disciplinaryTypesTableBody">
-                  <tr><td colspan="4">Loading...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
       </div>
     </main>
-    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260327031231"></script>
+
+    <div id="statusConfigModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card site-settings-config-modal-card">
+        <div class="modal-header">
+          <div>
+            <h3 id="statusConfigModalTitle">Add Status</h3>
+            <p class="finance-inline-caption">Define the access behavior for this employee status.</p>
+          </div>
+          <button class="btn btn-secondary btn-compact" type="button" data-close-modal="statusConfigModal">Close</button>
+        </div>
+        <form id="statusConfigForm" class="site-settings-compact-form site-settings-modal-form site-settings-status-form">
+          <div class="site-settings-compact-main">
+            <div>
+              <label for="statusConfigValue">Status Value</label>
+              <input id="statusConfigValue" name="value" type="text" placeholder="Active" required />
+            </div>
+            <div>
+              <label for="statusConfigAccessMode">Access Mode</label>
+              <select id="statusConfigAccessMode" name="accessMode">
+                <option value="normal">Normal Access</option>
+                <option value="my_details_only">My Details Only</option>
+                <option value="removed_page">Redirect To Removed Page</option>
+                <option value="blocked">Block Login</option>
+              </select>
+            </div>
+          </div>
+          <div class="site-settings-toggle-grid site-settings-toggle-grid-compact site-settings-toggle-grid-tight">
+            <label><input id="statusConfigShowNotice" name="showNotice" type="checkbox" /> <span>Show Notice</span></label>
+            <label><input id="statusConfigExcludeFromStats" name="excludeFromStats" type="checkbox" /> <span>No Longer Employee / Exclude From Stats</span></label>
+            <label><input id="statusConfigRemoveFromGroup" name="removeFromGroup" type="checkbox" /> <span>Remove From Roblox Group</span></label>
+          </div>
+          <div class="finance-cashflow-entry-actions site-settings-compact-actions">
+            <button id="statusConfigCancelBtn" class="btn btn-secondary" type="button" data-close-modal="statusConfigModal">Cancel</button>
+            <button id="statusConfigSaveBtn" class="btn btn-primary" type="submit">Add Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="disciplinaryTypeModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card site-settings-config-modal-card site-settings-config-modal-card-wide">
+        <div class="modal-header">
+          <div>
+            <h3 id="disciplinaryTypeModalTitle">Add Disciplinary Type</h3>
+            <p class="finance-inline-caption">Create or update disciplinary presets without keeping the full form on the page.</p>
+          </div>
+          <button class="btn btn-secondary btn-compact" type="button" data-close-modal="disciplinaryTypeModal">Close</button>
+        </div>
+        <form id="disciplinaryTypeForm" class="site-settings-compact-form site-settings-modal-form">
+          <div class="site-settings-compact-grid">
+            <div>
+              <label for="disciplinaryTypeKey">Key</label>
+              <input id="disciplinaryTypeKey" name="key" type="text" placeholder="WARNING" required />
+            </div>
+            <div>
+              <label for="disciplinaryTypeLabel">Label</label>
+              <input id="disciplinaryTypeLabel" name="label" type="text" placeholder="Warning" required />
+            </div>
+            <div>
+              <label for="disciplinaryTypeSeverity">Severity</label>
+              <input id="disciplinaryTypeSeverity" name="severity" type="number" min="1" step="1" value="1" />
+            </div>
+            <div>
+              <label for="disciplinaryTypeDefaultStatus">Default Status</label>
+              <select id="disciplinaryTypeDefaultStatus" name="defaultStatus">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="OPEN">OPEN</option>
+                <option value="CLOSED">CLOSED</option>
+                <option value="REVOKED">REVOKED</option>
+                <option value="EXPIRED">EXPIRED</option>
+              </select>
+            </div>
+            <div>
+              <label for="disciplinaryTypeDuration">Default Duration Days</label>
+              <input id="disciplinaryTypeDuration" name="defaultDurationDays" type="number" min="1" step="1" placeholder="Optional" />
+            </div>
+            <div>
+              <label for="disciplinaryTypeSetStatus">Employee Status Override</label>
+              <input id="disciplinaryTypeSetStatus" name="setEmployeeStatus" type="text" placeholder="Optional, e.g. Suspended" />
+            </div>
+          </div>
+          <div class="site-settings-toggle-grid site-settings-toggle-grid-tight">
+            <label><input id="disciplinaryTypeActive" name="isActive" type="checkbox" checked /> <span>Active</span></label>
+            <label><input id="disciplinaryTypeRequiresEnd" name="requiresEndDate" type="checkbox" /> <span>Requires End Date</span></label>
+            <label><input id="disciplinaryTypeSuspension" name="applySuspensionRank" type="checkbox" /> <span>Apply Suspension Rank</span></label>
+            <label><input id="disciplinaryTypeRestrictIntranet" name="restrictIntranet" type="checkbox" /> <span>Restrict Intranet</span></label>
+            <label><input id="disciplinaryTypeRestrictVoyages" name="restrictVoyages" type="checkbox" /> <span>Restrict Voyages</span></label>
+            <label><input id="disciplinaryTypeRestrictFinance" name="restrictFinance" type="checkbox" /> <span>Restrict Finance</span></label>
+          </div>
+          <div class="finance-cashflow-entry-actions site-settings-compact-actions">
+            <button id="disciplinaryTypeCancelBtn" class="btn btn-secondary" type="button" data-close-modal="disciplinaryTypeModal">Cancel</button>
+            <button id="disciplinaryTypeSaveBtn" class="btn btn-primary" type="submit">Add Type</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260327032844"></script>
   </body>
 </html>
-
-
-
 
