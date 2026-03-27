@@ -340,28 +340,28 @@ function toDateTimeLocalValue(value) {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 6e4);
   return local.toISOString().slice(0, 16);
 }
+function statusClass(status) {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "active" || normalized === "on leave") return "is-active";
+  if (normalized === "suspended") return "is-suspended";
+  if (normalized === "removed" || normalized === "left" || normalized === "terminated") return "is-inactive";
+  return "";
+}
+function disciplinaryStatusClass(status) {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (normalized === "active" || normalized === "open") return "is-suspended";
+  if (normalized === "closed" || normalized === "revoked" || normalized === "expired") return "is-inactive";
+  return "";
+}
 function summarizeDisciplinaryType(typeRow) {
   if (!typeRow) return "";
   const parts = [];
   const defaultDuration = Number(typeRow.default_duration_days || 0);
-  if (Number.isFinite(defaultDuration) && defaultDuration > 0) parts.push(`Defaults to ${defaultDuration} day${defaultDuration === 1 ? "" : "s"}`);
+  if (Number.isFinite(defaultDuration) && defaultDuration > 0) parts.push("Defaults to " + defaultDuration + " day" + (defaultDuration === 1 ? "" : "s"));
   if (Number(typeRow.requires_end_date || 0)) parts.push("End date required");
   const nextStatus = String(typeRow.set_employee_status || "").trim();
-  function statusClass2(status) {
-    const normalized = String(status || "").trim().toLowerCase();
-    if (!normalized) return "";
-    if (normalized === "active" || normalized === "on leave") return "is-active";
-    if (normalized === "suspended") return "is-suspended";
-    if (normalized === "removed" || normalized === "left" || normalized === "terminated") return "is-inactive";
-    return "";
-  }
-  function disciplinaryStatusClass2(status) {
-    const normalized = String(status || "").trim().toLowerCase();
-    if (normalized === "active" || normalized === "open") return "is-suspended";
-    if (normalized === "closed" || normalized === "revoked" || normalized === "expired") return "is-inactive";
-    return "";
-  }
-  if (nextStatus) parts.push(`Sets status to ${nextStatus}`);
+  if (nextStatus) parts.push("Sets status to " + nextStatus);
   if (Number(typeRow.apply_suspension_rank || 0)) parts.push("Applies suspension rank");
   return parts.join(" - ");
 }
