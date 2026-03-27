@@ -1,4 +1,4 @@
-﻿import { cachedJson, json } from '../../auth/_lib/auth.js';
+import { cachedJson, json } from '../../auth/_lib/auth.js';
 import { getCashflowPeriodSnapshot, getCurrentCashBalance, normalizeCashflowCategory, normalizeCashflowReason, normalizeCashflowType, toOptionalInteger, toPositiveInteger } from '../../_lib/cashflow.js';
 import { getFinanceRangeWindow, normalizeTzOffsetMinutes, requireFinancePermission, toMoney, toUtcBoundaryFromLocalDateInput } from '../../_lib/finances.js';
 import { BOOKKEEPER_PERMISSION, hasPermission } from '../../_lib/permissions.js';
@@ -80,6 +80,26 @@ export async function onRequestGet(context) {
   const { errorResponse, session } = await requireFinancePermission(context, 'finances.view');
   if (errorResponse) return errorResponse;
 
+  await env.DB
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS finance_reimbursement_settlements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        voyage_id INTEGER NOT NULL,
+        owner_employee_id INTEGER NOT NULL,
+        amount REAL NOT NULL DEFAULT 0,
+        settled_by_employee_id INTEGER,
+        settled_by_discord_user_id TEXT,
+        details_json TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(voyage_id, owner_employee_id),
+        FOREIGN KEY(voyage_id) REFERENCES voyages(id),
+        FOREIGN KEY(owner_employee_id) REFERENCES employees(id),
+        FOREIGN KEY(settled_by_employee_id) REFERENCES employees(id)
+      )` 
+    )
+    .run();
+
   const url = new URL(request.url);
   const tzOffsetMinutes = normalizeTzOffsetMinutes(url.searchParams.get('tzOffsetMinutes'));
   const rangeWindow = getFinanceRangeWindow(url.searchParams.get('range'), new Date(), tzOffsetMinutes);
@@ -137,7 +157,7 @@ export async function onRequestGet(context) {
   const kpiFromIso = null;
   const kpiToIso = null;
 
-  const [balanceSnapshot, periodSnapshotBase, legacyPeriodSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult] = await Promise.all([
+  const [balanceSnapshot, periodSnapshotBase, legacyPeriodSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult, reimbursementSettledByResult] = await Promise.all([
     getCurrentCashBalance(env),
     getCashflowPeriodSnapshot(env, kpiFromIso, kpiToIso),
     getLegacySolvedCashflowTotals(env, kpiFromIso, kpiToIso, tzOffsetMinutes),
@@ -229,6 +249,22 @@ export async function onRequestGet(context) {
          ORDER BY LOWER(COALESCE(e.roblox_username, '')) ASC, e.id ASC`
       )
       .all()
+    ,
+    env.DB
+      .prepare(
+        `SELECT
+           owner_employee_id,
+           SUM(amount) AS total_settled
+         FROM finance_reimbursement_settlements
+         WHERE voyage_id IN (
+           SELECT id
+           FROM voyages
+           WHERE deleted_at IS NULL
+         )
+           AND owner_employee_id IS NOT NULL
+         GROUP BY owner_employee_id` 
+      )
+      .all()
   ]);
   const periodSnapshot = {
     cashIn: toMoney(Number(periodSnapshotBase.cashIn || 0) + Number(legacyPeriodSnapshot.cashIn || 0)),
@@ -267,12 +303,20 @@ export async function onRequestGet(context) {
     id: Number(row.id || 0),
     label: buildVoyageLabel(row)
   }));
+  const reimbursementSettledBy = new Map(
+    (reimbursementSettledByResult?.results || [])
+      .map((row) => [Number(row.owner_employee_id || 0), Math.max(0, toMoney(row.total_settled || 0))])
+      .filter(([employeeId]) => Number.isInteger(employeeId) && employeeId > 0)
+  );
   const collectorRemittances = (collectorRemittancesResult?.results || [])
     .map((row) => ({
       collectorEmployeeId: Number(row.collector_employee_id || 0),
       collectorName: String(row.collector_name || '').trim() || `Employee #${Number(row.collector_employee_id || 0)}`,
       voyageCount: Number(row.voyage_count || 0),
-      totalAmount: Math.max(0, toMoney(Number(row.total_amount || 0))),
+      totalAmount: Math.max(
+        0,
+        toMoney(Number(row.total_amount || 0) - Number(reimbursementSettledBy.get(Number(row.collector_employee_id || 0)) || 0))
+      ),
       firstCollectedAt: row.first_collected_at || null
     }))
     .filter((row) => row.collectorEmployeeId > 0 && row.totalAmount > 0);
@@ -428,6 +472,8 @@ export async function onRequestPost(context) {
     }
   });
 }
+
+
 
 
 
