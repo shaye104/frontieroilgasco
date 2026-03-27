@@ -516,7 +516,40 @@ export async function onRequest(context) {
         }
         return apiResponse;
       }
-      const adminConfigMatch = pathname.match(/^\/api\/admin\/config\/([^\/]+)$/);
+      if ((pathname === '/api/admin/config-bootstrap' || pathname === '/api/admin/config-bootstrap/') && requestMethod === 'GET') {
+        const routeModule = await import('./api/admin/config-bootstrap.js');
+        const apiResponse = await routeModule.onRequestGet(context);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_admin_config_bootstrap_alias' }
+            })
+          );
+        }
+        return apiResponse;
+      }
+      if ((pathname === '/api/admin/config/bootstrap' || pathname === '/api/admin/config/bootstrap/') && requestMethod === 'GET') {
+        const routeModule = await import('./api/admin/config/bootstrap.js');
+        const apiResponse = await routeModule.onRequestGet(context);
+        if (isLoggedIn) {
+          context.waitUntil(
+            logWebsiteAction(context.env, {
+              session,
+              pathname,
+              method: requestMethod,
+              responseStatus: apiResponse.status,
+              isApiPath,
+              metadata: { routedBy: 'middleware_admin_config_bootstrap' }
+            })
+          );
+        }
+        return apiResponse;
+      }      const adminConfigMatch = pathname.match(/^\/api\/admin\/config\/([^\/]+)$/);
       if (adminConfigMatch && (requestMethod === 'GET' || requestMethod === 'POST' || requestMethod === 'PUT' || requestMethod === 'DELETE')) {
         const type = String(adminConfigMatch[1] || '').trim();
         const routeContext = {

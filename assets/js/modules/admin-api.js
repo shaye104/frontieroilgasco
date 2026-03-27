@@ -298,10 +298,10 @@ export function getConfig(type) {
 }
 
 export function getEmployeeConfigBootstrap() {
-  return requestJson('/api/admin/config/bootstrap', {
+  return requestJson('/api/admin/config-bootstrap', {
     method: 'GET',
     cacheTtlMs: 30000,
-    cacheKey: 'GET:/api/admin/config/bootstrap'
+    cacheKey: 'GET:/api/admin/config-bootstrap'
   });
 }
 

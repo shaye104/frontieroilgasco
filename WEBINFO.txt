@@ -1,5 +1,5 @@
 WEBINFO - Frontier Oil & Gas Company
-Generated: 2026-03-27T01:14:58.563Z
+Generated: 2026-03-27T01:19:18.471Z
 
 PROJECT PURPOSE
 - Public-facing landing website for Frontier Oil & Gas Company.
