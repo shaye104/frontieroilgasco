@@ -205,15 +205,6 @@ function loadVisibleColumns() {
     return new Set(DEFAULT_VISIBLE_COLUMNS);
   }
 }
-
-function saveVisibleColumns(columns) {
-  try {
-    window.localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify([...columns]));
-  } catch {
-    // best effort only
-  }
-}
-
 function fillOptions(select, items = [], placeholder = 'Select') {
   if (!select) return;
   const current = String(select.value || '').trim();
@@ -237,6 +228,27 @@ function fillOptions(select, items = [], placeholder = 'Select') {
   else if (caseInsensitiveMatch) select.value = caseInsensitiveMatch.value;
   else select.value = '';
 }
+
+function renderSelectOptions(items = [], selectedValue = '') {
+  const current = String(selectedValue ?? '').trim();
+  const normalizedItems = (Array.isArray(items) ? items : [])
+    .map((item) => {
+      if (typeof item === 'string') return { value: item, label: item };
+      const value = String(item?.value ?? item?.label ?? item?.name ?? '').trim();
+      const label = String(item?.label ?? item?.value ?? item?.name ?? '').trim();
+      return value ? { value, label: label || value } : null;
+    })
+    .filter(Boolean);
+
+  return [
+    '<option value=""></option>',
+    ...normalizedItems.map((item) => {
+      const selected = item.value === current ? ' selected' : '';
+      return `<option value="${escapeHtml(item.value)}"${selected}>${escapeHtml(item.label)}</option>`;
+    })
+  ].join('');
+}
+
 
 function employeeRowSkeleton() {
   return `<tr>
