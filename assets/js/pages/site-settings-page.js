@@ -11,6 +11,86 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function bindHoldToConfirm(button, onConfirm, holdMs = 1000) {
+  if (!(button instanceof HTMLButtonElement) || typeof onConfirm !== 'function') return () => {};
+
+  const duration = Math.max(300, Number(holdMs) || 1000);
+  let holdFrame = null;
+  let holdActive = false;
+  let inFlight = false;
+  let holdStartTs = 0;
+
+  const setProgress = (value) => {
+    button.style.setProperty('--hold-progress', `${Math.max(0, Math.min(100, Number(value) || 0))}%`);
+  };
+
+  const resetHold = () => {
+    holdActive = false;
+    holdStartTs = 0;
+    if (holdFrame) {
+      window.cancelAnimationFrame(holdFrame);
+      holdFrame = null;
+    }
+    button.classList.remove('is-holding', 'is-armed');
+    setProgress(0);
+  };
+
+  const tickHold = async (ts) => {
+    if (!holdActive || button.disabled || inFlight) return;
+    if (!holdStartTs) holdStartTs = ts;
+    const elapsed = ts - holdStartTs;
+    const ratio = Math.max(0, Math.min(1, elapsed / duration));
+    setProgress(ratio * 100);
+
+    if (ratio >= 1) {
+      holdActive = false;
+      button.classList.remove('is-holding');
+      button.classList.add('is-armed');
+      inFlight = true;
+      try {
+        await onConfirm();
+      } finally {
+        inFlight = false;
+        window.setTimeout(() => resetHold(), 120);
+      }
+      return;
+    }
+
+    holdFrame = window.requestAnimationFrame(tickHold);
+  };
+
+  const startHold = (event) => {
+    if (event.type === 'pointerdown' && 'button' in event && event.button !== 0) return;
+    if (button.disabled || inFlight) return;
+    event.preventDefault();
+    resetHold();
+    holdActive = true;
+    holdStartTs = 0;
+    button.classList.add('is-holding');
+    setProgress(0);
+    holdFrame = window.requestAnimationFrame(tickHold);
+  };
+
+  const cancelHold = () => {
+    if (!holdActive) return;
+    resetHold();
+  };
+
+  button.addEventListener('pointerdown', startHold);
+  button.addEventListener('pointerup', cancelHold);
+  button.addEventListener('pointerleave', cancelHold);
+  button.addEventListener('pointercancel', cancelHold);
+  button.addEventListener('dragstart', (event) => event.preventDefault());
+
+  return () => {
+    resetHold();
+    button.removeEventListener('pointerdown', startHold);
+    button.removeEventListener('pointerup', cancelHold);
+    button.removeEventListener('pointerleave', cancelHold);
+    button.removeEventListener('pointercancel', cancelHold);
+  };
+}
+
 function normalizeGroupRow(row = {}) {
   return {
     id: String(row?.id ?? '').trim().replace(/\D+/g, ''),
@@ -87,7 +167,7 @@ function ruleSummary(row) {
     String(row?.set_employee_status || '').trim() ? `Status: ${String(row.set_employee_status).trim()}` : '',
     Number(row?.apply_suspension_rank || 0) ? 'Applies suspension rank' : ''
   ].filter(Boolean);
-  return items.join(' â€¢ ');
+  return items.join(' • ');
 }
 
 function restrictionSummary(row) {
@@ -123,6 +203,19 @@ function renderDisciplinaryTypes(target, rows = []) {
     .join('');
 }
 
+function summarizeStatusBehavior(row) {
+  const accessMode = String(row?.access_mode || 'normal');
+  const items = [
+    accessMode === 'my_details_only' ? 'My Details only' : '',
+    accessMode === 'removed_page' ? 'Redirects to removed page' : '',
+    accessMode === 'blocked' ? 'Blocks login' : '',
+    Number(row?.show_notice || 0) ? 'Shows notice' : '',
+    Number(row?.exclude_from_stats || 0) ? 'Excluded from stats' : '',
+    Number(row?.remove_from_group || 0) ? 'Removes from Roblox group' : ''
+  ].filter(Boolean);
+  return items.join(' • ') || 'Normal access';
+}
+
 function renderStatuses(target, rows = []) {
   if (!target) return;
   if (!rows.length) {
@@ -133,16 +226,7 @@ function renderStatuses(target, rows = []) {
     .map(
       (row) => `<tr>
         <td><strong>${escapeHtml(String(row?.value || '').trim() || 'Unnamed')}</strong></td>
-        <td>${escapeHtml(
-          [
-            String(row?.access_mode || 'normal') === 'my_details_only' ? 'My Details only' : '',
-            String(row?.access_mode || 'normal') === 'removed_page' ? 'Redirects to removed page' : '',
-            String(row?.access_mode || 'normal') === 'blocked' ? 'Blocks login' : '',
-            Number(row?.show_notice || 0) ? 'Shows notice' : '',
-            Number(row?.exclude_from_stats || 0) ? 'Excluded from stats' : '',
-            Number(row?.remove_from_group || 0) ? 'Removes from Roblox group' : ''
-          ].filter(Boolean).join(' | ') || 'Normal access'
-        )}</td>
+        <td>${escapeHtml(summarizeStatusBehavior(row))}</td>
         <td class="align-right">
           <button class="btn btn-secondary btn-compact" type="button" data-edit-status="${Number(row?.id || 0)}">Edit</button>
           <button class="btn btn-danger btn-compact" type="button" data-delete-status="${Number(row?.id || 0)}">Delete</button>
@@ -151,6 +235,7 @@ function renderStatuses(target, rows = []) {
     )
     .join('');
 }
+
 function readCheckbox(selector) {
   return Boolean(document.querySelector(selector)?.checked);
 }
@@ -251,10 +336,33 @@ function resetStatusForm() {
   setStatusEditingState(null);
 }
 
+function updateMaintenanceUi(settings = {}) {
+  const enabled = Boolean(settings?.maintenanceMode);
+  const toggle = document.querySelector('#toggleMaintenanceModeBtn');
+  const badge = document.querySelector('#maintenanceModeStateBadge');
+  const hint = document.querySelector('#maintenanceModeHint');
+  const checkbox = document.querySelector('#settingsMaintenanceMode');
+  if (checkbox) checkbox.checked = enabled;
+  if (toggle) {
+    toggle.textContent = enabled ? 'Hold To Disable Maintenance' : 'Hold To Enable Maintenance';
+    toggle.setAttribute('aria-label', toggle.textContent);
+    toggle.title = enabled ? 'Press and hold for 1.2 seconds to disable maintenance mode' : 'Press and hold for 1.2 seconds to enable maintenance mode';
+  }
+  if (badge) {
+    badge.textContent = enabled ? 'Active' : 'Inactive';
+    badge.classList.toggle('is-live', enabled);
+  }
+  if (hint) {
+    hint.textContent = enabled
+      ? 'Public visitors are currently redirected to the maintenance page until you hold to disable it.'
+      : 'Public visitors stay on the normal website until this is enabled.';
+  }
+}
+
 function applyForm(settings) {
   const body = document.querySelector('#settingsRequiredRobloxGroupsBody');
   syncHiddenInput(body, normalizeGroupRows(settings.requiredRobloxGroups));
-  setCheckbox('#settingsMaintenanceMode', Boolean(settings?.maintenanceMode));
+  updateMaintenanceUi(settings);
 }
 
 function collectSiteSettingsForm() {
@@ -336,6 +444,10 @@ initIntranetPageGuard({
 
   groupsBody?.addEventListener('input', () => {
     setHiddenInputValue(readRowsFromDom(groupsBody));
+  });
+
+  document.querySelector('#settingsMaintenanceMode')?.addEventListener('change', () => {
+    updateMaintenanceUi({ maintenanceMode: readCheckbox('#settingsMaintenanceMode') });
   });
 
   resetBtn?.addEventListener('click', () => {
@@ -448,21 +560,29 @@ initIntranetPageGuard({
     }
   });
 
-  toggleMaintenanceModeBtn?.addEventListener('click', async () => {
-    const nextValue = !readCheckbox('#settingsMaintenanceMode');
-    setCheckbox('#settingsMaintenanceMode', nextValue);
-    showMessage(feedback, nextValue ? 'Enabling maintenance mode...' : 'Disabling maintenance mode...', 'info');
-    try {
-      const response = await saveSiteSettings({ maintenanceMode: nextValue });
-      state.siteSettings = response?.settings || state.siteSettings;
-      applyForm(state.siteSettings);
-      showMessage(feedback, nextValue ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.', 'success');
-      if (nextValue) window.location.href = '/maintenance';
-    } catch (error) {
-      setCheckbox('#settingsMaintenanceMode', !nextValue);
-      showMessage(feedback, error.message || 'Unable to update maintenance mode.', 'error');
-    }
-  });
+  if (toggleMaintenanceModeBtn instanceof HTMLButtonElement) {
+    bindHoldToConfirm(
+      toggleMaintenanceModeBtn,
+      async () => {
+        const nextValue = !Boolean(state.siteSettings?.maintenanceMode);
+        toggleMaintenanceModeBtn.disabled = true;
+        showMessage(feedback, nextValue ? 'Enabling maintenance mode...' : 'Disabling maintenance mode...', 'info');
+        try {
+          const response = await saveSiteSettings({ maintenanceMode: nextValue });
+          state.siteSettings = response?.settings || { ...state.siteSettings, maintenanceMode: nextValue };
+          applyForm(state.siteSettings);
+          showMessage(feedback, nextValue ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.', 'success');
+          if (nextValue) window.location.href = '/maintenance';
+        } catch (error) {
+          applyForm(state.siteSettings || {});
+          showMessage(feedback, error.message || 'Unable to update maintenance mode.', 'error');
+        } finally {
+          toggleMaintenanceModeBtn.disabled = false;
+        }
+      },
+      Number(toggleMaintenanceModeBtn.dataset.holdConfirmMs || 1200)
+    );
+  }
 
   statusTableBody?.addEventListener('click', (event) => {
     const target = event.target;
@@ -501,5 +621,3 @@ initIntranetPageGuard({
     })();
   });
 });
-
-

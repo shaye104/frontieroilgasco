@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327011047" />
+    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327025451" />
   </head>
   <body class="page page-intranet page-site-settings">
     <header class="site-header">
@@ -26,20 +26,23 @@
 
     <main class="section">
       <div class="container intranet-layout">
-        <section class="panel">
-          <div class="button-row align-between">
-            <div>
+        <section class="panel site-settings-hero-panel">
+          <div class="site-settings-hero-row">
+            <div class="site-settings-hero-copy">
+              <p class="eyebrow">Admin Controls</p>
               <h1>Site Settings</h1>
-              <p class="my-details-subtitle">Configure employee status behavior, Roblox group requirements, and website maintenance controls.</p>
+              <p class="my-details-subtitle">Configure employee status behavior, Roblox group requirements, disciplinary rules, and live-site controls from one place.</p>
             </div>
-            <a class="btn btn-secondary" href="/admin">Back to Admin Panel</a>
+            <div class="site-settings-hero-actions">
+              <a class="btn btn-secondary" href="/admin">Back to Admin Panel</a>
+            </div>
           </div>
           <div id="siteSettingsFeedback" class="feedback" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="siteSettingsContent" class="panel hidden">
-          <form id="siteSettingsForm" class="finance-cashflow-entry-form">
-            <div class="finance-cashflow-entry-wide">
+        <section id="siteSettingsContent" class="hidden site-settings-top-grid">
+          <section class="panel site-settings-primary-card">
+            <form id="siteSettingsForm" class="site-settings-primary-form">
               <div class="admin-employees-table-header site-settings-section-head">
                 <div>
                   <label>Required Roblox Groups</label>
@@ -47,8 +50,9 @@
                 </div>
                 <button id="addRequiredRobloxGroupBtn" class="btn btn-secondary" type="button">Add Group</button>
               </div>
-              <div class="table-wrap">
-                <table class="data-table employee-scan-table">
+
+              <div class="table-wrap site-settings-table-wrap">
+                <table class="data-table employee-scan-table site-settings-data-table">
                   <thead>
                     <tr>
                       <th>Group ID</th>
@@ -63,23 +67,49 @@
                 </table>
               </div>
               <input id="settingsRequiredRobloxGroupsJson" name="requiredRobloxGroups" type="hidden" />
-              <p class="finance-inline-caption">Run Scan will flag employees who are not in the Discord guild from <code>DISCORD_GUILD_ID</code> or are missing every configured Roblox group ID.</p>
-            </div>
-            <div class="finance-cashflow-entry-wide">
-              <div class="admin-employees-table-header site-settings-section-head">
-                <div>
-                  <label>Maintenance Mode</label>
-                  <p class="finance-inline-caption">Temporarily redirect the public site to the maintenance page while allowing admins to get back in.</p>
-                </div>
-                <button id="toggleMaintenanceModeBtn" class="btn btn-secondary" type="button">Toggle Maintenance</button>
+              <p class="finance-inline-caption site-settings-form-note">Run Scan will flag employees who are not in the Discord guild from <code>DISCORD_GUILD_ID</code> or are missing every configured Roblox group ID.</p>
+
+              <div class="finance-cashflow-entry-actions site-settings-primary-actions">
+                <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
+                <button id="siteSettingsResetBtn" class="btn btn-secondary" type="button">Reset Form</button>
               </div>
-              <label class="site-settings-toggle-inline"><input id="settingsMaintenanceMode" name="maintenanceMode" type="checkbox" /> Enable maintenance mode</label>
+            </form>
+          </section>
+
+          <aside class="panel site-settings-maintenance-panel">
+            <div class="site-settings-maintenance-shell">
+              <div class="site-settings-maintenance-head">
+                <div>
+                  <p class="eyebrow">Live Site Control</p>
+                  <h2>Maintenance Mode</h2>
+                  <p class="finance-inline-caption">Temporarily redirect public traffic to the maintenance page while still allowing admins back in.</p>
+                </div>
+                <span id="maintenanceModeStateBadge" class="site-settings-state-pill">Inactive</span>
+              </div>
+
+              <div class="site-settings-maintenance-box">
+                <div class="site-settings-maintenance-box-head">
+                  <strong>Maintenance safety lock</strong>
+                  <span class="site-settings-maintenance-inline-note">Hold to apply</span>
+                </div>
+                <label class="site-settings-maintenance-toggle" for="settingsMaintenanceMode">
+                  <input id="settingsMaintenanceMode" name="maintenanceMode" type="checkbox" />
+                  <span>
+                    <strong>Enable maintenance mode</strong>
+                    <small id="maintenanceModeHint">Public visitors stay on the normal website until this is enabled.</small>
+                  </span>
+                </label>
+                <button
+                  id="toggleMaintenanceModeBtn"
+                  class="btn btn-warning btn-hold-confirm btn-hold-warning site-settings-maintenance-button"
+                  type="button"
+                  data-hold-confirm-ms="1200"
+                >
+                  Hold To Enable Maintenance
+                </button>
+              </div>
             </div>
-            <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
-              <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
-              <button id="siteSettingsResetBtn" class="btn btn-secondary" type="button">Reset Form</button>
-            </div>
-          </form>
+          </aside>
         </section>
 
         <div class="site-settings-admin-grid">
@@ -87,11 +117,11 @@
             <div class="admin-employees-table-header site-settings-section-head">
               <div>
                 <h2>Employee Statuses</h2>
-                <p class="finance-inline-caption">Define status values and store how they should behave operationally.</p>
+                <p class="finance-inline-caption">Define status values and how each one affects login, intranet access, and employment visibility.</p>
               </div>
             </div>
 
-            <form id="statusConfigForm" class="site-settings-compact-form">
+            <form id="statusConfigForm" class="site-settings-compact-form site-settings-status-form">
               <div class="site-settings-compact-main">
                 <div>
                   <label for="statusConfigValue">Status Value</label>
@@ -107,10 +137,10 @@
                   </select>
                 </div>
               </div>
-              <div class="site-settings-toggle-grid site-settings-toggle-grid-compact">
-                <label><input id="statusConfigShowNotice" name="showNotice" type="checkbox" /> Show Notice</label>
-                <label><input id="statusConfigExcludeFromStats" name="excludeFromStats" type="checkbox" /> No Longer Employee / Exclude From Stats</label>
-                <label><input id="statusConfigRemoveFromGroup" name="removeFromGroup" type="checkbox" /> Remove From Roblox Group</label>
+              <div class="site-settings-toggle-grid site-settings-toggle-grid-compact site-settings-toggle-grid-tight">
+                <label><input id="statusConfigShowNotice" name="showNotice" type="checkbox" /> <span>Show Notice</span></label>
+                <label><input id="statusConfigExcludeFromStats" name="excludeFromStats" type="checkbox" /> <span>No Longer Employee / Exclude From Stats</span></label>
+                <label><input id="statusConfigRemoveFromGroup" name="removeFromGroup" type="checkbox" /> <span>Remove From Roblox Group</span></label>
               </div>
               <div class="finance-cashflow-entry-actions site-settings-compact-actions">
                 <button id="statusConfigSaveBtn" class="btn btn-primary" type="submit">Add Status</button>
@@ -119,8 +149,8 @@
 
             <div id="statusConfigFeedback" class="feedback" role="status" aria-live="polite"></div>
 
-            <div class="table-wrap">
-              <table class="data-table employee-scan-table">
+            <div class="table-wrap site-settings-table-wrap site-settings-admin-table-wrap">
+              <table class="data-table employee-scan-table site-settings-data-table site-settings-status-table">
                 <thead>
                   <tr>
                     <th>Status</th>
@@ -176,13 +206,13 @@
                   <input id="disciplinaryTypeSetStatus" name="setEmployeeStatus" type="text" placeholder="Optional, e.g. Suspended" />
                 </div>
               </div>
-              <div class="site-settings-toggle-grid">
-                <label><input id="disciplinaryTypeActive" name="isActive" type="checkbox" checked /> Active</label>
-                <label><input id="disciplinaryTypeRequiresEnd" name="requiresEndDate" type="checkbox" /> Requires End Date</label>
-                <label><input id="disciplinaryTypeSuspension" name="applySuspensionRank" type="checkbox" /> Apply Suspension Rank</label>
-                <label><input id="disciplinaryTypeRestrictIntranet" name="restrictIntranet" type="checkbox" /> Restrict Intranet</label>
-                <label><input id="disciplinaryTypeRestrictVoyages" name="restrictVoyages" type="checkbox" /> Restrict Voyages</label>
-                <label><input id="disciplinaryTypeRestrictFinance" name="restrictFinance" type="checkbox" /> Restrict Finance</label>
+              <div class="site-settings-toggle-grid site-settings-toggle-grid-tight">
+                <label><input id="disciplinaryTypeActive" name="isActive" type="checkbox" checked /> <span>Active</span></label>
+                <label><input id="disciplinaryTypeRequiresEnd" name="requiresEndDate" type="checkbox" /> <span>Requires End Date</span></label>
+                <label><input id="disciplinaryTypeSuspension" name="applySuspensionRank" type="checkbox" /> <span>Apply Suspension Rank</span></label>
+                <label><input id="disciplinaryTypeRestrictIntranet" name="restrictIntranet" type="checkbox" /> <span>Restrict Intranet</span></label>
+                <label><input id="disciplinaryTypeRestrictVoyages" name="restrictVoyages" type="checkbox" /> <span>Restrict Voyages</span></label>
+                <label><input id="disciplinaryTypeRestrictFinance" name="restrictFinance" type="checkbox" /> <span>Restrict Finance</span></label>
               </div>
               <div class="finance-cashflow-entry-actions site-settings-compact-actions">
                 <button id="disciplinaryTypeSaveBtn" class="btn btn-primary" type="submit">Add Type</button>
@@ -191,8 +221,8 @@
 
             <div id="disciplinaryTypesFeedback" class="feedback" role="status" aria-live="polite"></div>
 
-            <div class="table-wrap">
-              <table class="data-table employee-scan-table">
+            <div class="table-wrap site-settings-table-wrap site-settings-admin-table-wrap">
+              <table class="data-table employee-scan-table site-settings-data-table site-settings-disciplinary-table">
                 <thead>
                   <tr>
                     <th>Type</th>
@@ -210,7 +240,7 @@
         </div>
       </div>
     </main>
-    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260326003246"></script>
+    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260327025451"></script>
   </body>
 </html>
 
