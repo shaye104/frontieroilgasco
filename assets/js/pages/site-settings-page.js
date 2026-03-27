@@ -175,10 +175,9 @@ function boolLabel(enabled, label) {
 function ruleSummary(row) {
   const items = [
     `Severity ${Number(row?.severity || 1)}`,
-    String(row?.default_status || 'ACTIVE').trim().toUpperCase() || 'ACTIVE',
     Number(row?.requires_end_date || 0) ? 'End date required' : '',
-    Number(row?.default_duration_days || 0) > 0 ? `${Number(row.default_duration_days)} days` : '',
-    String(row?.set_employee_status || '').trim() ? `Status: ${String(row.set_employee_status).trim()}` : '',
+    Number(row?.default_duration_days || 0) > 0 ? `Defaults to ${Number(row.default_duration_days)} day${Number(row.default_duration_days) === 1 ? '' : 's'}` : '',
+    String(row?.set_employee_status || '').trim() ? `Sets status to ${String(row.set_employee_status).trim()}` : '',
     Number(row?.apply_suspension_rank || 0) ? 'Applies suspension rank' : ''
   ].filter(Boolean);
   return items.join(' - ');
@@ -224,19 +223,21 @@ function summarizeStatusBehavior(row) {
   const accessMode = explicitAccessMode || (
     normalizedValue === 'suspended'
       ? 'my_details_only'
-      : normalizedValue === 'removed'
+      : normalizedValue === 'removed' || normalizedValue === 'terminated'
         ? 'removed_page'
         : normalizedValue === 'left'
           ? 'blocked'
           : 'normal'
   );
-  const shouldShowNotice = Number(row?.show_notice || 0) || normalizedValue === 'suspended';
-  const excludeFromStats = Number(row?.exclude_from_stats || 0) || normalizedValue === 'left';
-  const removeFromGroup = Number(row?.remove_from_group || 0) || normalizedValue === 'left';
+  const restrictIntranet = Number(row?.restrict_intranet || 0) === 1 || accessMode === 'my_details_only' || accessMode === 'removed_page' || accessMode === 'blocked';
+  const shouldShowNotice = Number(row?.show_notice || 0) === 1 || normalizedValue === 'suspended';
+  const excludeFromStats = Number(row?.exclude_from_stats || 0) === 1 || normalizedValue === 'left';
+  const removeFromGroup = Number(row?.remove_from_group || 0) === 1 || normalizedValue === 'left' || normalizedValue === 'removed';
   const items = [
     accessMode === 'my_details_only' ? 'My Details only' : '',
     accessMode === 'removed_page' ? 'Redirects to removed page' : '',
     accessMode === 'blocked' ? 'Blocks login' : '',
+    restrictIntranet && accessMode === 'normal' ? 'Restricted intranet' : '',
     shouldShowNotice ? 'Shows notice' : '',
     excludeFromStats ? 'Excluded from stats' : '',
     removeFromGroup ? 'Removes from Roblox group' : ''
@@ -292,7 +293,6 @@ function normalizeTypePayload(payload = {}) {
     label,
     value: label,
     severity: Number.isFinite(severity) && severity > 0 ? Math.floor(severity) : 1,
-    defaultStatus: String(payload?.defaultStatus || 'ACTIVE').trim().toUpperCase() || 'ACTIVE',
     defaultDurationDays: Number.isFinite(defaultDurationDays) && defaultDurationDays > 0 ? Math.floor(defaultDurationDays) : null,
     setEmployeeStatus: String(payload?.setEmployeeStatus || '').trim(),
     isActive: Boolean(payload?.isActive),
@@ -309,7 +309,6 @@ function collectDisciplinaryForm() {
     key: readInput('#disciplinaryTypeKey'),
     label: readInput('#disciplinaryTypeLabel'),
     severity: readInput('#disciplinaryTypeSeverity'),
-    defaultStatus: readInput('#disciplinaryTypeDefaultStatus'),
     defaultDurationDays: readInput('#disciplinaryTypeDuration'),
     setEmployeeStatus: readInput('#disciplinaryTypeSetStatus'),
     isActive: readCheckbox('#disciplinaryTypeActive'),
@@ -325,7 +324,6 @@ function fillDisciplinaryForm(row = null) {
   setInput('#disciplinaryTypeKey', row?.key || '');
   setInput('#disciplinaryTypeLabel', row?.label || row?.value || '');
   setInput('#disciplinaryTypeSeverity', Number(row?.severity || 1));
-  setInput('#disciplinaryTypeDefaultStatus', row?.default_status || 'ACTIVE');
   setInput('#disciplinaryTypeDuration', row?.default_duration_days || '');
   setInput('#disciplinaryTypeSetStatus', row?.set_employee_status || '');
   setCheckbox('#disciplinaryTypeActive', Number(row?.is_active ?? 1));
@@ -688,3 +686,6 @@ initIntranetPageGuard({
     })();
   });
 });
+
+
+

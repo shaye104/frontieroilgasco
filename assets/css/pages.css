@@ -9761,17 +9761,28 @@ body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-t
 }
 
 
-body.page-intranet.is-suspended-view main.section {
-  filter: grayscale(0.28);
+body.page-intranet.is-suspended-view {
+  background: #24303b;
 }
 
-body.page-intranet.is-suspended-view .site-header {
-  filter: grayscale(0.12);
+body.page-intranet.is-suspended-view .site-header,
+body.page-intranet.is-suspended-view main.section,
+body.page-intranet.is-suspended-view .site-footer {
+  filter: grayscale(1) saturate(0.08) contrast(0.96) brightness(1.01);
 }
 
 body.page-intranet.is-suspended-view .suspended-status-banner {
   margin-bottom: 0.9rem;
-  border-left: 4px solid #d18a14;
+  border-left: 4px solid #7d8791;
+  background: #eef1f4;
+  color: #1f2933;
+}
+
+body.page-intranet.is-suspended-view .badge-status,
+body.page-intranet.is-suspended-view .btn,
+body.page-intranet.is-suspended-view .panel,
+body.page-intranet.is-suspended-view .section-surface {
+  filter: grayscale(1) saturate(0);
 }
 
 .page-site-settings .site-settings-hero-panel {
@@ -10320,3 +10331,4 @@ body.page-intranet.is-suspended-view .suspended-status-banner {
     grid-template-columns: 1fr;
   }
 }
+

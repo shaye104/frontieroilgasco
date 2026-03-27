@@ -111,7 +111,7 @@ export async function onRequestPost(context) {
     const label = String(payload?.label || value).trim();
     const severity = Number(payload?.severity);
     const isActive = Number(payload?.is_active ?? payload?.isActive ?? 1) ? 1 : 0;
-    const defaultStatus = String(payload?.default_status || payload?.defaultStatus || 'ACTIVE').trim().toUpperCase() || 'ACTIVE';
+    const defaultStatus = 'ACTIVE';
     const requiresEndDate = Number(payload?.requires_end_date ?? payload?.requiresEndDate ?? 0) ? 1 : 0;
     const defaultDurationDaysRaw = Number(payload?.default_duration_days ?? payload?.defaultDurationDays);
     const defaultDurationDays = Number.isFinite(defaultDurationDaysRaw) && defaultDurationDaysRaw > 0 ? Math.floor(defaultDurationDaysRaw) : null;
@@ -198,7 +198,7 @@ export async function onRequestPut(context) {
     const label = String(payload?.label || value).trim();
     const severity = Number(payload?.severity);
     const isActive = Number(payload?.is_active ?? payload?.isActive ?? 1) ? 1 : 0;
-    const defaultStatus = String(payload?.default_status || payload?.defaultStatus || 'ACTIVE').trim().toUpperCase() || 'ACTIVE';
+    const defaultStatus = 'ACTIVE';
     const requiresEndDate = Number(payload?.requires_end_date ?? payload?.requiresEndDate ?? 0) ? 1 : 0;
     const defaultDurationDaysRaw = Number(payload?.default_duration_days ?? payload?.defaultDurationDays);
     const defaultDurationDays = Number.isFinite(defaultDurationDaysRaw) && defaultDurationDaysRaw > 0 ? Math.floor(defaultDurationDaysRaw) : null;
@@ -257,3 +257,4 @@ export async function onRequestDelete(context) {
   const result = await listItems(env, params.type, table);
   return json({ items: result?.results || [] });
 }
+

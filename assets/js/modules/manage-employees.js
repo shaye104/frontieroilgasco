@@ -80,38 +80,23 @@ function formatJoinRequestDate(value) {
   });
 }
 
-function statusClass(status) {
-  const normalized = String(status || '').trim().toLowerCase();
-  if (normalized === 'active' || normalized === 'on duty') return 'is-active';
-  if (normalized === 'suspended') return 'is-suspended';
-  if (normalized === 'inactive' || normalized === 'terminated' || normalized === 'on leave') return 'is-inactive';
-  return '';
+function toDateTimeLocalValue(value) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return '';
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
 }
 
-function disciplinaryStatusClass(status) {
-  const normalized = String(status || '').trim().toLowerCase();
-  if (normalized === 'active' || normalized === 'open') return 'is-active';
-  if (normalized === 'closed' || normalized === 'resolved') return 'is-inactive';
-  if (normalized === 'revoked' || normalized === 'expired') return 'is-suspended';
-  return '';
-}
-
-function fillOptions(select, items, placeholder = 'All') {
-  if (!select) return;
-  const current = select.value;
-  select.innerHTML = `<option value="">${placeholder}</option>` +
-    items.map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.value)}</option>`).join('');
-  if (current) select.value = current;
-}
-
-function renderSelectOptions(items, selectedValue = '', placeholder = 'Select') {
-  const selected = String(selectedValue || '').trim();
-  const options = (items || [])
-    .map((item) => String(item?.value || '').trim())
-    .filter(Boolean)
-    .map((value) => `<option value="${escapeHtml(value)}" ${selected === value ? 'selected' : ''}>${escapeHtml(value)}</option>`)
-    .join('');
-  return `<option value="">${escapeHtml(placeholder)}</option>${options}`;
+function summarizeDisciplinaryType(typeRow) {
+  if (!typeRow) return '';
+  const parts = [];
+  const defaultDuration = Number(typeRow.default_duration_days || 0);
+  if (Number.isFinite(defaultDuration) && defaultDuration > 0) parts.push(`Defaults to ${defaultDuration} day${defaultDuration === 1 ? '' : 's'}`);
+  if (Number(typeRow.requires_end_date || 0)) parts.push('End date required');
+  const nextStatus = String(typeRow.set_employee_status || '').trim();
+  if (nextStatus) parts.push(`Sets status to ${nextStatus}`);
+  if (Number(typeRow.apply_suspension_rank || 0)) parts.push('Applies suspension rank');
+  return parts.join(' - ');
 }
 
 function extractRequesterId(row) {
@@ -504,7 +489,6 @@ function renderDrawerOverview(target, payload, options = {}) {
         <dt>Roblox User ID</dt><dd>${escapeHtml(text(employee.roblox_user_id))}</dd>
         <dt>Rank</dt><dd>${escapeHtml(text(employee.rank))}</dd>
         <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(text(employee.employee_status))}</span></dd>
-        <dt>Activation</dt><dd><span class="badge badge-status ${activationClass(employee.activation_status)}">${escapeHtml(activationStatus)}</span></dd>
         <dt>Disciplinary</dt><dd>${
           isSuspended
             ? `<span class="badge badge-status is-suspended">Suspended${suspendedUntil ? ` until ${escapeHtml(formatDate(suspendedUntil, true))}` : ''}</span> <button class="btn btn-secondary btn-compact" type="button" data-drawer-tab="disciplinary">View record</button>`
@@ -544,8 +528,8 @@ function renderDrawerOverview(target, payload, options = {}) {
         <label for="drawerEditEmployeeStatus">Status</label>
         <select id="drawerEditEmployeeStatus" name="employeeStatus">${renderSelectOptions(statuses, draft.employeeStatus)}</select>
       </div>
-        <div>
-          <label for="drawerEditHireDate">Hire Date</label>
+      <div>
+        <label for="drawerEditHireDate">Hire Date</label>
         <input id="drawerEditHireDate" name="hireDate" type="date" value="${escapeHtml(text(draft.hireDate))}" />
       </div>
       <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
@@ -760,7 +744,7 @@ function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selecte
   target.innerHTML = `
     <div class="admin-employees-table-header">
       <h3>Disciplinary</h3>
-      <span class="finance-inline-caption">Active: ${activeCount}${payload?.suspensionState?.isSuspended ? ` • Suspended${suspendedUntil ? ` until ${escapeHtml(formatDate(suspendedUntil, true))}` : ''}` : ''}</span>
+      <span class="finance-inline-caption">Active: ${activeCount}${payload?.suspensionState?.isSuspended ? ` - Suspended${suspendedUntil ? ` until ${escapeHtml(formatDate(suspendedUntil, true))}` : ''}` : ''}</span>
     </div>
     ${
       canAddDisciplinary
@@ -772,23 +756,13 @@ function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selecte
           ${types
             .map(
               (row) =>
-                `<option value="${escapeHtml(String(row.key || ''))}" data-requires-end="${Number(row.requires_end_date || 0)}">${escapeHtml(
+                `<option value="${escapeHtml(String(row.key || ''))}" data-requires-end="${Number(row.requires_end_date || 0)}" data-default-duration="${Number(row.default_duration_days || 0)}" data-set-status="${escapeHtml(String(row.set_employee_status || '').trim())}" data-apply-suspension="${Number(row.apply_suspension_rank || 0)}">${escapeHtml(
                   text(row.label || row.value || row.key)
                 )}</option>`
             )
             .join('')}
         </select>
-      </div>
-      <div>
-        <label for="drawerDisciplinaryStatus">Status</label>
-        <select id="drawerDisciplinaryStatus" name="status">
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="OPEN">OPEN</option>
-        </select>
-      </div>
-      <div>
-        <label for="drawerEffectiveAt">Effective</label>
-        <input id="drawerEffectiveAt" name="effectiveAt" type="datetime-local" />
+        <p id="drawerDisciplinaryTypeHint" class="finance-inline-caption">Effective date is set automatically when you press Create Record.</p>
       </div>
       <div>
         <label for="drawerEndsAt">Ends At</label>
@@ -831,7 +805,7 @@ function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selecte
                             ? `<button class="btn btn-secondary btn-compact" type="button" data-discipline-action="close" data-record-id="${Number(entry.id)}">Close</button>
                                <button class="btn btn-warning btn-compact" type="button" data-discipline-action="revoke" data-record-id="${Number(entry.id)}">Revoke</button>
                                <button class="btn btn-primary btn-compact" type="button" data-discipline-action="extend" data-record-id="${Number(entry.id)}">Extend</button>`
-                            : '<span class="finance-inline-caption">—</span>'
+                            : '<span class="finance-inline-caption">-</span>'
                         }
                       </td>
                     </tr>`;
@@ -849,22 +823,50 @@ function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selecte
 
   const typeSelect = target.querySelector('#drawerTypeKey');
   const endsAtInput = target.querySelector('#drawerEndsAt');
-  typeSelect?.addEventListener('change', () => {
+  const typeHint = target.querySelector('#drawerDisciplinaryTypeHint');
+
+  const applyTypeDefaults = ({ force = false } = {}) => {
+    if (!typeSelect || !endsAtInput) return;
     const selected = typeSelect.options[typeSelect.selectedIndex];
     const requiresEnd = Number(selected?.getAttribute('data-requires-end') || 0) === 1;
-    if (endsAtInput) endsAtInput.required = requiresEnd;
+    const defaultDuration = Number(selected?.getAttribute('data-default-duration') || 0);
+    const summary = summarizeDisciplinaryType({
+      default_duration_days: defaultDuration,
+      requires_end_date: requiresEnd ? 1 : 0,
+      set_employee_status: String(selected?.getAttribute('data-set-status') || '').trim(),
+      apply_suspension_rank: Number(selected?.getAttribute('data-apply-suspension') || 0)
+    });
+    endsAtInput.required = requiresEnd;
+    if (Number.isFinite(defaultDuration) && defaultDuration > 0 && (force || endsAtInput.dataset.autoDefault === '1' || !String(endsAtInput.value || '').trim())) {
+      endsAtInput.value = toDateTimeLocalValue(new Date(Date.now() + defaultDuration * 24 * 60 * 60 * 1000));
+      endsAtInput.dataset.autoDefault = '1';
+    } else if ((!Number.isFinite(defaultDuration) || defaultDuration <= 0) && (force || endsAtInput.dataset.autoDefault === '1')) {
+      endsAtInput.value = '';
+      endsAtInput.dataset.autoDefault = '0';
+    }
+    if (typeHint) typeHint.textContent = summary || 'Effective date is set automatically when you press Create Record.';
+  };
+
+  typeSelect?.addEventListener('change', () => applyTypeDefaults({ force: true }));
+  endsAtInput?.addEventListener('input', () => {
+    if (endsAtInput) endsAtInput.dataset.autoDefault = '0';
   });
+  applyTypeDefaults();
 
   const form = target.querySelector('#drawerAddDisciplinaryForm');
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const fd = new FormData(form);
     try {
+      const selected = typeSelect?.options?.[typeSelect.selectedIndex];
+      const defaultDuration = Number(selected?.getAttribute('data-default-duration') || 0);
+      let endsAt = String(fd.get('endsAt') || '').trim();
+      if (endsAtInput?.dataset.autoDefault === '1' && Number.isFinite(defaultDuration) && defaultDuration > 0) {
+        endsAt = new Date(Date.now() + defaultDuration * 24 * 60 * 60 * 1000).toISOString();
+      }
       await addDisciplinary(selectedEmployeeId, {
         typeKey: String(fd.get('typeKey') || '').trim(),
-        status: String(fd.get('status') || '').trim(),
-        effectiveAt: String(fd.get('effectiveAt') || '').trim(),
-        endsAt: String(fd.get('endsAt') || '').trim(),
+        endsAt,
         reasonText: String(fd.get('reasonText') || '').trim(),
         internalNotes: String(fd.get('internalNotes') || '').trim()
       });
@@ -1882,3 +1884,7 @@ export async function initManageEmployees(config) {
     showMessage(feedback, error.message || 'Unable to initialize Manage Employees.', 'error');
   }
 }
+
+
+
+

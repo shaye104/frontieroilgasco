@@ -271,7 +271,7 @@ export async function createDisciplinaryRecord(env, options = {}) {
   const reasonText = text(payload.reasonText || payload.reason || payload.notes);
   if (!reasonText) throw new Error('Reason text is required.');
   const internalNotes = text(payload.internalNotes);
-  const status = toStatus(payload.status || payload.recordStatus || typeConfig.default_status, 'ACTIVE');
+  const status = 'ACTIVE';
 
   const rowResult = await env.DB
     .prepare(
@@ -461,3 +461,4 @@ export async function listDisciplinaryRecordsForEmployee(env, employeeId) {
     .all();
   return result?.results || [];
 }
+
