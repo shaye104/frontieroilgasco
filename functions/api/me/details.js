@@ -2,7 +2,7 @@ import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { calculateTenureDays, ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { enrichSessionWithPermissions } from '../_lib/permissions.js';
 import { expireDisciplinaryRecordsForEmployee, listDisciplinaryRecordsForEmployee, reconcileEmployeeSuspensionState } from '../_lib/disciplinary.js';
-import { canAccessGeneralIntranet, deriveLifecycleStatusFromEmployee } from '../_lib/lifecycle.js';
+import { canAccessGeneralIntranet, deriveConfiguredLifecycleStatus } from '../_lib/lifecycle.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -43,7 +43,7 @@ export async function onRequestGet(context) {
     });
   }
 
-  const lifecycleStatus = deriveLifecycleStatusFromEmployee(employee, session?.userStatus || 'ACTIVE');
+  const lifecycleStatus = await deriveConfiguredLifecycleStatus(env, employee, session?.userStatus || 'ACTIVE');
   if (!session.isAdmin && !canAccessGeneralIntranet(lifecycleStatus)) {
     return json(
       {

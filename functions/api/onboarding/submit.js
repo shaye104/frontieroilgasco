@@ -1,6 +1,6 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { ensureCoreSchema, getLinkedRanksForDiscordRoles, normalizeDiscordUserId, writeAdminActivityEvent } from '../_lib/db.js';
-import { deriveLifecycleStatusFromEmployee } from '../_lib/lifecycle.js';
+import { deriveConfiguredLifecycleStatus } from '../_lib/lifecycle.js';
 
 function text(value) {
   return String(value || '').trim();
@@ -60,7 +60,7 @@ export async function onRequestPost(context) {
   }
   if (!employee) return json({ error: 'Unable to create onboarding profile.' }, 500);
 
-  const lifecycle = deriveLifecycleStatusFromEmployee(employee, 'DEACTIVATED');
+  const lifecycle = await deriveConfiguredLifecycleStatus(env, employee, 'DEACTIVATED');
   if (lifecycle !== 'DEACTIVATED') {
     return json({ error: 'Onboarding is only available for deactivated accounts.' }, 400);
   }

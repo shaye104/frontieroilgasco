@@ -1,14 +1,14 @@
 import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { normalizeDiscordUserId } from '../_lib/db.js';
 import { expireDisciplinaryRecordsForEmployee, reconcileEmployeeSuspensionState } from '../_lib/disciplinary.js';
-import { deriveLifecycleStatusFromEmployee, isPendingLifecycle, toLegacyActivationStatus } from '../_lib/lifecycle.js';
+import { deriveConfiguredActivationStatus, deriveConfiguredLifecycleStatus, isPendingLifecycle } from '../_lib/lifecycle.js';
 
 function text(value) {
   return String(value || '').trim();
 }
 
-function deriveOnboardingState(employee) {
-  const lifecycle = deriveLifecycleStatusFromEmployee(employee, 'DEACTIVATED');
+async function deriveOnboardingState(env, employee) {
+  const lifecycle = employee ? await deriveConfiguredLifecycleStatus(env, employee, 'DEACTIVATED') : 'DEACTIVATED';
   if (!isPendingLifecycle(lifecycle)) return 'ACTIVE';
   const hasRobloxProfile = Boolean(text(employee?.roblox_user_id) && text(employee?.roblox_username));
   const hasSubmitted = Boolean(text(employee?.onboarding_submitted_at));
@@ -94,8 +94,8 @@ export async function onRequestGet(context) {
     if (!schemaError) schemaError = error;
   }
 
-  const lifecycleStatus = deriveLifecycleStatusFromEmployee(employee, 'DEACTIVATED');
-  const state = deriveOnboardingState(employee);
+  const lifecycleStatus = employee ? await deriveConfiguredLifecycleStatus(env, employee, 'DEACTIVATED') : 'DEACTIVATED';
+  const state = await deriveOnboardingState(env, employee);
   const isPendingAccount = isPendingLifecycle(lifecycleStatus);
   const hasSubmitted = Boolean(text(employee?.onboarding_submitted_at));
   const qualifies = Boolean(session.isAdmin) || Boolean(employee || qualifiesByRole);
@@ -116,7 +116,7 @@ export async function onRequestGet(context) {
             id: Number(employee.id),
             state,
             lifecycleStatus,
-            activationStatus: toLegacyActivationStatus(lifecycleStatus),
+            activationStatus: await deriveConfiguredActivationStatus(env, employee, 'DEACTIVATED'),
             robloxUserId: text(employee.roblox_user_id),
             robloxUsername: text(employee.roblox_username),
             submittedAt: text(employee.onboarding_submitted_at),

@@ -2,7 +2,7 @@ import { json } from '../../../auth/_lib/auth.js';
 import { requirePermission } from '../../_lib/admin-auth.js';
 import { hasPermission } from '../../../_lib/permissions.js';
 import { canEditEmployeeByRank, writeAdminActivityEvent } from '../../../_lib/db.js';
-import { normalizeLifecycleStatus, toLegacyActivationStatus } from '../../../_lib/lifecycle.js';
+import { deriveConfiguredActivationStatus, getEmployeeStatusBehavior, normalizeLifecycleStatus } from '../../../_lib/lifecycle.js';
 import {
   createDisciplinaryRecord,
   expireDisciplinaryRecordsForEmployee,
@@ -293,10 +293,11 @@ export async function onRequestPut(context) {
     ? String(payload?.robloxUserId || '').trim()
     : String(existing.roblox_user_id || '').trim();
   const nextRank = hasOwn(payload, 'rank') ? String(payload?.rank || '').trim() : String(existing.rank || '').trim();
-  const nextLifecycleStatus = hasOwn(payload, 'employeeStatus') || hasOwn(payload, 'activationStatus')
-    ? normalizeLifecycleInput(payload?.employeeStatus || payload?.activationStatus || 'ACTIVE', 'ACTIVE')
+  const nextLifecycleStatus = hasOwn(payload, 'employeeStatus')
+    ? normalizeLifecycleInput(payload?.employeeStatus || 'ACTIVE', 'ACTIVE')
     : normalizeLifecycleInput(existing.employee_status || 'ACTIVE', 'ACTIVE');
   const nextHireDate = hasOwn(payload, 'hireDate') ? String(payload?.hireDate || '').trim() : String(existing.hire_date || '').trim();
+  const nextActivationStatus = await deriveConfiguredActivationStatus(env, { employee_status: nextLifecycleStatus }, existing.activation_status || 'ACTIVE');
   const rankRow = await env.DB
     .prepare('SELECT id, value, level FROM config_ranks WHERE LOWER(value) = LOWER(?) LIMIT 1')
     .bind(nextRank)
@@ -311,18 +312,9 @@ export async function onRequestPut(context) {
     }
   }
   const rankChanged = String(existing?.rank || '').trim() !== String(nextRank || '').trim();
+  const nextStatusBehavior = await getEmployeeStatusBehavior(env, nextLifecycleStatus);
   const becameDeactivated = isDeactivatedStatus(nextLifecycleStatus) && !isDeactivatedStatus(existing?.employee_status);
-  let statusExcludesFromStats = false;
-  try {
-    const statusConfig = await env.DB
-      .prepare('SELECT exclude_from_stats FROM config_employee_statuses WHERE LOWER(value) = LOWER(?) LIMIT 1')
-      .bind(nextLifecycleStatus)
-      .first();
-    statusExcludesFromStats = Number(statusConfig?.exclude_from_stats || 0) === 1;
-  } catch {
-    statusExcludesFromStats = false;
-  }
-  const shouldRemoveFromGroup = becameDeactivated || statusExcludesFromStats;
+  const shouldRemoveFromGroup = becameDeactivated || Boolean(nextStatusBehavior?.removeFromGroup);
 
   let rankRoleSyncPrecheck = null;
   if (rankChanged && !shouldRemoveFromGroup) {
@@ -374,7 +366,7 @@ export async function onRequestPut(context) {
       nextRobloxUserId,
       nextRank,
       nextLifecycleStatus,
-      toLegacyActivationStatus(nextLifecycleStatus),
+      nextActivationStatus,
       nextHireDate,
       employeeId
     )
@@ -645,5 +637,6 @@ export async function onRequestDelete(context) {
     robloxGroupKick: robloxKick
   });
 }
+
 
 

@@ -1,7 +1,7 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { ensureCoreSchema } from './db.js';
 import { enrichSessionWithPermissions, hasPermission } from './permissions.js';
-import { canUseVoyageAndFinance, deriveLifecycleStatusFromEmployee } from './lifecycle.js';
+import { canUseVoyageAndFinance, deriveConfiguredLifecycleStatus } from './lifecycle.js';
 
 export function toMoney(value) {
   const number = Number(value);
@@ -29,7 +29,7 @@ export async function requireVoyagePermission(context, permissionKey) {
   if (!session.employee) {
     return { errorResponse: json({ error: 'Employee profile required for voyages.' }, 403), session: null, employee: null };
   }
-  const lifecycleStatus = deriveLifecycleStatusFromEmployee(session.employee, session?.userStatus || 'ACTIVE');
+  const lifecycleStatus = await deriveConfiguredLifecycleStatus(env, session.employee, session?.userStatus || 'ACTIVE');
   if (!canUseVoyageAndFinance(lifecycleStatus)) {
     return { errorResponse: json({ error: 'Your account status does not allow voyage access.' }, 403), session: null, employee: null };
   }

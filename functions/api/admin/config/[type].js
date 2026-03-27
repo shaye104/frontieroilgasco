@@ -1,5 +1,6 @@
 import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
+import { ensureEmployeeStatusConfigSchema, normalizeStatusAccessMode } from '../../_lib/lifecycle.js';
 
 const tableMap = {
   statuses: 'config_employee_statuses',
@@ -28,6 +29,33 @@ function rankOrderSql() {
   return 'ORDER BY level DESC, value ASC, id ASC';
 }
 
+async function listItems(env, type, table) {
+  if (isStatusesType(type)) {
+    await ensureEmployeeStatusConfigSchema(env);
+    return env.DB
+      .prepare(
+        `SELECT id, value, restrict_intranet, exclude_from_stats, access_mode, show_notice, remove_from_group, created_at
+         FROM ${table}
+         ORDER BY value ASC, id ASC`
+      )
+      .all();
+  }
+  if (isRanksType(type)) {
+    return env.DB.prepare(`SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`).all();
+  }
+  if (isDisciplinaryTypes(type)) {
+    return env.DB
+      .prepare(
+        `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
+                apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at
+         FROM ${table}
+         ORDER BY severity DESC, label ASC, id ASC`
+      )
+      .all();
+  }
+  return env.DB.prepare(`SELECT id, value, created_at FROM ${table} ORDER BY value ASC`).all();
+}
+
 export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse } = await requirePermission(context, ['config.manage']);
@@ -35,19 +63,7 @@ export async function onRequestGet(context) {
 
   const table = getTable(params.type);
   if (!table) return json({ error: 'Invalid config type.' }, 400);
-
-  let query = `SELECT id, value, created_at FROM ${table} ORDER BY value ASC`;
-  if (isRanksType(params.type)) {
-    query = `SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`;
-  } else if (isStatusesType(params.type)) {
-    query = `SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM ${table} ORDER BY value ASC, id ASC`;
-  } else if (isDisciplinaryTypes(params.type)) {
-    query = `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
-                    apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at
-             FROM ${table}
-             ORDER BY severity DESC, label ASC, id ASC`;
-  }
-  const result = await env.DB.prepare(query).all();
+  const result = await listItems(env, params.type, table);
   return json({ items: result?.results || [] });
 }
 
@@ -76,9 +92,20 @@ export async function onRequestPost(context) {
       .bind(value, Number.isFinite(level) ? Math.floor(level) : 0, description)
       .run();
   } else if (isStatusesType(params.type)) {
-    const restrictIntranet = Number(payload?.restrict_intranet ?? payload?.restrictIntranet ?? 0) ? 1 : 0;
+    await ensureEmployeeStatusConfigSchema(env);
+    const accessMode = normalizeStatusAccessMode(payload?.access_mode ?? payload?.accessMode, 'normal');
+    const restrictIntranet = Number(payload?.restrict_intranet ?? payload?.restrictIntranet ?? (accessMode !== 'normal' ? 1 : 0)) ? 1 : 0;
     const excludeFromStats = Number(payload?.exclude_from_stats ?? payload?.excludeFromStats ?? 0) ? 1 : 0;
-    await env.DB.prepare(`INSERT OR IGNORE INTO ${table} (value, restrict_intranet, exclude_from_stats) VALUES (?, ?, ?)`).bind(value, restrictIntranet, excludeFromStats).run();
+    const showNotice = Number(payload?.show_notice ?? payload?.showNotice ?? (accessMode === 'my_details_only' ? 1 : 0)) ? 1 : 0;
+    const removeFromGroup = Number(payload?.remove_from_group ?? payload?.removeFromGroup ?? 0) ? 1 : 0;
+    await env.DB
+      .prepare(
+        `INSERT OR IGNORE INTO ${table}
+          (value, restrict_intranet, exclude_from_stats, access_mode, show_notice, remove_from_group)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .bind(value, restrictIntranet, excludeFromStats, accessMode, showNotice, removeFromGroup)
+      .run();
   } else if (isDisciplinaryTypes(params.type)) {
     const key = String(payload?.key || value).trim();
     const label = String(payload?.label || value).trim();
@@ -120,18 +147,8 @@ export async function onRequestPost(context) {
   } else {
     await env.DB.prepare(`INSERT OR IGNORE INTO ${table} (value) VALUES (?)`).bind(value).run();
   }
-  let query = `SELECT id, value, created_at FROM ${table} ORDER BY value ASC`;
-  if (isRanksType(params.type)) {
-    query = `SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`;
-  } else if (isStatusesType(params.type)) {
-    query = `SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM ${table} ORDER BY value ASC, id ASC`;
-  } else if (isDisciplinaryTypes(params.type)) {
-    query = `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
-                    apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at
-             FROM ${table}
-             ORDER BY severity DESC, label ASC, id ASC`;
-  }
-  const result = await env.DB.prepare(query).all();
+
+  const result = await listItems(env, params.type, table);
   return json({ items: result?.results || [] }, 201);
 }
 
@@ -162,9 +179,20 @@ export async function onRequestPut(context) {
       .bind(value, Number.isFinite(level) ? Math.floor(level) : 0, description, id)
       .run();
   } else if (isStatusesType(params.type)) {
-    const restrictIntranet = Number(payload?.restrict_intranet ?? payload?.restrictIntranet ?? 0) ? 1 : 0;
+    await ensureEmployeeStatusConfigSchema(env);
+    const accessMode = normalizeStatusAccessMode(payload?.access_mode ?? payload?.accessMode, 'normal');
+    const restrictIntranet = Number(payload?.restrict_intranet ?? payload?.restrictIntranet ?? (accessMode !== 'normal' ? 1 : 0)) ? 1 : 0;
     const excludeFromStats = Number(payload?.exclude_from_stats ?? payload?.excludeFromStats ?? 0) ? 1 : 0;
-    await env.DB.prepare(`UPDATE ${table} SET value = ?, restrict_intranet = ?, exclude_from_stats = ? WHERE id = ?`).bind(value, restrictIntranet, excludeFromStats, id).run();
+    const showNotice = Number(payload?.show_notice ?? payload?.showNotice ?? (accessMode === 'my_details_only' ? 1 : 0)) ? 1 : 0;
+    const removeFromGroup = Number(payload?.remove_from_group ?? payload?.removeFromGroup ?? 0) ? 1 : 0;
+    await env.DB
+      .prepare(
+        `UPDATE ${table}
+         SET value = ?, restrict_intranet = ?, exclude_from_stats = ?, access_mode = ?, show_notice = ?, remove_from_group = ?
+         WHERE id = ?`
+      )
+      .bind(value, restrictIntranet, excludeFromStats, accessMode, showNotice, removeFromGroup, id)
+      .run();
   } else if (isDisciplinaryTypes(params.type)) {
     const key = String(payload?.key || value).trim();
     const label = String(payload?.label || value).trim();
@@ -208,18 +236,8 @@ export async function onRequestPut(context) {
   } else {
     await env.DB.prepare(`UPDATE ${table} SET value = ? WHERE id = ?`).bind(value, id).run();
   }
-  let query = `SELECT id, value, created_at FROM ${table} ORDER BY value ASC`;
-  if (isRanksType(params.type)) {
-    query = `SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`;
-  } else if (isStatusesType(params.type)) {
-    query = `SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM ${table} ORDER BY value ASC, id ASC`;
-  } else if (isDisciplinaryTypes(params.type)) {
-    query = `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
-                    apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at
-             FROM ${table}
-             ORDER BY severity DESC, label ASC, id ASC`;
-  }
-  const result = await env.DB.prepare(query).all();
+
+  const result = await listItems(env, params.type, table);
   return json({ items: result?.results || [] });
 }
 
@@ -236,17 +254,6 @@ export async function onRequestDelete(context) {
   if (!Number.isInteger(id) || id <= 0) return json({ error: 'id is required.' }, 400);
 
   await env.DB.prepare(`DELETE FROM ${table} WHERE id = ?`).bind(id).run();
-  let query = `SELECT id, value, created_at FROM ${table} ORDER BY value ASC`;
-  if (isRanksType(params.type)) {
-    query = `SELECT id, value, level, description, updated_at, created_at FROM ${table} ${rankOrderSql()}`;
-  } else if (isStatusesType(params.type)) {
-    query = `SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM ${table} ORDER BY value ASC, id ASC`;
-  } else if (isDisciplinaryTypes(params.type)) {
-    query = `SELECT id, key, label, value, severity, is_active, default_status, requires_end_date, default_duration_days,
-                    apply_suspension_rank, set_employee_status, restrict_intranet, restrict_voyages, restrict_finance, updated_at, created_at
-             FROM ${table}
-             ORDER BY severity DESC, label ASC, id ASC`;
-  }
-  const result = await env.DB.prepare(query).all();
+  const result = await listItems(env, params.type, table);
   return json({ items: result?.results || [] });
 }

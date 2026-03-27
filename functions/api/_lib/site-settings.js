@@ -13,7 +13,8 @@ const DEFAULT_SITE_SETTINGS = {
   notificationSoundUrgentUrl: '/MorseAlert.mp3',
   requiredDiscordRoleIds: '',
   requiredRobloxGroupIds: '',
-  requiredRobloxGroups: []
+  requiredRobloxGroups: [],
+  maintenanceMode: false
 };
 
 let settingsCache = null;
@@ -36,6 +37,14 @@ function normalizeUrlValue(value, fallback) {
   if (normalized.startsWith('/')) return normalized;
   if (/^https?:\/\//i.test(normalized)) return normalized;
   return fallback;
+}
+
+function normalizeBooleanSetting(value, fallback = false) {
+  if (typeof value === 'boolean') return value;
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (['1','true','yes','on'].includes(normalized)) return true;
+  if (['0','false','no','off'].includes(normalized)) return false;
+  return Boolean(fallback);
 }
 
 function normalizeOptionalUrlValue(value) {
@@ -159,7 +168,8 @@ export async function readSiteSettings(env, { bypassCache = false } = {}) {
     requiredRobloxGroups: (() => {
       const parsed = parseRobloxGroupsSetting(map.requiredRobloxGroups);
       return parsed.length ? parsed : deriveRobloxGroupsFromIds(map.requiredRobloxGroupIds);
-    })()
+    })(),
+    maintenanceMode: normalizeBooleanSetting(map.maintenanceMode, DEFAULT_SITE_SETTINGS.maintenanceMode)
   };
   next.requiredRobloxGroupIds = normalizeRobloxGroupIdsSetting(next.requiredRobloxGroups.map((row) => row.id).join(', '));
 
@@ -198,7 +208,8 @@ export async function writeSiteSettings(env, updates, updatedBy = '') {
     requiredRobloxGroups: (() => {
       const parsed = normalizeRobloxGroupsSetting(merged.requiredRobloxGroups);
       return parsed.length ? parsed : deriveRobloxGroupsFromIds(merged.requiredRobloxGroupIds);
-    })()
+    })(),
+    maintenanceMode: normalizeBooleanSetting(merged.maintenanceMode, DEFAULT_SITE_SETTINGS.maintenanceMode)
   };
   normalized.requiredRobloxGroupIds = normalizeRobloxGroupIdsSetting(normalized.requiredRobloxGroups.map((row) => row.id).join(', '));
 
@@ -236,3 +247,4 @@ export function toAbsoluteUrl(origin, value, fallback = '') {
     return normalized;
   }
 }
+

@@ -1,17 +1,16 @@
 import { json } from '../../auth/_lib/auth.js';
 import { requirePermission } from '../_lib/admin-auth.js';
+import { ensureEmployeeStatusConfigSchema } from '../../_lib/lifecycle.js';
 
 async function listEmployeeStatuses(env) {
-  try {
-    return await env.DB
-      .prepare('SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC')
-      .all();
-  } catch (error) {
-    if (!String(error?.message || '').includes('no such column')) throw error;
-    return env.DB
-      .prepare('SELECT id, value, 0 AS restrict_intranet, 0 AS exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC')
-      .all();
-  }
+  await ensureEmployeeStatusConfigSchema(env);
+  return env.DB
+    .prepare(
+      `SELECT id, value, restrict_intranet, exclude_from_stats, access_mode, show_notice, remove_from_group, created_at
+       FROM config_employee_statuses
+       ORDER BY value ASC, id ASC`
+    )
+    .all();
 }
 
 export async function onRequestGet(context) {

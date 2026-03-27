@@ -1,7 +1,7 @@
 import { json, readSessionFromRequest } from './_lib/auth.js';
 import { ADMIN_PANEL_ENTRY_PERMISSIONS, buildPermissionContext, hasAnyPermission, hasPermission } from '../_lib/permissions.js';
 import { normalizeAppMode } from '../_lib/app-mode.js';
-import { deriveLifecycleStatusFromEmployee, isPendingLifecycle, toLegacyActivationStatus } from '../_lib/lifecycle.js';
+import { deriveConfiguredActivationStatus, deriveConfiguredLifecycleStatus, getEmployeeStatusBehavior, isPendingLifecycle } from '../_lib/lifecycle.js';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -42,14 +42,16 @@ export async function onRequest(context) {
       canAccessAdminPanel: true,
       canManageRoles: true,
       canManageConfig: true,
-      restrictions: { restrictIntranet: false, restrictVoyages: false, restrictFinance: false }
+      restrictions: { restrictIntranet: false, restrictVoyages: false, restrictFinance: false },
+      statusBehavior: { accessMode: 'normal', showNotice: false, removeFromGroup: false, excludeFromStats: false }
     });
   }
 
   const appMode = normalizeAppMode(env.APP_MODE);
   const isCoreMode = appMode === 'core';
-  const lifecycleStatus = deriveLifecycleStatusFromEmployee(employee, payload.userStatus || 'ACTIVE');
-  const activationStatus = toLegacyActivationStatus(lifecycleStatus);
+  const lifecycleStatus = await deriveConfiguredLifecycleStatus(env, employee, payload.userStatus || 'ACTIVE');
+  const activationStatus = await deriveConfiguredActivationStatus(env, employee, payload.userStatus || 'ACTIVE');
+  const statusBehavior = await getEmployeeStatusBehavior(env, employee?.employee_status || lifecycleStatus);
 
   return json({
     loggedIn: true,
@@ -70,6 +72,7 @@ export async function onRequest(context) {
     userStatus: lifecycleStatus,
     lifecycleStatus,
     activationStatus,
+    statusBehavior,
     canAccessAdminPanel: hasAnyPermission({ permissions: permissionContext?.permissions || [] }, ADMIN_PANEL_ENTRY_PERMISSIONS),
     canManageRoles: hasPermission({ permissions: permissionContext?.permissions || [] }, 'user_groups.manage'),
     canManageConfig: hasPermission({ permissions: permissionContext?.permissions || [] }, 'config.manage'),

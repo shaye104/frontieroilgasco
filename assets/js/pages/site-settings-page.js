@@ -135,9 +135,13 @@ function renderStatuses(target, rows = []) {
         <td><strong>${escapeHtml(String(row?.value || '').trim() || 'Unnamed')}</strong></td>
         <td>${escapeHtml(
           [
-            Number(row?.restrict_intranet || 0) ? 'Removes intranet access' : '',
-            Number(row?.exclude_from_stats || 0) ? 'Excluded from employee stats' : ''
-          ].filter(Boolean).join(' • ') || 'Standard status'
+            String(row?.access_mode || 'normal') === 'my_details_only' ? 'My Details only' : '',
+            String(row?.access_mode || 'normal') === 'removed_page' ? 'Redirects to removed page' : '',
+            String(row?.access_mode || 'normal') === 'blocked' ? 'Blocks login' : '',
+            Number(row?.show_notice || 0) ? 'Shows notice' : '',
+            Number(row?.exclude_from_stats || 0) ? 'Excluded from stats' : '',
+            Number(row?.remove_from_group || 0) ? 'Removes from Roblox group' : ''
+          ].filter(Boolean).join(' | ') || 'Normal access'
         )}</td>
         <td class="align-right">
           <button class="btn btn-secondary btn-compact" type="button" data-edit-status="${Number(row?.id || 0)}">Edit</button>
@@ -147,7 +151,6 @@ function renderStatuses(target, rows = []) {
     )
     .join('');
 }
-
 function readCheckbox(selector) {
   return Boolean(document.querySelector(selector)?.checked);
 }
@@ -241,21 +244,27 @@ function setStatusEditingState(editingId = null) {
 
 function resetStatusForm() {
   setInput('#statusConfigValue', '');
-  setCheckbox('#statusConfigRestrictIntranet', false);
+  setInput('#statusConfigAccessMode', 'normal');
+  setCheckbox('#statusConfigShowNotice', false);
   setCheckbox('#statusConfigExcludeFromStats', false);
+  setCheckbox('#statusConfigRemoveFromGroup', false);
   setStatusEditingState(null);
 }
 
 function applyForm(settings) {
   const body = document.querySelector('#settingsRequiredRobloxGroupsBody');
   syncHiddenInput(body, normalizeGroupRows(settings.requiredRobloxGroups));
+  setCheckbox('#settingsMaintenanceMode', Boolean(settings?.maintenanceMode));
 }
 
 function collectSiteSettingsForm() {
   const body = document.querySelector('#settingsRequiredRobloxGroupsBody');
   const rows = normalizeGroupRows(readRowsFromDom(body));
   setHiddenInputValue(rows);
-  return { requiredRobloxGroups: rows };
+  return {
+    requiredRobloxGroups: rows,
+    maintenanceMode: readCheckbox('#settingsMaintenanceMode')
+  };
 }
 
 async function loadPageData(feedback) {
@@ -284,6 +293,7 @@ initIntranetPageGuard({
   const form = document.querySelector('#siteSettingsForm');
   const resetBtn = document.querySelector('#siteSettingsResetBtn');
   const saveBtn = document.querySelector('#siteSettingsSaveBtn');
+  const toggleMaintenanceModeBtn = document.querySelector('#toggleMaintenanceModeBtn');
   const addGroupBtn = document.querySelector('#addRequiredRobloxGroupBtn');
   const groupsBody = document.querySelector('#settingsRequiredRobloxGroupsBody');
   const disciplinaryFeedback = document.querySelector('#disciplinaryTypesFeedback');
@@ -343,7 +353,7 @@ initIntranetPageGuard({
       const response = await saveSiteSettings(collectSiteSettingsForm());
       state.siteSettings = response?.settings || state.siteSettings;
       applyForm(state.siteSettings);
-      showMessage(feedback, 'Roblox group scan settings saved.', 'success');
+      showMessage(feedback, 'Site settings saved.', 'success');
     } catch (error) {
       showMessage(feedback, error.message || 'Unable to save site settings.', 'error');
     } finally {
@@ -417,8 +427,10 @@ initIntranetPageGuard({
     try {
       const payload = {
         value: readInput('#statusConfigValue'),
-        restrictIntranet: readCheckbox('#statusConfigRestrictIntranet'),
-        excludeFromStats: readCheckbox('#statusConfigExcludeFromStats')
+        accessMode: readInput('#statusConfigAccessMode') || 'normal',
+        showNotice: readCheckbox('#statusConfigShowNotice'),
+        excludeFromStats: readCheckbox('#statusConfigExcludeFromStats'),
+        removeFromGroup: readCheckbox('#statusConfigRemoveFromGroup')
       };
       if (!payload.value) throw new Error('Status value is required.');
       const editingId = Number(statusForm.dataset.editingId || 0);
@@ -436,6 +448,22 @@ initIntranetPageGuard({
     }
   });
 
+  toggleMaintenanceModeBtn?.addEventListener('click', async () => {
+    const nextValue = !readCheckbox('#settingsMaintenanceMode');
+    setCheckbox('#settingsMaintenanceMode', nextValue);
+    showMessage(feedback, nextValue ? 'Enabling maintenance mode...' : 'Disabling maintenance mode...', 'info');
+    try {
+      const response = await saveSiteSettings({ maintenanceMode: nextValue });
+      state.siteSettings = response?.settings || state.siteSettings;
+      applyForm(state.siteSettings);
+      showMessage(feedback, nextValue ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.', 'success');
+      if (nextValue) window.location.href = '/maintenance';
+    } catch (error) {
+      setCheckbox('#settingsMaintenanceMode', !nextValue);
+      showMessage(feedback, error.message || 'Unable to update maintenance mode.', 'error');
+    }
+  });
+
   statusTableBody?.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
@@ -447,8 +475,10 @@ initIntranetPageGuard({
       if (!row) return;
       setStatusEditingState(id);
       setInput('#statusConfigValue', row?.value || '');
-      setCheckbox('#statusConfigRestrictIntranet', Number(row?.restrict_intranet || 0));
+      setInput('#statusConfigAccessMode', row?.access_mode || 'normal');
+      setCheckbox('#statusConfigShowNotice', Number(row?.show_notice || 0));
       setCheckbox('#statusConfigExcludeFromStats', Number(row?.exclude_from_stats || 0));
+      setCheckbox('#statusConfigRemoveFromGroup', Number(row?.remove_from_group || 0));
       showMessage(statusFeedback, `Editing ${String(row?.value || '').trim()}.`, 'info');
       return;
     }
@@ -471,4 +501,5 @@ initIntranetPageGuard({
     })();
   });
 });
+
 

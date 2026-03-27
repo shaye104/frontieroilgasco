@@ -226,6 +226,10 @@ export async function initIntranetLayout(config) {
 
     const status = lifecycleStatus(session);
     const currentPath = normalizePathname(window.location.pathname);
+    if (!session?.isAdmin && status === 'LEFT') {
+      window.location.href = '/login?auth=denied&reason=left';
+      return null;
+    }
     if (!session?.isAdmin && status === 'DEACTIVATED' && !isOnboardingPath(currentPath)) {
       window.location.href = '/onboarding';
       return null;
@@ -292,6 +296,19 @@ export async function initIntranetLayout(config) {
       });
     }
 
+    if (!session?.isAdmin && status === 'SUSPENDED') {
+      document.body.classList.add('is-suspended-view');
+      const suspendedContainer = document.querySelector('main.section .container.intranet-layout');
+      if (suspendedContainer && !suspendedContainer.querySelector('[data-suspended-banner]')) {
+        const suspendedBar = document.createElement('section');
+        suspendedBar.className = 'feedback is-visible is-warning suspended-status-banner';
+        suspendedBar.setAttribute('data-suspended-banner', 'true');
+        suspendedBar.innerHTML = '<strong>Account Suspended:</strong> Your access is restricted to My Details only until this status is changed.';
+        suspendedContainer.prepend(suspendedBar);
+      }
+    } else {
+      document.body.classList.remove('is-suspended-view');
+    }
     protectedContent.classList.remove('hidden');
     return session;
   } catch {
@@ -299,3 +316,4 @@ export async function initIntranetLayout(config) {
     return null;
   }
 }
+

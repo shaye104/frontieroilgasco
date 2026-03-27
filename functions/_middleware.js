@@ -2,7 +2,7 @@ import { readSessionFromRequest } from './api/auth/_lib/auth.js';
 import { ensureCoreSchema, getEmployeeByDiscordUserId } from './api/_lib/db.js';
 import { isCoreAllowedApiPath, isCoreAllowedPagePath, isCoreOnly } from './api/_lib/app-mode.js';
 import { readSiteSettings, toAbsoluteUrl } from './api/_lib/site-settings.js';
-import { deriveLifecycleStatusFromEmployee, isPendingLifecycle, isRemovedLifecycle, isSuspendedLifecycle } from './api/_lib/lifecycle.js';
+import { deriveConfiguredLifecycleStatus, isLeftLifecycle, isPendingLifecycle, isRemovedLifecycle, isSuspendedLifecycle } from './api/_lib/lifecycle.js';
 import { ADMIN_PANEL_ENTRY_PERMISSIONS, enrichSessionWithPermissions } from './api/_lib/permissions.js';
 
 const FRONTIER_BRAND_NAME = 'Frontier Oil & Gas Company';
@@ -137,9 +137,9 @@ async function getLiveLifecycleStatus(env, session) {
     await ensureCoreSchema(env);
     const employee = await getEmployeeByDiscordUserId(env, session.userId);
     if (!employee) return 'DEACTIVATED';
-    return deriveLifecycleStatusFromEmployee(employee, session?.userStatus || 'ACTIVE');
+    return await deriveConfiguredLifecycleStatus(env, employee, session?.userStatus || 'ACTIVE');
   } catch {
-    return deriveLifecycleStatusFromEmployee({ employee_status: session?.userStatus, activation_status: session?.activationStatus }, 'ACTIVE');
+    return await deriveConfiguredLifecycleStatus(env, { employee_status: session?.userStatus, activation_status: session?.activationStatus }, 'ACTIVE');
   }
 }
 
@@ -387,10 +387,10 @@ export async function onRequest(context) {
     const maintenanceDiscordUserId = String(
       context.env?.DISCORD_USER_ID || context.env?.MAINTENANCE_DISCORD_USER_ID || context.env?.ADMIN_DISCORD_USER_ID || ''
     ).trim();
-    // Maintenance mode is currently disabled; keep env parsing for quick re-enable later.
-    const maintenanceEnabled = false;
+    const siteSettings = await readSiteSettings(context.env);
+    const maintenanceEnabled = Boolean(siteSettings?.maintenanceMode);
     const isApiPath = pathname.startsWith('/api/');
-    const hasMaintenanceAccess = isLoggedIn && String(session?.userId || '').trim() === maintenanceDiscordUserId;
+    const hasMaintenanceAccess = isLoggedIn && (Boolean(session?.isAdmin) || String(session?.userId || '').trim() === maintenanceDiscordUserId);
     if (maintenanceEnabled && !hasMaintenanceAccess) {
       if (isApiPath && !isMaintenanceBypassApiPath(pathname)) {
         return new Response(JSON.stringify({ error: 'Site is currently under maintenance.' }), {
@@ -419,6 +419,12 @@ export async function onRequest(context) {
 
       if (isLoggedIn && !session?.isAdmin) {
         const isAuthApi = pathname.startsWith('/api/auth/');
+        if (isLeftLifecycle(lifecycleStatus) && !isAuthApi) {
+          return new Response(JSON.stringify({ error: 'Account access disabled. Login is no longer permitted.' }), {
+            status: 403,
+            headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+          });
+        }
         if (isRemovedLifecycle(lifecycleStatus) && !isAuthApi) {
           return new Response(JSON.stringify({ error: 'Account removed. Access denied.' }), {
             status: 403,
@@ -715,6 +721,13 @@ export async function onRequest(context) {
       if (url.searchParams.has('auth') || url.searchParams.has('reason')) {
         return context.next();
       }
+      if (isLoggedIn && !session?.isAdmin && isLeftLifecycle(lifecycleStatus)) {
+        const denied = new URL('/login', url.origin);
+        denied.searchParams.set('auth', 'denied');
+        denied.searchParams.set('reason', 'left');
+        if (url.searchParams.get('reason') === 'left') return context.next();
+        return Response.redirect(denied.toString(), 302);
+      }
       if (isLoggedIn) {
         return Response.redirect(new URL('/dashboard', url.origin).toString(), 302);
       }
@@ -726,6 +739,12 @@ export async function onRequest(context) {
     }
 
     if (isLoggedIn && !session?.isAdmin) {
+      if (isLeftLifecycle(lifecycleStatus) && !isPublicPagePath(pathname)) {
+        const denied = new URL('/login', url.origin);
+        denied.searchParams.set('auth', 'denied');
+        denied.searchParams.set('reason', 'left');
+        return Response.redirect(denied.toString(), 302);
+      }
       if (isRemovedLifecycle(lifecycleStatus) && !isPublicPagePath(pathname)) {
         const denied = new URL('/access-denied', url.origin);
         denied.searchParams.set('reason', 'removed');
@@ -776,6 +795,7 @@ export async function onRequest(context) {
     return context.next();
   }
 }
+
 
 
 

@@ -3,7 +3,7 @@ import { requirePermission } from '../_lib/admin-auth.js';
 import { hasPermission } from '../../_lib/permissions.js';
 import { normalizeDiscordUserId, writeAdminActivityEvent } from '../../_lib/db.js';
 import { getActorAccessScope, hasHierarchyBypass, validateRoleSetManageable } from '../_lib/access-scope.js';
-import { normalizeLifecycleStatus, toLegacyActivationStatus } from '../../_lib/lifecycle.js';
+import { deriveConfiguredActivationStatus, ensureEmployeeStatusConfigSchema, normalizeLifecycleStatus } from '../../_lib/lifecycle.js';
 
 function normalizeText(value) {
   return String(value || '').trim();
@@ -17,13 +17,14 @@ function normalizeLifecycleInput(value, fallback = 'ACTIVE') {
 
 async function listEmployeeStatuses(env) {
   try {
+    await ensureEmployeeStatusConfigSchema(env);
     return await env.DB
-      .prepare('SELECT id, value, restrict_intranet, exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC')
+      .prepare('SELECT id, value, restrict_intranet, exclude_from_stats, access_mode, show_notice, remove_from_group, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC')
       .all();
   } catch (error) {
     if (!String(error?.message || '').includes('no such column')) throw error;
     return env.DB
-      .prepare('SELECT id, value, 0 AS restrict_intranet, 0 AS exclude_from_stats, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC')
+      .prepare("SELECT id, value, 0 AS restrict_intranet, 0 AS exclude_from_stats, 'normal' AS access_mode, 0 AS show_notice, 0 AS remove_from_group, created_at FROM config_employee_statuses ORDER BY value ASC, id ASC")
       .all();
   }
 }
@@ -309,7 +310,8 @@ export async function onRequestPost(context) {
   }
 
   try {
-    const lifecycleStatus = normalizeLifecycleInput(payload?.employeeStatus || payload?.activationStatus || 'ACTIVE', 'ACTIVE');
+    const lifecycleStatus = normalizeLifecycleInput(payload?.employeeStatus || 'ACTIVE', 'ACTIVE');
+    const activationStatus = await deriveConfiguredActivationStatus(env, { employee_status: lifecycleStatus }, 'ACTIVE');
     const insert = await env.DB.prepare(
       `INSERT INTO employees
        (discord_user_id, roblox_username, roblox_user_id, rank, employee_status, activation_status, hire_date, updated_at)
@@ -321,7 +323,7 @@ export async function onRequestPost(context) {
         String(payload?.robloxUserId || '').trim(),
         String(payload?.rank || '').trim(),
         lifecycleStatus,
-        toLegacyActivationStatus(lifecycleStatus),
+        activationStatus,
         String(payload?.hireDate || '').trim()
       )
       .run();
@@ -355,6 +357,7 @@ export async function onRequestPost(context) {
   const created = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(discordUserId).first();
   return json({ employee: created }, 201);
 }
+
 
 
 

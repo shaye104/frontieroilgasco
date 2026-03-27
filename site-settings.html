@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260325211145" />
+    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327011047" />
   </head>
   <body class="page page-intranet page-site-settings">
     <header class="site-header">
@@ -30,7 +30,7 @@
           <div class="button-row align-between">
             <div>
               <h1>Site Settings</h1>
-              <p class="my-details-subtitle">Configure the Roblox groups used by the employee access scan.</p>
+              <p class="my-details-subtitle">Configure employee status behavior, Roblox group requirements, and website maintenance controls.</p>
             </div>
             <a class="btn btn-secondary" href="/admin">Back to Admin Panel</a>
           </div>
@@ -65,6 +65,16 @@
               <input id="settingsRequiredRobloxGroupsJson" name="requiredRobloxGroups" type="hidden" />
               <p class="finance-inline-caption">Run Scan will flag employees who are not in the Discord guild from <code>DISCORD_GUILD_ID</code> or are missing every configured Roblox group ID.</p>
             </div>
+            <div class="finance-cashflow-entry-wide">
+              <div class="admin-employees-table-header site-settings-section-head">
+                <div>
+                  <label>Maintenance Mode</label>
+                  <p class="finance-inline-caption">Temporarily redirect the public site to the maintenance page while allowing admins to get back in.</p>
+                </div>
+                <button id="toggleMaintenanceModeBtn" class="btn btn-secondary" type="button">Toggle Maintenance</button>
+              </div>
+              <label class="site-settings-toggle-inline"><input id="settingsMaintenanceMode" name="maintenanceMode" type="checkbox" /> Enable maintenance mode</label>
+            </div>
             <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
               <button id="siteSettingsSaveBtn" class="btn btn-primary" type="submit">Save Settings</button>
               <button id="siteSettingsResetBtn" class="btn btn-secondary" type="button">Reset Form</button>
@@ -87,10 +97,20 @@
                   <label for="statusConfigValue">Status Value</label>
                   <input id="statusConfigValue" name="value" type="text" placeholder="Active" required />
                 </div>
+                <div>
+                  <label for="statusConfigAccessMode">Access Mode</label>
+                  <select id="statusConfigAccessMode" name="accessMode">
+                    <option value="normal">Normal Access</option>
+                    <option value="my_details_only">My Details Only</option>
+                    <option value="removed_page">Redirect To Removed Page</option>
+                    <option value="blocked">Block Login</option>
+                  </select>
+                </div>
               </div>
               <div class="site-settings-toggle-grid site-settings-toggle-grid-compact">
-                <label><input id="statusConfigRestrictIntranet" name="restrictIntranet" type="checkbox" /> Remove Intranet Access</label>
+                <label><input id="statusConfigShowNotice" name="showNotice" type="checkbox" /> Show Notice</label>
                 <label><input id="statusConfigExcludeFromStats" name="excludeFromStats" type="checkbox" /> No Longer Employee / Exclude From Stats</label>
+                <label><input id="statusConfigRemoveFromGroup" name="removeFromGroup" type="checkbox" /> Remove From Roblox Group</label>
               </div>
               <div class="finance-cashflow-entry-actions site-settings-compact-actions">
                 <button id="statusConfigSaveBtn" class="btn btn-primary" type="submit">Add Status</button>
@@ -190,6 +210,7 @@
         </div>
       </div>
     </main>
-    <script type="module" src="/assets/js/pages/site-settings-page.js?v=20260326fix"></script>
+    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260326003246"></script>
   </body>
 </html>
+

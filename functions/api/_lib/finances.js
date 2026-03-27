@@ -1,7 +1,7 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { ensureCoreSchema } from './db.js';
 import { enrichSessionWithPermissions, hasPermission } from './permissions.js';
-import { canUseVoyageAndFinance, deriveLifecycleStatusFromEmployee } from './lifecycle.js';
+import { canUseVoyageAndFinance, deriveConfiguredLifecycleStatus } from './lifecycle.js';
 
 const RANGE_KEYS = new Set(['week', 'month', '3m', '6m', 'year', 'all']);
 
@@ -244,7 +244,7 @@ export async function requireFinancePermission(context, permissionKey) {
     return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null };
   }
   if (!session.isAdmin) {
-    const lifecycleStatus = deriveLifecycleStatusFromEmployee(session?.employee, session?.userStatus || 'ACTIVE');
+    const lifecycleStatus = await deriveConfiguredLifecycleStatus(env, session?.employee, session?.userStatus || 'ACTIVE');
     if (!session.employee || !canUseVoyageAndFinance(lifecycleStatus)) {
       return { errorResponse: json({ error: 'Your account status does not allow finance access.' }, 403), session: null };
     }

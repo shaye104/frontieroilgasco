@@ -1,6 +1,6 @@
 import { json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { ensureCoreSchema, getEmployeeByDiscordUserId, getLinkedRanksForDiscordRoles, normalizeDiscordUserId } from '../_lib/db.js';
-import { deriveLifecycleStatusFromEmployee, toLegacyActivationStatus } from '../_lib/lifecycle.js';
+import { deriveConfiguredActivationStatus, deriveConfiguredLifecycleStatus } from '../_lib/lifecycle.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -35,8 +35,8 @@ export async function onRequestGet(context) {
   }
   if (!employee) return json({ error: 'Unable to create onboarding profile.' }, 500);
 
-  const lifecycleStatus = deriveLifecycleStatusFromEmployee(employee, 'DEACTIVATED');
-  const activationStatus = toLegacyActivationStatus(lifecycleStatus);
+  const lifecycleStatus = await deriveConfiguredLifecycleStatus(env, employee, 'DEACTIVATED');
+  const activationStatus = await deriveConfiguredActivationStatus(env, employee, 'DEACTIVATED');
   return json({
     loggedIn: true,
     lifecycleStatus,

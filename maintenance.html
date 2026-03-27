@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -18,49 +18,144 @@
         margin: 0;
         min-height: 100vh;
         font-family: Inter, "Segoe UI", sans-serif;
-        background: radial-gradient(circle at 10% 10%, #18477d 0%, #0b2447 55%, #071326 100%);
-        color: #e8f1ff;
+        color: #e9f3ff;
+        background:
+          radial-gradient(circle at top left, rgba(61, 125, 201, 0.34), transparent 38%),
+          radial-gradient(circle at bottom right, rgba(17, 66, 121, 0.4), transparent 34%),
+          linear-gradient(145deg, #07111f 0%, #0a1f3f 48%, #071a31 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 24px;
       }
       main {
-        width: min(680px, 100%);
-        background: rgba(6, 19, 38, 0.82);
-        border: 1px solid rgba(174, 206, 255, 0.28);
-        border-radius: 14px;
-        padding: 28px 24px;
-        backdrop-filter: blur(3px);
+        width: min(760px, 100%);
+        padding: 32px;
+        border-radius: 22px;
+        border: 1px solid rgba(171, 205, 255, 0.22);
+        background: rgba(7, 20, 39, 0.82);
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.32);
+        backdrop-filter: blur(10px);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      .brand img {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+      }
+      .brand strong {
+        display: block;
+        font-size: 1.05rem;
+        letter-spacing: 0.02em;
+      }
+      .brand span {
+        display: block;
+        color: #9fc6ff;
+        font-size: 0.9rem;
+      }
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #8fbfff;
       }
       h1 {
         margin: 0 0 12px;
-        font-size: clamp(1.6rem, 2.6vw, 2rem);
-        line-height: 1.2;
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        line-height: 1.05;
       }
       p {
         margin: 0;
-        color: #c7daf8;
-        line-height: 1.55;
+        color: #c9dfff;
+        line-height: 1.7;
+        font-size: 1rem;
       }
-      .brand {
-        display: inline-block;
-        margin-bottom: 16px;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        color: #9fc6ff;
+      .status-card {
+        margin-top: 26px;
+        padding: 18px 20px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(173, 210, 255, 0.18);
+      }
+      .status-card strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+      }
+      .status-card p {
+        font-size: 0.95rem;
+      }
+      .maintenance-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(171, 205, 255, 0.28);
+        color: #ecf4ff;
+        text-decoration: none;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #2f7df4, #5ba3ff);
+        border-color: transparent;
+        color: #041223;
+      }
+      .btn-primary:hover {
+        background: linear-gradient(135deg, #3a86f8, #6baeff);
+      }
+      @media (max-width: 640px) {
+        main {
+          padding: 24px;
+        }
+        .brand {
+          align-items: flex-start;
+        }
       }
     </style>
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260325211145" />
+    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327011047" />
   </head>
   <body>
     <main>
-      <span class="brand">Frontier Oil &amp; Gas Company</span>
-      <h1>Currently Under Maintenance</h1>
+      <div class="brand">
+        <img src="/assets/brand/frontierlogo.svg?v=20260325fix" alt="" loading="eager" decoding="async" />
+        <div>
+          <strong>Frontier Oil &amp; Gas Company</strong>
+          <span>Operations Portal</span>
+        </div>
+      </div>
+      <p class="eyebrow">Maintenance Mode</p>
+      <h1>We are applying updates right now.</h1>
       <p>
-        Access is temporarily restricted while updates are being finalized. Please check back shortly.
+        The website is temporarily in maintenance mode while configuration or deployment work is being completed.
+        Please check back shortly.
       </p>
+      <div class="status-card">
+        <strong>What this means</strong>
+        <p>Public access is paused for now. Admins can still return to the live site once maintenance mode is disabled.</p>
+      </div>
+      <div class="maintenance-actions">
+        <a class="btn btn-primary" href="/login">Return to Login</a>
+        <a class="btn" href="/">Home</a>
+      </div>
     </main>
   </body>
 </html>
-

@@ -1,14 +1,13 @@
 import { cachedJson, json, readSessionFromRequest } from '../auth/_lib/auth.js';
 import { ensureCoreSchema, getEmployeeByDiscordUserId } from '../_lib/db.js';
 import { expireDisciplinaryRecordsForEmployee, reconcileEmployeeSuspensionState } from '../_lib/disciplinary.js';
-import { deriveLifecycleStatusFromEmployee, isPendingLifecycle, toLegacyActivationStatus } from '../_lib/lifecycle.js';
+import { deriveConfiguredActivationStatus, deriveConfiguredLifecycleStatus, isPendingLifecycle } from '../_lib/lifecycle.js';
 
 function text(value) {
   return String(value || '').trim();
 }
 
-function onboardingStatus(employee) {
-  const lifecycle = deriveLifecycleStatusFromEmployee(employee, 'DEACTIVATED');
+function onboardingStatusFromLifecycle(employee, lifecycle) {
   if (!isPendingLifecycle(lifecycle)) return 'ACTIVE';
   const hasRobloxProfile = Boolean(text(employee?.roblox_user_id) && text(employee?.roblox_username));
   return hasRobloxProfile ? 'SUBMITTED' : 'PENDING';
@@ -43,16 +42,22 @@ export async function onRequestGet(context) {
 
   await ensureCoreSchema(env);
 
-  const [employee, qualifies] = await Promise.all([
+  const [employeeResult, qualifies] = await Promise.all([
     getEmployeeByDiscordUserId(env, session.userId),
     hasQualifyingDiscordRole(env, Array.isArray(session.discordRoles) ? session.discordRoles : Array.isArray(session.roles) ? session.roles : [])
   ]);
+
+  let employee = employeeResult;
   if (employee?.id) {
     await expireDisciplinaryRecordsForEmployee(env, Number(employee.id));
-    await reconcileEmployeeSuspensionState(env, Number(employee.id));
+    const suspensionState = await reconcileEmployeeSuspensionState(env, Number(employee.id));
+    if (suspensionState?.employee) employee = suspensionState.employee;
   }
 
-  const status = onboardingStatus(employee);
+  const lifecycleStatus = employee ? await deriveConfiguredLifecycleStatus(env, employee, 'DEACTIVATED') : 'DEACTIVATED';
+  const activationStatus = employee ? await deriveConfiguredActivationStatus(env, employee, 'DEACTIVATED') : 'PENDING';
+  const status = onboardingStatusFromLifecycle(employee, lifecycleStatus);
+
   const response = cachedJson(
     request,
     {
@@ -68,8 +73,8 @@ export async function onRequestGet(context) {
         ? {
             id: Number(employee.id),
             status,
-            lifecycleStatus: deriveLifecycleStatusFromEmployee(employee, 'DEACTIVATED'),
-            activationStatus: toLegacyActivationStatus(deriveLifecycleStatusFromEmployee(employee, 'DEACTIVATED')),
+            lifecycleStatus,
+            activationStatus,
             robloxUserId: text(employee.roblox_user_id),
             robloxUsername: text(employee.roblox_username),
             submittedAt: text(employee.onboarding_submitted_at),

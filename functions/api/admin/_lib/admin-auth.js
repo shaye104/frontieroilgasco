@@ -1,7 +1,7 @@
 import { json, readSessionFromRequest } from '../../auth/_lib/auth.js';
 import { ensureCoreSchema } from '../../_lib/db.js';
 import { enrichSessionWithPermissions, hasAnyPermission } from '../../_lib/permissions.js';
-import { canAccessGeneralIntranet, deriveLifecycleStatusFromEmployee } from '../../_lib/lifecycle.js';
+import { canAccessGeneralIntranet, deriveConfiguredLifecycleStatus } from '../../_lib/lifecycle.js';
 
 function isReadOnlyRequest(request) {
   const method = String(request?.method || '').toUpperCase();
@@ -28,7 +28,7 @@ export async function requirePermission(context, permissionKeys = []) {
     return { errorResponse: json({ error: 'Forbidden. Missing required permission.' }, 403), session: null };
   }
   if (!session.isAdmin) {
-    const lifecycleStatus = deriveLifecycleStatusFromEmployee(session?.employee, session?.userStatus || 'ACTIVE');
+    const lifecycleStatus = await deriveConfiguredLifecycleStatus(env, session?.employee, session?.userStatus || 'ACTIVE');
     if (!session.employee || !canAccessGeneralIntranet(lifecycleStatus)) {
       return { errorResponse: json({ error: 'Account is not active.' }, 403), session: null };
     }

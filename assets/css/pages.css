@@ -9759,3 +9759,17 @@ body.page-finances #financeTabCashflow .finance-remittance-table-card .finance-t
     width: 38% !important;
   }
 }
+
+
+body.page-intranet.is-suspended-view main.section {
+  filter: grayscale(0.28);
+}
+
+body.page-intranet.is-suspended-view .site-header {
+  filter: grayscale(0.12);
+}
+
+body.page-intranet.is-suspended-view .suspended-status-banner {
+  margin-bottom: 0.9rem;
+  border-left: 4px solid #d18a14;
+}

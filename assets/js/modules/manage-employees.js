@@ -544,17 +544,8 @@ function renderDrawerOverview(target, payload, options = {}) {
         <label for="drawerEditEmployeeStatus">Status</label>
         <select id="drawerEditEmployeeStatus" name="employeeStatus">${renderSelectOptions(statuses, draft.employeeStatus)}</select>
       </div>
-      <div>
-        <label for="drawerEditActivationStatus">Activation</label>
-        <select id="drawerEditActivationStatus" name="activationStatus">
-          <option value="ACTIVE" ${String(draft.activationStatus).toUpperCase() === 'ACTIVE' ? 'selected' : ''}>ACTIVE</option>
-          <option value="PENDING" ${String(draft.activationStatus).toUpperCase() === 'PENDING' ? 'selected' : ''}>PENDING</option>
-          <option value="DISABLED" ${String(draft.activationStatus).toUpperCase() === 'DISABLED' ? 'selected' : ''}>DISABLED</option>
-          <option value="REJECTED" ${String(draft.activationStatus).toUpperCase() === 'REJECTED' ? 'selected' : ''}>REJECTED</option>
-        </select>
-      </div>
-      <div>
-        <label for="drawerEditHireDate">Hire Date</label>
+        <div>
+          <label for="drawerEditHireDate">Hire Date</label>
         <input id="drawerEditHireDate" name="hireDate" type="date" value="${escapeHtml(text(draft.hireDate))}" />
       </div>
       <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
@@ -1014,7 +1005,6 @@ export async function initManageEmployees(config) {
       robloxUserId: employee?.roblox_user_id || '',
       rank: employee?.rank || '',
       employeeStatus: employee?.employee_status || '',
-      activationStatus: employee?.activation_status || 'PENDING',
       hireDate: employee?.hire_date || ''
     };
   }
@@ -1710,7 +1700,6 @@ export async function initManageEmployees(config) {
       robloxUserId: String(formData.get('robloxUserId') || '').trim(),
       rank: String(formData.get('rank') || '').trim(),
       employeeStatus: String(formData.get('employeeStatus') || '').trim(),
-      activationStatus: String(formData.get('activationStatus') || '').trim().toUpperCase() || 'PENDING',
       hireDate: String(formData.get('hireDate') || '').trim()
     };
     const changedPayload = {};
@@ -1718,7 +1707,6 @@ export async function initManageEmployees(config) {
     if (nextDraft.robloxUserId !== String(payload.employee?.roblox_user_id || '')) changedPayload.robloxUserId = nextDraft.robloxUserId;
     if (nextDraft.rank !== String(payload.employee?.rank || '')) changedPayload.rank = nextDraft.rank;
     if (nextDraft.employeeStatus !== String(payload.employee?.employee_status || '')) changedPayload.employeeStatus = nextDraft.employeeStatus;
-    if (nextDraft.activationStatus !== String(payload.employee?.activation_status || 'PENDING').toUpperCase()) changedPayload.activationStatus = nextDraft.activationStatus;
     if (nextDraft.hireDate !== String(payload.employee?.hire_date || '')) changedPayload.hireDate = nextDraft.hireDate;
 
     const overviewFeedback = drawerOverview?.querySelector('#drawerOverviewFeedback');
@@ -1737,7 +1725,6 @@ export async function initManageEmployees(config) {
       roblox_user_id: nextDraft.robloxUserId,
       rank: nextDraft.rank,
       employee_status: nextDraft.employeeStatus,
-      activation_status: nextDraft.activationStatus,
       hire_date: nextDraft.hireDate
     };
     state.drawerOverviewEditMode = false;
@@ -1784,12 +1771,12 @@ export async function initManageEmployees(config) {
   };
 
   filterQuery?.addEventListener('input', scheduleReload);
-  [filterRank, filterStatus, filterActivation, filterHireDateFrom, filterHireDateTo].forEach((input) => {
+  [filterRank, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {
     input?.addEventListener('change', scheduleReload);
   });
 
   clearFiltersBtn?.addEventListener('click', () => {
-    [filterQuery, filterRank, filterStatus, filterActivation, filterHireDateFrom, filterHireDateTo].forEach((input) => {
+    [filterQuery, filterRank, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {
       if (!input) return;
       input.value = '';
     });
@@ -1848,7 +1835,6 @@ export async function initManageEmployees(config) {
         robloxUserId: String(data.get('robloxUserId') || '').trim(),
         rank: String(data.get('rank') || '').trim(),
         employeeStatus: String(data.get('employeeStatus') || '').trim(),
-        activationStatus: String(data.get('activationStatus') || '').trim(),
         hireDate: String(data.get('hireDate') || '').trim()
       });
       createForm.reset();
