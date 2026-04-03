@@ -1,21 +1,17 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Frontier Oil & Gas Company activity tracker." />
     <title>Frontier Oil & Gas Company | Activity Tracker</title>
-    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260325fix" />
-    <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260325fix" />
-    <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260325fix" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap" rel="stylesheet" />
 
 
 
-
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327031757" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327032909" />
   </head>
   <body class="page page-intranet">
     <header class="site-header">
@@ -45,13 +41,24 @@
 
         <section id="protectedContent" class="hidden admin-employees-stack">
           <article class="panel">
+            <div class="button-row" style="margin-top: 0; margin-bottom: 1rem;">
+              <button class="btn btn-secondary" type="button" data-activity-preset="review">Needs Review</button>
+              <button class="btn btn-secondary" type="button" data-activity-preset="no_voyages">No Voyages</button>
+              <button class="btn btn-secondary" type="button" data-activity-preset="on_track">On Track</button>
+              <button class="btn btn-secondary" type="button" data-activity-preset="all_active">All Active</button>
+            </div>
+            <div id="activitySummaryGrid" class="card-grid" style="margin-bottom: 1rem;"></div>
             <div class="admin-employees-filter-main">
               <div>
                 <label for="activitySearch">Search</label>
                 <input id="activitySearch" type="text" placeholder="Username or Roblox ID" />
               </div>
               <div>
-                <label for="activityMinVoyages">Minimum Voyages</label>
+                <label for="activityQuotaTarget">Quota Target</label>
+                <input id="activityQuotaTarget" type="number" min="1" step="1" placeholder="e.g. 4" />
+              </div>
+              <div>
+                <label for="activityMinVoyages">Minimum Voyages (Advanced)</label>
                 <input id="activityMinVoyages" type="number" min="0" step="1" placeholder="e.g. 4" />
               </div>
               <div>
@@ -70,6 +77,13 @@
                 <label for="activityDateTo">Date To</label>
                 <input id="activityDateTo" type="date" />
               </div>
+              <div>
+                <label for="activityActiveOnly">Scope</label>
+                <label style="display:flex; align-items:center; gap:.5rem; margin-top:.75rem;">
+                  <input id="activityActiveOnly" type="checkbox" checked style="width:auto; margin:0;" />
+                  <span>Active staff only</span>
+                </label>
+              </div>
             </div>
           </article>
 
@@ -78,13 +92,16 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Employee ID</th>
                     <th>Username</th>
                     <th>Rank</th>
-                    <th>Total Voyages</th>
-                    <th>Officer of the Watch (OOTW)</th>
-                    <th>Crew</th>
+                    <th>Status</th>
+                    <th>Completed</th>
+                    <th>Target</th>
+                    <th>Shortfall</th>
+                    <th>OOTW / Crew</th>
                     <th>Last Ended Voyage</th>
+                    <th>Days Idle</th>
+                    <th>Recommendation</th>
                   </tr>
                 </thead>
                 <tbody id="activityTrackerBody"></tbody>
@@ -101,7 +118,6 @@
         </section>
       </div>
     </main>
-    <script type="module" src="/assets/dist/js/activity-tracker-page.bundle.js?v=20260325144816"></script>
+    <script type="module" src="/assets/js/pages/activity-tracker-page.js?v=20260404a"></script>
   </body>
 </html>
-

@@ -544,7 +544,11 @@ export function listActivityTracker(options = {}) {
   if (options.minVoyages !== undefined && options.minVoyages !== null && String(options.minVoyages).trim() !== '') {
     params.set('minVoyages', String(options.minVoyages));
   }
+  if (options.quotaTarget !== undefined && options.quotaTarget !== null && String(options.quotaTarget).trim() !== '') {
+    params.set('quotaTarget', String(options.quotaTarget));
+  }
   if (options.quotaFilter) params.set('quotaFilter', String(options.quotaFilter));
+  if (options.activeOnly !== undefined && options.activeOnly !== null) params.set('activeOnly', options.activeOnly ? 'true' : 'false');
   if (options.page) params.set('page', String(options.page));
   if (options.pageSize) params.set('pageSize', String(options.pageSize));
   params.set('tzOffsetMinutes', String(clientTzOffsetMinutes()));
@@ -564,7 +568,11 @@ export function getActivityTrackerCsvUrl(options = {}) {
   if (options.minVoyages !== undefined && options.minVoyages !== null && String(options.minVoyages).trim() !== '') {
     params.set('minVoyages', String(options.minVoyages));
   }
+  if (options.quotaTarget !== undefined && options.quotaTarget !== null && String(options.quotaTarget).trim() !== '') {
+    params.set('quotaTarget', String(options.quotaTarget));
+  }
   if (options.quotaFilter) params.set('quotaFilter', String(options.quotaFilter));
+  if (options.activeOnly !== undefined && options.activeOnly !== null) params.set('activeOnly', options.activeOnly ? 'true' : 'false');
   params.set('format', 'csv');
   params.set('tzOffsetMinutes', String(clientTzOffsetMinutes()));
   return `/api/admin/activity-tracker?${params.toString()}`;
