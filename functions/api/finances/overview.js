@@ -75,7 +75,6 @@ function shiftRangeWindow(range, start, end, offset) {
 
 function bucketForDate(range, date, rangeStart, tzOffsetMinutes) {
   const localDate = localByOffset(date, tzOffsetMinutes);
-  const localRangeStart = localByOffset(rangeStart, tzOffsetMinutes);
   if (range === 'week' || range === 'month') {
     return {
       key: isoDay(localDate),
@@ -84,15 +83,10 @@ function bucketForDate(range, date, rangeStart, tzOffsetMinutes) {
   }
 
   if (range === '3m' || range === '6m') {
-    const stepDays = range === '3m' ? 7 : 14;
-    const base = startOfUtcWeek(localRangeStart);
-    const weekStart = startOfUtcWeek(localDate);
-    const diffDays = Math.max(0, Math.floor((weekStart.getTime() - base.getTime()) / 86400000));
-    const steppedDays = Math.floor(diffDays / stepDays) * stepDays;
-    const bucketStart = addDays(base, steppedDays);
+    const bucketStart = new Date(Date.UTC(localDate.getUTCFullYear(), localDate.getUTCMonth(), 1, 0, 0, 0, 0));
     return {
       key: isoDay(bucketStart),
-      label: bucketStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
+      label: bucketStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' })
     };
   }
 
@@ -119,11 +113,13 @@ function buildBuckets(range, start, end, tzOffsetMinutes) {
   }
 
   if (range === '3m' || range === '6m') {
-    const stepDays = range === '3m' ? 7 : 14;
-    let cursor = startOfUtcWeek(localStart);
+    let cursor = new Date(Date.UTC(localStart.getUTCFullYear(), localStart.getUTCMonth(), 1, 0, 0, 0, 0));
     while (cursor <= localEnd) {
-      buckets.push({ key: isoDay(cursor), label: cursor.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }) });
-      cursor = addDays(cursor, stepDays);
+      buckets.push({
+        key: isoDay(cursor),
+        label: cursor.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' })
+      });
+      cursor = addMonths(cursor, 1);
     }
     return buckets;
   }

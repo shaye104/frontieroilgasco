@@ -206,13 +206,8 @@ function bucketForRange(date, range, anchorStart) {
   }
 
   if (range === '3m' || range === '6m') {
-    const stepDays = range === '3m' ? 7 : 14;
-    const anchor = startOfUtcWeek(anchorStart || date);
-    const weekStart = startOfUtcWeek(date);
-    const diffDays = Math.max(0, Math.floor((weekStart.getTime() - anchor.getTime()) / 86400000));
-    const steppedDays = Math.floor(diffDays / stepDays) * stepDays;
-    const bucketStart = addUtcDays(anchor, steppedDays);
-    const key = bucketStart.toISOString().slice(0, 10);
+    const bucketStart = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1, 0, 0, 0, 0));
+    const key = `${bucketStart.getUTCFullYear()}-${String(bucketStart.getUTCMonth() + 1).padStart(2, '0')}`;
     return { key, label: key };
   }
 
@@ -511,7 +506,7 @@ function rangeWindow(range) {
     const day = now.getDay();
     const mondayDelta = day === 0 ? -6 : 1 - day;
     start.setDate(now.getDate() + mondayDelta);
-    end.setDate(start.getDate() + 4);
+    end.setDate(start.getDate() + 6);
   } else if (range === 'month') {
     start.setDate(1);
     end.setMonth(now.getMonth() + 1, 0);
@@ -1552,7 +1547,7 @@ function closeCashflowModal() {
 }
 
 function renderCashflowSkeleton() {
-  ['#cashflowKpiIn', '#cashflowKpiOut', '#cashflowKpiNet'].forEach((selector) => {
+  ['#cashflowKpiIn', '#cashflowKpiOut', '#cashflowKpiNet', '#cashflowKpiBalance'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-value-skeleton"></span>';
   });
@@ -1717,6 +1712,9 @@ function renderCollectorRemittances(state) {
 }
 function renderCashflowPanel(state) {
   const kpis = state.cashflowKpis || {};
+  const balance = $('#cashflowKpiBalance');
+  if (balance) balance.textContent = formatGuilders(kpis.currentCashBalance || 0);
+
   const cashIn = $('#cashflowKpiIn');
   if (cashIn) cashIn.textContent = formatGuilders(kpis.cashIn || 0);
 
@@ -1727,13 +1725,7 @@ function renderCashflowPanel(state) {
   if (net) {
     const netValue = Number(kpis.netCashflow || 0);
     net.textContent = formatGuilders(netValue);
-    if (netValue > 0) {
-      net.style.color = '#15803d';
-    } else if (netValue < 0) {
-      net.style.color = '#b91c1c';
-    } else {
-      net.style.color = '#334155';
-    }
+    net.style.color = '';
   }
 
   renderCashflowRows(state);
@@ -2188,24 +2180,6 @@ async function loadOverview(state) {
     const previousError = previous?.__error || null;
     let effectiveCurrent = currentError ? { kpis: {} } : current || {};
     let effectivePrevious = previousError ? { kpis: {} } : previous || {};
-
-    const kpis = effectiveCurrent?.kpis || {};
-    const hasSelectedRangeData =
-      Number(kpis.completedVoyages || 0) > 0 ||
-      Number(kpis.grossRevenue || 0) !== 0 ||
-      Number(kpis.netProfit || 0) !== 0 ||
-      Number(kpis.companyShareEarnings || 0) !== 0 ||
-      Number(kpis.freightLossesValue || 0) !== 0;
-
-    if (!hasSelectedRangeData && state.range !== 'all') {
-      const allTime = await fetchJson(
-        `/api/finances/overview?range=all&unsettledScope=all&tzOffsetMinutes=${encodeURIComponent(String(CLIENT_TZ_OFFSET_MINUTES))}&${cacheBust}`
-      ).catch(() => null);
-      if (allTime && allTime.kpis) {
-        effectiveCurrent = allTime;
-        effectivePrevious = { kpis: {} };
-      }
-    }
 
     const stillEmptyAfterFallback =
       Number(effectiveCurrent?.kpis?.completedVoyages || 0) <= 0 &&

@@ -157,10 +157,12 @@ export async function onRequestGet(context) {
   const kpiFromIso = null;
   const kpiToIso = null;
 
-  const [balanceSnapshot, periodSnapshotBase, legacyPeriodSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult, reimbursementSettledByResult] = await Promise.all([
+  const [balanceSnapshot, periodSnapshotBase, overallSnapshotBase, legacyPeriodSnapshot, legacyOverallSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult, reimbursementSettledByResult] = await Promise.all([
     getCurrentCashBalance(env),
     getCashflowPeriodSnapshot(env, kpiFromIso, kpiToIso),
+    getCashflowPeriodSnapshot(env),
     getLegacySolvedCashflowTotals(env, kpiFromIso, kpiToIso, tzOffsetMinutes),
+    getLegacySolvedCashflowTotals(env, null, null, tzOffsetMinutes),
     env.DB
       .prepare(
         `SELECT COUNT(*) AS total
@@ -273,6 +275,17 @@ export async function onRequestGet(context) {
       Number(periodSnapshotBase.netCashflow || 0) + Number(legacyPeriodSnapshot.netCashflow || 0)
     )
   };
+  const overallSnapshot = {
+    cashIn: toMoney(Number(overallSnapshotBase.cashIn || 0) + Number(legacyOverallSnapshot.cashIn || 0)),
+    cashOut: toMoney(Number(overallSnapshotBase.cashOut || 0) + Number(legacyOverallSnapshot.cashOut || 0)),
+    netCashflow: toMoney(Number(overallSnapshotBase.netCashflow || 0) + Number(legacyOverallSnapshot.netCashflow || 0))
+  };
+  const effectiveBalanceSnapshot = {
+    ...(balanceSnapshot || {}),
+    currentBalance: toMoney(overallSnapshot.netCashflow),
+    cashInTotal: toMoney(overallSnapshot.cashIn),
+    cashOutTotal: toMoney(overallSnapshot.cashOut)
+  };
 
   const rows = (rowsResult?.results || []).map((row) => ({
     id: Number(row.id || 0),
@@ -346,12 +359,12 @@ export async function onRequestGet(context) {
     {
       range: rangeWindow.range,
       kpis: {
-        currentCashBalance: toMoney(balanceSnapshot.currentBalance),
+        currentCashBalance: toMoney(effectiveBalanceSnapshot.currentBalance),
         cashIn: toMoney(periodSnapshot.cashIn),
         cashOut: toMoney(periodSnapshot.cashOut),
         netCashflow: toMoney(periodSnapshot.netCashflow)
       },
-      balance: balanceSnapshot,
+      balance: effectiveBalanceSnapshot,
       period: periodSnapshot,
       rows,
       voyageOptions,

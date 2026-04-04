@@ -69,7 +69,7 @@ export function getFinanceRangeWindow(range, now = new Date(), tzOffsetMinutes =
 
   if (normalized === 'week') {
     localStart = startOfUtcWeekMonday(localEndOfToday);
-    localEnd = addUtcDays(localStart, 4);
+    localEnd = addUtcDays(localStart, 6);
   } else if (normalized === 'month') {
     localStart = startOfUtcMonth(localEndOfToday);
     localEnd = endOfUtcMonth(localEndOfToday);

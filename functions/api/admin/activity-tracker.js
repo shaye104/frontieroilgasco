@@ -219,10 +219,11 @@ export async function onRequestGet(context) {
     LEFT JOIN stats ON stats.employee_id = e.id
     ${hasLegacyHistory ? "LEFT JOIN legacy_stats ON legacy_stats.username_key = LOWER(TRIM(COALESCE(e.roblox_username, '')))" : ''}
     ${whereSql}`;
+  const rankedBaseSql = `SELECT * FROM (${baseSql}) tracker`;
 
   if (format === 'csv') {
     const exportRows = await env.DB
-      .prepare(`${baseSql} ORDER BY total_voyages ASC, last_voyage_at ASC, e.roblox_username ASC, e.id ASC LIMIT 2000`)
+      .prepare(`${rankedBaseSql} ORDER BY tracker.total_voyages ASC, tracker.last_voyage_at ASC, tracker.roblox_username ASC, tracker.employee_id ASC LIMIT 2000`)
       .bind(...bindsWithFilters)
       .all();
     const rows = (exportRows?.results || []).map((row) => ({
@@ -250,7 +251,7 @@ export async function onRequestGet(context) {
 
   const [rowsResult, totalResult, summaryResult] = await Promise.all([
     env.DB
-      .prepare(`${baseSql} ORDER BY CASE WHEN ${totalVoyagesExpr} < ? THEN 0 ELSE 1 END ASC, (? - ${totalVoyagesExpr}) DESC, CASE WHEN last_voyage_at IS NULL THEN 1 ELSE 0 END DESC, last_voyage_at ASC, e.roblox_username ASC, e.id ASC LIMIT ? OFFSET ?`)
+      .prepare(`${rankedBaseSql} ORDER BY CASE WHEN tracker.total_voyages < ? THEN 0 ELSE 1 END ASC, (? - tracker.total_voyages) DESC, CASE WHEN tracker.last_voyage_at IS NULL THEN 1 ELSE 0 END DESC, tracker.last_voyage_at ASC, tracker.roblox_username ASC, tracker.employee_id ASC LIMIT ? OFFSET ?`)
       .bind(...bindsWithFilters, quotaTarget, quotaTarget, pageSize, offset)
       .all(),
     env.DB
@@ -295,12 +296,7 @@ export async function onRequestGet(context) {
       daysSinceLastVoyage,
       quotaTarget,
       shortfall,
-      meetsQuota,
-      recommendation: !totalVoyagesValue
-        ? 'Urgent review'
-        : !meetsQuota
-          ? 'Review'
-          : 'On track'
+      meetsQuota
     };
   });
   const rows = allRows;
@@ -310,6 +306,7 @@ export async function onRequestGet(context) {
     summary: {
       total: Number(summaryResult?.total || 0),
       atRisk: Number(summaryResult?.at_risk || 0),
+      belowQuota: Math.max(0, Number(summaryResult?.at_risk || 0) - Number(summaryResult?.no_voyages || 0)),
       onTrack: Number(summaryResult?.on_track || 0),
       noVoyages: Number(summaryResult?.no_voyages || 0),
       inactive14Plus: Number(summaryResult?.inactive_14_plus || 0),
