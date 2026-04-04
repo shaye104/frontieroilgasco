@@ -110,6 +110,9 @@ export async function onRequestGet(context) {
     whereParts.push(`(LOWER(COALESCE(e.roblox_username, '')) LIKE ? OR LOWER(COALESCE(e.roblox_user_id, '')) LIKE ?)`);
     whereBindings.push(`%${query}%`, `%${query}%`);
   }
+  if (!statusFilter) {
+    whereParts.push(`UPPER(COALESCE(e.employee_status, 'ACTIVE')) != 'REMOVED'`);
+  }
   if (rankFilter) {
     whereParts.push(`LOWER(COALESCE(e.rank, '')) = LOWER(?)`);
     whereBindings.push(rankFilter);
@@ -136,6 +139,12 @@ export async function onRequestGet(context) {
   const allWhereParts = [...visibilityWhereParts, ...whereParts];
   const allWhereBindings = [...visibilityBindings, ...whereBindings];
   const whereSql = allWhereParts.length ? `WHERE ${allWhereParts.join(' AND ')}` : '';
+  const statsWhereParts = [...visibilityWhereParts];
+  const statsBindings = [...visibilityBindings];
+  if (!statusFilter) {
+    statsWhereParts.push(`UPPER(COALESCE(e.employee_status, 'ACTIVE')) != 'REMOVED'`);
+  }
+  const statsWhereSql = statsWhereParts.length ? `WHERE ${statsWhereParts.join(' AND ')}` : '';
 
   const dbStartedAt = Date.now();
   const [result, totalRow, statsRow, configBootstrap] = await Promise.all([
@@ -161,9 +170,9 @@ export async function onRequestGet(context) {
            SUM(CASE WHEN UPPER(COALESCE(employee_status, '')) = 'DEACTIVATED' THEN 1 ELSE 0 END) AS pending_activation
          FROM employees e
          ${rankJoinSql}
-         ${visibilityWhereParts.length ? `WHERE ${visibilityWhereParts.join(' AND ')}` : ''}`
+         ${statsWhereSql}`
       )
-      .bind(...visibilityBindings)
+      .bind(...statsBindings)
       .first(),
     includeConfig
       ? Promise.all([

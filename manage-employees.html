@@ -16,7 +16,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260404002854" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260404011647" />
   </head>
   <body class="page page-intranet page-manage-employees">
     <header class="site-header">
@@ -41,6 +41,7 @@
               <a class="btn btn-secondary" href="/admin/activity">Activity Tracker</a>
               <button id="runEmployeeScanBtn" class="btn btn-secondary" type="button">Run Scan</button>
               <button id="openJoinRequestsBtn" class="btn btn-secondary" type="button">Join Requests</button>
+              <button id="openRemovedEmployeesBtn" class="btn btn-secondary" type="button">Removed</button>
             </div>
             <div class="button-row admin-employees-header-actions-primary">
               <button id="openDeleteUserBtn" class="btn btn-danger" type="button">Delete User</button>
@@ -408,7 +409,38 @@
       </div>
     </section>
 
-    <script type="module" src="/assets/dist/js/manage-employees-page.bundle.js?v=20260327143000"></script>
+    <section id="removedEmployeesModal" class="modal-overlay hidden" aria-hidden="true">
+      <div class="modal-card join-requests-modal-card">
+        <div class="modal-header join-requests-modal-header">
+          <div>
+            <h2>Removed Employees</h2>
+            <p id="removedEmployeesSummary" class="finance-inline-caption">Loading removed employees...</p>
+          </div>
+          <div class="join-requests-modal-controls">
+            <button id="refreshRemovedEmployeesBtn" class="btn btn-secondary" type="button">Refresh</button>
+            <button class="btn btn-secondary" type="button" data-close-modal="removedEmployeesModal">Close</button>
+          </div>
+        </div>
+        <div id="removedEmployeesFeedback" class="feedback" role="status" aria-live="polite"></div>
+        <div class="table-wrap">
+          <table class="data-table join-requests-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Rank</th>
+                <th>Updated</th>
+                <th class="align-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="removedEmployeesTableBody">
+              <tr><td colspan="4">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260404a"></script>
   </body>
 </html>
 

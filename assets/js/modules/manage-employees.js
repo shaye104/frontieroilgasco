@@ -1008,6 +1008,12 @@ export async function initManageEmployees(config) {
   const joinRequestsModal = document.querySelector('#joinRequestsModal');
   const joinRequestsFeedback = document.querySelector('#joinRequestsFeedback');
   const joinRequestsTableBody = document.querySelector('#joinRequestsTableBody');
+  const openRemovedEmployeesBtn = document.querySelector('#openRemovedEmployeesBtn');
+  const refreshRemovedEmployeesBtn = document.querySelector('#refreshRemovedEmployeesBtn');
+  const removedEmployeesModal = document.querySelector('#removedEmployeesModal');
+  const removedEmployeesFeedback = document.querySelector('#removedEmployeesFeedback');
+  const removedEmployeesSummary = document.querySelector('#removedEmployeesSummary');
+  const removedEmployeesTableBody = document.querySelector('#removedEmployeesTableBody');
   const createForm = document.querySelector(config.createFormSelector);
   const openDeleteUserBtn = document.querySelector('#openDeleteUserBtn');
   const deleteUserForm = document.querySelector('#deleteUserForm');
@@ -1047,6 +1053,8 @@ export async function initManageEmployees(config) {
     },
     joinRequests: [],
     joinRequestsLoading: false,
+    removedEmployees: [],
+    removedEmployeesLoading: false,
     employeeScanRows: [],
     employeeScanLoading: false,
     employeeScanGroups: []
@@ -1246,6 +1254,63 @@ export async function initManageEmployees(config) {
       state.joinRequestsLoading = false;
       renderJoinRequestsTable();
       if (refreshJoinRequestsBtn) refreshJoinRequestsBtn.disabled = false;
+    }
+  }
+
+  function renderRemovedEmployeesTable() {
+    if (!removedEmployeesTableBody) return;
+    const rows = Array.isArray(state.removedEmployees) ? state.removedEmployees : [];
+    if (!rows.length) {
+      removedEmployeesTableBody.innerHTML = '<tr><td colspan="4">No removed employees found.</td></tr>';
+      return;
+    }
+    removedEmployeesTableBody.innerHTML = rows
+      .map(
+        (row) => `<tr>
+          <td>
+            <strong>${escapeHtml(text(row.roblox_username || `Employee #${Number(row.id || 0)}`))}</strong>
+            <small>${escapeHtml(text(row.roblox_user_id || 'No Roblox ID'))}</small>
+          </td>
+          <td>${escapeHtml(text(row.rank))}</td>
+          <td>${escapeHtml(formatDate(row.updated_at, true))}</td>
+          <td class="align-right">
+            <button class="btn btn-secondary btn-compact" type="button" data-open-removed-drawer="${Number(row.id || 0)}">Open Drawer</button>
+          </td>
+        </tr>`
+      )
+      .join('');
+  }
+
+  async function loadRemovedEmployees() {
+    if (!removedEmployeesTableBody) return;
+    state.removedEmployeesLoading = true;
+    removedEmployeesTableBody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+    if (removedEmployeesSummary) removedEmployeesSummary.textContent = 'Loading removed employees...';
+    if (refreshRemovedEmployeesBtn) refreshRemovedEmployeesBtn.disabled = true;
+    if (removedEmployeesFeedback) clearMessage(removedEmployeesFeedback);
+    try {
+      const rawPayload = await listEmployees({
+        status: 'Removed',
+        sortBy: 'updated_at',
+        sortDir: 'desc',
+        page: 1,
+        pageSize: 200
+      });
+      const payload = normalizeEmployeesPayload(rawPayload);
+      state.removedEmployees = Array.isArray(payload?.employees) ? payload.employees : [];
+      renderRemovedEmployeesTable();
+      if (removedEmployeesSummary) {
+        removedEmployeesSummary.textContent = `${Number(payload?.pagination?.total || state.removedEmployees.length || 0)} removed employee${Number(payload?.pagination?.total || state.removedEmployees.length || 0) === 1 ? '' : 's'}.`;
+      }
+    } catch (error) {
+      state.removedEmployees = [];
+      removedEmployeesTableBody.innerHTML = '<tr><td colspan="4">Unable to load removed employees.</td></tr>';
+      if (removedEmployeesSummary) removedEmployeesSummary.textContent = 'Unable to load removed employees.';
+      if (removedEmployeesFeedback) showMessage(removedEmployeesFeedback, error.message || 'Unable to load removed employees.', 'error');
+    } finally {
+      state.removedEmployeesLoading = false;
+      renderRemovedEmployeesTable();
+      if (refreshRemovedEmployeesBtn) refreshRemovedEmployeesBtn.disabled = false;
     }
   }
 
@@ -1486,6 +1551,13 @@ export async function initManageEmployees(config) {
   });
   refreshJoinRequestsBtn?.addEventListener('click', async () => {
     await loadJoinRequests();
+  });
+  openRemovedEmployeesBtn?.addEventListener('click', async () => {
+    openModal('removedEmployeesModal');
+    await loadRemovedEmployees();
+  });
+  refreshRemovedEmployeesBtn?.addEventListener('click', async () => {
+    await loadRemovedEmployees();
   });
   openDeleteUserBtn?.addEventListener('click', () => openModal('deleteUserModal'));
   document.querySelectorAll('[data-close-modal]').forEach((button) => {
@@ -1814,6 +1886,12 @@ export async function initManageEmployees(config) {
     const button = event.target instanceof HTMLElement ? event.target.closest('[data-open-scan-drawer]') : null;
     if (!button) return;
     const employeeId = Number(button.getAttribute('data-open-scan-drawer'));
+    if (Number.isInteger(employeeId) && employeeId > 0) void openDrawer(employeeId);
+  });
+  removedEmployeesTableBody?.addEventListener('click', (event) => {
+    const button = event.target instanceof HTMLElement ? event.target.closest('[data-open-removed-drawer]') : null;
+    if (!button) return;
+    const employeeId = Number(button.getAttribute('data-open-removed-drawer'));
     if (Number.isInteger(employeeId) && employeeId > 0) void openDrawer(employeeId);
   });
 
