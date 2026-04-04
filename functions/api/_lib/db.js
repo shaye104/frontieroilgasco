@@ -8,7 +8,7 @@ let schemaBootstrapPromise = null;
 let schemaCheckedAtMs = 0;
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
 const CORE_DATA_SEED_VERSION = '2026-02-28-core-v3';
-const SCHEMA_BOOTSTRAP_VERSION = '2026-04-04-schema-v14';
+const SCHEMA_BOOTSTRAP_VERSION = '2026-04-04-schema-v15';
 const DEFAULT_EMPLOYEE_STATUS_BEHAVIOR = {
   Active: { accessMode: 'normal', showNotice: 0, removeFromGroup: 0, restrictIntranet: 0, excludeFromStats: 0 },
   'On Leave': { accessMode: 'normal', showNotice: 0, removeFromGroup: 0, restrictIntranet: 0, excludeFromStats: 0 },
@@ -55,6 +55,58 @@ function normalizeLegacyEmployeeStatusValue(value, activationStatus = '') {
   if (normalizedActivation === 'DISABLED') return 'Left';
   if (normalizedActivation === 'ACTIVE') return 'Active';
   return raw;
+}
+
+function pickConfiguredStatusValue(statusRows, lifecycleStatus) {
+  const rows = Array.isArray(statusRows) ? statusRows : [];
+  const normalizedTarget = String(lifecycleStatus || '').trim().toUpperCase();
+  if (!normalizedTarget) return '';
+
+  const normalizeValue = (value) => String(value || '').trim().replace(/[\s_-]+/g, ' ').trim().toUpperCase();
+  const findRow = (predicate) => rows.find((row) => predicate(row, normalizeValue(String(row?.value || '').trim())));
+
+  if (normalizedTarget === 'ACTIVE') {
+    return (
+      findRow((row, value) => value === 'ACTIVE')?.value ||
+      findRow(
+        (row) =>
+          String(row?.access_mode || '').trim().toLowerCase() === 'normal' &&
+          Number(row?.exclude_from_stats || 0) !== 1 &&
+          Number(row?.remove_from_group || 0) !== 1
+      )?.value ||
+      'Active'
+    );
+  }
+
+  if (normalizedTarget === 'REMOVED') {
+    return (
+      findRow((row, value) => value === 'REMOVED' || value === 'TERMINATED')?.value ||
+      findRow((row) => String(row?.access_mode || '').trim().toLowerCase() === 'removed_page')?.value ||
+      'Terminated'
+    );
+  }
+
+  if (normalizedTarget === 'LEFT') {
+    return (
+      findRow((row, value) => value === 'LEFT')?.value ||
+      findRow((row) => String(row?.access_mode || '').trim().toLowerCase() === 'blocked')?.value ||
+      'Left'
+    );
+  }
+
+  if (normalizedTarget === 'SUSPENDED') {
+    return (
+      findRow((row, value) => value === 'SUSPENDED')?.value ||
+      findRow((row) => String(row?.access_mode || '').trim().toLowerCase() === 'my_details_only')?.value ||
+      'Suspended'
+    );
+  }
+
+  if (normalizedTarget === 'DEACTIVATED') {
+    return findRow((row, value) => value === 'DEACTIVATED')?.value || 'Deactivated';
+  }
+
+  return '';
 }
 
 export async function ensureCoreSchema(env) {
@@ -1252,6 +1304,10 @@ export async function ensureCoreSchema(env) {
       .all();
     const statusRows = Array.isArray(configuredStatuses?.results) ? configuredStatuses.results : [];
     const statusByValue = new Map(statusRows.map((row) => [String(row?.value || '').trim().toLowerCase(), row]).filter(([value]) => value));
+    const activeStatusValue = pickConfiguredStatusValue(statusRows, 'ACTIVE');
+    const removedStatusValue = pickConfiguredStatusValue(statusRows, 'REMOVED');
+    const leftStatusValue = pickConfiguredStatusValue(statusRows, 'LEFT');
+    const deactivatedStatusValue = pickConfiguredStatusValue(statusRows, 'DEACTIVATED');
 
     for (const row of statusRows) {
       const currentValue = String(row?.value || '').trim();
@@ -1317,6 +1373,29 @@ export async function ensureCoreSchema(env) {
       await env.DB.batch(employeeUpdates);
     }
 
+    const blankStatusRows = await env.DB
+      .prepare(
+        `SELECT id, activation_status
+         FROM employees
+         WHERE TRIM(COALESCE(employee_status, '')) = ''`
+      )
+      .all();
+    const blankStatusUpdates = (blankStatusRows?.results || [])
+      .map((row) => {
+        const activationStatus = String(row?.activation_status || '').trim().toUpperCase();
+        let nextStatus = '';
+        if (activationStatus === 'ACTIVE') nextStatus = activeStatusValue;
+        else if (activationStatus === 'REJECTED') nextStatus = removedStatusValue;
+        else if (activationStatus === 'DISABLED') nextStatus = leftStatusValue;
+        else if (activationStatus === 'PENDING') nextStatus = deactivatedStatusValue;
+        if (!nextStatus) return null;
+        return env.DB.prepare(`UPDATE employees SET employee_status = ? WHERE id = ?`).bind(String(nextStatus).trim(), Number(row.id));
+      })
+      .filter(Boolean);
+    if (blankStatusUpdates.length) {
+      await env.DB.batch(blankStatusUpdates);
+    }
+
     const typeStatuses = await env.DB
       .prepare(`SELECT id, set_employee_status FROM config_disciplinary_types WHERE TRIM(COALESCE(set_employee_status, '')) != ''`)
       .all();
@@ -1337,16 +1416,18 @@ export async function ensureCoreSchema(env) {
         .prepare(
           `INSERT OR IGNORE INTO config_disciplinary_types
              (key, label, value, severity, is_active, default_status, requires_end_date, apply_suspension_rank, set_employee_status, updated_at, created_at)
-           VALUES ('TERMINATION', 'Termination', 'Termination', 5, 1, 'ACTIVE', 0, 0, 'Removed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-        ),
+           VALUES ('TERMINATION', 'Termination', 'Termination', 5, 1, 'ACTIVE', 0, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+        )
+        .bind(removedStatusValue || 'Terminated'),
       env.DB
         .prepare(
           `UPDATE config_disciplinary_types
            SET is_active = 1,
-               set_employee_status = COALESCE(NULLIF(TRIM(set_employee_status), ''), 'Removed'),
+               set_employee_status = COALESCE(NULLIF(TRIM(set_employee_status), ''), ?),
                updated_at = CURRENT_TIMESTAMP
            WHERE UPPER(COALESCE(key, '')) = 'TERMINATION'`
         )
+        .bind(removedStatusValue || 'Terminated')
     ]);
   } catch {
     // Keep status normalization non-fatal on odd legacy states.
