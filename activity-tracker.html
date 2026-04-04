@@ -9,9 +9,74 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap" rel="stylesheet" />
 
-
-
       <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260327032909" />
+      <style>
+        .activity-tracker-panel {
+          padding: .9rem 1.05rem;
+        }
+        .activity-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: .6rem;
+          margin-bottom: .65rem;
+        }
+        .activity-summary-stat {
+          border: 1px solid var(--color-border);
+          border-radius: 10px;
+          padding: .5rem .7rem;
+          background: #f8fbff;
+        }
+        .activity-summary-label {
+          margin: 0 0 .1rem;
+          font-size: .7rem;
+          letter-spacing: .04em;
+          text-transform: uppercase;
+          color: var(--color-muted);
+        }
+        .activity-summary-value {
+          display: block;
+          font-size: 1.3rem;
+          line-height: 1;
+        }
+        .activity-filter-grid {
+          display: grid;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: .6rem;
+          align-items: end;
+        }
+        .activity-filter-grid input,
+        .activity-filter-grid select {
+          margin-bottom: 0;
+        }
+        .activity-scope-toggle {
+          display: flex;
+          align-items: center;
+          gap: .5rem;
+          min-height: 40px;
+          margin-top: .35rem;
+        }
+        .activity-scope-toggle input {
+          width: auto;
+          margin: 0;
+        }
+        .activity-advanced-row {
+        }
+        @media (max-width: 1200px) {
+          .activity-summary-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+          .activity-filter-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+        @media (max-width: 760px) {
+          .activity-summary-grid,
+          .activity-filter-grid,
+          .activity-advanced-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      </style>
   </head>
   <body class="page page-intranet">
     <header class="site-header">
@@ -40,15 +105,9 @@
         </section>
 
         <section id="protectedContent" class="hidden admin-employees-stack">
-          <article class="panel">
-            <div class="button-row" style="margin-top: 0; margin-bottom: 1rem;">
-              <button class="btn btn-secondary" type="button" data-activity-preset="review">Needs Review</button>
-              <button class="btn btn-secondary" type="button" data-activity-preset="no_voyages">No Voyages</button>
-              <button class="btn btn-secondary" type="button" data-activity-preset="on_track">On Track</button>
-              <button class="btn btn-secondary" type="button" data-activity-preset="all_active">All Active</button>
-            </div>
-            <div id="activitySummaryGrid" class="card-grid" style="margin-bottom: 1rem;"></div>
-            <div class="admin-employees-filter-main">
+          <article class="panel activity-tracker-panel">
+            <div id="activitySummaryGrid" class="activity-summary-grid"></div>
+            <div class="activity-filter-grid">
               <div>
                 <label for="activitySearch">Search</label>
                 <input id="activitySearch" type="text" placeholder="Username or Roblox ID" />
@@ -56,10 +115,6 @@
               <div>
                 <label for="activityQuotaTarget">Quota Target</label>
                 <input id="activityQuotaTarget" type="number" min="1" step="1" placeholder="e.g. 4" />
-              </div>
-              <div>
-                <label for="activityMinVoyages">Minimum Voyages (Advanced)</label>
-                <input id="activityMinVoyages" type="number" min="0" step="1" placeholder="e.g. 4" />
               </div>
               <div>
                 <label for="activityQuotaFilter">Quota Filter</label>
@@ -79,8 +134,8 @@
               </div>
               <div>
                 <label for="activityActiveOnly">Scope</label>
-                <label style="display:flex; align-items:center; gap:.5rem; margin-top:.75rem;">
-                  <input id="activityActiveOnly" type="checkbox" checked style="width:auto; margin:0;" />
+                <label class="activity-scope-toggle">
+                  <input id="activityActiveOnly" type="checkbox" checked />
                   <span>Active staff only</span>
                 </label>
               </div>
@@ -97,11 +152,9 @@
                     <th>Status</th>
                     <th>Completed</th>
                     <th>Target</th>
-                    <th>Shortfall</th>
                     <th>OOTW / Crew</th>
                     <th>Last Ended Voyage</th>
                     <th>Days Idle</th>
-                    <th>Recommendation</th>
                   </tr>
                 </thead>
                 <tbody id="activityTrackerBody"></tbody>
