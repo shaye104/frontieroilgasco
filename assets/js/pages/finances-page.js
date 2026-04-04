@@ -1,4 +1,4 @@
-﻿import { hasPermission, performLogout, renderIntranetNavbar } from '../modules/nav.js?v=20260222a';
+import { hasPermission, performLogout, renderIntranetNavbar } from '../modules/nav.js?v=20260222a';
 import { dateInputToUtcIso, formatLocalDateTime, getClientTimezoneOffsetMinutes } from '../modules/local-datetime.js';
 
 function $(selector) {
@@ -61,11 +61,11 @@ function text(value) {
 
 function escapeHtml(value) {
   return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function cleanSerial(value) {
@@ -153,9 +153,6 @@ function formatDateLabel(value, fallbackLabel = '') {
   } else if (/^\d{4}-\d{2}$/.test(raw)) {
     monthly = true;
     date = new Date(`${raw}-01T00:00:00`);
-  } else {
-    const parsed = new Date(raw);
-    if (!Number.isNaN(parsed.getTime())) date = parsed;
   }
 
   if (!date || Number.isNaN(date.getTime())) return text(fallbackLabel || raw);
@@ -163,136 +160,6 @@ function formatDateLabel(value, fallbackLabel = '') {
     return date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
   }
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
-function parseFinanceDate(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(`${raw}T00:00:00Z`);
-  if (/^\d{4}-\d{2}$/.test(raw)) return new Date(`${raw}-01T00:00:00Z`);
-  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(raw)) {
-    return new Date(raw.replace(' ', 'T') + 'Z');
-  }
-  const parsed = new Date(raw);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function toDayBucketKey(value) {
-  const parsed = parseFinanceDate(value);
-  if (!parsed || Number.isNaN(parsed.getTime())) return '';
-  return parsed.toISOString().slice(0, 10);
-}
-
-function startOfUtcWeek(date) {
-  const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
-  const day = next.getUTCDay();
-  const delta = day === 0 ? -6 : 1 - day;
-  next.setUTCDate(next.getUTCDate() + delta);
-  return next;
-}
-
-function addUtcDays(date, days) {
-  const next = new Date(date.getTime());
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-}
-
-function bucketForRange(date, range, anchorStart) {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
-
-  if (range === 'week' || range === 'month') {
-    const key = date.toISOString().slice(0, 10);
-    return { key, label: key };
-  }
-
-  if (range === '3m' || range === '6m') {
-    const bucketStart = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1, 0, 0, 0, 0));
-    const key = `${bucketStart.getUTCFullYear()}-${String(bucketStart.getUTCMonth() + 1).padStart(2, '0')}`;
-    return { key, label: key };
-  }
-
-  const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-  return { key, label: key };
-}
-
-function aggregateTrendForRange(series, range, mode = 'sum') {
-  const rows = Array.isArray(series) ? series : [];
-  const viewport = rangeWindow(range);
-  const anchorStart = new Date(Date.UTC(viewport.start.getFullYear(), viewport.start.getMonth(), viewport.start.getDate(), 0, 0, 0, 0));
-  const map = new Map();
-
-  rows.forEach((point) => {
-    const parsed = parseFinanceDate(point?.key || point?.label || '');
-    const bucketInfo = bucketForRange(parsed, range, anchorStart);
-    if (!bucketInfo?.key) return;
-    if (!map.has(bucketInfo.key)) {
-      map.set(bucketInfo.key, { key: bucketInfo.key, label: bucketInfo.label, sum: 0, count: 0, last: 0 });
-    }
-    const bucket = map.get(bucketInfo.key);
-    bucket.sum += Number(point?.value || 0);
-    bucket.count += 1;
-    bucket.last = Number(point?.value || 0);
-  });
-
-  return [...map.values()]
-    .sort((a, b) => a.key.localeCompare(b.key))
-    .map((bucket) => ({
-      key: bucket.key,
-      label: bucket.label,
-      value:
-        mode === 'avg'
-          ? toMoney(bucket.sum / Math.max(1, bucket.count))
-          : mode === 'last'
-          ? toMoney(bucket.last)
-          : toMoney(bucket.sum)
-    }));
-}
-
-function sumSeriesValues(series) {
-  return toMoney((Array.isArray(series) ? series : []).reduce((sum, point) => sum + Number(point?.value || 0), 0));
-}
-
-function normalizeOverviewChartsForRange(data, range) {
-  if (!data || typeof data !== 'object') return data;
-  const charts = data.charts || {};
-  const netProfitTrend = aggregateTrendForRange(charts.netProfitTrend || [], range, 'sum');
-  const companyShareTrend = aggregateTrendForRange(charts.companyShareTrend || [], range, 'sum');
-  const voyageCountTrend = aggregateTrendForRange(charts.voyageCountTrend || [], range, 'sum');
-  const freightLossValueTrend = aggregateTrendForRange(charts.freightLossValueTrend || [], range, 'sum');
-  const grossRevenueTrend = aggregateTrendForRange(charts.grossRevenueTrend || [], range, 'sum');
-  const outstandingTrend = aggregateTrendForRange(charts.outstandingTrend || companyShareTrend, range, 'last');
-  const avgNetProfitTrend = netProfitTrend.map((point, index) => ({
-    key: point.key,
-    label: point.label,
-    value:
-      Number(voyageCountTrend[index]?.value || 0) > 0
-        ? toMoney(Number(point.value || 0) / Math.max(1, Number(voyageCountTrend[index]?.value || 0)))
-        : toMoney(point.value || 0)
-  }));
-
-  const grossRevenueTotal = sumSeriesValues(grossRevenueTrend);
-  const netProfitTotal = sumSeriesValues(netProfitTrend);
-  const companyShareTotal = Number(data?.kpis?.companyShareEarnings || 0);
-
-  return {
-    ...data,
-    kpis: {
-      ...(data?.kpis || {}),
-      grossRevenue: grossRevenueTotal,
-      netProfit: netProfitTotal,
-      crewShare: Math.max(0, toMoney(grossRevenueTotal - companyShareTotal))
-    },
-    charts: {
-      ...charts,
-      netProfitTrend,
-      companyShareTrend,
-      voyageCountTrend,
-      freightLossValueTrend,
-      grossRevenueTrend,
-      avgNetProfitTrend,
-      outstandingTrend
-    }
-  };
 }
 
 function normalizeSeriesPoints(series) {
@@ -323,6 +190,7 @@ function normalizeSeriesPoints(series) {
 
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, {
+    cache: 'no-store',
     credentials: 'include',
     headers: {
       accept: 'application/json',
@@ -354,17 +222,22 @@ async function fetchJsonWithFallback(urls, options = {}) {
     throw new Error('Invalid request path.');
   }
   let lastError = null;
+  const attempts = [];
   for (let index = 0; index < candidates.length; index += 1) {
     try {
       return await fetchJson(candidates[index], options);
     } catch (error) {
       lastError = error;
       const status = Number(error?.status || 0);
+      attempts.push(`${candidates[index]} [${status || 'ERR'}]`);
       const retryable = status === 404 || status === 429 || status >= 500;
       const isFinal = index >= candidates.length - 1;
       if (!retryable || isFinal) break;
       await new Promise((resolve) => window.setTimeout(resolve, 180));
     }
+  }
+  if (lastError) {
+    lastError.message = `${lastError.message}${attempts.length ? ` | Attempts: ${attempts.join(', ')}` : ''}`;
   }
   throw lastError || new Error('Request failed');
 }
@@ -470,18 +343,18 @@ function toDelta(current, previous, range, invertDirection = false) {
   const label = previousRangeLabel(range);
 
   if (prev === 0 && now === 0) {
-    return { text: `\u2022 0% vs ${label}`, tone: 'neutral' };
+    return { text: `• 0% vs ${label}`, tone: 'neutral' };
   }
 
   if (prev === 0) {
     const tone = invertDirection ? 'negative' : 'positive';
-    const icon = '\u25B2';
+    const icon = '▲';
     return { text: `${icon} New vs ${label}`, tone };
   }
 
   const percent = Math.round((diff / Math.abs(prev)) * 100);
   const value = Math.abs(percent);
-  const icon = percent > 0 ? '\u25B2' : percent < 0 ? '\u25BC' : '\u2022';
+  const icon = percent > 0 ? '▲' : percent < 0 ? '▼' : '•';
   let tone = percent > 0 ? 'positive' : percent < 0 ? 'negative' : 'neutral';
   if (invertDirection && tone !== 'neutral') {
     tone = tone === 'positive' ? 'negative' : 'positive';
@@ -1208,7 +1081,7 @@ function alignProfitLossSeries(profitSeries, lossSeries) {
   });
 }
 
-function renderProfitLossChart(target, profitSeries, lossSeries, options = {}) {
+function renderProfitLossChart(target, profitSeries, lossSeries) {
   if (target) target.classList.remove('is-empty');
   const rows = alignProfitLossSeries(profitSeries, lossSeries);
   if (!rows.length) {
@@ -1228,7 +1101,7 @@ function renderProfitLossChart(target, profitSeries, lossSeries, options = {}) {
   renderCartesianLineChart(
     target,
     [
-      { label: text(options.primaryLabel || 'Net Profit'), color: '#15803d', points: profit },
+      { label: 'Net Profit', color: '#15803d', points: profit },
       { label: 'Freight Loss Value', color: '#b91c1c', points: loss }
     ],
     {
@@ -1327,12 +1200,12 @@ function isAllZeroSeries(series) {
 }
 
 function renderOverviewSkeleton() {
-  ['#kpiNetProfit', '#kpiCompanyShare', '#kpiEmissions', '#kpiAvgDaysToSettle', '#kpiLossValue'].forEach((selector) => {
+  ['#kpiNetProfit', '#kpiCompanyShare', '#kpiFishKilled', '#kpiAvgDaysToSettle', '#kpiLossValue'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-value-skeleton"></span>';
   });
 
-  ['#kpiDeltaNetProfit', '#kpiDeltaCompanyShare', '#kpiDeltaEmissions', '#kpiDeltaLossValue', '#kpiAvgDaysHint'].forEach((selector) => {
+  ['#kpiDeltaNetProfit', '#kpiDeltaCompanyShare', '#kpiDeltaFishKilled', '#kpiDeltaLossValue', '#kpiAvgDaysHint'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
@@ -1368,7 +1241,6 @@ function renderOverviewSkeleton() {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
-
 }
 
 function renderOverview(data, previousData, range, breakdownMode = 'route') {
@@ -1390,38 +1262,23 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
     el.textContent = formatInteger(value || 0);
   };
 
-  const totalEarnings = Number(kpis.grossRevenue || 0);
-  const previousTotalEarnings = Number(previousKpis.grossRevenue || 0);
-
-  writeMoney('#kpiNetProfit', totalEarnings);
+  writeMoney('#kpiNetProfit', kpis.netProfit || 0);
   writeMoney('#kpiCompanyShare', kpis.companyShareEarnings || 0);
-  const totalEmissionsValue = Number.isFinite(Number(kpis.emissionsKg))
-    ? Number(kpis.emissionsKg)
-    : Number.isFinite(Number(kpis.totalEmissions))
-    ? Number(kpis.totalEmissions)
-    : Number(kpis.totalFishKilled || 0);
-  const previousEmissionsValue = Number.isFinite(Number(previousKpis.emissionsKg))
-    ? Number(previousKpis.emissionsKg)
-    : Number.isFinite(Number(previousKpis.totalEmissions))
-    ? Number(previousKpis.totalEmissions)
-    : Number(previousKpis.totalFishKilled || 0);
-  writeCount('#kpiEmissions', totalEmissionsValue);
+  writeCount('#kpiFishKilled', kpis.totalFishKilled || 0);
   writeMoney('#kpiLossValue', kpis.freightLossesValue || 0);
 
   const avgDays = $('#kpiAvgDaysToSettle');
-  if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? '\u2014' : `${formatInteger(kpis.avgDaysToSettle)}d`;
+  if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
 
   const avgDaysHint = $('#kpiAvgDaysHint');
   if (avgDaysHint) avgDaysHint.textContent = kpis.avgDaysToSettle == null ? 'No settled voyages in range' : 'Settled voyages only';
 
-  setDelta('#kpiDeltaNetProfit', toDelta(totalEarnings, previousTotalEarnings, range));
+  setDelta('#kpiDeltaNetProfit', toDelta(kpis.netProfit, previousKpis.netProfit, range));
   setDelta('#kpiDeltaCompanyShare', toDelta(kpis.companyShareEarnings, previousKpis.companyShareEarnings, range));
-  setDelta('#kpiDeltaEmissions', toDelta(totalEmissionsValue, previousEmissionsValue, range));
+  setDelta('#kpiDeltaFishKilled', toDelta(kpis.totalFishKilled, previousKpis.totalFishKilled, range));
   setDelta('#kpiDeltaLossValue', toDelta(kpis.freightLossesValue, previousKpis.freightLossesValue, range, true));
   const hasVoyages = !isAllZeroSeries(charts.voyageCountTrend || []);
-  renderProfitLossChart($('#chartNetProfit'), charts.grossRevenueTrend || [], charts.freightLossValueTrend || [], {
-    primaryLabel: 'Total Earnings'
-  });
+  renderProfitLossChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.freightLossValueTrend || []);
 
   if (!hasVoyages) {
     renderNoData($('#trendsChartOutstanding'), 'No voyages in this period');
@@ -1456,7 +1313,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   const overviewCompletedVoyages = $('#overviewCompletedVoyages');
   if (overviewCompletedVoyages) overviewCompletedVoyages.textContent = formatInteger(kpis.completedVoyages || 0);
   const overviewAvgDays = $('#overviewAvgDaysToSettle');
-  if (overviewAvgDays) overviewAvgDays.textContent = kpis.avgDaysToSettle == null ? '\u2014' : `${formatInteger(kpis.avgDaysToSettle)}d`;
+  if (overviewAvgDays) overviewAvgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
   const overviewOverdue = $('#overviewOverdueUnsettled');
   if (overviewOverdue) overviewOverdue.textContent = formatInteger(unsettled.overdueVoyages || 0);
 
@@ -1488,6 +1345,7 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
   setTop('#topRouteLabel', '#topRouteValue', topPerformers?.sellLocation);
   setTop('#topVesselLabel', '#topVesselValue', topPerformers?.voyage || topPerformers?.vessel);
   setTop('#topOotwLabel', '#topOotwValue', topPerformers?.ootw);
+
 }
 
 function setInlineFeedback(selector, message, type = 'error') {
@@ -1612,7 +1470,7 @@ function renderCashflowRows(state) {
         <td colspan="8">
           <div class="finance-table-empty-state">
             <strong>No cashflow entries yet.</strong>
-            <span>Create your first ledger record using "New Cashflow Entry".</span>
+            <span>Create your first ledger record using “New Cashflow Entry”.</span>
           </div>
         </td>
       </tr>`;
@@ -1710,6 +1568,7 @@ function renderCollectorRemittances(state) {
     });
   });
 }
+
 function renderCashflowPanel(state) {
   const kpis = state.cashflowKpis || {};
   const balance = $('#cashflowKpiBalance');
@@ -1757,7 +1616,16 @@ async function loadCashflow(state) {
     params.set('tzOffsetMinutes', String(CLIENT_TZ_OFFSET_MINUTES));
 
     const query = params.toString();
-    const payload = await fetchJsonWithFallback([`/api/finances/cashflow?${query}`, `/api/finances/cashflow/?${query}`]);
+    const payload = await fetchJsonWithFallback([
+      `/api/finances/cashflow?${query}`,
+      `/api/finances/cashflow/?${query}`,
+      `/api/finances/cashflow/ledger?${query}`,
+      `/api/finances/cashflow/ledger/?${query}`,
+      `/api/finances/ledger?${query}`,
+      `/api/finances/ledger/?${query}`,
+      `/api/finances/cashflow-ledger?${query}`,
+      `/api/finances/cashflow-ledger/?${query}`
+    ]);
 
     state.cashflowKpis = payload?.kpis || {};
     state.cashflowRows = Array.isArray(payload?.rows) ? payload.rows : [];
@@ -1882,7 +1750,7 @@ function renderReimbursementList(state) {
   if (!tbody) return;
   const safeRows = Array.isArray(state?.debtReimbursements) ? state.debtReimbursements : [];
   if (!safeRows.length) {
-    tbody.innerHTML = '<tr class="finance-empty-row"><td colspan="3">No lost Freight/Cargo reimbursements.</td></tr>';
+    tbody.innerHTML = '<tr class="finance-empty-row"><td colspan="3">No lost tote reimbursements.</td></tr>';
     return;
   }
   tbody.innerHTML = safeRows
@@ -1894,7 +1762,7 @@ function renderReimbursementList(state) {
         <td>${
           canSettle
             ? `<button type="button" class="btn btn-primary btn-compact" data-settle-reimbursement-owner="${Number(row.ownerEmployeeId || 0)}">Settle</button>`
-            : '<span class="muted">\u2014</span>'
+            : '<span class="muted">—</span>'
         }</td>
       </tr>`;
     })
@@ -1949,7 +1817,7 @@ function renderDebtsRows(state) {
             ? canSettle
               ? `<button type="button" class="btn btn-primary btn-compact" data-settle-group="${text(group.groupKey)}">Settle All</button>`
               : '<span class="muted">Settled</span>'
-            : '<span class="muted">\u2014</span>'
+            : '<span class="muted">—</span>'
         }</td>
       </tr>`;
     })
@@ -2156,125 +2024,24 @@ async function loadOverview(state) {
   renderOverviewSkeleton();
 
   try {
-    const cacheBust = `_ts=${Date.now()}`;
     const currentPromise = fetchJson(
       `/api/finances/overview?range=${encodeURIComponent(state.range)}&unsettledScope=all&tzOffsetMinutes=${encodeURIComponent(
         String(CLIENT_TZ_OFFSET_MINUTES)
-      )}&${cacheBust}`
-    ).catch((error) => ({ __error: error }));
+      )}`
+    );
     const previousPromise =
       state.range === 'all'
         ? Promise.resolve({ kpis: {} })
         : fetchJson(
             `/api/finances/overview?range=${encodeURIComponent(state.range)}&unsettledScope=all&offset=1&tzOffsetMinutes=${encodeURIComponent(
               String(CLIENT_TZ_OFFSET_MINUTES)
-            )}&${cacheBust}`
-          ).catch((error) => ({ __error: error }));
+            )}`
+          );
 
-    const debugPromise = fetchJson(
-      `/api/finances/debug?range=${encodeURIComponent(state.range)}&tzOffsetMinutes=${encodeURIComponent(String(CLIENT_TZ_OFFSET_MINUTES))}`
-    ).catch((error) => ({ error: error?.message || 'Failed to load debug endpoint.' }));
+    const [current, previous] = await Promise.all([currentPromise, previousPromise]);
 
-    const [current, previous, debugPayload] = await Promise.all([currentPromise, previousPromise, debugPromise]);
-    const currentError = current?.__error || null;
-    const previousError = previous?.__error || null;
-    let effectiveCurrent = currentError ? { kpis: {} } : current || {};
-    let effectivePrevious = previousError ? { kpis: {} } : previous || {};
-
-    const stillEmptyAfterFallback =
-      Number(effectiveCurrent?.kpis?.completedVoyages || 0) <= 0 &&
-      Number(effectiveCurrent?.kpis?.grossRevenue || 0) === 0 &&
-      Number(effectiveCurrent?.kpis?.netProfit || 0) === 0 &&
-      Number(effectiveCurrent?.kpis?.companyShareEarnings || 0) === 0 &&
-      Number(effectiveCurrent?.kpis?.freightLossesValue || 0) === 0;
-
-    const debugRange = debugPayload?.rangeStats || {};
-    const debugVoyageCount = Number(debugRange?.rangeVoyageCount || 0);
-    const debugNetProfit = Number(debugRange?.rangeProfitTotal || 0);
-    const debugGrossRevenue = Number(debugRange?.rangeGrossRevenueTotal || 0);
-    const debugCompanyShare = Number(debugRange?.rangeCompanyShareTotal || 0);
-
-    const debugFallbackOverview = debugPayload?.fallbackOverview || null;
-    if (stillEmptyAfterFallback && (debugVoyageCount > 0 || debugNetProfit !== 0 || debugCompanyShare !== 0)) {
-      const fallbackKpis = debugFallbackOverview?.kpis || {};
-      const fallbackTopPerformers = debugFallbackOverview?.topPerformers || {};
-      const fallbackUnsettled = debugFallbackOverview?.unsettled || {};
-      const fallbackCharts = debugFallbackOverview?.charts || {};
-      const fallbackBreakdowns = debugFallbackOverview?.breakdowns || {};
-      const netProfitTrend = aggregateTrendForRange(fallbackCharts.netProfitTrend, state.range, 'sum');
-      const companyShareTrend = aggregateTrendForRange(fallbackCharts.companyShareTrend, state.range, 'sum');
-      const voyageCountTrend = aggregateTrendForRange(fallbackCharts.voyageCountTrend, state.range, 'sum');
-      const freightLossValueTrend = aggregateTrendForRange(fallbackCharts.freightLossValueTrend, state.range, 'sum');
-      const grossRevenueTrend = aggregateTrendForRange(fallbackCharts.grossRevenueTrend, state.range, 'sum');
-      const avgNetProfitTrend = netProfitTrend.map((point, index) => ({
-        key: point.key,
-        label: point.label,
-        value:
-          Number(voyageCountTrend[index]?.value || 0) > 0
-            ? toMoney(Number(point.value || 0) / Math.max(1, Number(voyageCountTrend[index]?.value || 0)))
-            : toMoney(point.value || 0)
-      }));
-      effectiveCurrent = {
-        ...(effectiveCurrent || {}),
-        kpis: {
-          ...(effectiveCurrent?.kpis || {}),
-          netProfit: Number(fallbackKpis.netProfit ?? debugNetProfit),
-          grossRevenue: Number(fallbackKpis.grossRevenue ?? debugGrossRevenue),
-          companyShareEarnings: Number(fallbackKpis.companyShareEarnings ?? debugCompanyShare),
-          crewShare: Number(
-            fallbackKpis.crewShare ??
-              Math.max(0, Math.round((fallbackKpis.grossRevenue ?? debugGrossRevenue ?? debugNetProfit) - debugCompanyShare))
-          ),
-          freightLossesValue: Number(fallbackKpis.freightLossesValue ?? 0),
-          completedVoyages: Number(fallbackKpis.completedVoyages ?? Math.max(0, debugVoyageCount)),
-          emissionsKg: Number(fallbackKpis.emissionsKg ?? 0),
-          crudeSold: Number(fallbackKpis.crudeSold ?? 0),
-          gasSold: Number(fallbackKpis.gasSold ?? 0)
-        },
-        charts: {
-          ...(effectiveCurrent?.charts || {}),
-          netProfitTrend,
-          companyShareTrend,
-          voyageCountTrend,
-          freightLossValueTrend,
-          grossRevenueTrend,
-          avgNetProfitTrend,
-          outstandingTrend: companyShareTrend
-        },
-        breakdowns: {
-          ...(effectiveCurrent?.breakdowns || {}),
-          byRoute: Array.isArray(fallbackBreakdowns.byRoute) ? fallbackBreakdowns.byRoute : [],
-          byVessel: Array.isArray(fallbackBreakdowns.byVessel) ? fallbackBreakdowns.byVessel : [],
-          byOotw: Array.isArray(fallbackBreakdowns.byOotw) ? fallbackBreakdowns.byOotw : []
-        },
-        topPerformers: {
-          ...(effectiveCurrent?.topPerformers || {}),
-          sellLocation: fallbackTopPerformers.sellLocation || effectiveCurrent?.topPerformers?.sellLocation,
-          voyage: fallbackTopPerformers.voyage || effectiveCurrent?.topPerformers?.voyage,
-          ootw: fallbackTopPerformers.ootw || effectiveCurrent?.topPerformers?.ootw
-        },
-        unsettled: {
-          ...(effectiveCurrent?.unsettled || {}),
-          totalOutstanding: Number(fallbackUnsettled.totalOutstanding ?? 0),
-          totalVoyages: Number(fallbackUnsettled.totalVoyages ?? 0),
-          overdueVoyages: Number(fallbackUnsettled.overdueVoyages ?? 0),
-          topDebtors: Array.isArray(fallbackUnsettled.topDebtors) ? fallbackUnsettled.topDebtors : []
-        },
-        debugOverview: {
-          source: 'client_debug_fallback',
-          debugVoyageCount,
-          debugNetProfit,
-          debugCompanyShare,
-          fallbackOverviewPresent: Boolean(debugFallbackOverview)
-        }
-      };
-      effectivePrevious = effectivePrevious || { kpis: {} };
-    }
-
-    effectiveCurrent = normalizeOverviewChartsForRange(effectiveCurrent, state.range);
-    state.overview = effectiveCurrent;
-    state.overviewPrevious = effectivePrevious;
-    state.financeDebug = debugPayload || null;
+    state.overview = current || {};
+    state.overviewPrevious = previous || {};
     renderOverview(state.overview, state.overviewPrevious, state.range, state.breakdownMode);
     clearFeedback();
 
@@ -2287,12 +2054,8 @@ async function loadOverview(state) {
       state.auditPage = 1;
       await loadAudit(state);
     }
-    if (currentError) {
-      console.warn('finances overview primary endpoint failed; rendered using fallback data', currentError);
-    }
   } catch (error) {
-    const primaryError = error?.__error || error;
-    console.error('finances overview fetch error', primaryError);
+    console.error('finances overview fetch error', error);
     setFeedback(`Failed to load finance data: ${error.message || 'Unknown error'}`, 'error', async () => loadOverview(state));
   } finally {
     state.overviewLoading = false;
@@ -2437,9 +2200,6 @@ async function confirmSettlePendingVoyage(state) {
     try {
       await fetchJson(`/api/finances/collector-remittances/${sourceCollectorEmployeeId}/transfer`, {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json'
-        },
         body: JSON.stringify({
           toCollectorEmployeeId: targetCollectorEmployeeId
         })
@@ -2468,6 +2228,7 @@ async function confirmSettlePendingVoyage(state) {
     }
     return;
   }
+
   const voyageIds = Array.isArray(pending?.voyageIds) ? pending.voyageIds : [];
   if (!voyageIds.length) {
     closeSettleModal(state);
@@ -2552,7 +2313,6 @@ async function init() {
     breakdownMode: normalizeBreakdownMode(query.get('breakdown')),
     overview: null,
     overviewPrevious: null,
-    financeDebug: null,
     overviewLoaded: false,
     overviewLoading: false,
     debtsLoaded: false,
@@ -2887,12 +2647,4 @@ init().catch((error) => {
   console.error('finances init error', error);
   setFeedback(`Failed to load finance module: ${error.message || 'Unknown error'}`, 'error');
 });
-
-
-
-
-
-
-
-
 

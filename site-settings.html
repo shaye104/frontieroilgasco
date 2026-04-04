@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260404011647" />
+    <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260404020219" />
   </head>
   <body class="page page-intranet page-site-settings">
     <header class="site-header">
@@ -229,17 +229,22 @@
               <input id="disciplinaryTypeDuration" name="defaultDurationDays" type="number" min="1" step="1" placeholder="Optional" />
             </div>
             <div>
-              <label for="disciplinaryTypeSetStatus">Employee Status Override</label>
-              <input id="disciplinaryTypeSetStatus" name="setEmployeeStatus" type="text" placeholder="Optional, e.g. Suspended" />
+              <label for="disciplinaryTypeSetStatus">Status After Record</label>
+              <select id="disciplinaryTypeSetStatus" name="setEmployeeStatus">
+                <option value="">No status change</option>
+              </select>
             </div>
           </div>
+          <p id="disciplinaryTypeSummary" class="finance-inline-caption site-settings-form-note">
+            Leave status override empty to keep the employee on their current status.
+          </p>
           <div class="site-settings-toggle-grid site-settings-toggle-grid-tight">
-            <label><input id="disciplinaryTypeActive" name="isActive" type="checkbox" checked /> <span>Active</span></label>
+            <label><input id="disciplinaryTypeActive" name="isActive" type="checkbox" checked /> <span>Available For Managers</span></label>
             <label><input id="disciplinaryTypeRequiresEnd" name="requiresEndDate" type="checkbox" /> <span>Requires End Date</span></label>
-            <label><input id="disciplinaryTypeSuspension" name="applySuspensionRank" type="checkbox" /> <span>Apply Suspension Rank</span></label>
-            <label><input id="disciplinaryTypeRestrictIntranet" name="restrictIntranet" type="checkbox" /> <span>Restrict Intranet</span></label>
-            <label><input id="disciplinaryTypeRestrictVoyages" name="restrictVoyages" type="checkbox" /> <span>Restrict Voyages</span></label>
-            <label><input id="disciplinaryTypeRestrictFinance" name="restrictFinance" type="checkbox" /> <span>Restrict Finance</span></label>
+            <label><input id="disciplinaryTypeSuspension" name="applySuspensionRank" type="checkbox" /> <span>Use Suspension Rank</span></label>
+            <label><input id="disciplinaryTypeRestrictIntranet" name="restrictIntranet" type="checkbox" /> <span>Limit Intranet Access</span></label>
+            <label><input id="disciplinaryTypeRestrictVoyages" name="restrictVoyages" type="checkbox" /> <span>Block Voyage Access</span></label>
+            <label><input id="disciplinaryTypeRestrictFinance" name="restrictFinance" type="checkbox" /> <span>Block Finance Access</span></label>
           </div>
           <div class="finance-cashflow-entry-actions site-settings-compact-actions">
             <button id="disciplinaryTypeCancelBtn" class="btn btn-secondary" type="button" data-close-modal="disciplinaryTypeModal">Cancel</button>
@@ -249,7 +254,7 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/dist/js/site-settings-page.bundle.js?v=20260327041651"></script>
+    <script type="module" src="/assets/js/pages/site-settings-page.js?v=20260404d"></script>
   </body>
 </html>
 

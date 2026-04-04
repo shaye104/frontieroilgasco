@@ -16,7 +16,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260404011647" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260404020219" />
   </head>
   <body class="page page-intranet page-manage-employees">
     <header class="site-header">
@@ -41,7 +41,7 @@
               <a class="btn btn-secondary" href="/admin/activity">Activity Tracker</a>
               <button id="runEmployeeScanBtn" class="btn btn-secondary" type="button">Run Scan</button>
               <button id="openJoinRequestsBtn" class="btn btn-secondary" type="button">Join Requests</button>
-              <button id="openRemovedEmployeesBtn" class="btn btn-secondary" type="button">Removed</button>
+              <button id="openRemovedEmployeesBtn" class="btn btn-secondary" type="button">Former Employees</button>
             </div>
             <div class="button-row admin-employees-header-actions-primary">
               <button id="openDeleteUserBtn" class="btn btn-danger" type="button">Delete User</button>
@@ -413,8 +413,8 @@
       <div class="modal-card join-requests-modal-card">
         <div class="modal-header join-requests-modal-header">
           <div>
-            <h2>Removed Employees</h2>
-            <p id="removedEmployeesSummary" class="finance-inline-caption">Loading removed employees...</p>
+            <h2>Former Employees</h2>
+            <p id="removedEmployeesSummary" class="finance-inline-caption">Loading former employees...</p>
           </div>
           <div class="join-requests-modal-controls">
             <button id="refreshRemovedEmployeesBtn" class="btn btn-secondary" type="button">Refresh</button>
@@ -422,6 +422,9 @@
           </div>
         </div>
         <div id="removedEmployeesFeedback" class="feedback" role="status" aria-live="polite"></div>
+        <div class="join-requests-modal-controls" style="justify-content: flex-start; margin-bottom: 0.75rem;">
+          <input id="removedEmployeesSearch" type="search" placeholder="Search former employees" />
+        </div>
         <div class="table-wrap">
           <table class="data-table join-requests-table">
             <thead>
@@ -440,7 +443,7 @@
       </div>
     </section>
 
-    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260404a"></script>
+    <script type="module" src="/assets/js/pages/manage-employees-page.js?v=20260404b"></script>
   </body>
 </html>
 

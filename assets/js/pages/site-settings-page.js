@@ -283,6 +283,40 @@ function setInput(selector, value) {
   if (node) node.value = String(value ?? '');
 }
 
+function setSelectOptions(selector, items = [], selectedValue = '', placeholder = 'Select') {
+  const node = document.querySelector(selector);
+  if (!(node instanceof HTMLSelectElement)) return;
+  const current = String(selectedValue ?? '').trim();
+  const values = [...new Set((Array.isArray(items) ? items : []).map((item) => String(item?.value || item || '').trim()).filter(Boolean))];
+  node.innerHTML = [`<option value="">${escapeHtml(placeholder)}</option>`, ...values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)].join('');
+  const matched = values.find((value) => value.toLowerCase() === current.toLowerCase());
+  node.value = matched || '';
+}
+
+function buildDisciplinarySummary(payload = {}) {
+  const parts = [];
+  const status = String(payload?.setEmployeeStatus || payload?.set_employee_status || '').trim();
+  if (status) parts.push(`Sets employee status to ${status}`);
+  if (Number(payload?.defaultDurationDays || payload?.default_duration_days || 0) > 0) {
+    const days = Number(payload?.defaultDurationDays || payload?.default_duration_days || 0);
+    parts.push(`defaults end date to ${days} day${days === 1 ? '' : 's'}`);
+  }
+  if (payload?.requiresEndDate || Number(payload?.requires_end_date || 0) === 1) parts.push('requires an end date');
+  if (payload?.applySuspensionRank || Number(payload?.apply_suspension_rank || 0) === 1) parts.push('uses suspension rank');
+  const restrictions = [
+    payload?.restrictIntranet || Number(payload?.restrict_intranet || 0) === 1 ? 'intranet' : '',
+    payload?.restrictVoyages || Number(payload?.restrict_voyages || 0) === 1 ? 'voyages' : '',
+    payload?.restrictFinance || Number(payload?.restrict_finance || 0) === 1 ? 'finance' : ''
+  ].filter(Boolean);
+  if (restrictions.length) parts.push(`restricts ${restrictions.join(', ')}`);
+  return parts.length ? `${parts[0].charAt(0).toUpperCase()}${parts[0].slice(1)}${parts.length > 1 ? ` and ${parts.slice(1).join(', ')}` : ''}.` : 'Leave status override empty to keep the employee on their current status.';
+}
+
+function updateDisciplinarySummary(payload = {}) {
+  const node = document.querySelector('#disciplinaryTypeSummary');
+  if (node) node.textContent = buildDisciplinarySummary(payload);
+}
+
 function normalizeTypePayload(payload = {}) {
   const key = String(payload?.key || '').trim().replace(/[^A-Za-z0-9 _-]/g, '').replace(/[\s-]+/g, '_').toUpperCase();
   const label = String(payload?.label || '').trim();
@@ -325,13 +359,14 @@ function fillDisciplinaryForm(row = null) {
   setInput('#disciplinaryTypeLabel', row?.label || row?.value || '');
   setInput('#disciplinaryTypeSeverity', Number(row?.severity || 1));
   setInput('#disciplinaryTypeDuration', row?.default_duration_days || '');
-  setInput('#disciplinaryTypeSetStatus', row?.set_employee_status || '');
+  setSelectOptions('#disciplinaryTypeSetStatus', window.__siteSettingsStatuses || [], row?.set_employee_status || '', 'No status change');
   setCheckbox('#disciplinaryTypeActive', Number(row?.is_active ?? 1));
   setCheckbox('#disciplinaryTypeRequiresEnd', Number(row?.requires_end_date || 0));
   setCheckbox('#disciplinaryTypeSuspension', Number(row?.apply_suspension_rank || 0));
   setCheckbox('#disciplinaryTypeRestrictIntranet', Number(row?.restrict_intranet || 0));
   setCheckbox('#disciplinaryTypeRestrictVoyages', Number(row?.restrict_voyages || 0));
   setCheckbox('#disciplinaryTypeRestrictFinance', Number(row?.restrict_finance || 0));
+  updateDisciplinarySummary(row || {});
 }
 
 function setDisciplinaryEditingState(editingId = null) {
@@ -411,9 +446,11 @@ async function loadPageData(feedback) {
   const settings = sitePayload?.settings || {};
   const disciplinaryTypes = Array.isArray(configPayload?.disciplinaryTypes) ? configPayload.disciplinaryTypes : [];
   const statuses = Array.isArray(configPayload?.statuses) ? configPayload.statuses : [];
+  window.__siteSettingsStatuses = statuses;
   applyForm(settings);
   renderDisciplinaryTypes(document.querySelector('#disciplinaryTypesTableBody'), disciplinaryTypes);
   renderStatuses(document.querySelector('#statusConfigTableBody'), statuses);
+  setSelectOptions('#disciplinaryTypeSetStatus', statuses, '', 'No status change');
   document.querySelector('#siteSettingsContent')?.classList.remove('hidden');
   document.querySelector('#disciplinaryConfigSection')?.classList.remove('hidden');
   document.querySelector('#statusConfigSection')?.classList.remove('hidden');
@@ -455,6 +492,7 @@ initIntranetPageGuard({
     state.siteSettings = loaded.settings;
     state.disciplinaryTypes = loaded.disciplinaryTypes;
     state.statuses = loaded.statuses;
+    window.__siteSettingsStatuses = state.statuses;
     resetDisciplinaryForm();
     resetStatusForm();
   } catch (error) {
@@ -612,7 +650,9 @@ initIntranetPageGuard({
         ? await updateConfigValue('statuses', editingId, payload)
         : await createConfigValue('statuses', payload);
       state.statuses = Array.isArray(response?.items) ? response.items : [];
+      window.__siteSettingsStatuses = state.statuses;
       renderStatuses(statusTableBody, state.statuses);
+      setSelectOptions('#disciplinaryTypeSetStatus', state.statuses, '', 'No status change');
       resetStatusForm();
       closeModal('statusConfigModal');
       showMessage(statusFeedback, editingId ? 'Status updated.' : 'Status added.', 'success');
@@ -676,7 +716,9 @@ initIntranetPageGuard({
       try {
         const response = await deleteConfigValue('statuses', id);
         state.statuses = Array.isArray(response?.items) ? response.items : [];
+        window.__siteSettingsStatuses = state.statuses;
         renderStatuses(statusTableBody, state.statuses);
+        setSelectOptions('#disciplinaryTypeSetStatus', state.statuses, '', 'No status change');
         resetStatusForm();
         closeModal('statusConfigModal');
         showMessage(statusFeedback, 'Status deleted.', 'success');
@@ -684,6 +726,10 @@ initIntranetPageGuard({
         showMessage(statusFeedback, error.message || 'Unable to delete status.', 'error');
       }
     })();
+  });
+
+  document.querySelector('#disciplinaryTypeForm')?.addEventListener('input', () => {
+    updateDisciplinarySummary(collectDisciplinaryForm());
   });
 });
 

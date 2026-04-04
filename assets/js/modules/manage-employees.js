@@ -239,7 +239,6 @@ function renderSelectOptions(items = [], selectedValue = '') {
       return value ? { value, label: label || value } : null;
     })
     .filter(Boolean);
-
   return [
     '<option value=""></option>',
     ...normalizedItems.map((item) => {
@@ -981,7 +980,6 @@ export async function initManageEmployees(config) {
   const filterQuery = document.querySelector(config.filterQuerySelector);
   const filterRank = document.querySelector(config.filterRankSelector);
   const filterStatus = document.querySelector(config.filterStatusSelector);
-  const filterActivation = document.querySelector(config.filterActivationSelector);
   const filterHireDateFrom = document.querySelector(config.filterHireDateFromSelector);
   const filterHireDateTo = document.querySelector(config.filterHireDateToSelector);
   const clearFiltersBtn = document.querySelector(config.clearFiltersBtnSelector);
@@ -1014,6 +1012,7 @@ export async function initManageEmployees(config) {
   const removedEmployeesFeedback = document.querySelector('#removedEmployeesFeedback');
   const removedEmployeesSummary = document.querySelector('#removedEmployeesSummary');
   const removedEmployeesTableBody = document.querySelector('#removedEmployeesTableBody');
+  const removedEmployeesSearch = document.querySelector('#removedEmployeesSearch');
   const createForm = document.querySelector(config.createFormSelector);
   const openDeleteUserBtn = document.querySelector('#openDeleteUserBtn');
   const deleteUserForm = document.querySelector('#deleteUserForm');
@@ -1145,7 +1144,6 @@ export async function initManageEmployees(config) {
       q: filterQuery?.value || '',
       rank: filterRank?.value || '',
       status: filterStatus?.value || '',
-      activationStatus: filterActivation?.value || '',
       hireFrom: filterHireDateFrom?.value || '',
       hireTo: filterHireDateTo?.value || '',
       includeConfig: !state.configBootstrapped,
@@ -1159,8 +1157,9 @@ export async function initManageEmployees(config) {
   function applyConfigOptions(statusesItems = [], ranksItems = []) {
     state.configOptions.statuses = statusesItems;
     state.configOptions.ranks = ranksItems;
+    const mainFilterStatuses = (Array.isArray(statusesItems) ? statusesItems : []).filter((item) => Number(item?.exclude_from_stats || 0) !== 1);
     fillOptions(filterRank, ranksItems, 'All Ranks');
-    fillOptions(filterStatus, statusesItems, 'All Statuses');
+    fillOptions(filterStatus, mainFilterStatuses, 'All Statuses');
     fillOptions(createForm.querySelector('[name="employeeStatus"]'), statusesItems, 'Select');
     fillOptions(createForm.querySelector('[name="rank"]'), ranksItems, 'Select');
   }
@@ -1259,9 +1258,20 @@ export async function initManageEmployees(config) {
 
   function renderRemovedEmployeesTable() {
     if (!removedEmployeesTableBody) return;
-    const rows = Array.isArray(state.removedEmployees) ? state.removedEmployees : [];
+    const query = String(removedEmployeesSearch?.value || '').trim().toLowerCase();
+    const rows = (Array.isArray(state.removedEmployees) ? state.removedEmployees : []).filter((row) => {
+      if (!query) return true;
+      return [
+        row?.roblox_username,
+        row?.roblox_user_id,
+        row?.rank,
+        row?.employee_status,
+        row?.discord_display_name
+      ]
+        .some((value) => String(value || '').toLowerCase().includes(query));
+    });
     if (!rows.length) {
-      removedEmployeesTableBody.innerHTML = '<tr><td colspan="4">No removed employees found.</td></tr>';
+      removedEmployeesTableBody.innerHTML = `<tr><td colspan="4">${query ? 'No former employees match that search.' : 'No former employees found.'}</td></tr>`;
       return;
     }
     removedEmployeesTableBody.innerHTML = rows
@@ -1285,12 +1295,12 @@ export async function initManageEmployees(config) {
     if (!removedEmployeesTableBody) return;
     state.removedEmployeesLoading = true;
     removedEmployeesTableBody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-    if (removedEmployeesSummary) removedEmployeesSummary.textContent = 'Loading removed employees...';
+    if (removedEmployeesSummary) removedEmployeesSummary.textContent = 'Loading former employees...';
     if (refreshRemovedEmployeesBtn) refreshRemovedEmployeesBtn.disabled = true;
     if (removedEmployeesFeedback) clearMessage(removedEmployeesFeedback);
     try {
       const rawPayload = await listEmployees({
-        status: 'Removed',
+        formerOnly: true,
         sortBy: 'updated_at',
         sortDir: 'desc',
         page: 1,
@@ -1300,13 +1310,13 @@ export async function initManageEmployees(config) {
       state.removedEmployees = Array.isArray(payload?.employees) ? payload.employees : [];
       renderRemovedEmployeesTable();
       if (removedEmployeesSummary) {
-        removedEmployeesSummary.textContent = `${Number(payload?.pagination?.total || state.removedEmployees.length || 0)} removed employee${Number(payload?.pagination?.total || state.removedEmployees.length || 0) === 1 ? '' : 's'}.`;
+        removedEmployeesSummary.textContent = `${Number(payload?.pagination?.total || state.removedEmployees.length || 0)} former employee${Number(payload?.pagination?.total || state.removedEmployees.length || 0) === 1 ? '' : 's'}.`;
       }
     } catch (error) {
       state.removedEmployees = [];
-      removedEmployeesTableBody.innerHTML = '<tr><td colspan="4">Unable to load removed employees.</td></tr>';
-      if (removedEmployeesSummary) removedEmployeesSummary.textContent = 'Unable to load removed employees.';
-      if (removedEmployeesFeedback) showMessage(removedEmployeesFeedback, error.message || 'Unable to load removed employees.', 'error');
+      removedEmployeesTableBody.innerHTML = '<tr><td colspan="4">Unable to load former employees.</td></tr>';
+      if (removedEmployeesSummary) removedEmployeesSummary.textContent = 'Unable to load former employees.';
+      if (removedEmployeesFeedback) showMessage(removedEmployeesFeedback, error.message || 'Unable to load former employees.', 'error');
     } finally {
       state.removedEmployeesLoading = false;
       renderRemovedEmployeesTable();
@@ -1893,6 +1903,9 @@ export async function initManageEmployees(config) {
     if (!button) return;
     const employeeId = Number(button.getAttribute('data-open-removed-drawer'));
     if (Number.isInteger(employeeId) && employeeId > 0) void openDrawer(employeeId);
+  });
+  removedEmployeesSearch?.addEventListener('input', () => {
+    renderRemovedEmployeesTable();
   });
 
   const scheduleReload = () => {

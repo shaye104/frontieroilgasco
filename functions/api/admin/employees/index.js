@@ -73,6 +73,7 @@ export async function onRequestGet(context) {
   const sortByInput = normalizeText(url.searchParams.get('sortBy')).toLowerCase();
   const sortDirInput = normalizeText(url.searchParams.get('sortDir')).toLowerCase();
   const includeConfig = url.searchParams.get('includeConfig') === '1';
+  const formerOnly = url.searchParams.get('formerOnly') === '1';
   const sortDir = sortDirInput === 'asc' ? 'ASC' : 'DESC';
   const sortableColumns = new Map([
     ['id', 'e.id'],
@@ -104,14 +105,30 @@ export async function onRequestGet(context) {
     }
   }
 
+  const statusConfigRows = await listEmployeeStatuses(env);
+  const configuredStatuses = statusConfigRows?.results || [];
+  const excludedStatuses = configuredStatuses
+    .filter((row) => Number(row?.exclude_from_stats || 0) === 1)
+    .map((row) => normalizeText(row?.value))
+    .filter(Boolean);
+  const excludedStatusPlaceholders = excludedStatuses.map(() => '?').join(', ');
+
   const whereParts = [];
   const whereBindings = [];
   if (query) {
     whereParts.push(`(LOWER(COALESCE(e.roblox_username, '')) LIKE ? OR LOWER(COALESCE(e.roblox_user_id, '')) LIKE ?)`);
     whereBindings.push(`%${query}%`, `%${query}%`);
   }
-  if (!statusFilter) {
-    whereParts.push(`UPPER(COALESCE(e.employee_status, 'ACTIVE')) != 'REMOVED'`);
+  if (formerOnly) {
+    if (excludedStatuses.length) {
+      whereParts.push(`LOWER(COALESCE(e.employee_status, '')) IN (${excludedStatusPlaceholders})`);
+      whereBindings.push(...excludedStatuses.map((value) => value.toLowerCase()));
+    } else {
+      whereParts.push('1 = 0');
+    }
+  } else if (!statusFilter && excludedStatuses.length) {
+    whereParts.push(`LOWER(COALESCE(e.employee_status, '')) NOT IN (${excludedStatusPlaceholders})`);
+    whereBindings.push(...excludedStatuses.map((value) => value.toLowerCase()));
   }
   if (rankFilter) {
     whereParts.push(`LOWER(COALESCE(e.rank, '')) = LOWER(?)`);
@@ -141,8 +158,16 @@ export async function onRequestGet(context) {
   const whereSql = allWhereParts.length ? `WHERE ${allWhereParts.join(' AND ')}` : '';
   const statsWhereParts = [...visibilityWhereParts];
   const statsBindings = [...visibilityBindings];
-  if (!statusFilter) {
-    statsWhereParts.push(`UPPER(COALESCE(e.employee_status, 'ACTIVE')) != 'REMOVED'`);
+  if (formerOnly) {
+    if (excludedStatuses.length) {
+      statsWhereParts.push(`LOWER(COALESCE(e.employee_status, '')) IN (${excludedStatusPlaceholders})`);
+      statsBindings.push(...excludedStatuses.map((value) => value.toLowerCase()));
+    } else {
+      statsWhereParts.push('1 = 0');
+    }
+  } else if (!statusFilter && excludedStatuses.length) {
+    statsWhereParts.push(`LOWER(COALESCE(e.employee_status, '')) NOT IN (${excludedStatusPlaceholders})`);
+    statsBindings.push(...excludedStatuses.map((value) => value.toLowerCase()));
   }
   const statsWhereSql = statsWhereParts.length ? `WHERE ${statsWhereParts.join(' AND ')}` : '';
 
@@ -176,7 +201,7 @@ export async function onRequestGet(context) {
       .first(),
     includeConfig
       ? Promise.all([
-          listEmployeeStatuses(env),
+          Promise.resolve(statusConfigRows),
           env.DB
             .prepare('SELECT id, value, level, description, updated_at, created_at FROM config_ranks ORDER BY level DESC, value ASC, id ASC')
             .all()

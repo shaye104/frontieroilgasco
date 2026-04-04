@@ -1,5 +1,12 @@
 const VALID_LIFECYCLE_STATUSES = new Set(['ACTIVE', 'ON LEAVE', 'SUSPENDED', 'DEACTIVATED', 'REMOVED', 'LEFT']);
 const VALID_ACCESS_MODES = new Set(['normal', 'my_details_only', 'removed_page', 'blocked']);
+const DEFAULT_EMPLOYEE_STATUS_ROWS = [
+  { value: 'Active', accessMode: 'normal', showNotice: 0, removeFromGroup: 0, restrictIntranet: 0, excludeFromStats: 0 },
+  { value: 'On Leave', accessMode: 'normal', showNotice: 0, removeFromGroup: 0, restrictIntranet: 0, excludeFromStats: 0 },
+  { value: 'Suspended', accessMode: 'my_details_only', showNotice: 1, removeFromGroup: 0, restrictIntranet: 1, excludeFromStats: 0 },
+  { value: 'Removed', accessMode: 'removed_page', showNotice: 0, removeFromGroup: 1, restrictIntranet: 1, excludeFromStats: 1 },
+  { value: 'Left', accessMode: 'blocked', showNotice: 0, removeFromGroup: 1, restrictIntranet: 1, excludeFromStats: 1 }
+];
 
 function text(value) {
   return String(value || '').trim();
@@ -7,6 +14,45 @@ function text(value) {
 
 function normalizeLabel(value) {
   return text(value).replace(/[\s_-]+/g, ' ').trim().toUpperCase();
+}
+
+export function normalizeEmployeeStatusValue(value, activationStatus = '') {
+  const normalized = normalizeLabel(value);
+  const normalizedActivation = text(activationStatus).toUpperCase();
+  if (!normalized) {
+    if (normalizedActivation === 'REJECTED') return 'Removed';
+    if (normalizedActivation === 'DISABLED') return 'Left';
+    if (normalizedActivation === 'ACTIVE') return 'Active';
+    return '';
+  }
+  if (normalized === 'ACTIVE' || normalized === 'ON DUTY' || normalized === 'EMPLOYED' || normalized === 'APPROVED') return 'Active';
+  if (normalized === 'ON LEAVE' || normalized === 'LEAVE' || normalized === 'LEAVE OF ABSENCE') return 'On Leave';
+  if (normalized.includes('SUSPEND')) return 'Suspended';
+  if (
+    normalized === 'REMOVED' ||
+    normalized === 'TERMINATED' ||
+    normalized === 'TERMINATION' ||
+    normalized === 'FIRED' ||
+    normalized === 'REJECTED'
+  ) {
+    return 'Removed';
+  }
+  if (
+    normalized === 'LEFT' ||
+    normalized === 'RESIGNED' ||
+    normalized === 'RESIGNATION' ||
+    normalized === 'DISABLED' ||
+    normalized === 'QUIT' ||
+    normalized === 'RETIRED' ||
+    normalized === 'FORMER EMPLOYEE' ||
+    normalized === 'FORMER EMPLOYEES'
+  ) {
+    return 'Left';
+  }
+  if (normalizedActivation === 'REJECTED') return 'Removed';
+  if (normalizedActivation === 'DISABLED') return 'Left';
+  if (normalizedActivation === 'ACTIVE') return 'Active';
+  return text(value);
 }
 
 export function normalizeLifecycleStatus(value, fallback = 'ACTIVE') {
@@ -31,7 +77,7 @@ function defaultStatusBehavior(statusValue) {
   if (normalized === 'SUSPENDED') {
     return { accessMode: 'my_details_only', showNotice: true, removeFromGroup: false, restrictIntranet: true, excludeFromStats: false };
   }
-  if (normalized === 'REMOVED') {
+  if (normalized === 'REMOVED' || normalized === 'TERMINATED') {
     return { accessMode: 'removed_page', showNotice: false, removeFromGroup: true, restrictIntranet: true, excludeFromStats: true };
   }
   if (normalized === 'LEFT') {
@@ -109,13 +155,19 @@ export async function ensureEmployeeStatusConfigSchema(env) {
     await env.DB.prepare(`ALTER TABLE config_employee_statuses ADD COLUMN remove_from_group INTEGER NOT NULL DEFAULT 0`).run();
   }
 
-  await env.DB.batch([
-    env.DB.prepare(`INSERT OR IGNORE INTO config_employee_statuses (value, access_mode, show_notice, remove_from_group, restrict_intranet, exclude_from_stats) VALUES ('Active', 'normal', 0, 0, 0, 0)`),
-    env.DB.prepare(`INSERT OR IGNORE INTO config_employee_statuses (value, access_mode, show_notice, remove_from_group, restrict_intranet, exclude_from_stats) VALUES ('On Leave', 'normal', 0, 0, 0, 0)`),
-    env.DB.prepare(`INSERT OR IGNORE INTO config_employee_statuses (value, access_mode, show_notice, remove_from_group, restrict_intranet, exclude_from_stats) VALUES ('Suspended', 'my_details_only', 1, 0, 1, 0)`),
-    env.DB.prepare(`INSERT OR IGNORE INTO config_employee_statuses (value, access_mode, show_notice, remove_from_group, restrict_intranet, exclude_from_stats) VALUES ('Removed', 'removed_page', 0, 1, 1, 1)`),
-    env.DB.prepare(`INSERT OR IGNORE INTO config_employee_statuses (value, access_mode, show_notice, remove_from_group, restrict_intranet, exclude_from_stats) VALUES ('Left', 'blocked', 0, 1, 1, 1)`)
-  ]);
+  const existingCountRow = await env.DB.prepare(`SELECT COUNT(*) AS count FROM config_employee_statuses`).first();
+  if (Number(existingCountRow?.count || 0) === 0) {
+    await env.DB.batch(
+      DEFAULT_EMPLOYEE_STATUS_ROWS.map((row) =>
+        env.DB
+          .prepare(
+            `INSERT INTO config_employee_statuses (value, access_mode, show_notice, remove_from_group, restrict_intranet, exclude_from_stats)
+             VALUES (?, ?, ?, ?, ?, ?)`
+          )
+          .bind(row.value, row.accessMode, row.showNotice, row.removeFromGroup, row.restrictIntranet, row.excludeFromStats)
+      )
+    );
+  }
 }
 
 export async function getEmployeeStatusBehavior(env, statusValue) {

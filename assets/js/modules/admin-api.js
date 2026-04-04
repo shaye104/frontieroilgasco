@@ -373,6 +373,7 @@ export function listEmployees(options = {}) {
   if (options.hireDateTo) params.set('hireDateTo', String(options.hireDateTo));
   if (options.sortBy) params.set('sortBy', String(options.sortBy));
   if (options.sortDir) params.set('sortDir', String(options.sortDir));
+  if (options.formerOnly) params.set('formerOnly', '1');
   if (options.includeConfig) params.set('includeConfig', '1');
   const suffix = params.toString() ? `?${params.toString()}` : '';
   return requestJson(`/api/admin/employees${suffix}`, {

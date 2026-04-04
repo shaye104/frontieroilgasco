@@ -8,7 +8,54 @@ let schemaBootstrapPromise = null;
 let schemaCheckedAtMs = 0;
 const SCHEMA_CHECK_TTL_MS = 24 * 60 * 60 * 1000;
 const CORE_DATA_SEED_VERSION = '2026-02-28-core-v3';
-const SCHEMA_BOOTSTRAP_VERSION = '2026-03-25-schema-v13';
+const SCHEMA_BOOTSTRAP_VERSION = '2026-04-04-schema-v14';
+const DEFAULT_EMPLOYEE_STATUS_BEHAVIOR = {
+  Active: { accessMode: 'normal', showNotice: 0, removeFromGroup: 0, restrictIntranet: 0, excludeFromStats: 0 },
+  'On Leave': { accessMode: 'normal', showNotice: 0, removeFromGroup: 0, restrictIntranet: 0, excludeFromStats: 0 },
+  Suspended: { accessMode: 'my_details_only', showNotice: 1, removeFromGroup: 0, restrictIntranet: 1, excludeFromStats: 0 },
+  Removed: { accessMode: 'removed_page', showNotice: 0, removeFromGroup: 1, restrictIntranet: 1, excludeFromStats: 1 },
+  Left: { accessMode: 'blocked', showNotice: 0, removeFromGroup: 1, restrictIntranet: 1, excludeFromStats: 1 }
+};
+
+function normalizeLegacyEmployeeStatusValue(value, activationStatus = '') {
+  const raw = String(value || '').trim();
+  const normalized = raw.replace(/[\s_-]+/g, ' ').trim().toUpperCase();
+  const normalizedActivation = String(activationStatus || '').trim().toUpperCase();
+  if (!normalized) {
+    if (normalizedActivation === 'REJECTED') return 'Removed';
+    if (normalizedActivation === 'DISABLED') return 'Left';
+    if (normalizedActivation === 'ACTIVE') return 'Active';
+    return '';
+  }
+  if (normalized === 'ACTIVE' || normalized === 'ON DUTY' || normalized === 'EMPLOYED' || normalized === 'APPROVED') return 'Active';
+  if (normalized === 'ON LEAVE' || normalized === 'LEAVE' || normalized === 'LEAVE OF ABSENCE') return 'On Leave';
+  if (normalized.includes('SUSPEND')) return 'Suspended';
+  if (
+    normalized === 'REMOVED' ||
+    normalized === 'TERMINATED' ||
+    normalized === 'TERMINATION' ||
+    normalized === 'FIRED' ||
+    normalized === 'REJECTED'
+  ) {
+    return 'Removed';
+  }
+  if (
+    normalized === 'LEFT' ||
+    normalized === 'RESIGNED' ||
+    normalized === 'RESIGNATION' ||
+    normalized === 'DISABLED' ||
+    normalized === 'QUIT' ||
+    normalized === 'RETIRED' ||
+    normalized === 'FORMER EMPLOYEE' ||
+    normalized === 'FORMER EMPLOYEES'
+  ) {
+    return 'Left';
+  }
+  if (normalizedActivation === 'REJECTED') return 'Removed';
+  if (normalizedActivation === 'DISABLED') return 'Left';
+  if (normalizedActivation === 'ACTIVE') return 'Active';
+  return raw;
+}
 
 export async function ensureCoreSchema(env) {
   if (!env.DB) throw new Error('D1 binding `DB` is not configured.');
@@ -962,10 +1009,6 @@ export async function ensureCoreSchema(env) {
     );
 
     await env.DB.batch([
-      env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Active'),
-      env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('On Leave'),
-      env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Suspended'),
-      env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Terminated'),
       env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Warning'),
       env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Final Warning'),
       env.DB.prepare('INSERT OR IGNORE INTO config_disciplinary_types(value) VALUES (?)').bind('Suspension')
@@ -1199,44 +1242,114 @@ export async function ensureCoreSchema(env) {
       .run();
   }
 
-  await env.DB.batch([
-    env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind('Removed'),
-    env.DB
+  try {
+    const configuredStatuses = await env.DB
       .prepare(
-        `INSERT OR IGNORE INTO config_disciplinary_types
-           (key, label, value, severity, is_active, default_status, requires_end_date, apply_suspension_rank, set_employee_status, updated_at, created_at)
-         VALUES ('TERMINATION', 'Termination', 'Termination', 5, 1, 'ACTIVE', 0, 0, 'Removed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
-      ),
-    env.DB
-      .prepare(
-        `UPDATE config_disciplinary_types
-         SET is_active = 1,
-             set_employee_status = COALESCE(NULLIF(TRIM(set_employee_status), ''), 'Removed'),
-             updated_at = CURRENT_TIMESTAMP
-         WHERE UPPER(COALESCE(key, '')) = 'TERMINATION'`
+        `SELECT id, value, access_mode, show_notice, remove_from_group, restrict_intranet, exclude_from_stats
+         FROM config_employee_statuses
+         ORDER BY id ASC`
       )
-  ]);
+      .all();
+    const statusRows = Array.isArray(configuredStatuses?.results) ? configuredStatuses.results : [];
+    const statusByValue = new Map(statusRows.map((row) => [String(row?.value || '').trim().toLowerCase(), row]).filter(([value]) => value));
 
-  const configuredEmployeeStatuses = await env.DB.prepare(`SELECT value FROM config_employee_statuses`).all();
-  const configuredEmployeeStatusNames = new Set(
-    (configuredEmployeeStatuses?.results || []).map((row) => String(row?.value || '').trim().toLowerCase()).filter(Boolean)
-  );
-  const liveEmployeeStatuses = await env.DB
-    .prepare(
-      `SELECT DISTINCT TRIM(COALESCE(employee_status, '')) AS value
-       FROM employees
-       WHERE TRIM(COALESCE(employee_status, '')) != ''`
-    )
-    .all();
-  const missingEmployeeStatusSeeds = (liveEmployeeStatuses?.results || [])
-    .map((row) => String(row?.value || '').trim())
-    .filter((value) => value && !configuredEmployeeStatusNames.has(value.toLowerCase()));
-  if (missingEmployeeStatusSeeds.length) {
-    await env.DB.batch(
-      missingEmployeeStatusSeeds.map((value) =>
-        env.DB.prepare('INSERT OR IGNORE INTO config_employee_statuses(value) VALUES (?)').bind(value)
-      )
-    );
+    for (const row of statusRows) {
+      const currentValue = String(row?.value || '').trim();
+      if (!currentValue) continue;
+      const normalizedValue = normalizeLegacyEmployeeStatusValue(currentValue);
+      const behavior = DEFAULT_EMPLOYEE_STATUS_BEHAVIOR[normalizedValue];
+      if (!behavior || normalizedValue.toLowerCase() === currentValue.toLowerCase()) continue;
+      const targetRow = statusByValue.get(normalizedValue.toLowerCase());
+      if (targetRow && Number(targetRow.id) !== Number(row.id)) {
+        await env.DB.prepare(`UPDATE employees SET employee_status = ? WHERE LOWER(TRIM(COALESCE(employee_status, ''))) = LOWER(?)`).bind(normalizedValue, currentValue).run();
+        await env.DB
+          .prepare(
+            `UPDATE config_disciplinary_types
+             SET set_employee_status = ?
+             WHERE LOWER(TRIM(COALESCE(set_employee_status, ''))) = LOWER(?)`
+          )
+          .bind(normalizedValue, currentValue)
+          .run();
+        await env.DB.prepare(`DELETE FROM config_employee_statuses WHERE id = ?`).bind(Number(row.id)).run();
+      } else {
+        await env.DB
+          .prepare(
+            `UPDATE config_employee_statuses
+             SET value = ?, access_mode = ?, show_notice = ?, remove_from_group = ?, restrict_intranet = ?, exclude_from_stats = ?
+             WHERE id = ?`
+          )
+          .bind(
+            normalizedValue,
+            behavior.accessMode,
+            behavior.showNotice,
+            behavior.removeFromGroup,
+            behavior.restrictIntranet,
+            behavior.excludeFromStats,
+            Number(row.id)
+          )
+          .run();
+        statusByValue.delete(currentValue.toLowerCase());
+        statusByValue.set(normalizedValue.toLowerCase(), { ...row, value: normalizedValue, ...behavior });
+        await env.DB.prepare(`UPDATE employees SET employee_status = ? WHERE LOWER(TRIM(COALESCE(employee_status, ''))) = LOWER(?)`).bind(normalizedValue, currentValue).run();
+        await env.DB
+          .prepare(
+            `UPDATE config_disciplinary_types
+             SET set_employee_status = ?
+             WHERE LOWER(TRIM(COALESCE(set_employee_status, ''))) = LOWER(?)`
+          )
+          .bind(normalizedValue, currentValue)
+          .run();
+      }
+    }
+
+    const employeesToNormalize = await env.DB
+      .prepare(`SELECT id, employee_status, activation_status FROM employees WHERE TRIM(COALESCE(employee_status, '')) != ''`)
+      .all();
+    const employeeUpdates = (employeesToNormalize?.results || [])
+      .map((row) => {
+        const currentValue = String(row?.employee_status || '').trim();
+        const normalizedValue = normalizeLegacyEmployeeStatusValue(currentValue, row?.activation_status);
+        if (!normalizedValue || normalizedValue.toLowerCase() === currentValue.toLowerCase()) return null;
+        return env.DB.prepare(`UPDATE employees SET employee_status = ? WHERE id = ?`).bind(normalizedValue, Number(row.id));
+      })
+      .filter(Boolean);
+    if (employeeUpdates.length) {
+      await env.DB.batch(employeeUpdates);
+    }
+
+    const typeStatuses = await env.DB
+      .prepare(`SELECT id, set_employee_status FROM config_disciplinary_types WHERE TRIM(COALESCE(set_employee_status, '')) != ''`)
+      .all();
+    const typeUpdates = (typeStatuses?.results || [])
+      .map((row) => {
+        const currentValue = String(row?.set_employee_status || '').trim();
+        const normalizedValue = normalizeLegacyEmployeeStatusValue(currentValue);
+        if (!normalizedValue || normalizedValue.toLowerCase() === currentValue.toLowerCase()) return null;
+        return env.DB.prepare(`UPDATE config_disciplinary_types SET set_employee_status = ? WHERE id = ?`).bind(normalizedValue, Number(row.id));
+      })
+      .filter(Boolean);
+    if (typeUpdates.length) {
+      await env.DB.batch(typeUpdates);
+    }
+
+    await env.DB.batch([
+      env.DB
+        .prepare(
+          `INSERT OR IGNORE INTO config_disciplinary_types
+             (key, label, value, severity, is_active, default_status, requires_end_date, apply_suspension_rank, set_employee_status, updated_at, created_at)
+           VALUES ('TERMINATION', 'Termination', 'Termination', 5, 1, 'ACTIVE', 0, 0, 'Removed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+        ),
+      env.DB
+        .prepare(
+          `UPDATE config_disciplinary_types
+           SET is_active = 1,
+               set_employee_status = COALESCE(NULLIF(TRIM(set_employee_status), ''), 'Removed'),
+               updated_at = CURRENT_TIMESTAMP
+           WHERE UPPER(COALESCE(key, '')) = 'TERMINATION'`
+        )
+    ]);
+  } catch {
+    // Keep status normalization non-fatal on odd legacy states.
   }
 
   await env.DB

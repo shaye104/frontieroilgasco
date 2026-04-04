@@ -1,723 +1,135 @@
-var __defProp = Object.defineProperty;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-
-// assets/js/modules/notice.js
-function showMessage(target, message, type = "success") {
-  if (!target) return;
-  target.textContent = message;
-  target.className = `feedback is-visible ${type === "error" ? "is-error" : "is-success"}`;
-}
-function clearMessage(target) {
-  if (!target) return;
-  target.textContent = "";
-  target.className = "feedback";
-}
-var init_notice = __esm({
-  "assets/js/modules/notice.js"() {
-  }
-});
-
-// assets/js/modules/admin-api.js
-function nowMs() {
-  return Date.now();
-}
-function cacheGet(key, ttlMs) {
-  if (!ttlMs || ttlMs <= 0) return null;
-  const item = clientDataCache.get(key);
-  if (!item) return null;
-  if (nowMs() - item.ts > ttlMs) return null;
-  return item.payload;
-}
-function cacheSet(key, payload) {
-  clientDataCache.set(key, { ts: nowMs(), payload });
-}
-function clearDataCache() {
-  clientDataCache.clear();
-}
-function markApiRequest(url) {
-  if (typeof window === "undefined") return;
-  const route = window.location.pathname || "/";
-  window.__fogRoutePerf = window.__fogRoutePerf || {};
-  if (!window.__fogRoutePerf[route]) {
-    window.__fogRoutePerf[route] = {
-      startedAt: performance.now(),
-      apiRequests: 0
-    };
-  }
-  window.__fogRoutePerf[route].apiRequests += 1;
-  if (window.__fogPerfVerbose) console.info("[perf] api", { route, url, requests: window.__fogRoutePerf[route].apiRequests });
-}
-async function requestJson(url, options = {}) {
-  const method = String(options.method || "GET").toUpperCase();
-  const cacheTtlMs = Number(options.cacheTtlMs || 0);
-  const cacheKey = String(options.cacheKey || `${method}:${url}`);
-  const timeoutMs = Number(options.timeoutMs || 0);
-  if (method === "GET" && cacheTtlMs > 0) {
-    const cached = cacheGet(cacheKey, cacheTtlMs);
-    if (cached) return cached;
-  }
-  const fetchOptions = { ...options };
-  delete fetchOptions.cacheTtlMs;
-  delete fetchOptions.cacheKey;
-  delete fetchOptions.timeoutMs;
-  markApiRequest(url);
-  const controller = timeoutMs > 0 ? new AbortController() : null;
-  const timeoutHandle = controller && timeoutMs > 0 ? setTimeout(() => {
-    try {
-      controller.abort("timeout");
-    } catch {
-    }
-  }, timeoutMs) : null;
-  const response = await fetch(url, {
-    credentials: "include",
-    headers: { "content-type": "application/json", ...fetchOptions.headers || {} },
-    keepalive: method !== "GET",
-    signal: controller ? controller.signal : fetchOptions.signal,
-    ...fetchOptions
-  }).finally(() => {
-    if (timeoutHandle) clearTimeout(timeoutHandle);
-  });
-  if (response.status === 304) {
-    const cached = clientDataCache.get(cacheKey);
-    if (cached?.payload) {
-      cacheSet(cacheKey, cached.payload);
-      return cached.payload;
-    }
-    const bust = url.includes("?") ? `&_rt=${Date.now()}` : `?_rt=${Date.now()}`;
-    const retryResponse = await fetch(`${url}${bust}`, {
-      credentials: "include",
-      headers: {
-        "content-type": "application/json",
-        "cache-control": "no-cache",
-        pragma: "no-cache",
-        ...fetchOptions.headers || {}
-      },
-      keepalive: method !== "GET"
-    });
-    const retryPayload = await retryResponse.json().catch(() => ({}));
-    if (!retryResponse.ok) throw new Error(retryPayload.error || `Request failed: ${retryResponse.status}`);
-    if (method === "GET" && cacheTtlMs > 0) {
-      cacheSet(cacheKey, retryPayload);
-    }
-    return retryPayload;
-  }
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error || `Request failed: ${response.status}`);
-  if (method === "GET" && cacheTtlMs > 0) {
-    cacheSet(cacheKey, payload);
-  } else if (method !== "GET") {
-    clearDataCache();
-  }
-  return payload;
-}
-function getRobloxGroupJoinRequests({ pageSize = 25, pageToken = "" } = {}) {
-  const params = new URLSearchParams();
-  params.set("pageSize", String(pageSize));
-  if (String(pageToken || "").trim()) params.set("pageToken", String(pageToken).trim());
-  return requestJson(`/api/admin/roblox/group/join-requests?${params.toString()}`, { method: "GET", timeoutMs: 15e3 });
-}
-function acceptRobloxGroupJoinRequest(requesterId) {
-  return requestJson(`/api/admin/roblox/group/join-requests/${encodeURIComponent(String(requesterId || ""))}/accept`, {
-    method: "POST",
-    timeoutMs: 15e3
-  });
-}
-function declineRobloxGroupJoinRequest(requesterId) {
-  return requestJson(`/api/admin/roblox/group/join-requests/${encodeURIComponent(String(requesterId || ""))}/decline`, {
-    method: "POST",
-    timeoutMs: 15e3
-  });
-}
-function getConfig(type) {
-  return requestJson(`/api/admin/config/${type}`, { method: "GET" });
-}
-function getEmployeeConfigBootstrap() {
-  return requestJson("/api/admin/config-bootstrap", {
-    method: "GET",
-    cacheTtlMs: 3e4,
-    cacheKey: "GET:/api/admin/config-bootstrap"
-  });
-}
-function runEmployeeComplianceScan() {
-  return requestJson("/api/admin/employees/scan", {
-    method: "POST",
-    timeoutMs: 12e4
-  });
-}
-function listEmployees(options = {}) {
-  const params = new URLSearchParams();
-  if (options.page) params.set("page", String(options.page));
-  if (options.pageSize) params.set("pageSize", String(options.pageSize));
-  if (options.q) params.set("q", String(options.q));
-  if (options.rank) params.set("rank", String(options.rank));
-  if (options.status) params.set("status", String(options.status));
-  if (options.activationStatus) params.set("activationStatus", String(options.activationStatus));
-  if (options.hireFrom) params.set("hireFrom", String(options.hireFrom));
-  if (options.hireTo) params.set("hireTo", String(options.hireTo));
-  if (options.hireDateFrom) params.set("hireDateFrom", String(options.hireDateFrom));
-  if (options.hireDateTo) params.set("hireDateTo", String(options.hireDateTo));
-  if (options.sortBy) params.set("sortBy", String(options.sortBy));
-  if (options.sortDir) params.set("sortDir", String(options.sortDir));
-  if (options.includeConfig) params.set("includeConfig", "1");
-  const suffix = params.toString() ? `?${params.toString()}` : "";
-  return requestJson(`/api/admin/employees${suffix}`, {
-    method: "GET",
-    cacheTtlMs: 15e3,
-    cacheKey: `GET:/api/admin/employees:${suffix}`
-  });
-}
-function createEmployee(employee) {
-  return requestJson("/api/admin/employees", {
-    method: "POST",
-    body: JSON.stringify(employee)
-  });
-}
-function getEmployeeDrawer(employeeId, options = {}) {
-  const params = new URLSearchParams();
-  if (options.activityPageSize) params.set("activityPageSize", String(options.activityPageSize));
-  const suffix = params.toString() ? `?${params.toString()}` : "";
-  return requestJson(`/api/admin/employees/${employeeId}/drawer${suffix}`, {
-    method: "GET",
-    cacheTtlMs: 1e4,
-    cacheKey: `GET:/api/admin/employees/${employeeId}/drawer:${suffix}`
-  });
-}
-function updateEmployee(employeeId, employee) {
-  return requestJson(`/api/admin/employees/${employeeId}`, {
-    method: "PUT",
-    body: JSON.stringify(employee)
-  });
-}
-function assignEmployeeVessel(employeeId, payload) {
-  return requestJson(`/api/admin/employees/${employeeId}/vessel-assignment`, {
-    method: "PUT",
-    body: JSON.stringify(payload || {})
-  });
-}
-function clearEmployeeVessel(employeeId) {
-  return requestJson(`/api/admin/employees/${employeeId}/vessel-assignment`, {
-    method: "DELETE"
-  });
-}
-function activateEmployee(employeeId) {
-  return requestJson(`/api/admin/employees/${employeeId}/activate`, { method: "POST" });
-}
-function addDisciplinary(employeeId, entry) {
-  return requestJson(`/api/admin/employees/${employeeId}/disciplinary`, {
-    method: "POST",
-    body: JSON.stringify(entry)
-  });
-}
-function updateDisciplinary(employeeId, entry) {
-  return requestJson(`/api/admin/employees/${employeeId}/disciplinary`, {
-    method: "PATCH",
-    body: JSON.stringify(entry)
-  });
-}
-function addEmployeeNote(employeeId, entry) {
-  return requestJson(`/api/admin/employees/${employeeId}/notes`, {
-    method: "POST",
-    body: JSON.stringify(entry)
-  });
-}
-function deleteEmployee(employeeId, payload = {}) {
-  return requestJson(`/api/admin/employees/${employeeId}`, {
-    method: "DELETE",
-    body: JSON.stringify(payload)
-  });
-}
-function purgeUserByDiscord(payload = {}) {
-  return requestJson("/api/admin/employees/purge", {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-}
-var clientDataCache;
-var init_admin_api = __esm({
-  "assets/js/modules/admin-api.js"() {
-    clientDataCache = /* @__PURE__ */ new Map();
-  }
-});
-
-// assets/js/modules/local-datetime.js
-function parseDateValue(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return null;
-  const d1Match = raw.match(
-    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?$/
-  );
-  if (d1Match) {
-    const [, y, m, d, hh, mm, ss, ms] = d1Match;
-    const isoUtc = `${y}-${m}-${d}T${hh}:${mm}:${ss}.${String(ms || "0").padEnd(3, "0")}Z`;
-    const parsed = new Date(isoUtc);
-    if (!Number.isNaN(parsed.getTime())) return parsed;
-  }
-  const native = new Date(raw);
-  if (!Number.isNaN(native.getTime())) return native;
-  return null;
-}
-function formatLocalDateTime(value, options = {}) {
-  const raw = String(value || "").trim();
-  if (!raw) return options.fallback || "N/A";
-  const date = parseDateValue(raw);
-  if (!date) return raw;
-  const resolvedTz = options.timeZone || (typeof Intl !== "undefined" && Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : void 0);
-  return date.toLocaleString(options.locale || void 0, {
-    ...options.formatOptions || {},
-    ...resolvedTz ? { timeZone: resolvedTz } : {}
-  });
-}
-function formatLocalDate(value, options = {}) {
-  const raw = String(value || "").trim();
-  if (!raw) return options.fallback || "N/A";
-  const date = parseDateValue(raw);
-  if (!date) return raw;
-  const resolvedTz = options.timeZone || (typeof Intl !== "undefined" && Intl.DateTimeFormat ? Intl.DateTimeFormat().resolvedOptions().timeZone : void 0);
-  return date.toLocaleDateString(options.locale || void 0, {
-    ...options.formatOptions || {},
-    ...resolvedTz ? { timeZone: resolvedTz } : {}
-  });
-}
-var init_local_datetime = __esm({
-  "assets/js/modules/local-datetime.js"() {
-  }
-});
-
-// assets/js/modules/manage-employees.js?v=20260309b
-var manage_employees_exports = {};
-__export(manage_employees_exports, {
-  initManageEmployees: () => initManageEmployees
-});
-function text(value) {
-  const s = String(value ?? "").trim();
-  return s || "N/A";
-}
-function escapeHtml(value) {
-  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-}
-function getInitials(value) {
-  const cleaned = String(value || "").replace(/\[[^\]]*]/g, " ").replace(/&/g, " ").replace(/[^A-Za-z0-9\s]+/g, " ").trim();
-  if (!cleaned) return "RG";
-  const tokens = cleaned.split(/\s+/).filter(Boolean);
-  if (!tokens.length) return "RG";
-  if (tokens.length === 1) return tokens[0].slice(0, 2).toUpperCase();
-  return tokens.slice(0, 3).map((token) => token.charAt(0).toUpperCase()).join("");
-}
-function getGroupColumnLabel(group) {
-  const explicit = String(group?.shortLabel || group?.label || "").trim();
-  if (explicit) return explicit.slice(0, 24);
-  return getInitials(group?.name || "RG");
-}
-function formatDate(value, withTime = false) {
-  if (!value) return "N/A";
-  if (withTime) return formatLocalDateTime(value, { fallback: String(value) });
-  return formatLocalDate(value, { fallback: String(value) });
-}
-function formatJoinRequestDate(value) {
-  if (!value) return "Unknown";
-  return formatLocalDateTime(value, {
-    fallback: String(value),
-    formatOptions: {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    }
-  });
-}
-function toDateTimeLocalValue(value) {
-  const date = value ? new Date(value) : /* @__PURE__ */ new Date();
-  if (Number.isNaN(date.getTime())) return "";
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 6e4);
-  return local.toISOString().slice(0, 16);
-}
-function statusClass(status) {
-  const normalized = String(status || "").trim().toLowerCase();
-  if (!normalized) return "";
-  if (normalized === "active" || normalized === "on leave") return "is-active";
-  if (normalized === "suspended") return "is-suspended";
-  if (normalized === "removed" || normalized === "left" || normalized === "terminated") return "is-inactive";
-  return "";
-}
-function disciplinaryStatusClass(status) {
-  const normalized = String(status || "").trim().toLowerCase();
-  if (normalized === "active" || normalized === "open") return "is-suspended";
-  if (normalized === "closed" || normalized === "revoked" || normalized === "expired") return "is-inactive";
-  return "";
-}
-function summarizeDisciplinaryType(typeRow) {
-  if (!typeRow) return "";
-  const parts = [];
-  const defaultDuration = Number(typeRow.default_duration_days || 0);
-  if (Number.isFinite(defaultDuration) && defaultDuration > 0) parts.push("Defaults to " + defaultDuration + " day" + (defaultDuration === 1 ? "" : "s"));
-  if (Number(typeRow.requires_end_date || 0)) parts.push("End date required");
-  const nextStatus = String(typeRow.set_employee_status || "").trim();
-  if (nextStatus) parts.push("Sets status to " + nextStatus);
-  if (Number(typeRow.apply_suspension_rank || 0)) parts.push("Applies suspension rank");
-  return parts.join(" - ");
-}
-function extractRequesterId(row) {
-  const nested = String(row?.requester?.userId || row?.requester?.id || "").trim();
-  if (nested) return nested.replace(/\D+/g, "");
-  const nestedUser = String(row?.requester?.user?.userId || row?.requester?.user?.id || row?.user?.userId || row?.user?.id || "").trim();
-  if (nestedUser) return nestedUser.replace(/\D+/g, "");
-  const direct = String(row?.requesterUserId || row?.requester_id || "").trim();
-  if (direct) return direct.replace(/\D+/g, "");
-  const requesterPath = String(row?.requester?.path || row?.requester?.name || row?.requester?.user?.path || row?.requester || row?.user?.path || row?.user || row?.userPath || "").trim();
-  const match = requesterPath.match(/(\d{3,30})/);
-  return match?.[1] || "";
-}
-function joinRequestCreatedAt(row) {
-  return String(row?.createTime || row?.createdAt || row?.created_at || "").trim();
-}
-function joinRequestRequesterLabel(row) {
-  const id = extractRequesterId(row);
-  const requesterDisplay = String(
-    row?.requester?.displayName || row?.requester?.username || row?.requester?.name || row?.requester?.user?.displayName || row?.requester?.user?.username || row?.requester?.user?.name || row?.user?.displayName || row?.user?.username || row?.user?.name || ""
-  ).trim();
-  if (requesterDisplay && id) return `${requesterDisplay} (#${id})`;
-  if (requesterDisplay) return requesterDisplay;
-  const path = String(row?.requester?.path || row?.requester || row?.user || "").trim();
-  if (id) return `User #${id}`;
-  return path || "Unknown requester";
-}
-function extractJoinRequestsFromPayload(payload) {
-  const candidates = [
-    payload?.requests,
-    payload?.groupJoinRequests,
-    payload?.raw?.groupJoinRequests,
-    payload?.raw?.data,
-    payload?.data
-  ];
-  for (const rows of candidates) {
-    if (Array.isArray(rows)) return rows;
-  }
-  return [];
-}
-function openModal(id) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-  modal.classList.remove("hidden");
-  modal.setAttribute("aria-hidden", "false");
-}
-function closeModal(id) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-  modal.classList.add("hidden");
-  modal.setAttribute("aria-hidden", "true");
-}
-function loadVisibleColumns() {
-  try {
-    const raw = window.localStorage.getItem(VISIBLE_COLUMNS_STORAGE_KEY);
-    if (!raw) return new Set(DEFAULT_VISIBLE_COLUMNS);
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Set(DEFAULT_VISIBLE_COLUMNS);
-    const valid = parsed.filter((key) => Object.prototype.hasOwnProperty.call(COLUMN_LABELS, key));
-    if (!valid.length) return new Set(DEFAULT_VISIBLE_COLUMNS);
-    return new Set(valid);
-  } catch {
-    return new Set(DEFAULT_VISIBLE_COLUMNS);
-  }
-}
-function fillOptions(select, items = [], placeholder = "Select") {
-  if (!select) return;
-  const current = String(select.value || "").trim();
-  const normalizedItems = (Array.isArray(items) ? items : []).map((item) => {
-    if (typeof item === "string") return { value: item, label: item };
-    const value = String(item?.value ?? item?.label ?? item?.name ?? "").trim();
-    const label = String(item?.label ?? item?.value ?? item?.name ?? "").trim();
-    return value ? { value, label: label || value } : null;
-  }).filter(Boolean);
-  select.innerHTML = [
-    `<option value="">${escapeHtml(placeholder)}</option>`,
-    ...normalizedItems.map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>`)
-  ].join("");
-  const exactMatch = normalizedItems.find((item) => item.value === current);
-  const caseInsensitiveMatch = normalizedItems.find((item) => item.value.toLowerCase() === current.toLowerCase());
-  if (exactMatch) select.value = exactMatch.value;
-  else if (caseInsensitiveMatch) select.value = caseInsensitiveMatch.value;
-  else select.value = "";
-}
-function renderSelectOptions(items = [], selectedValue = "") {
-  const current = String(selectedValue ?? "").trim();
-  const normalizedItems = (Array.isArray(items) ? items : []).map((item) => {
-    if (typeof item === "string") return { value: item, label: item };
-    const value = String(item?.value ?? item?.label ?? item?.name ?? "").trim();
-    const label = String(item?.label ?? item?.value ?? item?.name ?? "").trim();
-    return value ? { value, label: label || value } : null;
-  }).filter(Boolean);
-  return [
-    '<option value=""></option>',
-    ...normalizedItems.map((item) => {
-      const selected = item.value === current ? " selected" : "";
-      return `<option value="${escapeHtml(item.value)}"${selected}>${escapeHtml(item.label)}</option>`;
-    })
-  ].join("");
-}
-function employeeRowSkeleton() {
-  return `<tr>
+var Bt=Object.defineProperty;var ge=(e,t)=>()=>(e&&(t=e(e=0)),t);var Ct=(e,t)=>{for(var n in t)Bt(e,n,{get:t[n],enumerable:!0})};function E(e,t,n="success"){e&&(e.textContent=t,e.className=`feedback is-visible ${n==="error"?"is-error":"is-success"}`)}function K(e){e&&(e.textContent="",e.className="feedback")}var qe=ge(()=>{});function rt(){return Date.now()}function rr(e,t){if(!t||t<=0)return null;let n=he.get(e);return!n||rt()-n.ts>t?null:n.payload}function Ue(e,t){he.set(e,{ts:rt(),payload:t})}function nr(){he.clear()}function ar(e){if(typeof window>"u")return;let t=window.location.pathname||"/";window.__fogRoutePerf=window.__fogRoutePerf||{},window.__fogRoutePerf[t]||(window.__fogRoutePerf[t]={startedAt:performance.now(),apiRequests:0}),window.__fogRoutePerf[t].apiRequests+=1,window.__fogPerfVerbose&&console.info("[perf] api",{route:t,url:e,requests:window.__fogRoutePerf[t].apiRequests})}async function I(e,t={}){let n=String(t.method||"GET").toUpperCase(),s=Number(t.cacheTtlMs||0),o=String(t.cacheKey||`${n}:${e}`),c=Number(t.timeoutMs||0);if(n==="GET"&&s>0){let S=rr(o,s);if(S)return S}let b={...t};delete b.cacheTtlMs,delete b.cacheKey,delete b.timeoutMs,ar(e);let d=c>0?new AbortController:null,y=d&&c>0?setTimeout(()=>{try{d.abort("timeout")}catch{}},c):null,w=await fetch(e,{credentials:"include",headers:{"content-type":"application/json",...b.headers||{}},keepalive:n!=="GET",signal:d?d.signal:b.signal,...b}).finally(()=>{y&&clearTimeout(y)});if(w.status===304){let S=he.get(o);if(S?.payload)return Ue(o,S.payload),S.payload;let T=e.includes("?")?`&_rt=${Date.now()}`:`?_rt=${Date.now()}`,N=await fetch(`${e}${T}`,{credentials:"include",headers:{"content-type":"application/json","cache-control":"no-cache",pragma:"no-cache",...b.headers||{}},keepalive:n!=="GET"}),P=await N.json().catch(()=>({}));if(!N.ok)throw new Error(P.error||`Request failed: ${N.status}`);return n==="GET"&&s>0&&Ue(o,P),P}let $=await w.json().catch(()=>({}));if(!w.ok)throw new Error($.error||`Request failed: ${w.status}`);return n==="GET"&&s>0?Ue(o,$):n!=="GET"&&nr(),$}function nt({pageSize:e=25,pageToken:t=""}={}){let n=new URLSearchParams;return n.set("pageSize",String(e)),String(t||"").trim()&&n.set("pageToken",String(t).trim()),I(`/api/admin/roblox/group/join-requests?${n.toString()}`,{method:"GET",timeoutMs:15e3})}function at(e){return I(`/api/admin/roblox/group/join-requests/${encodeURIComponent(String(e||""))}/accept`,{method:"POST",timeoutMs:15e3})}function st(e){return I(`/api/admin/roblox/group/join-requests/${encodeURIComponent(String(e||""))}/decline`,{method:"POST",timeoutMs:15e3})}function Ie(e){return I(`/api/admin/config/${e}`,{method:"GET"})}function it(){return I("/api/admin/config-bootstrap",{method:"GET",cacheTtlMs:3e4,cacheKey:"GET:/api/admin/config-bootstrap"})}function ot(){return I("/api/admin/employees/scan",{method:"POST",timeoutMs:12e4})}function Me(e={}){let t=new URLSearchParams;e.page&&t.set("page",String(e.page)),e.pageSize&&t.set("pageSize",String(e.pageSize)),e.q&&t.set("q",String(e.q)),e.rank&&t.set("rank",String(e.rank)),e.status&&t.set("status",String(e.status)),e.activationStatus&&t.set("activationStatus",String(e.activationStatus)),e.hireFrom&&t.set("hireFrom",String(e.hireFrom)),e.hireTo&&t.set("hireTo",String(e.hireTo)),e.hireDateFrom&&t.set("hireDateFrom",String(e.hireDateFrom)),e.hireDateTo&&t.set("hireDateTo",String(e.hireDateTo)),e.sortBy&&t.set("sortBy",String(e.sortBy)),e.sortDir&&t.set("sortDir",String(e.sortDir)),e.includeConfig&&t.set("includeConfig","1");let n=t.toString()?`?${t.toString()}`:"";return I(`/api/admin/employees${n}`,{method:"GET",cacheTtlMs:15e3,cacheKey:`GET:/api/admin/employees:${n}`})}function ct(e){return I("/api/admin/employees",{method:"POST",body:JSON.stringify(e)})}function dt(e,t={}){let n=new URLSearchParams;t.activityPageSize&&n.set("activityPageSize",String(t.activityPageSize));let s=n.toString()?`?${n.toString()}`:"";return I(`/api/admin/employees/${e}/drawer${s}`,{method:"GET",cacheTtlMs:1e4,cacheKey:`GET:/api/admin/employees/${e}/drawer:${s}`})}function ve(e,t){return I(`/api/admin/employees/${e}`,{method:"PUT",body:JSON.stringify(t)})}function lt(e,t){return I(`/api/admin/employees/${e}/vessel-assignment`,{method:"PUT",body:JSON.stringify(t||{})})}function ut(e){return I(`/api/admin/employees/${e}/vessel-assignment`,{method:"DELETE"})}function mt(e){return I(`/api/admin/employees/${e}/activate`,{method:"POST"})}function pt(e,t){return I(`/api/admin/employees/${e}/disciplinary`,{method:"POST",body:JSON.stringify(t)})}function ft(e,t){return I(`/api/admin/employees/${e}/disciplinary`,{method:"PATCH",body:JSON.stringify(t)})}function gt(e,t){return I(`/api/admin/employees/${e}/notes`,{method:"POST",body:JSON.stringify(t)})}function yt(e,t={}){return I(`/api/admin/employees/${e}`,{method:"DELETE",body:JSON.stringify(t)})}function bt(e={}){return I("/api/admin/employees/purge",{method:"POST",body:JSON.stringify(e)})}var he,St=ge(()=>{he=new Map});function ht(e){let t=String(e||"").trim();if(!t)return null;let n=t.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?$/);if(n){let[,o,c,b,d,y,w,$]=n,S=`${o}-${c}-${b}T${d}:${y}:${w}.${String($||"0").padEnd(3,"0")}Z`,T=new Date(S);if(!Number.isNaN(T.getTime()))return T}let s=new Date(t);return Number.isNaN(s.getTime())?null:s}function Pe(e,t={}){let n=String(e||"").trim();if(!n)return t.fallback||"N/A";let s=ht(n);if(!s)return n;let o=t.timeZone||(typeof Intl<"u"&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:void 0);return s.toLocaleString(t.locale||void 0,{...t.formatOptions||{},...o?{timeZone:o}:{}})}function vt(e,t={}){let n=String(e||"").trim();if(!n)return t.fallback||"N/A";let s=ht(n);if(!s)return n;let o=t.timeZone||(typeof Intl<"u"&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:void 0);return s.toLocaleDateString(t.locale||void 0,{...t.formatOptions||{},...o?{timeZone:o}:{}})}var wt=ge(()=>{});var xt={};Ct(xt,{initManageEmployees:()=>Ar});function f(e){return String(e??"").trim()||"N/A"}function l(e){return String(e??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}function ir(e){let t=String(e||"").replace(/\[[^\]]*]/g," ").replace(/&/g," ").replace(/[^A-Za-z0-9\s]+/g," ").trim();if(!t)return"RG";let n=t.split(/\s+/).filter(Boolean);return n.length?n.length===1?n[0].slice(0,2).toUpperCase():n.slice(0,3).map(s=>s.charAt(0).toUpperCase()).join(""):"RG"}function or(e){let t=String(e?.shortLabel||e?.label||"").trim();return t?t.slice(0,24):ir(e?.name||"RG")}function O(e,t=!1){return e?t?Pe(e,{fallback:String(e)}):vt(e,{fallback:String(e)}):"N/A"}function cr(e){return e?Pe(e,{fallback:String(e),formatOptions:{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:!1}}):"Unknown"}function dr(e){let t=e?new Date(e):new Date;return Number.isNaN(t.getTime())?"":new Date(t.getTime()-t.getTimezoneOffset()*6e4).toISOString().slice(0,16)}function Nt(e){let t=String(e||"").trim().toLowerCase();return t?t==="active"||t==="on leave"?"is-active":t==="suspended"?"is-suspended":t==="removed"||t==="left"||t==="terminated"?"is-inactive":"":""}function lr(e){let t=String(e||"").trim().toLowerCase();return t==="active"||t==="open"?"is-suspended":t==="closed"||t==="revoked"||t==="expired"?"is-inactive":""}function ur(e){if(!e)return"";let t=[],n=Number(e.default_duration_days||0);Number.isFinite(n)&&n>0&&t.push("Defaults to "+n+" day"+(n===1?"":"s")),Number(e.requires_end_date||0)&&t.push("End date required");let s=String(e.set_employee_status||"").trim();return s&&t.push("Sets status to "+s),Number(e.apply_suspension_rank||0)&&t.push("Applies suspension rank"),t.join(" - ")}function kt(e){let t=String(e?.requester?.userId||e?.requester?.id||"").trim();if(t)return t.replace(/\D+/g,"");let n=String(e?.requester?.user?.userId||e?.requester?.user?.id||e?.user?.userId||e?.user?.id||"").trim();if(n)return n.replace(/\D+/g,"");let s=String(e?.requesterUserId||e?.requester_id||"").trim();return s?s.replace(/\D+/g,""):String(e?.requester?.path||e?.requester?.name||e?.requester?.user?.path||e?.requester||e?.user?.path||e?.user||e?.userPath||"").trim().match(/(\d{3,30})/)?.[1]||""}function mr(e){return String(e?.createTime||e?.createdAt||e?.created_at||"").trim()}function pr(e){let t=kt(e),n=String(e?.requester?.displayName||e?.requester?.username||e?.requester?.name||e?.requester?.user?.displayName||e?.requester?.user?.username||e?.requester?.user?.name||e?.user?.displayName||e?.user?.username||e?.user?.name||"").trim();if(n&&t)return`${n} (#${t})`;if(n)return n;let s=String(e?.requester?.path||e?.requester||e?.user||"").trim();return t?`User #${t}`:s||"Unknown requester"}function fr(e){let t=[e?.requests,e?.groupJoinRequests,e?.raw?.groupJoinRequests,e?.raw?.data,e?.data];for(let n of t)if(Array.isArray(n))return n;return[]}function se(e){let t=document.getElementById(e);t&&(t.classList.remove("hidden"),t.setAttribute("aria-hidden","false"))}function Oe(e){let t=document.getElementById(e);t&&(t.classList.add("hidden"),t.setAttribute("aria-hidden","true"))}function gr(){try{let e=window.localStorage.getItem(sr);if(!e)return new Set(we);let t=JSON.parse(e);if(!Array.isArray(t))return new Set(we);let n=t.filter(s=>Object.prototype.hasOwnProperty.call(At,s));return n.length?new Set(n):new Set(we)}catch{return new Set(we)}}function Ee(e,t=[],n="Select"){if(!e)return;let s=String(e.value||"").trim(),o=(Array.isArray(t)?t:[]).map(d=>{if(typeof d=="string")return{value:d,label:d};let y=String(d?.value??d?.label??d?.name??"").trim(),w=String(d?.label??d?.value??d?.name??"").trim();return y?{value:y,label:w||y}:null}).filter(Boolean);e.innerHTML=[`<option value="">${l(n)}</option>`,...o.map(d=>`<option value="${l(d.value)}">${l(d.label)}</option>`)].join("");let c=o.find(d=>d.value===s),b=o.find(d=>d.value.toLowerCase()===s.toLowerCase());c?e.value=c.value:b?e.value=b.value:e.value=""}function Et(e=[],t=""){let n=String(t??"").trim();return['<option value=""></option>',...(Array.isArray(e)?e:[]).map(o=>{if(typeof o=="string")return{value:o,label:o};let c=String(o?.value??o?.label??o?.name??"").trim(),b=String(o?.label??o?.value??o?.name??"").trim();return c?{value:c,label:b||c}:null}).filter(Boolean).map(o=>{let c=o.value===n?" selected":"";return`<option value="${l(o.value)}"${c}>${l(o.label)}</option>`})].join("")}function yr(){return`<tr>
     <td><span class="skeleton-line skeleton-w-55"></span></td>
     <td><span class="skeleton-line skeleton-w-80"></span></td>
     <td><span class="skeleton-line skeleton-w-70"></span></td>
     <td><span class="skeleton-line skeleton-w-55"></span></td>
     <td><span class="skeleton-line skeleton-w-45"></span></td>
     <td><span class="skeleton-line skeleton-w-60"></span></td>
-  </tr>`;
-}
-function renderStatCards(payload) {
-  const counts = payload?.meta?.counts || null;
-  const overview = payload?.overview || null;
-  const totalNode = document.querySelector("#employeeStatTotal");
-  const activeNode = document.querySelector("#employeeStatActive");
-  const inactiveNode = document.querySelector("#employeeStatInactive");
-  const newHiresNode = document.querySelector("#employeeStatNewHires");
-  const total = Number(counts?.total ?? overview?.totalEmployees ?? 0);
-  const active = Number(counts?.active ?? overview?.activeEmployees ?? 0);
-  const inactive = Number(counts?.inactiveSuspended ?? overview?.inactiveEmployees ?? 0);
-  const newHires = Number(counts?.newHires30d ?? overview?.newHires30d ?? 0);
-  if (totalNode) totalNode.textContent = String(total);
-  if (activeNode) activeNode.textContent = String(active);
-  if (inactiveNode) inactiveNode.textContent = String(inactive);
-  if (newHiresNode) newHiresNode.textContent = String(newHires);
-}
-function renderSortHeaders(sortBy, sortDir) {
-  document.querySelectorAll(".table-sort-btn").forEach((btn) => {
-    const key = String(btn.getAttribute("data-sort") || "");
-    if (!key) return;
-    const active = key === sortBy;
-    const baseLabel = String(btn.getAttribute("data-label") || btn.textContent || "").replace(/[↑↓]/g, "").trim();
-    btn.setAttribute("data-label", baseLabel);
-    btn.classList.toggle("is-active", active);
-    btn.setAttribute("aria-sort", active ? sortDir === "asc" ? "ascending" : "descending" : "none");
-    btn.textContent = `${baseLabel}${active ? sortDir === "asc" ? " \u2191" : " \u2193" : ""}`;
-  });
-}
-function renderTable(target, employees, visibleColumns) {
-  if (!target) return;
-  if (!employees.length) {
-    target.innerHTML = '<tr><td colspan="6">No employees found for the selected filters.</td></tr>';
-    return;
-  }
-  target.innerHTML = employees.map(
-    (emp) => `
-      <tr class="admin-employee-row" data-employee-id="${Number(emp.id)}">
-        <td>${Number(emp.id)}</td>
-        <td data-col="roblox_username">${escapeHtml(text(emp.roblox_username))}</td>
-        <td data-col="roblox_user_id">${escapeHtml(text(emp.roblox_user_id))}</td>
-        <td data-col="rank">${escapeHtml(text(emp.rank))}</td>
-        <td data-col="employee_status"><span class="badge badge-status ${statusClass(emp.employee_status)}">${escapeHtml(text(emp.employee_status))}</span></td>
-        <td data-col="hire_date">${escapeHtml(formatDate(emp.hire_date))}</td>
-      </tr>`
-  ).join("");
-  target.querySelectorAll("[data-col]").forEach((cell) => {
-    const col = String(cell.getAttribute("data-col") || "");
-    if (col && !visibleColumns.has(col)) cell.classList.add("hidden");
-  });
-}
-function renderScanResults(target, rows = [], requiredGroups = []) {
-  if (!target) return;
-  const safeRows = Array.isArray(rows) ? rows : [];
-  const groups = Array.isArray(requiredGroups) ? requiredGroups : [];
-  if (!safeRows.length) {
-    target.innerHTML = `<tr><td colspan="${3 + groups.length}">No flagged employees found.</td></tr>`;
-    return;
-  }
-  target.innerHTML = safeRows.map((row) => {
-    const checks = Array.isArray(row.checks) ? row.checks : [];
-    const discordCheck = checks.find((check) => String(check?.label || "").trim().toLowerCase() === "discord guild");
-    const nameParts = [text(row.robloxUsername), text(row.rank)].filter((value) => value && value !== "N/A");
-    const issueLabel = text(row.issueLabel);
-    const issueDetail = text(row.issueDetail);
-    const employeeMeta = [text(row.robloxUserId), issueLabel].filter((value) => value && value !== "N/A").join(" \u2022 ");
-    const groupCells = groups.map((group) => {
-      const groupCheck = checks.find((check) => String(check?.label || "").trim() === String(group?.name || "").trim());
-      const ok = Boolean(groupCheck?.ok);
-      const detail = text(groupCheck?.detail || (!groupCheck ? "Not checked." : ""));
-      return `<td class="employee-scan-status-cell" title="${escapeHtml(`${text(group?.name)}: ${detail || issueDetail || "Not checked."}`)}">
-            <span class="employee-scan-status-dot ${ok ? "is-pass" : "is-fail"}" aria-label="${ok ? "Pass" : "Fail"}">${ok ? "&#10003;" : "&#10007;"}</span>
-          </td>`;
-    }).join("");
-    return `
+  </tr>`}function br(e){let t=e?.meta?.counts||null,n=e?.overview||null,s=document.querySelector("#employeeStatTotal"),o=document.querySelector("#employeeStatActive"),c=document.querySelector("#employeeStatInactive"),b=document.querySelector("#employeeStatNewHires"),d=Number(t?.total??n?.totalEmployees??0),y=Number(t?.active??n?.activeEmployees??0),w=Number(t?.inactiveSuspended??n?.inactiveEmployees??0),$=Number(t?.newHires30d??n?.newHires30d??0);s&&(s.textContent=String(d)),o&&(o.textContent=String(y)),c&&(c.textContent=String(w)),b&&(b.textContent=String($))}function Sr(e,t){document.querySelectorAll(".table-sort-btn").forEach(n=>{let s=String(n.getAttribute("data-sort")||"");if(!s)return;let o=s===e,c=String(n.getAttribute("data-label")||n.textContent||"").replace(/[↑↓]/g,"").trim();n.setAttribute("data-label",c),n.classList.toggle("is-active",o),n.setAttribute("aria-sort",o?t==="asc"?"ascending":"descending":"none"),n.textContent=`${c}${o?t==="asc"?" \u2191":" \u2193":""}`})}function hr(e,t,n){if(e){if(!t.length){e.innerHTML='<tr><td colspan="6">No employees found for the selected filters.</td></tr>';return}e.innerHTML=t.map(s=>`
+      <tr class="admin-employee-row" data-employee-id="${Number(s.id)}">
+        <td>${Number(s.id)}</td>
+        <td data-col="roblox_username">${l(f(s.roblox_username))}</td>
+        <td data-col="roblox_user_id">${l(f(s.roblox_user_id))}</td>
+        <td data-col="rank">${l(f(s.rank))}</td>
+        <td data-col="employee_status"><span class="badge badge-status ${Nt(s.employee_status)}">${l(f(s.employee_status))}</span></td>
+        <td data-col="hire_date">${l(O(s.hire_date))}</td>
+      </tr>`).join(""),e.querySelectorAll("[data-col]").forEach(s=>{let o=String(s.getAttribute("data-col")||"");o&&!n.has(o)&&s.classList.add("hidden")})}}function vr(e,t=[],n=[]){if(!e)return;let s=Array.isArray(t)?t:[],o=Array.isArray(n)?n:[];if(!s.length){e.innerHTML=`<tr><td colspan="${3+o.length}">No flagged employees found.</td></tr>`;return}e.innerHTML=s.map(c=>{let b=Array.isArray(c.checks)?c.checks:[],d=b.find(N=>String(N?.label||"").trim().toLowerCase()==="discord guild"),y=[f(c.robloxUsername),f(c.rank)].filter(N=>N&&N!=="N/A"),w=f(c.issueLabel),$=f(c.issueDetail),S=[f(c.robloxUserId),w].filter(N=>N&&N!=="N/A").join(" \u2022 "),T=o.map(N=>{let P=b.find(A=>String(A?.label||"").trim()===String(N?.name||"").trim()),v=!!P?.ok,g=f(P?.detail||(P?"":"Not checked."));return`<td class="employee-scan-status-cell" title="${l(`${f(N?.name)}: ${g||$||"Not checked."}`)}">
+            <span class="employee-scan-status-dot ${v?"is-pass":"is-fail"}" aria-label="${v?"Pass":"Fail"}">${v?"&#10003;":"&#10007;"}</span>
+          </td>`}).join("");return`
       <tr>
         <td class="employee-scan-employee-cell">
-          <strong>${escapeHtml(nameParts[0] || `Employee #${Number(row.employeeId || 0)}`)}</strong>
-          <small>${escapeHtml(employeeMeta || issueDetail || "Flagged during scan.")}</small>
+          <strong>${l(y[0]||`Employee #${Number(c.employeeId||0)}`)}</strong>
+          <small>${l(S||$||"Flagged during scan.")}</small>
         </td>
-        <td class="employee-scan-status-cell" title="${escapeHtml(`Discord: ${text(discordCheck?.detail || issueDetail || "Not checked.")}`)}">
-          <span class="employee-scan-status-dot ${discordCheck?.ok ? "is-pass" : "is-fail"}" aria-label="${discordCheck?.ok ? "Pass" : "Fail"}">${discordCheck?.ok ? "&#10003;" : "&#10007;"}</span>
+        <td class="employee-scan-status-cell" title="${l(`Discord: ${f(d?.detail||$||"Not checked.")}`)}">
+          <span class="employee-scan-status-dot ${d?.ok?"is-pass":"is-fail"}" aria-label="${d?.ok?"Pass":"Fail"}">${d?.ok?"&#10003;":"&#10007;"}</span>
         </td>
-        ${groupCells}
+        ${T}
         <td class="align-right">
-          <button type="button" class="btn btn-secondary btn-compact" data-open-scan-drawer="${Number(row.employeeId || 0)}">Open Drawer</button>
+          <button type="button" class="btn btn-secondary btn-compact" data-open-scan-drawer="${Number(c.employeeId||0)}">Open Drawer</button>
         </td>
-      </tr>`;
-  }).join("");
-}
-function renderScanTableHead(target, requiredGroups = []) {
-  if (!target) return;
-  const groups = Array.isArray(requiredGroups) ? requiredGroups : [];
-  const groupHeaders = groups.map((group) => {
-    const titleParts = [text(group?.name), text(group?.id) ? `ID ${text(group.id)}` : ""].filter(Boolean);
-    return `<th class="employee-scan-status-head" title="${escapeHtml(titleParts.join(" \u2022 ") || "Required group")}">${escapeHtml(getGroupColumnLabel(group))}</th>`;
-  }).join("");
-  target.innerHTML = `<th>Employee</th><th class="employee-scan-status-head">Discord</th>${groupHeaders}<th class="align-right">Action</th>`;
-}
-function renderDrawerUserGroupsSection(payload, options = {}) {
-  const assignedRoles = Array.isArray(payload?.assignedRoles) ? payload.assignedRoles : [];
-  const availableRoles = Array.isArray(payload?.availableRoles) ? payload.availableRoles : [];
-  const canAssign = Boolean(payload?.capabilities?.canAssignUserGroups);
-  const isBusy = Boolean(options.isBusy);
-  const assignedIds = new Set(assignedRoles.map((row) => Number(row.id)).filter((id) => Number.isInteger(id) && id > 0));
-  const addable = availableRoles.filter((row) => !assignedIds.has(Number(row.id)));
-  return `
+      </tr>`}).join("")}function _e(e,t=[]){if(!e)return;let s=(Array.isArray(t)?t:[]).map(o=>{let c=[f(o?.name),f(o?.id)?`ID ${f(o.id)}`:""].filter(Boolean);return`<th class="employee-scan-status-head" title="${l(c.join(" \u2022 ")||"Required group")}">${l(or(o))}</th>`}).join("");e.innerHTML=`<th>Employee</th><th class="employee-scan-status-head">Discord</th>${s}<th class="align-right">Action</th>`}function wr(e,t={}){let n=Array.isArray(e?.assignedRoles)?e.assignedRoles:[],s=Array.isArray(e?.availableRoles)?e.availableRoles:[],o=!!e?.capabilities?.canAssignUserGroups,c=!!t.isBusy,b=new Set(n.map(y=>Number(y.id)).filter(y=>Number.isInteger(y)&&y>0)),d=s.filter(y=>!b.has(Number(y.id)));return`
     <article class="drawer-user-groups-card">
       <div class="admin-employees-table-header">
         <h3>User Groups</h3>
       </div>
-      ${assignedRoles.length ? `<ul class="drawer-user-groups-list">
-              ${assignedRoles.map(
-    (role) => `
+      ${n.length?`<ul class="drawer-user-groups-list">
+              ${n.map(y=>`
                     <li class="drawer-user-groups-item">
                       <div>
-                        <strong>${escapeHtml(text(role.name))}</strong>
-                        <small>${escapeHtml(text(role.description || "No description"))}</small>
+                        <strong>${l(f(y.name))}</strong>
+                        <small>${l(f(y.description||"No description"))}</small>
                       </div>
-                      ${canAssign ? `<button class="btn btn-secondary btn-compact" type="button" data-remove-employee-group="${Number(role.id)}" ${isBusy ? "disabled" : ""}>Remove</button>` : ""}
+                      ${o?`<button class="btn btn-secondary btn-compact" type="button" data-remove-employee-group="${Number(y.id)}" ${c?"disabled":""}>Remove</button>`:""}
                     </li>
-                  `
-  ).join("")}
-            </ul>` : '<p class="finance-inline-caption">No user groups assigned.</p>'}
-      ${canAssign ? `<div class="drawer-user-groups-actions">
-               <select id="drawerUserGroupSelect" ${isBusy ? "disabled" : ""}>
+                  `).join("")}
+            </ul>`:'<p class="finance-inline-caption">No user groups assigned.</p>'}
+      ${o?`<div class="drawer-user-groups-actions">
+               <select id="drawerUserGroupSelect" ${c?"disabled":""}>
                  <option value="">Select user group...</option>
-                 ${addable.map((row) => `<option value="${Number(row.id)}">${escapeHtml(text(row.name))}</option>`).join("")}
+                 ${d.map(y=>`<option value="${Number(y.id)}">${l(f(y.name))}</option>`).join("")}
                </select>
-               <button id="drawerAddEmployeeGroupBtn" class="btn btn-primary btn-compact" type="button" ${isBusy || !addable.length ? "disabled" : ""}>Add Group</button>
-             </div>` : '<p class="finance-inline-caption">You do not have permission to assign user groups.</p>'}
+               <button id="drawerAddEmployeeGroupBtn" class="btn btn-primary btn-compact" type="button" ${c||!d.length?"disabled":""}>Add Group</button>
+             </div>`:'<p class="finance-inline-caption">You do not have permission to assign user groups.</p>'}
       <div id="drawerUserGroupsFeedback" class="feedback" role="status" aria-live="polite"></div>
     </article>
-  `;
-}
-function renderDrawerVesselAssignmentSection(payload, options = {}) {
-  const current = payload?.currentVesselAssignment || null;
-  const history = Array.isArray(payload?.vesselAssignmentHistory) ? payload.vesselAssignmentHistory : [];
-  const canManage = Boolean(options.canManage);
-  const isBusy = Boolean(options.isBusy);
-  const ships = Array.isArray(payload?.vesselConfig?.ships) ? payload.vesselConfig.ships : [];
-  const currentShipId = Number(current?.ship_id || 0);
-  const shipOptions = [
-    '<option value="">Select ship</option>',
-    ...ships.map((ship) => {
-      const shipId = Number(ship.id);
-      const selected = shipId === currentShipId ? " selected" : "";
-      return `<option value="${shipId}"${selected}>${escapeHtml(text(ship.ship_name))} | ${escapeHtml(text(ship.vessel_class))}</option>`;
-    })
-  ].join("");
-  return `
+  `}function Er(e,t={}){let n=e?.currentVesselAssignment||null,s=Array.isArray(e?.vesselAssignmentHistory)?e.vesselAssignmentHistory:[],o=!!t.canManage,c=!!t.isBusy,b=Array.isArray(e?.vesselConfig?.ships)?e.vesselConfig.ships:[],d=Number(n?.ship_id||0),y=['<option value="">Select ship</option>',...b.map(w=>{let $=Number(w.id);return`<option value="${$}"${$===d?" selected":""}>${l(f(w.ship_name))} | ${l(f(w.vessel_class))}</option>`})].join("");return`
     <article class="drawer-user-groups-card">
       <div class="admin-employees-table-header">
         <h3>Vessel Assignment</h3>
       </div>
       <p class="finance-inline-caption">
-        ${current ? `${escapeHtml(text(current.vessel_name))} | ${escapeHtml(text(current.vessel_class))}` : "No active vessel assigned."}
+        ${n?`${l(f(n.vessel_name))} | ${l(f(n.vessel_class))}`:"No active vessel assigned."}
       </p>
-      ${current ? `<p class="finance-inline-caption">Assigned ${escapeHtml(formatDate(current.assigned_at, true))}</p>` : ""}
-      ${canManage ? `<form id="drawerVesselAssignForm" class="finance-cashflow-entry-form">
+      ${n?`<p class="finance-inline-caption">Assigned ${l(O(n.assigned_at,!0))}</p>`:""}
+      ${o?`<form id="drawerVesselAssignForm" class="finance-cashflow-entry-form">
                <div>
                  <label for="drawerShipId">Ship</label>
-                 <select id="drawerShipId" name="shipId" ${isBusy ? "disabled" : ""}>${shipOptions}</select>
+                 <select id="drawerShipId" name="shipId" ${c?"disabled":""}>${y}</select>
                </div>
                <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
-                 <button class="btn btn-primary" type="submit" ${isBusy ? "disabled" : ""}>Save Assignment</button>
-                 <button id="drawerClearVesselAssignmentBtn" class="btn btn-secondary" type="button" ${isBusy || !current ? "disabled" : ""}>Clear Active</button>
+                 <button class="btn btn-primary" type="submit" ${c?"disabled":""}>Save Assignment</button>
+                 <button id="drawerClearVesselAssignmentBtn" class="btn btn-secondary" type="button" ${c||!n?"disabled":""}>Clear Active</button>
                </div>
-             </form>` : '<p class="finance-inline-caption">You do not have permission to manage vessel assignments.</p>'}
-      ${history.length ? `<div class="table-wrap">
+             </form>`:'<p class="finance-inline-caption">You do not have permission to manage vessel assignments.</p>'}
+      ${s.length?`<div class="table-wrap">
                <table class="data-table">
                  <thead><tr><th>Vessel</th><th>Assigned</th><th>Ended</th></tr></thead>
                  <tbody>
-                   ${history.map(
-    (row) => `<tr>
-                         <td>${escapeHtml(text(row.vessel_name))} | ${escapeHtml(text(row.vessel_class))}</td>
-                         <td>${escapeHtml(formatDate(row.assigned_at, true))}</td>
-                         <td>${row.ended_at ? escapeHtml(formatDate(row.ended_at, true)) : "Active"}</td>
-                       </tr>`
-  ).join("")}
+                   ${s.map(w=>`<tr>
+                         <td>${l(f(w.vessel_name))} | ${l(f(w.vessel_class))}</td>
+                         <td>${l(O(w.assigned_at,!0))}</td>
+                         <td>${w.ended_at?l(O(w.ended_at,!0)):"Active"}</td>
+                       </tr>`).join("")}
                  </tbody>
                </table>
-             </div>` : ""}
+             </div>`:""}
       <div id="drawerVesselAssignmentFeedback" class="feedback" role="status" aria-live="polite"></div>
     </article>
-  `;
-}
-function renderDrawerOverview(target, payload, options = {}) {
-  if (!target) return;
-  const employee = payload?.employee || {};
-  const canEdit = Boolean(options.canEdit);
-  const isEditing = Boolean(options.isEditing);
-  const draft = options.draft || {};
-  const ranks = options?.configOptions?.ranks || [];
-  const statuses = options?.configOptions?.statuses || [];
-  const activationStatus = String(employee.activation_status || "PENDING").trim().toUpperCase() || "PENDING";
-  const isSuspended = Boolean(payload?.suspensionState?.isSuspended || employee?.suspension_active_record_id);
-  const suspendedUntil = String(payload?.suspensionState?.suspendedUntil || employee?.suspension_ends_at || "").trim();
-  if (!isEditing) {
-    target.innerHTML = `
+  `}function Tt(e,t,n={}){if(!e)return;let s=t?.employee||{},o=!!n.canEdit,c=!!n.isEditing,b=n.draft||{},d=n?.configOptions?.ranks||[],y=n?.configOptions?.statuses||[],w=String(s.activation_status||"PENDING").trim().toUpperCase()||"PENDING",$=!!(t?.suspensionState?.isSuspended||s?.suspension_active_record_id),S=String(t?.suspensionState?.suspendedUntil||s?.suspension_ends_at||"").trim();if(!c){e.innerHTML=`
       <div class="admin-employees-table-header">
         <h3>Overview</h3>
-        ${canEdit ? `<div class="button-row">
+        ${o?`<div class="button-row">
                  <button id="drawerEditEmployeeBtn" class="btn btn-secondary btn-compact" type="button">Edit details</button>
-                 ${payload?.capabilities?.canDelete ? '<button id="drawerDeleteEmployeeBtn" class="btn btn-danger btn-compact" type="button">Delete user</button>' : ""}
-               </div>` : ""}
+                 ${t?.capabilities?.canDelete?'<button id="drawerDeleteEmployeeBtn" class="btn btn-danger btn-compact" type="button">Delete user</button>':""}
+               </div>`:""}
       </div>
       <div class="profile-kv-grid">
-        <dt>Discord User ID</dt><dd>${escapeHtml(text(employee.discord_user_id))}</dd>
-        <dt>Roblox Username</dt><dd>${escapeHtml(text(employee.roblox_username))}</dd>
-        <dt>Roblox User ID</dt><dd>${escapeHtml(text(employee.roblox_user_id))}</dd>
-        <dt>Rank</dt><dd>${escapeHtml(text(employee.rank))}</dd>
-        <dt>Status</dt><dd><span class="badge badge-status ${statusClass(employee.employee_status)}">${escapeHtml(text(employee.employee_status))}</span></dd>
-        <dt>Disciplinary</dt><dd>${isSuspended ? `<span class="badge badge-status is-suspended">Suspended${suspendedUntil ? ` until ${escapeHtml(formatDate(suspendedUntil, true))}` : ""}</span> <button class="btn btn-secondary btn-compact" type="button" data-drawer-tab="disciplinary">View record</button>` : '<span class="badge badge-status is-active">No active suspension</span>'}</dd>
-        <dt>Hire Date</dt><dd>${escapeHtml(formatDate(employee.hire_date))}</dd>
-        <dt>Last Updated</dt><dd>${escapeHtml(formatDate(employee.updated_at, true))}</dd>
+        <dt>Discord User ID</dt><dd>${l(f(s.discord_user_id))}</dd>
+        <dt>Roblox Username</dt><dd>${l(f(s.roblox_username))}</dd>
+        <dt>Roblox User ID</dt><dd>${l(f(s.roblox_user_id))}</dd>
+        <dt>Rank</dt><dd>${l(f(s.rank))}</dd>
+        <dt>Status</dt><dd><span class="badge badge-status ${Nt(s.employee_status)}">${l(f(s.employee_status))}</span></dd>
+        <dt>Disciplinary</dt><dd>${$?`<span class="badge badge-status is-suspended">Suspended${S?` until ${l(O(S,!0))}`:""}</span> <button class="btn btn-secondary btn-compact" type="button" data-drawer-tab="disciplinary">View record</button>`:'<span class="badge badge-status is-active">No active suspension</span>'}</dd>
+        <dt>Hire Date</dt><dd>${l(O(s.hire_date))}</dd>
+        <dt>Last Updated</dt><dd>${l(O(s.updated_at,!0))}</dd>
       </div>
-      ${activationStatus === "PENDING" && payload?.capabilities?.canActivate ? '<div class="button-row"><button id="drawerActivateEmployeeBtn" class="btn btn-primary" type="button">Activate</button></div>' : ""}
+      ${w==="PENDING"&&t?.capabilities?.canActivate?'<div class="button-row"><button id="drawerActivateEmployeeBtn" class="btn btn-primary" type="button">Activate</button></div>':""}
       <div id="drawerOverviewFeedback" class="feedback" role="status" aria-live="polite"></div>
-    `;
-    return;
-  }
-  target.innerHTML = `
+    `;return}e.innerHTML=`
     <div class="admin-employees-table-header">
       <h3>Edit Overview</h3>
     </div>
     <form id="drawerOverviewEditForm" class="finance-cashflow-entry-form">
       <div>
         <label for="drawerEditRobloxUsername">Roblox Username</label>
-        <input id="drawerEditRobloxUsername" name="robloxUsername" type="text" value="${escapeHtml(text(draft.robloxUsername))}" />
+        <input id="drawerEditRobloxUsername" name="robloxUsername" type="text" value="${l(f(b.robloxUsername))}" />
       </div>
       <div>
         <label for="drawerEditRobloxUserId">Roblox User ID</label>
-        <input id="drawerEditRobloxUserId" name="robloxUserId" type="text" value="${escapeHtml(text(draft.robloxUserId))}" inputmode="numeric" />
+        <input id="drawerEditRobloxUserId" name="robloxUserId" type="text" value="${l(f(b.robloxUserId))}" inputmode="numeric" />
       </div>
       <div>
         <label for="drawerEditRank">Rank</label>
-        <select id="drawerEditRank" name="rank">${renderSelectOptions(ranks, draft.rank)}</select>
+        <select id="drawerEditRank" name="rank">${Et(d,b.rank)}</select>
       </div>
       <div>
         <label for="drawerEditEmployeeStatus">Status</label>
-        <select id="drawerEditEmployeeStatus" name="employeeStatus">${renderSelectOptions(statuses, draft.employeeStatus)}</select>
+        <select id="drawerEditEmployeeStatus" name="employeeStatus">${Et(y,b.employeeStatus)}</select>
       </div>
       <div>
         <label for="drawerEditHireDate">Hire Date</label>
-        <input id="drawerEditHireDate" name="hireDate" type="date" value="${escapeHtml(text(draft.hireDate))}" />
+        <input id="drawerEditHireDate" name="hireDate" type="date" value="${l(f(b.hireDate))}" />
       </div>
       <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
         <button id="drawerSaveOverviewBtn" class="btn btn-primary" type="submit">Save</button>
@@ -725,102 +137,46 @@ function renderDrawerOverview(target, payload, options = {}) {
       </div>
     </form>
     <div id="drawerOverviewFeedback" class="feedback" role="status" aria-live="polite"></div>
-  `;
-}
-function renderDrawerVoyages(target, payload, options = {}) {
-  if (!target) return;
-  const voyages = Array.isArray(payload?.recentVoyages) ? payload.recentVoyages : [];
-  const showVesselAssignment = Boolean(options.showVesselAssignment);
-  target.innerHTML = `
+  `}function Tr(e,t,n={}){if(!e)return;let s=Array.isArray(t?.recentVoyages)?t.recentVoyages:[],o=!!n.showVesselAssignment;e.innerHTML=`
     <div class="button-row">
-      <button id="toggleVesselAssignmentBtn" class="btn btn-secondary btn-compact" type="button">${showVesselAssignment ? "Hide" : "Manage"} Vessel Assignment</button>
+      <button id="toggleVesselAssignmentBtn" class="btn btn-secondary btn-compact" type="button">${o?"Hide":"Manage"} Vessel Assignment</button>
     </div>
-    <section class="${showVesselAssignment ? "" : "hidden"}">
-      ${renderDrawerVesselAssignmentSection(payload, {
-    canManage: Boolean(payload?.capabilities?.canManageVesselAssignment),
-    isBusy: options.vesselBusy
-  })}
+    <section class="${o?"":"hidden"}">
+      ${Er(t,{canManage:!!t?.capabilities?.canManageVesselAssignment,isBusy:n.vesselBusy})}
     </section>
-    ${voyages.length ? `<div class="table-wrap">
+    ${s.length?`<div class="table-wrap">
              <table class="data-table">
                <thead>
                  <tr><th>Vessel</th><th>Route</th><th>Status</th><th>Ended</th><th class="align-right">Net Profit</th></tr>
                </thead>
                <tbody>
-                 ${voyages.map(
-    (voyage) => `<tr>
-                     <td>${escapeHtml(text(voyage.vessel_name))} (${escapeHtml(text(voyage.vessel_class))})</td>
-                     <td>${escapeHtml(text(voyage.departure_port))} \u2192 ${escapeHtml(text(voyage.destination_port))}</td>
-                     <td>${escapeHtml(text(voyage.status))}</td>
-                     <td>${escapeHtml(formatDate(voyage.ended_at || voyage.started_at, true))}</td>
-                     <td class="align-right">\u0192 ${Math.round(Number(voyage.net_profit || 0)).toLocaleString()}</td>
-                   </tr>`
-  ).join("")}
+                 ${s.map(c=>`<tr>
+                     <td>${l(f(c.vessel_name))} (${l(f(c.vessel_class))})</td>
+                     <td>${l(f(c.departure_port))} \u2192 ${l(f(c.destination_port))}</td>
+                     <td>${l(f(c.status))}</td>
+                     <td>${l(O(c.ended_at||c.started_at,!0))}</td>
+                     <td class="align-right">\u0192 ${Math.round(Number(c.net_profit||0)).toLocaleString()}</td>
+                   </tr>`).join("")}
                </tbody>
              </table>
-           </div>` : '<p class="finance-inline-caption">No recent voyages found.</p>'}
-  `;
-}
-function renderDrawerAccess(target, payload, options = {}) {
-  if (!target) return;
-  target.innerHTML = renderDrawerUserGroupsSection(payload, { isBusy: options.userGroupsBusy });
-}
-function renderDrawerActivity(target, payload) {
-  if (!target) return;
-  const activity = Array.isArray(payload?.activity) ? payload.activity : [];
-  if (!activity.length) {
-    target.innerHTML = '<p class="finance-inline-caption">No activity records found for this employee.</p>';
-    return;
-  }
-  target.innerHTML = `
+           </div>`:'<p class="finance-inline-caption">No recent voyages found.</p>'}
+  `}function $r(e,t,n={}){e&&(e.innerHTML=wr(t,{isBusy:n.userGroupsBusy}))}function Nr(e,t){if(!e)return;let n=Array.isArray(t?.activity)?t.activity:[];if(!n.length){e.innerHTML='<p class="finance-inline-caption">No activity records found for this employee.</p>';return}e.innerHTML=`
     <ul class="role-list">
-      ${activity.map(
-    (entry) => `
+      ${n.map(s=>`
         <li class="role-item">
           <div>
-            <strong>${escapeHtml(text(entry.actionType))}</strong>
-            <p class="finance-inline-caption">${escapeHtml(text(entry.summary))}</p>
-            <p class="finance-inline-caption">${escapeHtml(formatDate(entry.createdAt, true))}</p>
+            <strong>${l(f(s.actionType))}</strong>
+            <p class="finance-inline-caption">${l(f(s.summary))}</p>
+            <p class="finance-inline-caption">${l(O(s.createdAt,!0))}</p>
           </div>
-          <span class="role-id">${escapeHtml(text(entry.actorRobloxUsername || entry.actorName || entry.actorDiscordId || "System"))}</span>
+          <span class="role-id">${l(f(s.actorRobloxUsername||s.actorName||s.actorDiscordId||"System"))}</span>
         </li>
-      `
-  ).join("")}
-    </ul>`;
-}
-function isSystemNote(noteText) {
-  const value = String(noteText || "").trim().toLowerCase();
-  return value.startsWith("[activity]") || value.startsWith("[system]");
-}
-function renderDrawerNotes(target, payload, showSystem, notesFeedback, selectedEmployeeId, refreshDrawerData, setShowSystem) {
-  if (!target) return;
-  const rawNotes = (Array.isArray(payload?.notes) ? payload.notes : []).filter(
-    (entry) => !String(entry?.note || "").trim().toLowerCase().startsWith("[activity]")
-  );
-  const systemActivity = Array.isArray(payload?.activity) ? payload.activity : [];
-  const allNotes = [
-    ...rawNotes.map((entry) => ({
-      id: `note-${entry.id}`,
-      note: entry.note,
-      authored_by: entry.authored_by,
-      created_at: entry.created_at,
-      isSystem: isSystemNote(entry.note)
-    })),
-    ...systemActivity.map((entry) => ({
-      id: `activity-${entry.id}`,
-      note: `${text(entry.actionType)}: ${text(entry.summary)}`,
-      authored_by: entry.actorRobloxUsername || entry.actorName || entry.actorDiscordId || "System",
-      created_at: entry.createdAt,
-      isSystem: true
-    }))
-  ].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
-  const canAddNotes = Boolean(payload?.capabilities?.canAddNotes);
-  const notes = showSystem ? allNotes : allNotes.filter((note) => !note.isSystem);
-  target.innerHTML = `
+      `).join("")}
+    </ul>`}function kr(e){let t=String(e||"").trim().toLowerCase();return t.startsWith("[activity]")||t.startsWith("[system]")}function Be(e,t,n,s,o,c,b){if(!e)return;let d=(Array.isArray(t?.notes)?t.notes:[]).filter(v=>!String(v?.note||"").trim().toLowerCase().startsWith("[activity]")),y=Array.isArray(t?.activity)?t.activity:[],w=[...d.map(v=>({id:`note-${v.id}`,note:v.note,authored_by:v.authored_by,created_at:v.created_at,isSystem:kr(v.note)})),...y.map(v=>({id:`activity-${v.id}`,note:`${f(v.actionType)}: ${f(v.summary)}`,authored_by:v.actorRobloxUsername||v.actorName||v.actorDiscordId||"System",created_at:v.createdAt,isSystem:!0}))].sort((v,g)=>new Date(g.created_at||0).getTime()-new Date(v.created_at||0).getTime()),$=!!t?.capabilities?.canAddNotes,S=n?w:w.filter(v=>!v.isSystem);e.innerHTML=`
     <div class="button-row">
-      <label class="finance-toggle-wrap"><input id="drawerSystemNotesToggle" type="checkbox" ${showSystem ? "checked" : ""}/> Show system messages</label>
+      <label class="finance-toggle-wrap"><input id="drawerSystemNotesToggle" type="checkbox" ${n?"checked":""}/> Show system messages</label>
     </div>
-    ${canAddNotes ? `<form id="drawerAddNoteForm" class="finance-cashflow-entry-form">
+    ${$?`<form id="drawerAddNoteForm" class="finance-cashflow-entry-form">
       <div>
         <label for="drawerNoteCategory">Category</label>
         <select id="drawerNoteCategory" name="category">
@@ -838,83 +194,31 @@ function renderDrawerNotes(target, payload, showSystem, notesFeedback, selectedE
       <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
         <button class="btn btn-primary" type="submit">Add Note</button>
       </div>
-    </form>` : '<p class="finance-inline-caption">You do not have permission to add notes.</p>'}
+    </form>`:'<p class="finance-inline-caption">You do not have permission to add notes.</p>'}
     <div id="drawerNotesFeedback" class="feedback" role="status" aria-live="polite"></div>
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr><th>When</th><th>Author</th><th>Entry</th></tr></thead>
         <tbody>
-          ${notes.length ? notes.map(
-    (entry) => `<tr>
-                      <td>${escapeHtml(formatDate(entry.created_at, true))}</td>
-                      <td>${escapeHtml(text(entry.authored_by || "System"))}</td>
-                      <td>${entry.isSystem ? '<span class="badge badge-status is-inactive">SYSTEM</span> ' : ""}${escapeHtml(text(entry.note))}</td>
-                    </tr>`
-  ).join("") : '<tr><td colspan="3">No notes found.</td></tr>'}
+          ${S.length?S.map(v=>`<tr>
+                      <td>${l(O(v.created_at,!0))}</td>
+                      <td>${l(f(v.authored_by||"System"))}</td>
+                      <td>${v.isSystem?'<span class="badge badge-status is-inactive">SYSTEM</span> ':""}${l(f(v.note))}</td>
+                    </tr>`).join(""):'<tr><td colspan="3">No notes found.</td></tr>'}
         </tbody>
       </table>
     </div>
-  `;
-  const feedbackNode = target.querySelector("#drawerNotesFeedback");
-  if (feedbackNode && notesFeedback?.message) showMessage(feedbackNode, notesFeedback.message, notesFeedback.type || "info");
-  const toggle = target.querySelector("#drawerSystemNotesToggle");
-  toggle?.addEventListener("change", () => {
-    const nextShowSystem = Boolean(toggle.checked);
-    if (typeof setShowSystem === "function") setShowSystem(nextShowSystem);
-    renderDrawerNotes(target, payload, nextShowSystem, null, selectedEmployeeId, refreshDrawerData, setShowSystem);
-  });
-  const form = target.querySelector("#drawerAddNoteForm");
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const fd = new FormData(form);
-    const note = String(fd.get("note") || "").trim();
-    if (!note) return;
-    try {
-      await addEmployeeNote(selectedEmployeeId, {
-        category: String(fd.get("category") || "").trim(),
-        note
-      });
-      await refreshDrawerData(selectedEmployeeId, {
-        force: true,
-        feedback: { message: "Note added.", type: "success" },
-        tab: "notes",
-        showSystem: Boolean(toggle?.checked)
-      });
-    } catch (error) {
-      renderDrawerNotes(
-        target,
-        payload,
-        Boolean(toggle?.checked),
-        { message: error.message || "Unable to add note.", type: "error" },
-        selectedEmployeeId,
-        refreshDrawerData,
-        setShowSystem
-      );
-    }
-  });
-}
-function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selectedEmployeeId, refreshDrawerData) {
-  if (!target) return;
-  const records = Array.isArray(payload?.disciplinaries) ? payload.disciplinaries : [];
-  const types = Array.isArray(payload?.disciplinaryTypes) ? payload.disciplinaryTypes : [];
-  const canAddDisciplinary = Boolean(payload?.capabilities?.canAddDisciplinary);
-  const activeCount = records.filter((entry) => ["ACTIVE", "OPEN"].includes(String(entry.status || entry.record_status || "").toUpperCase())).length;
-  const suspendedUntil = String(payload?.suspensionState?.suspendedUntil || "").trim();
-  target.innerHTML = `
+  `;let T=e.querySelector("#drawerNotesFeedback");T&&s?.message&&E(T,s.message,s.type||"info");let N=e.querySelector("#drawerSystemNotesToggle");N?.addEventListener("change",()=>{let v=!!N.checked;typeof b=="function"&&b(v),Be(e,t,v,null,o,c,b)});let P=e.querySelector("#drawerAddNoteForm");P?.addEventListener("submit",async v=>{v.preventDefault();let g=new FormData(P),A=String(g.get("note")||"").trim();if(A)try{await gt(o,{category:String(g.get("category")||"").trim(),note:A}),await c(o,{force:!0,feedback:{message:"Note added.",type:"success"},tab:"notes",showSystem:!!N?.checked})}catch(q){Be(e,t,!!N?.checked,{message:q.message||"Unable to add note.",type:"error"},o,c,b)}})}function Ce(e,t,n,s,o){if(!e)return;let c=Array.isArray(t?.disciplinaries)?t.disciplinaries:[],b=Array.isArray(t?.disciplinaryTypes)?t.disciplinaryTypes:[],d=!!t?.capabilities?.canAddDisciplinary,y=c.filter(g=>["ACTIVE","OPEN"].includes(String(g.status||g.record_status||"").toUpperCase())).length,w=String(t?.suspensionState?.suspendedUntil||"").trim();e.innerHTML=`
     <div class="admin-employees-table-header">
       <h3>Disciplinary</h3>
-      <span class="finance-inline-caption">Active: ${activeCount}${payload?.suspensionState?.isSuspended ? ` - Suspended${suspendedUntil ? ` until ${escapeHtml(formatDate(suspendedUntil, true))}` : ""}` : ""}</span>
+      <span class="finance-inline-caption">Active: ${y}${t?.suspensionState?.isSuspended?` - Suspended${w?` until ${l(O(w,!0))}`:""}`:""}</span>
     </div>
-    ${canAddDisciplinary ? `<form id="drawerAddDisciplinaryForm" class="finance-cashflow-entry-form">
+    ${d?`<form id="drawerAddDisciplinaryForm" class="finance-cashflow-entry-form">
       <div>
         <label for="drawerTypeKey">Type</label>
         <select id="drawerTypeKey" name="typeKey" required>
           <option value="">Select disciplinary type</option>
-          ${types.map(
-    (row) => `<option value="${escapeHtml(String(row.key || ""))}" data-requires-end="${Number(row.requires_end_date || 0)}" data-default-duration="${Number(row.default_duration_days || 0)}" data-set-status="${escapeHtml(String(row.set_employee_status || "").trim())}" data-apply-suspension="${Number(row.apply_suspension_rank || 0)}">${escapeHtml(
-      text(row.label || row.value || row.key)
-    )}</option>`
-  ).join("")}
+          ${b.map(g=>`<option value="${l(String(g.key||""))}" data-requires-end="${Number(g.requires_end_date||0)}" data-default-duration="${Number(g.default_duration_days||0)}" data-set-status="${l(String(g.set_employee_status||"").trim())}" data-apply-suspension="${Number(g.apply_suspension_rank||0)}">${l(f(g.label||g.value||g.key))}</option>`).join("")}
         </select>
         <p id="drawerDisciplinaryTypeHint" class="finance-inline-caption">Effective date is set automatically when you press Create Record.</p>
       </div>
@@ -933,1464 +237,49 @@ function renderDrawerDisciplinary(target, payload, disciplinaryFeedback, selecte
       <div class="finance-cashflow-entry-wide finance-cashflow-entry-actions">
         <button class="btn btn-primary" type="submit">Create Record</button>
       </div>
-    </form>` : '<p class="finance-inline-caption">You do not have permission to add disciplinary records.</p>'}
+    </form>`:'<p class="finance-inline-caption">You do not have permission to add disciplinary records.</p>'}
     <div id="drawerDisciplinaryFeedback" class="feedback" role="status" aria-live="polite"></div>
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr><th>When</th><th>Type</th><th>Status</th><th>Issued By</th><th>Reason</th><th class="align-right">Actions</th></tr></thead>
         <tbody>
-          ${records.length ? records.map((entry) => {
-    const rowStatus = String(entry.status || entry.record_status || "").toUpperCase();
-    const canModify = ["ACTIVE", "OPEN"].includes(rowStatus) && canAddDisciplinary;
-    return `<tr>
-                      <td>${escapeHtml(formatDate(entry.effective_at || entry.record_date || entry.created_at, true))}${entry.ends_at ? `<br><small>Ends: ${escapeHtml(formatDate(entry.ends_at, true))}</small>` : ""}</td>
-                      <td>${escapeHtml(text(entry.type_label || entry.record_type || entry.type_key))}</td>
-                      <td><span class="badge badge-status ${disciplinaryStatusClass(rowStatus)}">${escapeHtml(rowStatus || "ACTIVE")}</span></td>
-                      <td>${escapeHtml(text(entry.issued_by_name || entry.issued_by || "System"))}</td>
-                      <td>${escapeHtml(text(entry.reason_text || entry.notes))}</td>
+          ${c.length?c.map(g=>{let A=String(g.status||g.record_status||"").toUpperCase(),q=["ACTIVE","OPEN"].includes(A)&&d;return`<tr>
+                      <td>${l(O(g.effective_at||g.record_date||g.created_at,!0))}${g.ends_at?`<br><small>Ends: ${l(O(g.ends_at,!0))}</small>`:""}</td>
+                      <td>${l(f(g.type_label||g.record_type||g.type_key))}</td>
+                      <td><span class="badge badge-status ${lr(A)}">${l(A||"ACTIVE")}</span></td>
+                      <td>${l(f(g.issued_by_name||g.issued_by||"System"))}</td>
+                      <td>${l(f(g.reason_text||g.notes))}</td>
                       <td class="align-right">
-                        ${canModify ? `<button class="btn btn-secondary btn-compact" type="button" data-discipline-action="close" data-record-id="${Number(entry.id)}">Close</button>
-                               <button class="btn btn-warning btn-compact" type="button" data-discipline-action="revoke" data-record-id="${Number(entry.id)}">Revoke</button>
-                               <button class="btn btn-primary btn-compact" type="button" data-discipline-action="extend" data-record-id="${Number(entry.id)}">Extend</button>` : '<span class="finance-inline-caption">-</span>'}
+                        ${q?`<button class="btn btn-secondary btn-compact" type="button" data-discipline-action="close" data-record-id="${Number(g.id)}">Close</button>
+                               <button class="btn btn-warning btn-compact" type="button" data-discipline-action="revoke" data-record-id="${Number(g.id)}">Revoke</button>
+                               <button class="btn btn-primary btn-compact" type="button" data-discipline-action="extend" data-record-id="${Number(g.id)}">Extend</button>`:'<span class="finance-inline-caption">-</span>'}
                       </td>
-                    </tr>`;
-  }).join("") : '<tr><td colspan="6">No disciplinary records found.</td></tr>'}
+                    </tr>`}).join(""):'<tr><td colspan="6">No disciplinary records found.</td></tr>'}
         </tbody>
       </table>
     </div>
-  `;
-  const feedbackNode = target.querySelector("#drawerDisciplinaryFeedback");
-  if (feedbackNode && disciplinaryFeedback?.message) showMessage(feedbackNode, disciplinaryFeedback.message, disciplinaryFeedback.type || "info");
-  const typeSelect = target.querySelector("#drawerTypeKey");
-  const endsAtInput = target.querySelector("#drawerEndsAt");
-  const typeHint = target.querySelector("#drawerDisciplinaryTypeHint");
-  const applyTypeDefaults = ({ force = false } = {}) => {
-    if (!typeSelect || !endsAtInput) return;
-    const selected = typeSelect.options[typeSelect.selectedIndex];
-    const requiresEnd = Number(selected?.getAttribute("data-requires-end") || 0) === 1;
-    const defaultDuration = Number(selected?.getAttribute("data-default-duration") || 0);
-    const summary = summarizeDisciplinaryType({
-      default_duration_days: defaultDuration,
-      requires_end_date: requiresEnd ? 1 : 0,
-      set_employee_status: String(selected?.getAttribute("data-set-status") || "").trim(),
-      apply_suspension_rank: Number(selected?.getAttribute("data-apply-suspension") || 0)
-    });
-    endsAtInput.required = requiresEnd;
-    if (Number.isFinite(defaultDuration) && defaultDuration > 0 && (force || endsAtInput.dataset.autoDefault === "1" || !String(endsAtInput.value || "").trim())) {
-      endsAtInput.value = toDateTimeLocalValue(new Date(Date.now() + defaultDuration * 24 * 60 * 60 * 1e3));
-      endsAtInput.dataset.autoDefault = "1";
-    } else if ((!Number.isFinite(defaultDuration) || defaultDuration <= 0) && (force || endsAtInput.dataset.autoDefault === "1")) {
-      endsAtInput.value = "";
-      endsAtInput.dataset.autoDefault = "0";
-    }
-    if (typeHint) typeHint.textContent = summary || "Effective date is set automatically when you press Create Record.";
-  };
-  typeSelect?.addEventListener("change", () => applyTypeDefaults({ force: true }));
-  endsAtInput?.addEventListener("input", () => {
-    if (endsAtInput) endsAtInput.dataset.autoDefault = "0";
-  });
-  applyTypeDefaults();
-  const form = target.querySelector("#drawerAddDisciplinaryForm");
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const fd = new FormData(form);
-    try {
-      const selected = typeSelect?.options?.[typeSelect.selectedIndex];
-      const defaultDuration = Number(selected?.getAttribute("data-default-duration") || 0);
-      let endsAt = String(fd.get("endsAt") || "").trim();
-      if (endsAtInput?.dataset.autoDefault === "1" && Number.isFinite(defaultDuration) && defaultDuration > 0) {
-        endsAt = new Date(Date.now() + defaultDuration * 24 * 60 * 60 * 1e3).toISOString();
-      }
-      await addDisciplinary(selectedEmployeeId, {
-        typeKey: String(fd.get("typeKey") || "").trim(),
-        endsAt,
-        reasonText: String(fd.get("reasonText") || "").trim(),
-        internalNotes: String(fd.get("internalNotes") || "").trim()
-      });
-      await refreshDrawerData(selectedEmployeeId, {
-        force: true,
-        feedback: { message: "Disciplinary record created.", type: "success" },
-        tab: "disciplinary"
-      });
-    } catch (error) {
-      renderDrawerDisciplinary(target, payload, { message: error.message || "Unable to create disciplinary record.", type: "error" }, selectedEmployeeId, refreshDrawerData);
-    }
-  });
-  target.querySelectorAll("[data-discipline-action]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const action = String(button.getAttribute("data-discipline-action") || "").trim();
-      const recordId = Number(button.getAttribute("data-record-id"));
-      if (!action || !Number.isInteger(recordId) || recordId <= 0) return;
-      try {
-        let payloadData = { recordId, action };
-        if (action === "extend") {
-          const nextEndsAt = window.prompt("Enter new end date/time (YYYY-MM-DDTHH:mm):", "");
-          if (!nextEndsAt) return;
-          payloadData = { ...payloadData, endsAt: nextEndsAt };
-        }
-        await updateDisciplinary(selectedEmployeeId, payloadData);
-        await refreshDrawerData(selectedEmployeeId, {
-          force: true,
-          feedback: { message: `Record ${action}d.`, type: "success" },
-          tab: "disciplinary"
-        });
-      } catch (error) {
-        renderDrawerDisciplinary(target, payload, { message: error.message || "Unable to update disciplinary record.", type: "error" }, selectedEmployeeId, refreshDrawerData);
-      }
-    });
-  });
-}
-function normalizeEmployeesPayload(payload) {
-  const employees = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload?.employees) ? payload.employees : [];
-  const pagination = payload?.pagination || {};
-  const meta = payload?.meta || {};
-  return {
-    ...payload,
-    employees,
-    pagination: {
-      page: Number(meta.page || pagination.page || 1),
-      pageSize: Number(meta.pageSize || pagination.pageSize || employees.length || 20),
-      total: Number(meta.total || pagination.total || 0),
-      totalPages: Number(meta.totalPages || pagination.totalPages || 1)
-    }
-  };
-}
-async function initManageEmployees(config) {
-  const feedback = document.querySelector(config.feedbackSelector);
-  const tableBody = document.querySelector(config.employeeTableBodySelector);
-  const filterQuery = document.querySelector(config.filterQuerySelector);
-  const filterRank = document.querySelector(config.filterRankSelector);
-  const filterStatus = document.querySelector(config.filterStatusSelector);
-  const filterActivation = document.querySelector(config.filterActivationSelector);
-  const filterHireDateFrom = document.querySelector(config.filterHireDateFromSelector);
-  const filterHireDateTo = document.querySelector(config.filterHireDateToSelector);
-  const clearFiltersBtn = document.querySelector(config.clearFiltersBtnSelector);
-  const toggleMoreFiltersBtn = document.querySelector(config.toggleMoreFiltersBtnSelector);
-  const moreFiltersPanel = document.querySelector(config.moreFiltersPanelSelector);
-  const runScanBtn = document.querySelector(config.runScanBtnSelector);
-  const rerunScanBtn = document.querySelector(config.rerunScanBtnSelector);
-  const scanModal = document.querySelector(config.scanModalSelector);
-  const scanFeedback = document.querySelector(config.scanFeedbackSelector);
-  const scanSummary = document.querySelector(config.scanSummarySelector);
-  const scanTableHeadRow = document.querySelector(config.scanTableHeadRowSelector);
-  const scanTableBody = document.querySelector(config.scanTableBodySelector);
-  const paginationInfo = document.querySelector(config.paginationInfoSelector);
-  const prevPageBtn = document.querySelector(config.prevPageBtnSelector);
-  const nextPageBtn = document.querySelector(config.nextPageBtnSelector);
-  const columnVisibilityBtn = document.querySelector(config.columnVisibilityBtnSelector);
-  const columnVisibilityMenu = document.querySelector(config.columnVisibilityMenuSelector);
-  const openCreateEmployeeBtn = document.querySelector(config.openCreateEmployeeBtnSelector);
-  const openJoinRequestsBtn = document.querySelector("#openJoinRequestsBtn");
-  const refreshJoinRequestsBtn = document.querySelector("#refreshJoinRequestsBtn");
-  const joinRequestsModal = document.querySelector("#joinRequestsModal");
-  const joinRequestsFeedback = document.querySelector("#joinRequestsFeedback");
-  const joinRequestsTableBody = document.querySelector("#joinRequestsTableBody");
-  const createForm = document.querySelector(config.createFormSelector);
-  const openDeleteUserBtn = document.querySelector("#openDeleteUserBtn");
-  const deleteUserForm = document.querySelector("#deleteUserForm");
-  const drawer = document.querySelector(config.drawerSelector);
-  const drawerName = document.querySelector(config.drawerNameSelector);
-  const drawerMeta = document.querySelector(config.drawerMetaSelector);
-  const drawerOverview = document.querySelector(config.drawerOverviewSelector);
-  const drawerVoyages = document.querySelector(config.drawerVoyagesSelector);
-  const drawerActivity = document.querySelector(config.drawerActivitySelector);
-  const drawerAccess = document.querySelector(config.drawerAccessSelector);
-  const drawerNotes = document.querySelector(config.drawerNotesSelector);
-  const drawerDisciplinary = document.querySelector(config.drawerDisciplinarySelector);
-  if (!feedback || !tableBody || !createForm) return;
-  const state = {
-    page: 1,
-    pageSize: 20,
-    totalPages: 1,
-    sortBy: "id",
-    sortDir: "desc",
-    visibleColumns: loadVisibleColumns(),
-    drawerTab: "overview",
-    drawerVoyagesShowVesselAssignment: false,
-    selectedEmployeeId: null,
-    showSystemNotes: false,
-    drawerOverviewEditMode: false,
-    drawerOverviewDraft: null,
-    drawerPayload: null,
-    drawerUserGroupsBusy: false,
-    drawerVesselBusy: false,
-    configBootstrapped: false,
-    configOptions: {
-      ranks: [],
-      statuses: []
-    },
-    joinRequests: [],
-    joinRequestsLoading: false,
-    employeeScanRows: [],
-    employeeScanLoading: false,
-    employeeScanGroups: []
-  };
-  const drawerCache = /* @__PURE__ */ new Map();
-  let debounceTimer = null;
-  function buildOverviewDraft(employee = {}) {
-    return {
-      robloxUsername: employee?.roblox_username || "",
-      robloxUserId: employee?.roblox_user_id || "",
-      rank: employee?.rank || "",
-      employeeStatus: employee?.employee_status || "",
-      hireDate: employee?.hire_date || ""
-    };
-  }
-  function renderOverviewFromState() {
-    if (!drawerOverview || !state.drawerPayload) return;
-    renderDrawerOverview(drawerOverview, state.drawerPayload, {
-      canEdit: Boolean(state.drawerPayload?.capabilities?.canActivate),
-      isEditing: state.drawerOverviewEditMode,
-      draft: state.drawerOverviewDraft,
-      configOptions: state.configOptions,
-      userGroupsBusy: state.drawerUserGroupsBusy,
-      vesselBusy: state.drawerVesselBusy
-    });
-  }
-  function rerenderCurrentDrawerTab() {
-    if (!state.drawerPayload || !state.selectedEmployeeId) return;
-    renderActiveDrawerTab(state.drawerPayload, state.selectedEmployeeId, {});
-  }
-  function applyColumnVisibility() {
-    document.querySelectorAll("[data-col]").forEach((node) => {
-      const col = String(node.getAttribute("data-col") || "");
-      if (!col) return;
-      node.classList.toggle("hidden", !state.visibleColumns.has(col));
-    });
-  }
-  function renderColumnMenu() {
-    if (!columnVisibilityMenu) return;
-    columnVisibilityMenu.innerHTML = Object.entries(COLUMN_LABELS).map(
-      ([key, label]) => `
+  `;let $=e.querySelector("#drawerDisciplinaryFeedback");$&&n?.message&&E($,n.message,n.type||"info");let S=e.querySelector("#drawerTypeKey"),T=e.querySelector("#drawerEndsAt"),N=e.querySelector("#drawerDisciplinaryTypeHint"),P=({force:g=!1}={})=>{if(!S||!T)return;let A=S.options[S.selectedIndex],q=Number(A?.getAttribute("data-requires-end")||0)===1,U=Number(A?.getAttribute("data-default-duration")||0),F=ur({default_duration_days:U,requires_end_date:q?1:0,set_employee_status:String(A?.getAttribute("data-set-status")||"").trim(),apply_suspension_rank:Number(A?.getAttribute("data-apply-suspension")||0)});T.required=q,Number.isFinite(U)&&U>0&&(g||T.dataset.autoDefault==="1"||!String(T.value||"").trim())?(T.value=dr(new Date(Date.now()+U*24*60*60*1e3)),T.dataset.autoDefault="1"):(!Number.isFinite(U)||U<=0)&&(g||T.dataset.autoDefault==="1")&&(T.value="",T.dataset.autoDefault="0"),N&&(N.textContent=F||"Effective date is set automatically when you press Create Record.")};S?.addEventListener("change",()=>P({force:!0})),T?.addEventListener("input",()=>{T&&(T.dataset.autoDefault="0")}),P();let v=e.querySelector("#drawerAddDisciplinaryForm");v?.addEventListener("submit",async g=>{g.preventDefault();let A=new FormData(v);try{let q=S?.options?.[S.selectedIndex],U=Number(q?.getAttribute("data-default-duration")||0),F=String(A.get("endsAt")||"").trim();T?.dataset.autoDefault==="1"&&Number.isFinite(U)&&U>0&&(F=new Date(Date.now()+U*24*60*60*1e3).toISOString()),await pt(s,{typeKey:String(A.get("typeKey")||"").trim(),endsAt:F,reasonText:String(A.get("reasonText")||"").trim(),internalNotes:String(A.get("internalNotes")||"").trim()}),await o(s,{force:!0,feedback:{message:"Disciplinary record created.",type:"success"},tab:"disciplinary"})}catch(q){Ce(e,t,{message:q.message||"Unable to create disciplinary record.",type:"error"},s,o)}}),e.querySelectorAll("[data-discipline-action]").forEach(g=>{g.addEventListener("click",async()=>{let A=String(g.getAttribute("data-discipline-action")||"").trim(),q=Number(g.getAttribute("data-record-id"));if(!(!A||!Number.isInteger(q)||q<=0))try{let U={recordId:q,action:A};if(A==="extend"){let F=window.prompt("Enter new end date/time (YYYY-MM-DDTHH:mm):","");if(!F)return;U={...U,endsAt:F}}await ft(s,U),await o(s,{force:!0,feedback:{message:`Record ${A}d.`,type:"success"},tab:"disciplinary"})}catch(U){Ce(e,t,{message:U.message||"Unable to update disciplinary record.",type:"error"},s,o)}})})}function $t(e){let t=Array.isArray(e?.data)?e.data:Array.isArray(e?.employees)?e.employees:[],n=e?.pagination||{},s=e?.meta||{};return{...e,employees:t,pagination:{page:Number(s.page||n.page||1),pageSize:Number(s.pageSize||n.pageSize||t.length||20),total:Number(s.total||n.total||0),totalPages:Number(s.totalPages||n.totalPages||1)}}}async function Ar(e){let t=document.querySelector(e.feedbackSelector),n=document.querySelector(e.employeeTableBodySelector),s=document.querySelector(e.filterQuerySelector),o=document.querySelector(e.filterRankSelector),c=document.querySelector(e.filterStatusSelector),b=document.querySelector(e.filterActivationSelector),d=document.querySelector(e.filterHireDateFromSelector),y=document.querySelector(e.filterHireDateToSelector),w=document.querySelector(e.clearFiltersBtnSelector),$=document.querySelector(e.toggleMoreFiltersBtnSelector),S=document.querySelector(e.moreFiltersPanelSelector),T=document.querySelector(e.runScanBtnSelector),N=document.querySelector(e.rerunScanBtnSelector),P=document.querySelector(e.scanModalSelector),v=document.querySelector(e.scanFeedbackSelector),g=document.querySelector(e.scanSummarySelector),A=document.querySelector(e.scanTableHeadRowSelector),q=document.querySelector(e.scanTableBodySelector),U=document.querySelector(e.paginationInfoSelector),F=document.querySelector(e.prevPageBtnSelector),Te=document.querySelector(e.nextPageBtnSelector),$e=document.querySelector(e.columnVisibilityBtnSelector),W=document.querySelector(e.columnVisibilityMenuSelector),qt=document.querySelector(e.openCreateEmployeeBtnSelector),Dt=document.querySelector("#openJoinRequestsBtn"),ne=document.querySelector("#refreshJoinRequestsBtn"),Lt=document.querySelector("#joinRequestsModal"),C=document.querySelector("#joinRequestsFeedback"),Q=document.querySelector("#joinRequestsTableBody"),Ut=document.querySelector("#openRemovedEmployeesBtn"),ae=document.querySelector("#refreshRemovedEmployeesBtn"),xr=document.querySelector("#removedEmployeesModal"),ie=document.querySelector("#removedEmployeesFeedback"),X=document.querySelector("#removedEmployeesSummary"),Z=document.querySelector("#removedEmployeesTableBody"),ee=document.querySelector(e.createFormSelector),It=document.querySelector("#openDeleteUserBtn"),Ne=document.querySelector("#deleteUserForm"),D=document.querySelector(e.drawerSelector),Fe=document.querySelector(e.drawerNameSelector),oe=document.querySelector(e.drawerMetaSelector),j=document.querySelector(e.drawerOverviewSelector),ce=document.querySelector(e.drawerVoyagesSelector),de=document.querySelector(e.drawerActivitySelector),le=document.querySelector(e.drawerAccessSelector),ue=document.querySelector(e.drawerNotesSelector),me=document.querySelector(e.drawerDisciplinarySelector);if(!t||!n||!ee)return;let r={page:1,pageSize:20,totalPages:1,sortBy:"id",sortDir:"desc",visibleColumns:gr(),drawerTab:"overview",drawerVoyagesShowVesselAssignment:!1,selectedEmployeeId:null,showSystemNotes:!1,drawerOverviewEditMode:!1,drawerOverviewDraft:null,drawerPayload:null,drawerUserGroupsBusy:!1,drawerVesselBusy:!1,configBootstrapped:!1,configOptions:{ranks:[],statuses:[]},joinRequests:[],joinRequestsLoading:!1,removedEmployees:[],removedEmployeesLoading:!1,employeeScanRows:[],employeeScanLoading:!1,employeeScanGroups:[]},_=new Map,ke=null;function Ve(i={}){return{robloxUsername:i?.roblox_username||"",robloxUserId:i?.roblox_user_id||"",rank:i?.rank||"",employeeStatus:i?.employee_status||"",hireDate:i?.hire_date||""}}function te(){!j||!r.drawerPayload||Tt(j,r.drawerPayload,{canEdit:!!r.drawerPayload?.capabilities?.canActivate,isEditing:r.drawerOverviewEditMode,draft:r.drawerOverviewDraft,configOptions:r.configOptions,userGroupsBusy:r.drawerUserGroupsBusy,vesselBusy:r.drawerVesselBusy})}function V(){!r.drawerPayload||!r.selectedEmployeeId||Re(r.drawerPayload,r.selectedEmployeeId,{})}function Ge(){document.querySelectorAll("[data-col]").forEach(i=>{let a=String(i.getAttribute("data-col")||"");a&&i.classList.toggle("hidden",!r.visibleColumns.has(a))})}function Mt(){W&&(W.innerHTML=Object.entries(At).map(([i,a])=>`
         <label class="admin-column-option">
-          <input type="checkbox" data-column-key="${key}" ${state.visibleColumns.has(key) ? "checked" : ""} />
-          <span>${escapeHtml(label)}</span>
-        </label>`
-    ).join("");
-    columnVisibilityMenu.querySelectorAll("input[data-column-key]").forEach((checkbox) => {
-      checkbox.addEventListener("change", () => {
-        const key = String(checkbox.getAttribute("data-column-key") || "");
-        if (!key) return;
-        if (checkbox.checked) {
-          state.visibleColumns.add(key);
-        } else {
-          if (state.visibleColumns.size <= 1) {
-            checkbox.checked = true;
-            showMessage(feedback, "At least one column must stay visible.", "error");
-            return;
-          }
-          state.visibleColumns.delete(key);
-        }
-        saveVisibleColumns(state.visibleColumns);
-        applyColumnVisibility();
-      });
-    });
-  }
-  function validateFilterDates() {
-    const from = String(filterHireDateFrom?.value || "").trim();
-    const to = String(filterHireDateTo?.value || "").trim();
-    if (from && to && from > to) {
-      showMessage(feedback, 'Hire date range is invalid. "From" must be on or before "To".', "error");
-      return false;
-    }
-    clearMessage(feedback);
-    return true;
-  }
-  function collectFilters() {
-    return {
-      q: filterQuery?.value || "",
-      rank: filterRank?.value || "",
-      status: filterStatus?.value || "",
-      activationStatus: filterActivation?.value || "",
-      hireFrom: filterHireDateFrom?.value || "",
-      hireTo: filterHireDateTo?.value || "",
-      includeConfig: !state.configBootstrapped,
-      page: state.page,
-      pageSize: state.pageSize,
-      sortBy: state.sortBy,
-      sortDir: state.sortDir
-    };
-  }
-  function applyConfigOptions(statusesItems = [], ranksItems = []) {
-    state.configOptions.statuses = statusesItems;
-    state.configOptions.ranks = ranksItems;
-    fillOptions(filterRank, ranksItems, "All Ranks");
-    fillOptions(filterStatus, statusesItems, "All Statuses");
-    fillOptions(createForm.querySelector('[name="employeeStatus"]'), statusesItems, "Select");
-    fillOptions(createForm.querySelector('[name="rank"]'), ranksItems, "Select");
-  }
-  async function loadEmployees() {
-    if (!validateFilterDates()) return;
-    tableBody.innerHTML = Array.from({ length: 8 }, () => employeeRowSkeleton()).join("");
-    try {
-      const rawPayload = await listEmployees(collectFilters());
-      const payload = normalizeEmployeesPayload(rawPayload);
-      if (!state.configBootstrapped && payload?.config) {
-        applyConfigOptions(
-          Array.isArray(payload.config.statuses) ? payload.config.statuses : [],
-          Array.isArray(payload.config.ranks) ? payload.config.ranks : []
-        );
-        state.configBootstrapped = true;
-      } else if (!state.configBootstrapped) {
-        await refreshConfig();
-      }
-      renderStatCards(payload);
-      renderTable(tableBody, payload.employees || [], state.visibleColumns);
-      const pagination = payload.pagination || {};
-      state.totalPages = Math.max(1, Number(pagination.totalPages || 1));
-      state.page = Math.min(state.totalPages, Math.max(1, Number(pagination.page || 1)));
-      if (paginationInfo) paginationInfo.textContent = `Page ${state.page} of ${state.totalPages} \u2022 ${Number(pagination.total || 0)} total`;
-      if (prevPageBtn) prevPageBtn.disabled = state.page <= 1;
-      if (nextPageBtn) nextPageBtn.disabled = state.page >= state.totalPages;
-      renderSortHeaders(state.sortBy, state.sortDir);
-      applyColumnVisibility();
-      clearMessage(feedback);
-    } catch (error) {
-      showMessage(feedback, error.message || "Unable to load employees.", "error");
-      tableBody.innerHTML = '<tr><td colspan="6">Unable to load employees.</td></tr>';
-    }
-  }
-  function renderJoinRequestsTable() {
-    if (!joinRequestsTableBody) return;
-    const rows = Array.isArray(state.joinRequests) ? state.joinRequests : [];
-    if (!rows.length) {
-      joinRequestsTableBody.innerHTML = '<tr><td colspan="3">No pending join requests.</td></tr>';
-      return;
-    }
-    joinRequestsTableBody.innerHTML = rows.map((row) => {
-      const requesterId = extractRequesterId(row);
-      const createdAt = joinRequestCreatedAt(row);
-      const createdAtLabel = formatJoinRequestDate(createdAt);
-      return `<tr>
-          <td class="join-request-requester">${escapeHtml(joinRequestRequesterLabel(row))}</td>
-          <td class="join-request-created-at" title="${escapeHtml(createdAt || "")}">${escapeHtml(createdAtLabel)}</td>
+          <input type="checkbox" data-column-key="${i}" ${r.visibleColumns.has(i)?"checked":""} />
+          <span>${l(a)}</span>
+        </label>`).join(""),W.querySelectorAll("input[data-column-key]").forEach(i=>{i.addEventListener("change",()=>{let a=String(i.getAttribute("data-column-key")||"");if(a){if(i.checked)r.visibleColumns.add(a);else{if(r.visibleColumns.size<=1){i.checked=!0,E(t,"At least one column must stay visible.","error");return}r.visibleColumns.delete(a)}saveVisibleColumns(r.visibleColumns),Ge()}})}))}function Pt(){let i=String(d?.value||"").trim(),a=String(y?.value||"").trim();return i&&a&&i>a?(E(t,'Hire date range is invalid. "From" must be on or before "To".',"error"),!1):(K(t),!0)}function Ot(){return{q:s?.value||"",rank:o?.value||"",status:c?.value||"",activationStatus:b?.value||"",hireFrom:d?.value||"",hireTo:y?.value||"",includeConfig:!r.configBootstrapped,page:r.page,pageSize:r.pageSize,sortBy:r.sortBy,sortDir:r.sortDir}}function He(i=[],a=[]){r.configOptions.statuses=i,r.configOptions.ranks=a,Ee(o,a,"All Ranks"),Ee(c,i,"All Statuses"),Ee(ee.querySelector('[name="employeeStatus"]'),i,"Select"),Ee(ee.querySelector('[name="rank"]'),a,"Select")}async function G(){if(Pt()){n.innerHTML=Array.from({length:8},()=>yr()).join("");try{let i=await Me(Ot()),a=$t(i);!r.configBootstrapped&&a?.config?(He(Array.isArray(a.config.statuses)?a.config.statuses:[],Array.isArray(a.config.ranks)?a.config.ranks:[]),r.configBootstrapped=!0):r.configBootstrapped||await _t(),br(a),hr(n,a.employees||[],r.visibleColumns);let u=a.pagination||{};r.totalPages=Math.max(1,Number(u.totalPages||1)),r.page=Math.min(r.totalPages,Math.max(1,Number(u.page||1))),U&&(U.textContent=`Page ${r.page} of ${r.totalPages} \u2022 ${Number(u.total||0)} total`),F&&(F.disabled=r.page<=1),Te&&(Te.disabled=r.page>=r.totalPages),Sr(r.sortBy,r.sortDir),Ge(),K(t)}catch(i){E(t,i.message||"Unable to load employees.","error"),n.innerHTML='<tr><td colspan="6">Unable to load employees.</td></tr>'}}}function pe(){if(!Q)return;let i=Array.isArray(r.joinRequests)?r.joinRequests:[];if(!i.length){Q.innerHTML='<tr><td colspan="3">No pending join requests.</td></tr>';return}Q.innerHTML=i.map(a=>{let u=kt(a),m=mr(a),p=cr(m);return`<tr>
+          <td class="join-request-requester">${l(pr(a))}</td>
+          <td class="join-request-created-at" title="${l(m||"")}">${l(p)}</td>
           <td class="align-right join-request-actions-cell">
-            <button class="btn btn-primary btn-compact" type="button" data-join-action="accept" data-requester-id="${escapeHtml(requesterId)}" ${state.joinRequestsLoading || !requesterId ? "disabled" : ""}>Accept</button>
-            <button class="btn btn-danger btn-compact" type="button" data-join-action="decline" data-requester-id="${escapeHtml(requesterId)}" ${state.joinRequestsLoading || !requesterId ? "disabled" : ""}>Decline</button>
+            <button class="btn btn-primary btn-compact" type="button" data-join-action="accept" data-requester-id="${l(u)}" ${r.joinRequestsLoading||!u?"disabled":""}>Accept</button>
+            <button class="btn btn-danger btn-compact" type="button" data-join-action="decline" data-requester-id="${l(u)}" ${r.joinRequestsLoading||!u?"disabled":""}>Decline</button>
           </td>
-        </tr>`;
-    }).join("");
-  }
-  async function loadJoinRequests() {
-    if (!joinRequestsTableBody) return;
-    state.joinRequestsLoading = true;
-    joinRequestsTableBody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
-    if (refreshJoinRequestsBtn) refreshJoinRequestsBtn.disabled = true;
-    if (joinRequestsFeedback) clearMessage(joinRequestsFeedback);
-    try {
-      const payload = await getRobloxGroupJoinRequests({ pageSize: 100 });
-      state.joinRequests = extractJoinRequestsFromPayload(payload);
-      renderJoinRequestsTable();
-      if (!state.joinRequests.length && joinRequestsFeedback) {
-        const mode = String(payload?.mode || payload?.authMode || "").trim();
-        showMessage(
-          joinRequestsFeedback,
-          mode ? `No pending join requests found (${mode} mode).` : "No pending join requests found.",
-          "info"
-        );
-      }
-    } catch (error) {
-      state.joinRequests = [];
-      joinRequestsTableBody.innerHTML = '<tr><td colspan="3">Unable to load join requests.</td></tr>';
-      if (joinRequestsFeedback) showMessage(joinRequestsFeedback, error.message || "Unable to load join requests.", "error");
-    } finally {
-      state.joinRequestsLoading = false;
-      renderJoinRequestsTable();
-      if (refreshJoinRequestsBtn) refreshJoinRequestsBtn.disabled = false;
-    }
-  }
-  async function runScan() {
-    if (!scanModal || !scanTableBody || !scanSummary) return;
-    state.employeeScanLoading = true;
-    openModal("employeeScanModal");
-    if (runScanBtn) runScanBtn.disabled = true;
-    if (rerunScanBtn) rerunScanBtn.disabled = true;
-    clearMessage(scanFeedback);
-    scanSummary.textContent = "Running access scan...";
-    renderScanTableHead(scanTableHeadRow, state.employeeScanGroups);
-    scanTableBody.innerHTML = `<tr><td colspan="${3 + state.employeeScanGroups.length}">Running scan...</td></tr>`;
-    try {
-      const payload = await runEmployeeComplianceScan();
-      const summary = payload?.summary || {};
-      const diagnostics = payload?.diagnostics || {};
-      const rows = Array.isArray(payload?.flaggedEmployees) ? payload.flaggedEmployees : [];
-      const requiredGroups = Array.isArray(payload?.requiredGroups) ? payload.requiredGroups : [];
-      state.employeeScanGroups = requiredGroups;
-      state.employeeScanRows = rows;
-      renderScanTableHead(scanTableHeadRow, requiredGroups);
-      renderScanResults(scanTableBody, rows, requiredGroups);
-      const required = Array.isArray(payload?.requiredGroupIds) && payload.requiredGroupIds.length ? ` Required Roblox group IDs: ${payload.requiredGroupIds.join(", ")}.` : "";
-      const robloxErrorCounts = summary?.robloxErrorCounts && typeof summary.robloxErrorCounts === "object" ? Object.entries(summary.robloxErrorCounts).map(([label, count]) => `${label} x${Number(count || 0)}`).join(", ") : "";
-      const robloxErrorSummary = robloxErrorCounts ? ` Roblox errors: ${robloxErrorCounts}.` : "";
-      const robloxCacheSummary = Number(summary.robloxCacheHits || 0) || Number(summary.robloxCacheFallbacks || 0) ? ` Roblox cache hits: ${Number(summary.robloxCacheHits || 0)}. Cache fallbacks after live failure: ${Number(summary.robloxCacheFallbacks || 0)}.` : "";
-      const robloxFailureSamples = Array.isArray(diagnostics?.robloxLookupFailedEmployees) ? diagnostics.robloxLookupFailedEmployees.slice(0, 5).map((row) => {
-        const username = text(row?.robloxUsername);
-        const userId = text(row?.robloxUserId);
-        const label = username || userId || `Employee #${Number(row?.employeeId || 0)}`;
-        return `${label}: ${text(row?.error) || "lookup failed"}${Number(row?.status || 0) ? ` (status ${Number(row.status)})` : ""}`;
-      }).join("; ") : "";
-      const robloxFailureSummary = Number(summary.robloxLookupFailed || 0) ? ` Roblox lookup failures are temporary verification failures, not confirmed access issues. Auth mode: ${text(
-        diagnostics?.robloxAuthMode || "unknown"
-      )}. Group: ${text(diagnostics?.robloxGroupId || "unknown")}.${robloxFailureSamples ? ` Sample failures: ${robloxFailureSamples}.` : ""}` : "";
-      scanSummary.textContent = `Scanned ${Number(summary.total || 0)} employees. Flagged ${Number(summary.flagged || 0)}. Confirmed access issues: ${Number(summary.confirmedIssues || 0)}. Temporary verification failures: ${Number(summary.verificationFailures || 0)}. Missing Discord ID: ${Number(summary.missingDiscordId || 0)}. Not in Discord: ${Number(summary.missingGuild || 0)}. Missing Roblox ID: ${Number(summary.missingRobloxId || 0)}. Missing required Roblox groups: ${Number(summary.missingRequiredGroups || 0)}. Discord lookup failures: ${Number(summary.discordLookupFailed || 0)}. Roblox lookup failures: ${Number(summary.robloxLookupFailed || 0)}.${required}${robloxErrorSummary}${robloxCacheSummary}${robloxFailureSummary}`;
-      showMessage(scanFeedback, rows.length ? "Scan completed. Review flagged employees below." : "Scan completed. No flagged employees found.", rows.length ? "info" : "success");
-    } catch (error) {
-      state.employeeScanRows = [];
-      renderScanTableHead(scanTableHeadRow, state.employeeScanGroups);
-      scanTableBody.innerHTML = `<tr><td colspan="${3 + state.employeeScanGroups.length}">Unable to run scan.</td></tr>`;
-      scanSummary.textContent = "Scan failed.";
-      const errorMessage = String(error?.message || "").trim();
-      const friendlyMessage = errorMessage === "timeout" ? "Employee scan timed out. Please try again; this scan can take a while." : errorMessage || "Unable to run employee scan.";
-      showMessage(scanFeedback, friendlyMessage, "error");
-    } finally {
-      state.employeeScanLoading = false;
-      if (runScanBtn) runScanBtn.disabled = false;
-      if (rerunScanBtn) rerunScanBtn.disabled = false;
-    }
-  }
-  async function refreshConfig() {
-    if (state.configBootstrapped) return;
-    let statusesItems = [];
-    let ranksItems = [];
-    try {
-      const bootstrap = await getEmployeeConfigBootstrap();
-      statusesItems = Array.isArray(bootstrap?.statuses) ? bootstrap.statuses : [];
-      ranksItems = Array.isArray(bootstrap?.ranks) ? bootstrap.ranks : [];
-    } catch {
-      const [statuses, ranks] = await Promise.all([getConfig("statuses"), getConfig("ranks")]);
-      statusesItems = statuses.items || [];
-      ranksItems = ranks.items || [];
-    }
-    applyConfigOptions(statusesItems, ranksItems);
-    state.configBootstrapped = true;
-  }
-  function setDrawerTab(tab) {
-    const allowedTabs = /* @__PURE__ */ new Set(["overview", "voyages", "activity", "access", "notes", "disciplinary"]);
-    const activeTab = allowedTabs.has(tab) ? tab : "overview";
-    state.drawerTab = activeTab;
-    const setPanelVisibility = (panel, isActive) => {
-      if (!panel) return;
-      panel.classList.toggle("hidden", !isActive);
-      panel.setAttribute("aria-hidden", isActive ? "false" : "true");
-      if (isActive) panel.style.removeProperty("display");
-      else panel.style.display = "none";
-    };
-    drawer?.querySelectorAll("[data-drawer-tab], [data-employee-tab]").forEach((btn) => {
-      const tabKey = String(btn.getAttribute("data-drawer-tab") || btn.getAttribute("data-employee-tab") || "");
-      const isActive = tabKey === activeTab;
-      btn.classList.toggle("is-active", isActive);
-      btn.setAttribute("aria-selected", isActive ? "true" : "false");
-    });
-    setPanelVisibility(drawerOverview, activeTab === "overview");
-    setPanelVisibility(drawerVoyages, activeTab === "voyages");
-    setPanelVisibility(drawerActivity, activeTab === "activity");
-    setPanelVisibility(drawerAccess, activeTab === "access");
-    setPanelVisibility(drawerNotes, activeTab === "notes");
-    setPanelVisibility(drawerDisciplinary, activeTab === "disciplinary");
-    if (state.drawerPayload && state.selectedEmployeeId) {
-      renderActiveDrawerTab(state.drawerPayload, state.selectedEmployeeId, {});
-    }
-  }
-  function renderActiveDrawerTab(payload, employeeId, options = {}) {
-    const activeTab = state.drawerTab || "overview";
-    if (activeTab === "overview") {
-      renderDrawerOverview(drawerOverview, payload, {
-        canEdit: Boolean(payload?.capabilities?.canActivate),
-        isEditing: state.drawerOverviewEditMode,
-        draft: state.drawerOverviewDraft,
-        configOptions: state.configOptions,
-        userGroupsBusy: state.drawerUserGroupsBusy,
-        vesselBusy: state.drawerVesselBusy
-      });
-      return;
-    }
-    if (activeTab === "voyages") {
-      renderDrawerVoyages(drawerVoyages, payload, {
-        userGroupsBusy: state.drawerUserGroupsBusy,
-        vesselBusy: state.drawerVesselBusy,
-        showVesselAssignment: state.drawerVoyagesShowVesselAssignment
-      });
-      return;
-    }
-    if (activeTab === "activity") {
-      renderDrawerActivity(drawerActivity, payload);
-      return;
-    }
-    if (activeTab === "access") {
-      renderDrawerAccess(drawerAccess, payload, { userGroupsBusy: state.drawerUserGroupsBusy });
-      return;
-    }
-    if (activeTab === "notes") {
-      renderDrawerNotes(
-        drawerNotes,
-        payload,
-        options.showSystem ?? state.showSystemNotes,
-        options.tab === "notes" ? options.feedback : null,
-        employeeId,
-        refreshDrawerData,
-        (value) => {
-          state.showSystemNotes = Boolean(value);
-        }
-      );
-      return;
-    }
-    if (activeTab === "disciplinary") {
-      renderDrawerDisciplinary(
-        drawerDisciplinary,
-        payload,
-        options.tab === "disciplinary" ? options.feedback : null,
-        employeeId,
-        refreshDrawerData
-      );
-    }
-  }
-  async function refreshDrawerData(employeeId, options = {}) {
-    const force = Boolean(options.force);
-    let payload = drawerCache.get(employeeId);
-    if (!payload || force) {
-      payload = await getEmployeeDrawer(employeeId, { activityPageSize: 20 });
-      drawerCache.set(employeeId, payload);
-    }
-    if (drawerName) drawerName.textContent = payload.employee?.roblox_username || `Employee #${employeeId}`;
-    if (drawerMeta) {
-      const rank = payload.employee?.rank ? payload.employee.rank : "Unset rank";
-      const status = payload.employee?.employee_status ? payload.employee.employee_status : "Unknown status";
-      drawerMeta.textContent = `${rank} \u2022 ${status}`;
-    }
-    if (!state.drawerOverviewDraft) state.drawerOverviewDraft = buildOverviewDraft(payload.employee);
-    state.drawerPayload = payload;
-    if (options.tab) setDrawerTab(options.tab);
-    renderActiveDrawerTab(payload, employeeId, options);
-  }
-  async function openDrawer(employeeId) {
-    if (!drawer) return;
-    state.selectedEmployeeId = employeeId;
-    state.drawerOverviewEditMode = false;
-    state.drawerOverviewDraft = null;
-    state.drawerPayload = null;
-    state.drawerUserGroupsBusy = false;
-    state.drawerVesselBusy = false;
-    state.showSystemNotes = false;
-    drawer.classList.remove("hidden");
-    drawer.setAttribute("aria-hidden", "false");
-    setDrawerTab("overview");
-    if (drawerOverview) drawerOverview.innerHTML = '<span class="skeleton-line skeleton-w-70"></span><span class="skeleton-line skeleton-w-90"></span>';
-    if (drawerVoyages) drawerVoyages.innerHTML = '<div class="finance-chart-skeleton"></div>';
-    if (drawerActivity) drawerActivity.innerHTML = '<div class="finance-chart-skeleton"></div>';
-    if (drawerAccess) drawerAccess.innerHTML = '<div class="finance-chart-skeleton"></div>';
-    if (drawerNotes) drawerNotes.innerHTML = '<div class="finance-chart-skeleton"></div>';
-    if (drawerDisciplinary) drawerDisciplinary.innerHTML = '<div class="finance-chart-skeleton"></div>';
-    try {
-      await refreshDrawerData(employeeId);
-    } catch (error) {
-      if (drawerOverview) drawerOverview.innerHTML = `<p class="finance-inline-caption">${escapeHtml(error.message || "Unable to load employee details.")}</p>`;
-    }
-  }
-  openCreateEmployeeBtn?.addEventListener("click", () => openModal("createEmployeeModal"));
-  runScanBtn?.addEventListener("click", () => {
-    void runScan();
-  });
-  rerunScanBtn?.addEventListener("click", () => {
-    void runScan();
-  });
-  openJoinRequestsBtn?.addEventListener("click", async () => {
-    openModal("joinRequestsModal");
-    await loadJoinRequests();
-  });
-  refreshJoinRequestsBtn?.addEventListener("click", async () => {
-    await loadJoinRequests();
-  });
-  openDeleteUserBtn?.addEventListener("click", () => openModal("deleteUserModal"));
-  document.querySelectorAll("[data-close-modal]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const target = button.getAttribute("data-close-modal");
-      if (target) closeModal(target);
-    });
-  });
-  joinRequestsModal?.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    const actionButton = target.closest("[data-join-action]");
-    if (!actionButton || state.joinRequestsLoading) return;
-    const action = String(actionButton.getAttribute("data-join-action") || "").trim().toLowerCase();
-    const requesterId = String(actionButton.getAttribute("data-requester-id") || "").trim();
-    if (!requesterId) return;
-    void (async () => {
-      state.joinRequestsLoading = true;
-      renderJoinRequestsTable();
-      try {
-        if (action === "accept") {
-          await acceptRobloxGroupJoinRequest(requesterId);
-          if (joinRequestsFeedback) showMessage(joinRequestsFeedback, `Accepted request for user #${requesterId}.`, "success");
-        } else if (action === "decline") {
-          await declineRobloxGroupJoinRequest(requesterId);
-          if (joinRequestsFeedback) showMessage(joinRequestsFeedback, `Declined request for user #${requesterId}.`, "success");
-        }
-        await loadJoinRequests();
-      } catch (error) {
-        state.joinRequestsLoading = false;
-        renderJoinRequestsTable();
-        if (joinRequestsFeedback) showMessage(joinRequestsFeedback, error.message || "Unable to update join request.", "error");
-      }
-    })();
-  });
-  document.querySelectorAll("[data-close-drawer]").forEach((button) => {
-    button.addEventListener("click", () => {
-      drawer?.classList.add("hidden");
-      drawer?.setAttribute("aria-hidden", "true");
-      state.selectedEmployeeId = null;
-    });
-  });
-  drawer?.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    if (target.closest("#drawerEditEmployeeBtn")) {
-      if (!state.drawerPayload) return;
-      state.drawerOverviewEditMode = true;
-      state.drawerOverviewDraft = buildOverviewDraft(state.drawerPayload.employee);
-      renderOverviewFromState();
-      return;
-    }
-    if (target.closest("#drawerCancelOverviewBtn")) {
-      state.drawerOverviewEditMode = false;
-      state.drawerOverviewDraft = null;
-      renderOverviewFromState();
-      return;
-    }
-    if (target.closest("#drawerActivateEmployeeBtn")) {
-      if (!state.selectedEmployeeId || !state.drawerPayload) return;
-      const employeeId = state.selectedEmployeeId;
-      void (async () => {
-        try {
-          state.drawerPayload.employee.activation_status = "ACTIVE";
-          drawerCache.set(employeeId, state.drawerPayload);
-          state.drawerOverviewEditMode = false;
-          state.drawerOverviewDraft = null;
-          renderOverviewFromState();
-          await activateEmployee(employeeId);
-          drawerCache.delete(employeeId);
-          void loadEmployees();
-          await refreshDrawerData(employeeId, { force: true, tab: "overview" });
-          showMessage(feedback, "Employee activated.", "success");
-        } catch (error) {
-          showMessage(feedback, error.message || "Unable to activate employee.", "error");
-        }
-      })();
-      return;
-    }
-    if (target.closest("#drawerDeleteEmployeeBtn")) {
-      if (!state.selectedEmployeeId || !state.drawerPayload) return;
-      const employeeId = state.selectedEmployeeId;
-      const targetName = String(state.drawerPayload?.employee?.roblox_username || `#${employeeId}`);
-      const confirmation = window.prompt(`Type DELETE to remove ${targetName}.`);
-      if (confirmation !== "DELETE") return;
-      const reason = window.prompt("Delete reason (required):") || "";
-      if (!String(reason || "").trim()) {
-        showMessage(feedback, "Delete reason is required.", "error");
-        return;
-      }
-      void (async () => {
-        try {
-          await deleteEmployee(employeeId, { reason: String(reason).trim() });
-          drawerCache.delete(employeeId);
-          drawer?.classList.add("hidden");
-          drawer?.setAttribute("aria-hidden", "true");
-          state.selectedEmployeeId = null;
-          await loadEmployees();
-          showMessage(feedback, "User deleted from employee records.", "success");
-        } catch (error) {
-          showMessage(feedback, error.message || "Unable to delete employee.", "error");
-        }
-      })();
-      return;
-    }
-    if (target.closest("#drawerAddEmployeeGroupBtn")) {
-      if (!state.selectedEmployeeId || !state.drawerPayload || state.drawerUserGroupsBusy) return;
-      const employeeId = state.selectedEmployeeId;
-      const select = drawer?.querySelector("#drawerUserGroupSelect");
-      const roleId = Number(select?.value || 0);
-      if (!Number.isInteger(roleId) || roleId <= 0) return;
-      const payload = state.drawerPayload;
-      const existingIds = new Set((payload.assignedRoles || []).map((row) => Number(row.id)).filter((id) => Number.isInteger(id) && id > 0));
-      if (existingIds.has(roleId)) return;
-      const roleRow = (payload.availableRoles || []).find((row) => Number(row.id) === roleId);
-      if (!roleRow) return;
-      const previousAssigned = [...payload.assignedRoles || []];
-      const nextRoleIds = [...existingIds, roleId];
-      payload.assignedRoles = [...previousAssigned, roleRow].sort(
-        (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || Number(a.id || 0) - Number(b.id || 0)
-      );
-      state.drawerUserGroupsBusy = true;
-      drawerCache.set(employeeId, payload);
-      rerenderCurrentDrawerTab();
-      void (async () => {
-        try {
-          await updateEmployee(employeeId, { roleIds: nextRoleIds });
-          state.drawerUserGroupsBusy = false;
-          rerenderCurrentDrawerTab();
-          const feedbackNode = drawer?.querySelector("#drawerUserGroupsFeedback");
-          if (feedbackNode) showMessage(feedbackNode, "User group added.", "success");
-        } catch (error) {
-          payload.assignedRoles = previousAssigned;
-          state.drawerUserGroupsBusy = false;
-          drawerCache.set(employeeId, payload);
-          rerenderCurrentDrawerTab();
-          const feedbackNode = drawer?.querySelector("#drawerUserGroupsFeedback");
-          if (feedbackNode) showMessage(feedbackNode, error.message || "Unable to add user group.", "error");
-        }
-      })();
-      return;
-    }
-    if (target.closest("#toggleVesselAssignmentBtn")) {
-      state.drawerVoyagesShowVesselAssignment = !state.drawerVoyagesShowVesselAssignment;
-      rerenderCurrentDrawerTab();
-      return;
-    }
-    const removeRoleButton = target.closest("[data-remove-employee-group]");
-    if (removeRoleButton) {
-      if (!state.selectedEmployeeId || !state.drawerPayload || state.drawerUserGroupsBusy) return;
-      const employeeId = state.selectedEmployeeId;
-      const roleId = Number(removeRoleButton.getAttribute("data-remove-employee-group"));
-      if (!Number.isInteger(roleId) || roleId <= 0) return;
-      const payload = state.drawerPayload;
-      const previousAssigned = [...payload.assignedRoles || []];
-      const nextAssigned = previousAssigned.filter((row) => Number(row.id) !== roleId);
-      const nextRoleIds = nextAssigned.map((row) => Number(row.id)).filter((id) => Number.isInteger(id) && id > 0);
-      payload.assignedRoles = nextAssigned;
-      state.drawerUserGroupsBusy = true;
-      drawerCache.set(employeeId, payload);
-      rerenderCurrentDrawerTab();
-      void (async () => {
-        try {
-          await updateEmployee(employeeId, { roleIds: nextRoleIds });
-          state.drawerUserGroupsBusy = false;
-          rerenderCurrentDrawerTab();
-          const feedbackNode = drawer?.querySelector("#drawerUserGroupsFeedback");
-          if (feedbackNode) showMessage(feedbackNode, "User group removed.", "success");
-        } catch (error) {
-          payload.assignedRoles = previousAssigned;
-          state.drawerUserGroupsBusy = false;
-          drawerCache.set(employeeId, payload);
-          rerenderCurrentDrawerTab();
-          const feedbackNode = drawer?.querySelector("#drawerUserGroupsFeedback");
-          if (feedbackNode) showMessage(feedbackNode, error.message || "Unable to remove user group.", "error");
-        }
-      })();
-      return;
-    }
-    if (target.closest("#drawerClearVesselAssignmentBtn")) {
-      if (!state.selectedEmployeeId || state.drawerVesselBusy) return;
-      const employeeId = state.selectedEmployeeId;
-      state.drawerVesselBusy = true;
-      rerenderCurrentDrawerTab();
-      void (async () => {
-        try {
-          await clearEmployeeVessel(employeeId);
-          drawerCache.delete(employeeId);
-          state.drawerVesselBusy = false;
-          await refreshDrawerData(employeeId, { force: true, tab: state.drawerTab || "voyages" });
-          const feedbackNode = drawer?.querySelector("#drawerVesselAssignmentFeedback");
-          if (feedbackNode) showMessage(feedbackNode, "Vessel assignment cleared.", "success");
-        } catch (error) {
-          state.drawerVesselBusy = false;
-          rerenderCurrentDrawerTab();
-          const feedbackNode = drawer?.querySelector("#drawerVesselAssignmentFeedback");
-          if (feedbackNode) showMessage(feedbackNode, error.message || "Unable to clear vessel assignment.", "error");
-        }
-      })();
-      return;
-    }
-    const tabButton = target.closest("[data-drawer-tab], [data-employee-tab]");
-    if (!tabButton) return;
-    setDrawerTab(String(tabButton.getAttribute("data-drawer-tab") || tabButton.getAttribute("data-employee-tab") || "overview"));
-  });
-  drawer?.addEventListener("submit", (event) => {
-    const form = event.target;
-    if (!(form instanceof HTMLFormElement)) return;
-    if (form.id === "drawerVesselAssignForm") {
-      event.preventDefault();
-      if (!state.selectedEmployeeId || state.drawerVesselBusy) return;
-      const employeeId2 = state.selectedEmployeeId;
-      const data = new FormData(form);
-      const shipId = Number(data.get("shipId") || 0);
-      if (!Number.isInteger(shipId) || shipId <= 0) {
-        const feedbackNode = drawer?.querySelector("#drawerVesselAssignmentFeedback");
-        if (feedbackNode) showMessage(feedbackNode, "Select a ship assignment.", "error");
-        return;
-      }
-      state.drawerVesselBusy = true;
-      rerenderCurrentDrawerTab();
-      void (async () => {
-        try {
-          await assignEmployeeVessel(employeeId2, { shipId });
-          drawerCache.delete(employeeId2);
-          state.drawerVesselBusy = false;
-          await refreshDrawerData(employeeId2, { force: true, tab: state.drawerTab || "voyages" });
-          const feedbackNode = drawer?.querySelector("#drawerVesselAssignmentFeedback");
-          if (feedbackNode) showMessage(feedbackNode, "Vessel assignment saved.", "success");
-        } catch (error) {
-          state.drawerVesselBusy = false;
-          rerenderCurrentDrawerTab();
-          const feedbackNode = drawer?.querySelector("#drawerVesselAssignmentFeedback");
-          if (feedbackNode) showMessage(feedbackNode, error.message || "Unable to save vessel assignment.", "error");
-        }
-      })();
-      return;
-    }
-    if (form.id !== "drawerOverviewEditForm") return;
-    event.preventDefault();
-    if (!state.selectedEmployeeId || !state.drawerPayload) return;
-    const employeeId = state.selectedEmployeeId;
-    const payload = state.drawerPayload;
-    const formData = new FormData(form);
-    const nextDraft = {
-      robloxUsername: String(formData.get("robloxUsername") || "").trim(),
-      robloxUserId: String(formData.get("robloxUserId") || "").trim(),
-      rank: String(formData.get("rank") || "").trim(),
-      employeeStatus: String(formData.get("employeeStatus") || "").trim(),
-      hireDate: String(formData.get("hireDate") || "").trim()
-    };
-    const changedPayload = {};
-    if (nextDraft.robloxUsername !== String(payload.employee?.roblox_username || "")) changedPayload.robloxUsername = nextDraft.robloxUsername;
-    if (nextDraft.robloxUserId !== String(payload.employee?.roblox_user_id || "")) changedPayload.robloxUserId = nextDraft.robloxUserId;
-    if (nextDraft.rank !== String(payload.employee?.rank || "")) changedPayload.rank = nextDraft.rank;
-    if (nextDraft.employeeStatus !== String(payload.employee?.employee_status || "")) changedPayload.employeeStatus = nextDraft.employeeStatus;
-    if (nextDraft.hireDate !== String(payload.employee?.hire_date || "")) changedPayload.hireDate = nextDraft.hireDate;
-    const overviewFeedback = drawerOverview?.querySelector("#drawerOverviewFeedback");
-    if (!Object.keys(changedPayload).length) {
-      state.drawerOverviewEditMode = false;
-      state.drawerOverviewDraft = null;
-      renderOverviewFromState();
-      if (overviewFeedback) showMessage(overviewFeedback, "No changes to save.", "info");
-      return;
-    }
-    const previous = { ...payload.employee };
-    payload.employee = {
-      ...payload.employee,
-      roblox_username: nextDraft.robloxUsername,
-      roblox_user_id: nextDraft.robloxUserId,
-      rank: nextDraft.rank,
-      employee_status: nextDraft.employeeStatus,
-      hire_date: nextDraft.hireDate
-    };
-    state.drawerOverviewEditMode = false;
-    state.drawerOverviewDraft = null;
-    drawerCache.set(employeeId, payload);
-    renderOverviewFromState();
-    if (drawerMeta) drawerMeta.textContent = `${nextDraft.rank || "Unset rank"} \u2022 ${nextDraft.employeeStatus || "Unknown status"}`;
-    if (overviewFeedback) showMessage(overviewFeedback, "Saved.", "success");
-    void (async () => {
-      try {
-        await updateEmployee(employeeId, changedPayload);
-        void loadEmployees();
-      } catch (error) {
-        payload.employee = previous;
-        drawerCache.set(employeeId, payload);
-        renderOverviewFromState();
-        const nextFeedback = drawerOverview?.querySelector("#drawerOverviewFeedback");
-        if (nextFeedback) showMessage(nextFeedback, error.message || "Unable to save employee.", "error");
-      }
-    })();
-  });
-  tableBody.addEventListener("click", (event) => {
-    const row = event.target instanceof HTMLElement ? event.target.closest("tr.admin-employee-row") : null;
-    if (!row) return;
-    const employeeId = Number(row.getAttribute("data-employee-id"));
-    if (Number.isInteger(employeeId) && employeeId > 0) openDrawer(employeeId);
-  });
-  scanTableBody?.addEventListener("click", (event) => {
-    const button = event.target instanceof HTMLElement ? event.target.closest("[data-open-scan-drawer]") : null;
-    if (!button) return;
-    const employeeId = Number(button.getAttribute("data-open-scan-drawer"));
-    if (Number.isInteger(employeeId) && employeeId > 0) void openDrawer(employeeId);
-  });
-  const scheduleReload = () => {
-    if (debounceTimer) window.clearTimeout(debounceTimer);
-    debounceTimer = window.setTimeout(() => {
-      state.page = 1;
-      loadEmployees();
-    }, 360);
-  };
-  filterQuery?.addEventListener("input", scheduleReload);
-  [filterRank, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {
-    input?.addEventListener("change", scheduleReload);
-  });
-  clearFiltersBtn?.addEventListener("click", () => {
-    [filterQuery, filterRank, filterStatus, filterHireDateFrom, filterHireDateTo].forEach((input) => {
-      if (!input) return;
-      input.value = "";
-    });
-    state.page = 1;
-    loadEmployees();
-  });
-  toggleMoreFiltersBtn?.addEventListener("click", () => {
-    moreFiltersPanel?.classList.toggle("hidden");
-  });
-  prevPageBtn?.addEventListener("click", () => {
-    if (state.page <= 1) return;
-    state.page -= 1;
-    loadEmployees();
-  });
-  nextPageBtn?.addEventListener("click", () => {
-    if (state.page >= state.totalPages) return;
-    state.page += 1;
-    loadEmployees();
-  });
-  document.querySelectorAll(".table-sort-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const sortKey = String(btn.getAttribute("data-sort") || "");
-      if (!sortKey) return;
-      if (state.sortBy === sortKey) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-      else {
-        state.sortBy = sortKey;
-        state.sortDir = sortKey === "id" ? "desc" : "asc";
-      }
-      state.page = 1;
-      loadEmployees();
-    });
-  });
-  columnVisibilityBtn?.addEventListener("click", () => {
-    columnVisibilityMenu?.classList.toggle("hidden");
-  });
-  document.addEventListener("click", (event) => {
-    if (!columnVisibilityMenu || !columnVisibilityBtn) return;
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    if (columnVisibilityMenu.contains(target) || columnVisibilityBtn.contains(target)) return;
-    columnVisibilityMenu.classList.add("hidden");
-  });
-  createForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    clearMessage(feedback);
-    const data = new FormData(createForm);
-    try {
-      await createEmployee({
-        discordUserId: String(data.get("discordUserId") || "").trim(),
-        robloxUsername: String(data.get("robloxUsername") || "").trim(),
-        robloxUserId: String(data.get("robloxUserId") || "").trim(),
-        rank: String(data.get("rank") || "").trim(),
-        employeeStatus: String(data.get("employeeStatus") || "").trim(),
-        hireDate: String(data.get("hireDate") || "").trim()
-      });
-      createForm.reset();
-      closeModal("createEmployeeModal");
-      state.page = 1;
-      await loadEmployees();
-      showMessage(feedback, "Employee created.", "success");
-    } catch (error) {
-      showMessage(feedback, error.message || "Unable to create employee.", "error");
-    }
-  });
-  deleteUserForm?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    clearMessage(feedback);
-    const data = new FormData(deleteUserForm);
-    const discordUserId = String(data.get("discordUserId") || "").trim();
-    const reason = String(data.get("reason") || "").trim();
-    if (!discordUserId || !reason) {
-      showMessage(feedback, "Discord User ID and reason are required.", "error");
-      return;
-    }
-    try {
-      const result = await purgeUserByDiscord({ discordUserId, reason });
-      deleteUserForm.reset();
-      closeModal("deleteUserModal");
-      await loadEmployees();
-      const message = result?.removedEmployee ? "User deleted (employee + related access request records)." : "User deleted from unauthorised/pending access records.";
-      showMessage(feedback, message, "success");
-    } catch (error) {
-      showMessage(feedback, error.message || "Unable to delete user.", "error");
-    }
-  });
-  try {
-    renderColumnMenu();
-    await loadEmployees();
-    const initialEmployeeId = Number(new URLSearchParams(window.location.search).get("employeeId"));
-    if (Number.isInteger(initialEmployeeId) && initialEmployeeId > 0) {
-      await openDrawer(initialEmployeeId);
-    }
-  } catch (error) {
-    showMessage(feedback, error.message || "Unable to initialize Manage Employees.", "error");
-  }
-}
-var VISIBLE_COLUMNS_STORAGE_KEY, DEFAULT_VISIBLE_COLUMNS, COLUMN_LABELS;
-var init_manage_employees = __esm({
-  "assets/js/modules/manage-employees.js?v=20260309b"() {
-    init_admin_api();
-    init_local_datetime();
-    init_notice();
-    VISIBLE_COLUMNS_STORAGE_KEY = "manageEmployees_visibleColumns";
-    DEFAULT_VISIBLE_COLUMNS = ["roblox_username", "roblox_user_id", "rank", "employee_status", "hire_date"];
-    COLUMN_LABELS = {
-      roblox_username: "Roblox Username",
-      roblox_user_id: "Roblox User ID",
-      rank: "Rank",
-      employee_status: "Status",
-      hire_date: "Hire Date"
-    };
-  }
-});
-
-// assets/js/modules/intranet-layout.js?v=20260313e
-init_notice();
-
-// assets/js/modules/nav.js?v=20260313e
-var PERMISSION_ALIASES = {
-  "roles.read": "user_groups.read",
-  "roles.manage": "user_groups.manage",
-  "roles.assign": "user_groups.assign",
-  "user_groups.read": "roles.read",
-  "user_groups.manage": "roles.manage",
-  "user_groups.assign": "roles.assign"
-};
-function hasPermission(session, permissionKey) {
-  if (!session || !permissionKey) return false;
-  const permissions = Array.isArray(session.permissions) ? session.permissions : [];
-  const requested = String(permissionKey || "").trim();
-  const alias = PERMISSION_ALIASES[requested];
-  const isReadOnlyAdmin = permissions.includes("admin.read_only");
-  const readOnlyViewable = isReadOnlyAdmin && (requested.endsWith(".read") || requested.endsWith(".view") || ["voyages.config.manage", "user_groups.manage", "user_ranks.manage", "config.manage"].includes(requested));
-  return permissions.includes("super.admin") || permissions.includes("admin.override") || readOnlyViewable || permissions.includes(requested) || (alias ? permissions.includes(alias) : false);
-}
-async function performLogout(redirectTo = "/") {
-  await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-  window.location.href = redirectTo;
-}
-function buildNavLink(href, label) {
-  const link = document.createElement("a");
-  link.href = href;
-  link.textContent = label;
-  return link;
-}
-function getPreferredUserLabel(session) {
-  const robloxUsername = String(session?.robloxUsername || "").trim();
-  if (robloxUsername) return robloxUsername;
-  const discordUsername = String(session?.discordUsername || "").trim();
-  if (discordUsername) return discordUsername;
-  const displayName = String(session?.displayName || "").trim();
-  if (displayName) return displayName;
-  const userId = String(session?.userId || "").trim();
-  return userId || "";
-}
-var ADMIN_PANEL_ENTRY_PERMISSIONS = [
-  "admin.read_only",
-  "employees.read",
-  "voyages.config.manage",
-  "user_groups.manage",
-  "user_ranks.manage",
-  "config.manage",
-  "activity_tracker.view"
-];
-function canAccessAdminPanel(session) {
-  return ADMIN_PANEL_ENTRY_PERMISSIONS.some((permissionKey) => hasPermission(session, permissionKey));
-}
-var INTRANET_NAV_ITEMS = [
-  { href: "/my-details", label: "My Details" },
-  { href: "/voyage-tracker", label: "Voyage Tracker" },
-  { href: "/fleet", label: "Fleet", anyPermissions: ["voyages.read"] },
-  { href: "/finances", label: "Finances" },
-  { href: "/admin-panel", label: "Admin Panel", anyPermissions: ADMIN_PANEL_ENTRY_PERMISSIONS }
-];
-function canRenderNavItem(session, item) {
-  if (typeof item?.customVisible === "function") {
-    return Boolean(item.customVisible(session));
-  }
-  const sessionFlag = String(item?.sessionFlag || "").trim();
-  if (sessionFlag && !session?.[sessionFlag]) return false;
-  const anyPermissions = Array.isArray(item?.anyPermissions) ? item.anyPermissions : [];
-  if (!anyPermissions.length) return true;
-  return anyPermissions.some((permissionKey) => hasPermission(session, permissionKey));
-}
-function renderIntranetNavbar(session) {
-  const nav = document.querySelector(".site-nav");
-  if (!nav) return;
-  nav.innerHTML = "";
-  INTRANET_NAV_ITEMS.forEach((item) => {
-    if (!canRenderNavItem(session, item)) return;
-    nav.append(buildNavLink(item.href, item.label));
-  });
-  const spacer = document.createElement("span");
-  spacer.className = "nav-spacer";
-  nav.append(spacer);
-  const preferredLabel = getPreferredUserLabel(session);
-  if (preferredLabel) {
-    const user = document.createElement("span");
-    user.className = "nav-user";
-    user.textContent = preferredLabel;
-    nav.append(user);
-  }
-  const logoutButton = document.createElement("button");
-  logoutButton.type = "button";
-  logoutButton.className = "btn btn-secondary";
-  logoutButton.textContent = "Logout";
-  logoutButton.addEventListener("click", async () => {
-    try {
-      await performLogout("/login");
-    } catch {
-      window.location.href = "/login";
-    }
-  });
-  nav.append(logoutButton);
-}
-
-// assets/js/modules/rank-preview.js?v=20260313b
-var STORAGE_KEY = "codswallop:rank-preview:v1";
-function normalizePermissionKeys(values) {
-  const source = Array.isArray(values) ? values : [];
-  return [...new Set(source.map((value) => String(value || "").trim()).filter(Boolean))];
-}
-function getRankPreviewState() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    const rankId = Number(parsed?.rankId);
-    const rankName = String(parsed?.rankName || "").trim();
-    const permissionKeys = normalizePermissionKeys(parsed?.permissionKeys);
-    if (!Number.isInteger(rankId) || rankId <= 0 || !rankName) return null;
-    return {
-      rankId,
-      rankName,
-      permissionKeys,
-      appliedAt: String(parsed?.appliedAt || "")
-    };
-  } catch {
-    return null;
-  }
-}
-function clearRankPreviewState() {
-  try {
-    window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-  }
-}
-
-// assets/js/modules/intranet-layout.js?v=20260313e
-function normalizePath(pathname) {
-  if (!pathname || pathname === "/") return "/";
-  return String(pathname).replace(/\/+$/, "") || "/";
-}
-function normalizeAppMode(value) {
-  const mode = String(value || "").trim().toLowerCase();
-  return mode === "core" ? "core" : "full";
-}
-function isCoreOnlyMode(session) {
-  return normalizeAppMode(session?.appMode) === "core" || Boolean(session?.isCoreMode);
-}
-function lifecycleStatus(session) {
-  return String(session?.lifecycleStatus || session?.userStatus || "").trim().toUpperCase() || "ACTIVE";
-}
-var CORE_ALLOWED_PAGE_EXACT = /* @__PURE__ */ new Set([
-  "/my-details",
-  "/my-details.html",
-  "/voyages",
-  "/voyage-tracker",
-  "/voyage-tracker.html",
-  "/fleet",
-  "/fleet.html",
-  "/shipyard",
-  "/shipyard.html",
-  "/voyage-archive",
-  "/voyage-archive.html",
-  "/voyage-details",
-  "/voyage-details.html",
-  "/finances",
-  "/finances.html",
-  "/admin",
-  "/admin-panel",
-  "/admin-panel.html",
-  "/admin/employees",
-  "/admin/activity",
-  "/admin/audit",
-  "/admin/voyages",
-  "/admin/user-groups",
-  "/admin/user-ranks",
-  "/roles",
-  "/roles.html",
-  "/user-ranks",
-  "/user-ranks.html",
-  "/activity-tracker",
-  "/activity-tracker.html",
-  "/audit-log",
-  "/audit-log.html",
-  "/site-settings",
-  "/site-settings.html",
-  "/voyage-settings",
-  "/voyage-settings.html",
-  "/access-setup",
-  "/access-setup.html",
-  "/not-permitted",
-  "/not-permitted.html",
-  "/onboarding",
-  "/onboarding.html",
-  "/onboarding/status"
-]);
-var CORE_ALLOWED_PAGE_PREFIXES = [
-  "/voyages/",
-  "/fleet/",
-  "/shipyard/",
-  "/finances/",
-  "/admin/employees/",
-  "/admin/activity/",
-  "/admin/audit/",
-  "/admin/voyages/",
-  "/admin/user-groups/",
-  "/admin/user-ranks/",
-  "/admin/site-settings/",
-  "/activity-tracker/",
-  "/audit-log/",
-  "/roles/",
-  "/user-ranks/",
-  "/access-setup/",
-  "/onboarding/"
-];
-function isCoreAllowedPagePath(pathname) {
-  const path = normalizePath(pathname);
-  if (CORE_ALLOWED_PAGE_EXACT.has(path)) return true;
-  return CORE_ALLOWED_PAGE_PREFIXES.some((prefix) => path.startsWith(prefix));
-}
-async function fetchSession() {
-  const response = await fetch("/api/auth/session", {
-    method: "GET",
-    credentials: "include"
-  });
-  if (!response.ok) return { loggedIn: false };
-  return response.json();
-}
-function toAccessDeniedUrl(reason) {
-  const url = new URL("/access-denied", window.location.origin);
-  if (reason) url.searchParams.set("reason", reason);
-  url.searchParams.set("from", window.location.pathname);
-  return url.toString();
-}
-function normalizePathname(path) {
-  return String(path || "").replace(/\/+$/, "") || "/";
-}
-function isOnboardingPath(pathname) {
-  const path = normalizePathname(pathname);
-  return path === "/onboarding" || path === "/onboarding.html" || path === "/onboarding/status" || path === "/access-setup" || path === "/access-setup.html";
-}
-function buildLink(href, label) {
-  const link = document.createElement("a");
-  link.href = href;
-  link.textContent = label;
-  return link;
-}
-function ensureNavbarFallback(session) {
-  const nav = document.querySelector(".site-nav");
-  if (!nav) return;
-  const links = [...nav.querySelectorAll("a[href]")];
-  const hasAnyLink = links.length > 0;
-  const hasFinances = links.some(
-    (link) => normalizePathname(new URL(link.getAttribute("href") || "", window.location.origin).pathname) === "/finances"
-  );
-  const status = lifecycleStatus(session);
-  const isPendingActivation = !session?.isAdmin && status === "DEACTIVATED";
-  const isSuspended = !session?.isAdmin && status === "SUSPENDED";
-  if ((isPendingActivation || isSuspended) && hasAnyLink || hasAnyLink && hasFinances) return;
-  nav.innerHTML = "";
-  if (isPendingActivation) {
-    nav.append(buildLink("/onboarding", "Access Setup"));
-  } else if (isSuspended) {
-    nav.append(buildLink("/my-details", "My Details"));
-  } else if (isCoreOnlyMode(session)) {
-    nav.append(buildLink("/my-details", "My Details"));
-    nav.append(buildLink("/voyages/my", "Voyages"));
-    if (hasPermission(session, "finances.view")) nav.append(buildLink("/finances", "Finances"));
-    if (canAccessAdminPanel(session)) nav.append(buildLink("/admin", "Admin Panel"));
-  } else {
-    nav.append(buildLink("/my-details", "My Details"));
-    nav.append(buildLink("/voyages/my", "Voyages"));
-    if (hasPermission(session, "finances.view")) nav.append(buildLink("/finances", "Finances"));
-    if (canAccessAdminPanel(session)) nav.append(buildLink("/admin", "Admin Panel"));
-  }
-  const spacer = document.createElement("span");
-  spacer.className = "nav-spacer";
-  nav.append(spacer);
-  const preferredLabel = getPreferredUserLabel(session);
-  if (preferredLabel) {
-    const user = document.createElement("span");
-    user.className = "nav-user";
-    user.textContent = preferredLabel;
-    nav.append(user);
-  }
-  const logoutButton = document.createElement("button");
-  logoutButton.type = "button";
-  logoutButton.className = "btn btn-secondary";
-  logoutButton.textContent = "Logout";
-  logoutButton.addEventListener("click", async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    } finally {
-      window.location.href = "/";
-    }
-  });
-  nav.append(logoutButton);
-}
-function isAdminLikePath(pathname) {
-  const path = normalizePathname(pathname);
-  if (path.startsWith("/admin/")) return true;
-  const legacyAdminPages = /* @__PURE__ */ new Set([
-    "/admin",
-    "/admin-panel",
-    "/activity-tracker",
-    "/audit-log",
-    "/roles",
-    "/user-ranks",
-    "/manage-employees",
-    "/site-settings"
-  ]);
-  return legacyAdminPages.has(path);
-}
-async function initIntranetLayout(config) {
-  window.addEventListener("pageshow", (event) => {
-    if (event.persisted) window.location.reload();
-  });
-  document.documentElement.classList.add("intranet-no-scroll");
-  document.body.classList.add("intranet-no-scroll");
-  const feedback = document.querySelector(config.feedbackSelector);
-  const protectedContent = document.querySelector(config.protectedContentSelector);
-  const requireAdmin = Boolean(config.requireAdmin);
-  const requireEmployee = Boolean(config.requireEmployee);
-  const requiredPermissions = Array.isArray(config.requiredPermissions) ? config.requiredPermissions : [];
-  const requiredAnyPermissions = Array.isArray(config.requiredAnyPermissions) ? config.requiredAnyPermissions : [];
-  if (!feedback || !protectedContent) return null;
-  try {
-    const session = await fetchSession();
-    if (!session.loggedIn) {
-      window.location.href = "/login?auth=denied&reason=login_required";
-      return null;
-    }
-    const status = lifecycleStatus(session);
-    const currentPath = normalizePathname(window.location.pathname);
-    if (!session?.isAdmin && status === "LEFT") {
-      window.location.href = "/login?auth=denied&reason=left";
-      return null;
-    }
-    if (!session?.isAdmin && status === "DEACTIVATED" && !isOnboardingPath(currentPath)) {
-      window.location.href = "/onboarding";
-      return null;
-    }
-    if (!session?.isAdmin && status === "REMOVED") {
-      window.location.href = toAccessDeniedUrl("removed");
-      return null;
-    }
-    if (!session?.isAdmin && status === "SUSPENDED" && currentPath !== "/my-details" && currentPath !== "/my-details.html") {
-      window.location.href = "/my-details?auth=denied&reason=suspended";
-      return null;
-    }
-    if (isCoreOnlyMode(session) && !isCoreAllowedPagePath(window.location.pathname)) {
-      window.location.href = isAdminLikePath(window.location.pathname) ? "/admin/employees" : "/voyages/my";
-      return null;
-    }
-    if (requireAdmin && !canAccessAdminPanel(session)) {
-      window.location.href = toAccessDeniedUrl("admin_required");
-      return null;
-    }
-    if (requiredPermissions.length && !requiredPermissions.every((permission) => hasPermission(session, permission))) {
-      window.location.href = toAccessDeniedUrl("missing_permissions");
-      return null;
-    }
-    if (requiredAnyPermissions.length && !requiredAnyPermissions.some((permission) => hasPermission(session, permission))) {
-      window.location.href = toAccessDeniedUrl("missing_permissions");
-      return null;
-    }
-    const preview = getRankPreviewState();
-    if (preview && hasPermission(session, "user_ranks.manage")) {
-      session.previewMode = {
-        rankId: preview.rankId,
-        rankName: preview.rankName,
-        appliedAt: preview.appliedAt
-      };
-      session.previewSourcePermissions = Array.isArray(session.permissions) ? [...session.permissions] : [];
-      session.permissions = [...preview.permissionKeys];
-    } else if (preview) {
-      clearRankPreviewState();
-    }
-    renderIntranetNavbar(session);
-    ensureNavbarFallback(session);
-    if (session.previewMode) {
-      const previewBar = document.createElement("section");
-      previewBar.className = "feedback is-visible is-warning";
-      previewBar.innerHTML = `
-        <strong>Preview Mode:</strong> Viewing as rank "${session.previewMode.rankName}".
+        </tr>`}).join("")}async function Ae(){if(Q){r.joinRequestsLoading=!0,Q.innerHTML='<tr><td colspan="3">Loading...</td></tr>',ne&&(ne.disabled=!0),C&&K(C);try{let i=await nt({pageSize:100});if(r.joinRequests=fr(i),pe(),!r.joinRequests.length&&C){let a=String(i?.mode||i?.authMode||"").trim();E(C,a?`No pending join requests found (${a} mode).`:"No pending join requests found.","info")}}catch(i){r.joinRequests=[],Q.innerHTML='<tr><td colspan="3">Unable to load join requests.</td></tr>',C&&E(C,i.message||"Unable to load join requests.","error")}finally{r.joinRequestsLoading=!1,pe(),ne&&(ne.disabled=!1)}}}function je(){if(!Z)return;let i=Array.isArray(r.removedEmployees)?r.removedEmployees:[];if(!i.length){Z.innerHTML='<tr><td colspan="4">No removed employees found.</td></tr>';return}Z.innerHTML=i.map(a=>`<tr>
+          <td>
+            <strong>${l(f(a.roblox_username||`Employee #${Number(a.id||0)}`))}</strong>
+            <small>${l(f(a.roblox_user_id||"No Roblox ID"))}</small>
+          </td>
+          <td>${l(f(a.rank))}</td>
+          <td>${l(O(a.updated_at,!0))}</td>
+          <td class="align-right">
+            <button class="btn btn-secondary btn-compact" type="button" data-open-removed-drawer="${Number(a.id||0)}">Open Drawer</button>
+          </td>
+        </tr>`).join("")}async function Je(){if(Z){r.removedEmployeesLoading=!0,Z.innerHTML='<tr><td colspan="4">Loading...</td></tr>',X&&(X.textContent="Loading removed employees..."),ae&&(ae.disabled=!0),ie&&K(ie);try{let i=await Me({status:"Removed",sortBy:"updated_at",sortDir:"desc",page:1,pageSize:200}),a=$t(i);r.removedEmployees=Array.isArray(a?.employees)?a.employees:[],je(),X&&(X.textContent=`${Number(a?.pagination?.total||r.removedEmployees.length||0)} removed employee${Number(a?.pagination?.total||r.removedEmployees.length||0)===1?"":"s"}.`)}catch(i){r.removedEmployees=[],Z.innerHTML='<tr><td colspan="4">Unable to load removed employees.</td></tr>',X&&(X.textContent="Unable to load removed employees."),ie&&E(ie,i.message||"Unable to load removed employees.","error")}finally{r.removedEmployeesLoading=!1,je(),ae&&(ae.disabled=!1)}}}async function ze(){if(!(!P||!q||!g)){r.employeeScanLoading=!0,se("employeeScanModal"),T&&(T.disabled=!0),N&&(N.disabled=!0),K(v),g.textContent="Running access scan...",_e(A,r.employeeScanGroups),q.innerHTML=`<tr><td colspan="${3+r.employeeScanGroups.length}">Running scan...</td></tr>`;try{let i=await ot(),a=i?.summary||{},u=i?.diagnostics||{},m=Array.isArray(i?.flaggedEmployees)?i.flaggedEmployees:[],p=Array.isArray(i?.requiredGroups)?i.requiredGroups:[];r.employeeScanGroups=p,r.employeeScanRows=m,_e(A,p),vr(q,m,p);let h=Array.isArray(i?.requiredGroupIds)&&i.requiredGroupIds.length?` Required Roblox group IDs: ${i.requiredGroupIds.join(", ")}.`:"",k=a?.robloxErrorCounts&&typeof a.robloxErrorCounts=="object"?Object.entries(a.robloxErrorCounts).map(([M,x])=>`${M} x${Number(x||0)}`).join(", "):"",L=k?` Roblox errors: ${k}.`:"",H=Number(a.robloxCacheHits||0)||Number(a.robloxCacheFallbacks||0)?` Roblox cache hits: ${Number(a.robloxCacheHits||0)}. Cache fallbacks after live failure: ${Number(a.robloxCacheFallbacks||0)}.`:"",B=Array.isArray(u?.robloxLookupFailedEmployees)?u.robloxLookupFailedEmployees.slice(0,5).map(M=>{let x=f(M?.robloxUsername),J=f(M?.robloxUserId);return`${x||J||`Employee #${Number(M?.employeeId||0)}`}: ${f(M?.error)||"lookup failed"}${Number(M?.status||0)?` (status ${Number(M.status)})`:""}`}).join("; "):"",R=Number(a.robloxLookupFailed||0)?` Roblox lookup failures are temporary verification failures, not confirmed access issues. Auth mode: ${f(u?.robloxAuthMode||"unknown")}. Group: ${f(u?.robloxGroupId||"unknown")}.${B?` Sample failures: ${B}.`:""}`:"";g.textContent=`Scanned ${Number(a.total||0)} employees. Flagged ${Number(a.flagged||0)}. Confirmed access issues: ${Number(a.confirmedIssues||0)}. Temporary verification failures: ${Number(a.verificationFailures||0)}. Missing Discord ID: ${Number(a.missingDiscordId||0)}. Not in Discord: ${Number(a.missingGuild||0)}. Missing Roblox ID: ${Number(a.missingRobloxId||0)}. Missing required Roblox groups: ${Number(a.missingRequiredGroups||0)}. Discord lookup failures: ${Number(a.discordLookupFailed||0)}. Roblox lookup failures: ${Number(a.robloxLookupFailed||0)}.${h}${L}${H}${R}`,E(v,m.length?"Scan completed. Review flagged employees below.":"Scan completed. No flagged employees found.",m.length?"info":"success")}catch(i){r.employeeScanRows=[],_e(A,r.employeeScanGroups),q.innerHTML=`<tr><td colspan="${3+r.employeeScanGroups.length}">Unable to run scan.</td></tr>`,g.textContent="Scan failed.";let a=String(i?.message||"").trim();E(v,a==="timeout"?"Employee scan timed out. Please try again; this scan can take a while.":a||"Unable to run employee scan.","error")}finally{r.employeeScanLoading=!1,T&&(T.disabled=!1),N&&(N.disabled=!1)}}}async function _t(){if(r.configBootstrapped)return;let i=[],a=[];try{let u=await it();i=Array.isArray(u?.statuses)?u.statuses:[],a=Array.isArray(u?.ranks)?u.ranks:[]}catch{let[u,m]=await Promise.all([Ie("statuses"),Ie("ranks")]);i=u.items||[],a=m.items||[]}He(i,a),r.configBootstrapped=!0}function xe(i){let u=new Set(["overview","voyages","activity","access","notes","disciplinary"]).has(i)?i:"overview";r.drawerTab=u;let m=(p,h)=>{p&&(p.classList.toggle("hidden",!h),p.setAttribute("aria-hidden",h?"false":"true"),h?p.style.removeProperty("display"):p.style.display="none")};D?.querySelectorAll("[data-drawer-tab], [data-employee-tab]").forEach(p=>{let k=String(p.getAttribute("data-drawer-tab")||p.getAttribute("data-employee-tab")||"")===u;p.classList.toggle("is-active",k),p.setAttribute("aria-selected",k?"true":"false")}),m(j,u==="overview"),m(ce,u==="voyages"),m(de,u==="activity"),m(le,u==="access"),m(ue,u==="notes"),m(me,u==="disciplinary"),r.drawerPayload&&r.selectedEmployeeId&&Re(r.drawerPayload,r.selectedEmployeeId,{})}function Re(i,a,u={}){let m=r.drawerTab||"overview";if(m==="overview"){Tt(j,i,{canEdit:!!i?.capabilities?.canActivate,isEditing:r.drawerOverviewEditMode,draft:r.drawerOverviewDraft,configOptions:r.configOptions,userGroupsBusy:r.drawerUserGroupsBusy,vesselBusy:r.drawerVesselBusy});return}if(m==="voyages"){Tr(ce,i,{userGroupsBusy:r.drawerUserGroupsBusy,vesselBusy:r.drawerVesselBusy,showVesselAssignment:r.drawerVoyagesShowVesselAssignment});return}if(m==="activity"){Nr(de,i);return}if(m==="access"){$r(le,i,{userGroupsBusy:r.drawerUserGroupsBusy});return}if(m==="notes"){Be(ue,i,u.showSystem??r.showSystemNotes,u.tab==="notes"?u.feedback:null,a,re,p=>{r.showSystemNotes=!!p});return}m==="disciplinary"&&Ce(me,i,u.tab==="disciplinary"?u.feedback:null,a,re)}async function re(i,a={}){let u=!!a.force,m=_.get(i);if((!m||u)&&(m=await dt(i,{activityPageSize:20}),_.set(i,m)),Fe&&(Fe.textContent=m.employee?.roblox_username||`Employee #${i}`),oe){let p=m.employee?.rank?m.employee.rank:"Unset rank",h=m.employee?.employee_status?m.employee.employee_status:"Unknown status";oe.textContent=`${p} \u2022 ${h}`}r.drawerOverviewDraft||(r.drawerOverviewDraft=Ve(m.employee)),r.drawerPayload=m,a.tab&&xe(a.tab),Re(m,i,a)}async function fe(i){if(D){r.selectedEmployeeId=i,r.drawerOverviewEditMode=!1,r.drawerOverviewDraft=null,r.drawerPayload=null,r.drawerUserGroupsBusy=!1,r.drawerVesselBusy=!1,r.showSystemNotes=!1,D.classList.remove("hidden"),D.setAttribute("aria-hidden","false"),xe("overview"),j&&(j.innerHTML='<span class="skeleton-line skeleton-w-70"></span><span class="skeleton-line skeleton-w-90"></span>'),ce&&(ce.innerHTML='<div class="finance-chart-skeleton"></div>'),de&&(de.innerHTML='<div class="finance-chart-skeleton"></div>'),le&&(le.innerHTML='<div class="finance-chart-skeleton"></div>'),ue&&(ue.innerHTML='<div class="finance-chart-skeleton"></div>'),me&&(me.innerHTML='<div class="finance-chart-skeleton"></div>');try{await re(i)}catch(a){j&&(j.innerHTML=`<p class="finance-inline-caption">${l(a.message||"Unable to load employee details.")}</p>`)}}}qt?.addEventListener("click",()=>se("createEmployeeModal")),T?.addEventListener("click",()=>{ze()}),N?.addEventListener("click",()=>{ze()}),Dt?.addEventListener("click",async()=>{se("joinRequestsModal"),await Ae()}),ne?.addEventListener("click",async()=>{await Ae()}),Ut?.addEventListener("click",async()=>{se("removedEmployeesModal"),await Je()}),ae?.addEventListener("click",async()=>{await Je()}),It?.addEventListener("click",()=>se("deleteUserModal")),document.querySelectorAll("[data-close-modal]").forEach(i=>{i.addEventListener("click",()=>{let a=i.getAttribute("data-close-modal");a&&Oe(a)})}),Lt?.addEventListener("click",i=>{let a=i.target;if(!(a instanceof HTMLElement))return;let u=a.closest("[data-join-action]");if(!u||r.joinRequestsLoading)return;let m=String(u.getAttribute("data-join-action")||"").trim().toLowerCase(),p=String(u.getAttribute("data-requester-id")||"").trim();p&&(async()=>{r.joinRequestsLoading=!0,pe();try{m==="accept"?(await at(p),C&&E(C,`Accepted request for user #${p}.`,"success")):m==="decline"&&(await st(p),C&&E(C,`Declined request for user #${p}.`,"success")),await Ae()}catch(h){r.joinRequestsLoading=!1,pe(),C&&E(C,h.message||"Unable to update join request.","error")}})()}),document.querySelectorAll("[data-close-drawer]").forEach(i=>{i.addEventListener("click",()=>{D?.classList.add("hidden"),D?.setAttribute("aria-hidden","true"),r.selectedEmployeeId=null})}),D?.addEventListener("click",i=>{let a=i.target;if(!(a instanceof HTMLElement))return;if(a.closest("#drawerEditEmployeeBtn")){if(!r.drawerPayload)return;r.drawerOverviewEditMode=!0,r.drawerOverviewDraft=Ve(r.drawerPayload.employee),te();return}if(a.closest("#drawerCancelOverviewBtn")){r.drawerOverviewEditMode=!1,r.drawerOverviewDraft=null,te();return}if(a.closest("#drawerActivateEmployeeBtn")){if(!r.selectedEmployeeId||!r.drawerPayload)return;let p=r.selectedEmployeeId;(async()=>{try{r.drawerPayload.employee.activation_status="ACTIVE",_.set(p,r.drawerPayload),r.drawerOverviewEditMode=!1,r.drawerOverviewDraft=null,te(),await mt(p),_.delete(p),G(),await re(p,{force:!0,tab:"overview"}),E(t,"Employee activated.","success")}catch(h){E(t,h.message||"Unable to activate employee.","error")}})();return}if(a.closest("#drawerDeleteEmployeeBtn")){if(!r.selectedEmployeeId||!r.drawerPayload)return;let p=r.selectedEmployeeId,h=String(r.drawerPayload?.employee?.roblox_username||`#${p}`);if(window.prompt(`Type DELETE to remove ${h}.`)!=="DELETE")return;let L=window.prompt("Delete reason (required):")||"";if(!String(L||"").trim()){E(t,"Delete reason is required.","error");return}(async()=>{try{await yt(p,{reason:String(L).trim()}),_.delete(p),D?.classList.add("hidden"),D?.setAttribute("aria-hidden","true"),r.selectedEmployeeId=null,await G(),E(t,"User deleted from employee records.","success")}catch(H){E(t,H.message||"Unable to delete employee.","error")}})();return}if(a.closest("#drawerAddEmployeeGroupBtn")){if(!r.selectedEmployeeId||!r.drawerPayload||r.drawerUserGroupsBusy)return;let p=r.selectedEmployeeId,h=D?.querySelector("#drawerUserGroupSelect"),k=Number(h?.value||0);if(!Number.isInteger(k)||k<=0)return;let L=r.drawerPayload,H=new Set((L.assignedRoles||[]).map(x=>Number(x.id)).filter(x=>Number.isInteger(x)&&x>0));if(H.has(k))return;let B=(L.availableRoles||[]).find(x=>Number(x.id)===k);if(!B)return;let R=[...L.assignedRoles||[]],M=[...H,k];L.assignedRoles=[...R,B].sort((x,J)=>Number(x.sort_order||0)-Number(J.sort_order||0)||Number(x.id||0)-Number(J.id||0)),r.drawerUserGroupsBusy=!0,_.set(p,L),V(),(async()=>{try{await ve(p,{roleIds:M}),r.drawerUserGroupsBusy=!1,V();let x=D?.querySelector("#drawerUserGroupsFeedback");x&&E(x,"User group added.","success")}catch(x){L.assignedRoles=R,r.drawerUserGroupsBusy=!1,_.set(p,L),V();let J=D?.querySelector("#drawerUserGroupsFeedback");J&&E(J,x.message||"Unable to add user group.","error")}})();return}if(a.closest("#toggleVesselAssignmentBtn")){r.drawerVoyagesShowVesselAssignment=!r.drawerVoyagesShowVesselAssignment,V();return}let u=a.closest("[data-remove-employee-group]");if(u){if(!r.selectedEmployeeId||!r.drawerPayload||r.drawerUserGroupsBusy)return;let p=r.selectedEmployeeId,h=Number(u.getAttribute("data-remove-employee-group"));if(!Number.isInteger(h)||h<=0)return;let k=r.drawerPayload,L=[...k.assignedRoles||[]],H=L.filter(R=>Number(R.id)!==h),B=H.map(R=>Number(R.id)).filter(R=>Number.isInteger(R)&&R>0);k.assignedRoles=H,r.drawerUserGroupsBusy=!0,_.set(p,k),V(),(async()=>{try{await ve(p,{roleIds:B}),r.drawerUserGroupsBusy=!1,V();let R=D?.querySelector("#drawerUserGroupsFeedback");R&&E(R,"User group removed.","success")}catch(R){k.assignedRoles=L,r.drawerUserGroupsBusy=!1,_.set(p,k),V();let M=D?.querySelector("#drawerUserGroupsFeedback");M&&E(M,R.message||"Unable to remove user group.","error")}})();return}if(a.closest("#drawerClearVesselAssignmentBtn")){if(!r.selectedEmployeeId||r.drawerVesselBusy)return;let p=r.selectedEmployeeId;r.drawerVesselBusy=!0,V(),(async()=>{try{await ut(p),_.delete(p),r.drawerVesselBusy=!1,await re(p,{force:!0,tab:r.drawerTab||"voyages"});let h=D?.querySelector("#drawerVesselAssignmentFeedback");h&&E(h,"Vessel assignment cleared.","success")}catch(h){r.drawerVesselBusy=!1,V();let k=D?.querySelector("#drawerVesselAssignmentFeedback");k&&E(k,h.message||"Unable to clear vessel assignment.","error")}})();return}let m=a.closest("[data-drawer-tab], [data-employee-tab]");m&&xe(String(m.getAttribute("data-drawer-tab")||m.getAttribute("data-employee-tab")||"overview"))}),D?.addEventListener("submit",i=>{let a=i.target;if(!(a instanceof HTMLFormElement))return;if(a.id==="drawerVesselAssignForm"){if(i.preventDefault(),!r.selectedEmployeeId||r.drawerVesselBusy)return;let B=r.selectedEmployeeId,R=new FormData(a),M=Number(R.get("shipId")||0);if(!Number.isInteger(M)||M<=0){let x=D?.querySelector("#drawerVesselAssignmentFeedback");x&&E(x,"Select a ship assignment.","error");return}r.drawerVesselBusy=!0,V(),(async()=>{try{await lt(B,{shipId:M}),_.delete(B),r.drawerVesselBusy=!1,await re(B,{force:!0,tab:r.drawerTab||"voyages"});let x=D?.querySelector("#drawerVesselAssignmentFeedback");x&&E(x,"Vessel assignment saved.","success")}catch(x){r.drawerVesselBusy=!1,V();let J=D?.querySelector("#drawerVesselAssignmentFeedback");J&&E(J,x.message||"Unable to save vessel assignment.","error")}})();return}if(a.id!=="drawerOverviewEditForm"||(i.preventDefault(),!r.selectedEmployeeId||!r.drawerPayload))return;let u=r.selectedEmployeeId,m=r.drawerPayload,p=new FormData(a),h={robloxUsername:String(p.get("robloxUsername")||"").trim(),robloxUserId:String(p.get("robloxUserId")||"").trim(),rank:String(p.get("rank")||"").trim(),employeeStatus:String(p.get("employeeStatus")||"").trim(),hireDate:String(p.get("hireDate")||"").trim()},k={};h.robloxUsername!==String(m.employee?.roblox_username||"")&&(k.robloxUsername=h.robloxUsername),h.robloxUserId!==String(m.employee?.roblox_user_id||"")&&(k.robloxUserId=h.robloxUserId),h.rank!==String(m.employee?.rank||"")&&(k.rank=h.rank),h.employeeStatus!==String(m.employee?.employee_status||"")&&(k.employeeStatus=h.employeeStatus),h.hireDate!==String(m.employee?.hire_date||"")&&(k.hireDate=h.hireDate);let L=j?.querySelector("#drawerOverviewFeedback");if(!Object.keys(k).length){r.drawerOverviewEditMode=!1,r.drawerOverviewDraft=null,te(),L&&E(L,"No changes to save.","info");return}let H={...m.employee};m.employee={...m.employee,roblox_username:h.robloxUsername,roblox_user_id:h.robloxUserId,rank:h.rank,employee_status:h.employeeStatus,hire_date:h.hireDate},r.drawerOverviewEditMode=!1,r.drawerOverviewDraft=null,_.set(u,m),te(),oe&&(oe.textContent=`${h.rank||"Unset rank"} \u2022 ${h.employeeStatus||"Unknown status"}`),L&&E(L,"Saved.","success"),(async()=>{try{await ve(u,k),G()}catch(B){m.employee=H,_.set(u,m),te();let R=j?.querySelector("#drawerOverviewFeedback");R&&E(R,B.message||"Unable to save employee.","error")}})()}),n.addEventListener("click",i=>{let a=i.target instanceof HTMLElement?i.target.closest("tr.admin-employee-row"):null;if(!a)return;let u=Number(a.getAttribute("data-employee-id"));Number.isInteger(u)&&u>0&&fe(u)}),q?.addEventListener("click",i=>{let a=i.target instanceof HTMLElement?i.target.closest("[data-open-scan-drawer]"):null;if(!a)return;let u=Number(a.getAttribute("data-open-scan-drawer"));Number.isInteger(u)&&u>0&&fe(u)}),Z?.addEventListener("click",i=>{let a=i.target instanceof HTMLElement?i.target.closest("[data-open-removed-drawer]"):null;if(!a)return;let u=Number(a.getAttribute("data-open-removed-drawer"));Number.isInteger(u)&&u>0&&fe(u)});let Ke=()=>{ke&&window.clearTimeout(ke),ke=window.setTimeout(()=>{r.page=1,G()},360)};s?.addEventListener("input",Ke),[o,c,d,y].forEach(i=>{i?.addEventListener("change",Ke)}),w?.addEventListener("click",()=>{[s,o,c,d,y].forEach(i=>{i&&(i.value="")}),r.page=1,G()}),$?.addEventListener("click",()=>{S?.classList.toggle("hidden")}),F?.addEventListener("click",()=>{r.page<=1||(r.page-=1,G())}),Te?.addEventListener("click",()=>{r.page>=r.totalPages||(r.page+=1,G())}),document.querySelectorAll(".table-sort-btn").forEach(i=>{i.addEventListener("click",()=>{let a=String(i.getAttribute("data-sort")||"");a&&(r.sortBy===a?r.sortDir=r.sortDir==="asc"?"desc":"asc":(r.sortBy=a,r.sortDir=a==="id"?"desc":"asc"),r.page=1,G())})}),$e?.addEventListener("click",()=>{W?.classList.toggle("hidden")}),document.addEventListener("click",i=>{if(!W||!$e)return;let a=i.target;a instanceof HTMLElement&&(W.contains(a)||$e.contains(a)||W.classList.add("hidden"))}),ee.addEventListener("submit",async i=>{i.preventDefault(),K(t);let a=new FormData(ee);try{await ct({discordUserId:String(a.get("discordUserId")||"").trim(),robloxUsername:String(a.get("robloxUsername")||"").trim(),robloxUserId:String(a.get("robloxUserId")||"").trim(),rank:String(a.get("rank")||"").trim(),employeeStatus:String(a.get("employeeStatus")||"").trim(),hireDate:String(a.get("hireDate")||"").trim()}),ee.reset(),Oe("createEmployeeModal"),r.page=1,await G(),E(t,"Employee created.","success")}catch(u){E(t,u.message||"Unable to create employee.","error")}}),Ne?.addEventListener("submit",async i=>{i.preventDefault(),K(t);let a=new FormData(Ne),u=String(a.get("discordUserId")||"").trim(),m=String(a.get("reason")||"").trim();if(!u||!m){E(t,"Discord User ID and reason are required.","error");return}try{let p=await bt({discordUserId:u,reason:m});Ne.reset(),Oe("deleteUserModal"),await G();let h=p?.removedEmployee?"User deleted (employee + related access request records).":"User deleted from unauthorised/pending access records.";E(t,h,"success")}catch(p){E(t,p.message||"Unable to delete user.","error")}});try{Mt(),await G();let i=Number(new URLSearchParams(window.location.search).get("employeeId"));Number.isInteger(i)&&i>0&&await fe(i)}catch(i){E(t,i.message||"Unable to initialize Manage Employees.","error")}}var sr,we,At,Rt=ge(()=>{St();wt();qe();sr="manageEmployees_visibleColumns";we=["roblox_username","roblox_user_id","rank","employee_status","hire_date"],At={roblox_username:"Roblox Username",roblox_user_id:"Roblox User ID",rank:"Rank",employee_status:"Status",hire_date:"Hire Date"}});qe();var Ft={"roles.read":"user_groups.read","roles.manage":"user_groups.manage","roles.assign":"user_groups.assign","user_groups.read":"roles.read","user_groups.manage":"roles.manage","user_groups.assign":"roles.assign"};function Y(e,t){if(!e||!t)return!1;let n=Array.isArray(e.permissions)?e.permissions:[],s=String(t||"").trim(),o=Ft[s],b=n.includes("admin.read_only")&&(s.endsWith(".read")||s.endsWith(".view")||["voyages.config.manage","user_groups.manage","user_ranks.manage","config.manage"].includes(s));return n.includes("super.admin")||n.includes("admin.override")||b||n.includes(s)||(o?n.includes(o):!1)}async function Vt(e="/"){await fetch("/api/auth/logout",{method:"POST",credentials:"include"}),window.location.href=e}function Gt(e,t){let n=document.createElement("a");return n.href=e,n.textContent=t,n}function De(e){let t=String(e?.robloxUsername||"").trim();if(t)return t;let n=String(e?.discordUsername||"").trim();if(n)return n;let s=String(e?.displayName||"").trim();return s||String(e?.userId||"").trim()||""}var Ye=["admin.read_only","employees.read","voyages.config.manage","user_groups.manage","user_ranks.manage","config.manage","activity_tracker.view"];function ye(e){return Ye.some(t=>Y(e,t))}var Ht=[{href:"/my-details",label:"My Details"},{href:"/voyage-tracker",label:"Voyage Tracker"},{href:"/fleet",label:"Fleet",anyPermissions:["voyages.read"]},{href:"/finances",label:"Finances"},{href:"/admin-panel",label:"Admin Panel",anyPermissions:Ye}];function jt(e,t){if(typeof t?.customVisible=="function")return!!t.customVisible(e);let n=String(t?.sessionFlag||"").trim();if(n&&!e?.[n])return!1;let s=Array.isArray(t?.anyPermissions)?t.anyPermissions:[];return s.length?s.some(o=>Y(e,o)):!0}function We(e){let t=document.querySelector(".site-nav");if(!t)return;t.innerHTML="",Ht.forEach(c=>{jt(e,c)&&t.append(Gt(c.href,c.label))});let n=document.createElement("span");n.className="nav-spacer",t.append(n);let s=De(e);if(s){let c=document.createElement("span");c.className="nav-user",c.textContent=s,t.append(c)}let o=document.createElement("button");o.type="button",o.className="btn btn-secondary",o.textContent="Logout",o.addEventListener("click",async()=>{try{await Vt("/login")}catch{window.location.href="/login"}}),t.append(o)}var Ze="codswallop:rank-preview:v1";function Jt(e){let t=Array.isArray(e)?e:[];return[...new Set(t.map(n=>String(n||"").trim()).filter(Boolean))]}function Qe(){try{let e=window.localStorage.getItem(Ze);if(!e)return null;let t=JSON.parse(e),n=Number(t?.rankId),s=String(t?.rankName||"").trim(),o=Jt(t?.permissionKeys);return!Number.isInteger(n)||n<=0||!s?null:{rankId:n,rankName:s,permissionKeys:o,appliedAt:String(t?.appliedAt||"")}}catch{return null}}function Le(){try{window.localStorage.removeItem(Ze)}catch{}}function zt(e){return!e||e==="/"?"/":String(e).replace(/\/+$/,"")||"/"}function Kt(e){return String(e||"").trim().toLowerCase()==="core"?"core":"full"}function Xe(e){return Kt(e?.appMode)==="core"||!!e?.isCoreMode}function et(e){return String(e?.lifecycleStatus||e?.userStatus||"").trim().toUpperCase()||"ACTIVE"}var Yt=new Set(["/my-details","/my-details.html","/voyages","/voyage-tracker","/voyage-tracker.html","/fleet","/fleet.html","/shipyard","/shipyard.html","/voyage-archive","/voyage-archive.html","/voyage-details","/voyage-details.html","/finances","/finances.html","/admin","/admin-panel","/admin-panel.html","/admin/employees","/admin/activity","/admin/audit","/admin/voyages","/admin/user-groups","/admin/user-ranks","/roles","/roles.html","/user-ranks","/user-ranks.html","/activity-tracker","/activity-tracker.html","/audit-log","/audit-log.html","/site-settings","/site-settings.html","/voyage-settings","/voyage-settings.html","/access-setup","/access-setup.html","/not-permitted","/not-permitted.html","/onboarding","/onboarding.html","/onboarding/status"]),Wt=["/voyages/","/fleet/","/shipyard/","/finances/","/admin/employees/","/admin/activity/","/admin/audit/","/admin/voyages/","/admin/user-groups/","/admin/user-ranks/","/admin/site-settings/","/activity-tracker/","/audit-log/","/roles/","/user-ranks/","/access-setup/","/onboarding/"];function Zt(e){let t=zt(e);return Yt.has(t)?!0:Wt.some(n=>t.startsWith(n))}async function Qt(){let e=await fetch("/api/auth/session",{method:"GET",credentials:"include"});return e.ok?e.json():{loggedIn:!1}}function be(e){let t=new URL("/access-denied",window.location.origin);return e&&t.searchParams.set("reason",e),t.searchParams.set("from",window.location.pathname),t.toString()}function Se(e){return String(e||"").replace(/\/+$/,"")||"/"}function Xt(e){let t=Se(e);return t==="/onboarding"||t==="/onboarding.html"||t==="/onboarding/status"||t==="/access-setup"||t==="/access-setup.html"}function z(e,t){let n=document.createElement("a");return n.href=e,n.textContent=t,n}function er(e){let t=document.querySelector(".site-nav");if(!t)return;let n=[...t.querySelectorAll("a[href]")],s=n.length>0,o=n.some(S=>Se(new URL(S.getAttribute("href")||"",window.location.origin).pathname)==="/finances"),c=et(e),b=!e?.isAdmin&&c==="DEACTIVATED",d=!e?.isAdmin&&c==="SUSPENDED";if((b||d)&&s||s&&o)return;t.innerHTML="",b?t.append(z("/onboarding","Access Setup")):d?t.append(z("/my-details","My Details")):Xe(e)?(t.append(z("/my-details","My Details")),t.append(z("/voyages/my","Voyages")),Y(e,"finances.view")&&t.append(z("/finances","Finances")),ye(e)&&t.append(z("/admin","Admin Panel"))):(t.append(z("/my-details","My Details")),t.append(z("/voyages/my","Voyages")),Y(e,"finances.view")&&t.append(z("/finances","Finances")),ye(e)&&t.append(z("/admin","Admin Panel")));let y=document.createElement("span");y.className="nav-spacer",t.append(y);let w=De(e);if(w){let S=document.createElement("span");S.className="nav-user",S.textContent=w,t.append(S)}let $=document.createElement("button");$.type="button",$.className="btn btn-secondary",$.textContent="Logout",$.addEventListener("click",async()=>{try{await fetch("/api/auth/logout",{method:"POST",credentials:"include"})}finally{window.location.href="/"}}),t.append($)}function tr(e){let t=Se(e);return t.startsWith("/admin/")?!0:new Set(["/admin","/admin-panel","/activity-tracker","/audit-log","/roles","/user-ranks","/manage-employees","/site-settings"]).has(t)}async function tt(e){window.addEventListener("pageshow",d=>{d.persisted&&window.location.reload()}),document.documentElement.classList.add("intranet-no-scroll"),document.body.classList.add("intranet-no-scroll");let t=document.querySelector(e.feedbackSelector),n=document.querySelector(e.protectedContentSelector),s=!!e.requireAdmin,o=!!e.requireEmployee,c=Array.isArray(e.requiredPermissions)?e.requiredPermissions:[],b=Array.isArray(e.requiredAnyPermissions)?e.requiredAnyPermissions:[];if(!t||!n)return null;try{let d=await Qt();if(!d.loggedIn)return window.location.href="/login?auth=denied&reason=login_required",null;let y=et(d),w=Se(window.location.pathname);if(!d?.isAdmin&&y==="LEFT")return window.location.href="/login?auth=denied&reason=left",null;if(!d?.isAdmin&&y==="DEACTIVATED"&&!Xt(w))return window.location.href="/onboarding",null;if(!d?.isAdmin&&y==="REMOVED")return window.location.href=be("removed"),null;if(!d?.isAdmin&&y==="SUSPENDED"&&w!=="/my-details"&&w!=="/my-details.html")return window.location.href="/my-details?auth=denied&reason=suspended",null;if(Xe(d)&&!Zt(window.location.pathname))return window.location.href=tr(window.location.pathname)?"/admin/employees":"/voyages/my",null;if(s&&!ye(d))return window.location.href=be("admin_required"),null;if(c.length&&!c.every(S=>Y(d,S))||b.length&&!b.some(S=>Y(d,S)))return window.location.href=be("missing_permissions"),null;let $=Qe();if($&&Y(d,"user_ranks.manage")?(d.previewMode={rankId:$.rankId,rankName:$.rankName,appliedAt:$.appliedAt},d.previewSourcePermissions=Array.isArray(d.permissions)?[...d.permissions]:[],d.permissions=[...$.permissionKeys]):$&&Le(),We(d),er(d),d.previewMode){let S=document.createElement("section");S.className="feedback is-visible is-warning",S.innerHTML=`
+        <strong>Preview Mode:</strong> Viewing as rank "${d.previewMode.rankName}".
         <button type="button" class="btn btn-secondary btn-compact" data-clear-rank-preview>Exit Preview</button>
-      `;
-      const container = document.querySelector("main.section .container.intranet-layout");
-      if (container) container.prepend(previewBar);
-      const clearButton = previewBar.querySelector("[data-clear-rank-preview]");
-      clearButton?.addEventListener("click", () => {
-        clearRankPreviewState();
-        window.location.reload();
-      });
-    }
-    if (!session?.isAdmin && status === "SUSPENDED") {
-      document.body.classList.add("is-suspended-view");
-      const suspendedContainer = document.querySelector("main.section .container.intranet-layout");
-      if (suspendedContainer && !suspendedContainer.querySelector("[data-suspended-banner]")) {
-        const suspendedBar = document.createElement("section");
-        suspendedBar.className = "feedback is-visible is-warning suspended-status-banner";
-        suspendedBar.setAttribute("data-suspended-banner", "true");
-        suspendedBar.innerHTML = "<strong>Account Suspended:</strong> Your access is restricted to My Details only until this status is changed.";
-        suspendedContainer.prepend(suspendedBar);
-      }
-    } else {
-      document.body.classList.remove("is-suspended-view");
-    }
-    protectedContent.classList.remove("hidden");
-    return session;
-  } catch {
-    showMessage(feedback, "Unable to verify your session.", "error");
-    return null;
-  }
-}
-
-// assets/js/pages/manage-employees-page.js
-initIntranetLayout({
-  feedbackSelector: "#guardFeedback",
-  protectedContentSelector: "#protectedContent",
-  adminNavLinkSelector: "#adminNavLink",
-  requiredPermissions: ["employees.read"]
-}).then((session) => {
-  if (!session) return;
-  Promise.resolve().then(() => (init_manage_employees(), manage_employees_exports)).then(
-    ({ initManageEmployees: initManageEmployees2 }) => initManageEmployees2(
-      {
-        feedbackSelector: "#manageEmployeesFeedback",
-        employeeTableBodySelector: "#employeeTableBody",
-        filterQuerySelector: "#filterEmployeeQuery",
-        filterRankSelector: "#filterRank",
-        filterStatusSelector: "#filterStatus",
-        filterActivationSelector: "#filterActivationStatus",
-        filterHireDateFromSelector: "#filterHireDateFrom",
-        filterHireDateToSelector: "#filterHireDateTo",
-        clearFiltersBtnSelector: "#clearEmployeeFiltersBtn",
-        toggleMoreFiltersBtnSelector: "#toggleMoreFiltersBtn",
-        moreFiltersPanelSelector: "#moreEmployeeFilters",
-        runScanBtnSelector: "#runEmployeeScanBtn",
-        rerunScanBtnSelector: "#rerunEmployeeScanBtn",
-        scanModalSelector: "#employeeScanModal",
-        scanFeedbackSelector: "#employeeScanFeedback",
-        scanSummarySelector: "#employeeScanSummary",
-        scanTableHeadRowSelector: "#employeeScanTableHeadRow",
-        scanTableBodySelector: "#employeeScanTableBody",
-        paginationInfoSelector: "#employeePaginationInfo",
-        prevPageBtnSelector: "#employeePrevPageBtn",
-        nextPageBtnSelector: "#employeeNextPageBtn",
-        columnVisibilityBtnSelector: "#columnVisibilityBtn",
-        columnVisibilityMenuSelector: "#columnVisibilityMenu",
-        drawerSelector: "#employeeDrawer",
-        drawerNameSelector: "#drawerEmployeeName",
-        drawerMetaSelector: "#drawerEmployeeMeta",
-        drawerOverviewSelector: "#drawerTabOverview",
-        drawerVoyagesSelector: "#drawerTabVoyages",
-        drawerActivitySelector: "#drawerTabActivity",
-        drawerAccessSelector: "#drawerTabAccess",
-        drawerNotesSelector: "#drawerTabNotes",
-        drawerDisciplinarySelector: "#drawerTabDisciplinary",
-        openCreateEmployeeBtnSelector: "#openCreateEmployeeBtn",
-        createFormSelector: "#createEmployeeForm"
-      }
-    )
-  );
-});
+      `;let T=document.querySelector("main.section .container.intranet-layout");T&&T.prepend(S),S.querySelector("[data-clear-rank-preview]")?.addEventListener("click",()=>{Le(),window.location.reload()})}if(!d?.isAdmin&&y==="SUSPENDED"){document.body.classList.add("is-suspended-view");let S=document.querySelector("main.section .container.intranet-layout");if(S&&!S.querySelector("[data-suspended-banner]")){let T=document.createElement("section");T.className="feedback is-visible is-warning suspended-status-banner",T.setAttribute("data-suspended-banner","true"),T.innerHTML="<strong>Account Suspended:</strong> Your access is restricted to My Details only until this status is changed.",S.prepend(T)}}else document.body.classList.remove("is-suspended-view");return n.classList.remove("hidden"),d}catch{return E(t,"Unable to verify your session.","error"),null}}tt({feedbackSelector:"#guardFeedback",protectedContentSelector:"#protectedContent",adminNavLinkSelector:"#adminNavLink",requiredPermissions:["employees.read"]}).then(e=>{e&&Promise.resolve().then(()=>(Rt(),xt)).then(({initManageEmployees:t})=>t({feedbackSelector:"#manageEmployeesFeedback",employeeTableBodySelector:"#employeeTableBody",filterQuerySelector:"#filterEmployeeQuery",filterRankSelector:"#filterRank",filterStatusSelector:"#filterStatus",filterActivationSelector:"#filterActivationStatus",filterHireDateFromSelector:"#filterHireDateFrom",filterHireDateToSelector:"#filterHireDateTo",clearFiltersBtnSelector:"#clearEmployeeFiltersBtn",toggleMoreFiltersBtnSelector:"#toggleMoreFiltersBtn",moreFiltersPanelSelector:"#moreEmployeeFilters",runScanBtnSelector:"#runEmployeeScanBtn",rerunScanBtnSelector:"#rerunEmployeeScanBtn",scanModalSelector:"#employeeScanModal",scanFeedbackSelector:"#employeeScanFeedback",scanSummarySelector:"#employeeScanSummary",scanTableHeadRowSelector:"#employeeScanTableHeadRow",scanTableBodySelector:"#employeeScanTableBody",paginationInfoSelector:"#employeePaginationInfo",prevPageBtnSelector:"#employeePrevPageBtn",nextPageBtnSelector:"#employeeNextPageBtn",columnVisibilityBtnSelector:"#columnVisibilityBtn",columnVisibilityMenuSelector:"#columnVisibilityMenu",drawerSelector:"#employeeDrawer",drawerNameSelector:"#drawerEmployeeName",drawerMetaSelector:"#drawerEmployeeMeta",drawerOverviewSelector:"#drawerTabOverview",drawerVoyagesSelector:"#drawerTabVoyages",drawerActivitySelector:"#drawerTabActivity",drawerAccessSelector:"#drawerTabAccess",drawerNotesSelector:"#drawerTabNotes",drawerDisciplinarySelector:"#drawerTabDisciplinary",openCreateEmployeeBtnSelector:"#openCreateEmployeeBtn",createFormSelector:"#createEmployeeForm"}))});

@@ -8,7 +8,7 @@ initIntranetLayout({
 }).then((session) => {
   if (!session) return;
 
-  import('../modules/manage-employees.js?v=20260309b').then(({ initManageEmployees }) =>
+  import('../modules/manage-employees.js?v=20260404b').then(({ initManageEmployees }) =>
     initManageEmployees(
     {
       feedbackSelector: '#manageEmployeesFeedback',
@@ -16,7 +16,6 @@ initIntranetLayout({
       filterQuerySelector: '#filterEmployeeQuery',
       filterRankSelector: '#filterRank',
       filterStatusSelector: '#filterStatus',
-      filterActivationSelector: '#filterActivationStatus',
       filterHireDateFromSelector: '#filterHireDateFrom',
       filterHireDateToSelector: '#filterHireDateTo',
       clearFiltersBtnSelector: '#clearEmployeeFiltersBtn',

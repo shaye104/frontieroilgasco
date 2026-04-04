@@ -56,6 +56,20 @@ async function listItems(env, type, table) {
   return env.DB.prepare(`SELECT id, value, created_at FROM ${table} ORDER BY value ASC`).all();
 }
 
+async function resolveConfiguredEmployeeStatus(env, value) {
+  const normalized = String(value || '').trim();
+  if (!normalized) return null;
+  await ensureEmployeeStatusConfigSchema(env);
+  const row = await env.DB
+    .prepare(`SELECT value FROM config_employee_statuses WHERE LOWER(value) = LOWER(?) LIMIT 1`)
+    .bind(normalized)
+    .first();
+  if (!row?.value) {
+    throw new Error('Employee status override must match an existing employee status.');
+  }
+  return String(row.value).trim();
+}
+
 export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse } = await requirePermission(context, ['config.manage']);
@@ -116,7 +130,10 @@ export async function onRequestPost(context) {
     const defaultDurationDaysRaw = Number(payload?.default_duration_days ?? payload?.defaultDurationDays);
     const defaultDurationDays = Number.isFinite(defaultDurationDaysRaw) && defaultDurationDaysRaw > 0 ? Math.floor(defaultDurationDaysRaw) : null;
     const applySuspensionRank = Number(payload?.apply_suspension_rank ?? payload?.applySuspensionRank ?? 0) ? 1 : 0;
-    const setEmployeeStatus = String(payload?.set_employee_status || payload?.setEmployeeStatus || '').trim() || null;
+    const setEmployeeStatus = await resolveConfiguredEmployeeStatus(
+      env,
+      String(payload?.set_employee_status || payload?.setEmployeeStatus || '').trim()
+    );
     const restrictIntranet = Number(payload?.restrict_intranet ?? payload?.restrictIntranet ?? 0) ? 1 : 0;
     const restrictVoyages = Number(payload?.restrict_voyages ?? payload?.restrictVoyages ?? 0) ? 1 : 0;
     const restrictFinance = Number(payload?.restrict_finance ?? payload?.restrictFinance ?? 0) ? 1 : 0;
@@ -203,7 +220,10 @@ export async function onRequestPut(context) {
     const defaultDurationDaysRaw = Number(payload?.default_duration_days ?? payload?.defaultDurationDays);
     const defaultDurationDays = Number.isFinite(defaultDurationDaysRaw) && defaultDurationDaysRaw > 0 ? Math.floor(defaultDurationDaysRaw) : null;
     const applySuspensionRank = Number(payload?.apply_suspension_rank ?? payload?.applySuspensionRank ?? 0) ? 1 : 0;
-    const setEmployeeStatus = String(payload?.set_employee_status || payload?.setEmployeeStatus || '').trim() || null;
+    const setEmployeeStatus = await resolveConfiguredEmployeeStatus(
+      env,
+      String(payload?.set_employee_status || payload?.setEmployeeStatus || '').trim()
+    );
     const restrictIntranet = Number(payload?.restrict_intranet ?? payload?.restrictIntranet ?? 0) ? 1 : 0;
     const restrictVoyages = Number(payload?.restrict_voyages ?? payload?.restrictVoyages ?? 0) ? 1 : 0;
     const restrictFinance = Number(payload?.restrict_finance ?? payload?.restrictFinance ?? 0) ? 1 : 0;
