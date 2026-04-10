@@ -162,6 +162,112 @@ function formatDateLabel(value, fallbackLabel = '') {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+function parseFinanceDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(`${raw}T00:00:00Z`);
+  if (/^\d{4}-\d{2}$/.test(raw)) return new Date(`${raw}-01T00:00:00Z`);
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(raw)) return new Date(raw.replace(' ', 'T') + 'Z');
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function bucketForRange(date, range) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  if (range === 'week' || range === 'month') {
+    const key = date.toISOString().slice(0, 10);
+    return { key, label: key };
+  }
+  const bucketStart = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1, 0, 0, 0, 0));
+  if (range === '3m' || range === '6m') {
+    return {
+      key: bucketStart.toISOString().slice(0, 10),
+      label: bucketStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' })
+    };
+  }
+  return {
+    key: `${bucketStart.getUTCFullYear()}-${String(bucketStart.getUTCMonth() + 1).padStart(2, '0')}`,
+    label: bucketStart.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' })
+  };
+}
+
+function aggregateTrendForRange(series, range, mode = 'sum') {
+  if (range === 'week' || range === 'month') return Array.isArray(series) ? series : [];
+  const rows = Array.isArray(series) ? series : [];
+  const map = new Map();
+  rows.forEach((point) => {
+    const parsed = parseFinanceDate(point?.key || point?.label || '');
+    const bucket = bucketForRange(parsed, range);
+    if (!bucket?.key) return;
+    if (!map.has(bucket.key)) {
+      map.set(bucket.key, { key: bucket.key, label: bucket.label, sum: 0, count: 0, last: 0 });
+    }
+    const current = map.get(bucket.key);
+    current.sum += Number(point?.value || 0);
+    current.count += 1;
+    current.last = Number(point?.value || 0);
+  });
+  return [...map.values()]
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .map((bucket) => ({
+      key: bucket.key,
+      label: bucket.label,
+      value:
+        mode === 'avg'
+          ? toMoney(bucket.sum / Math.max(1, bucket.count))
+          : mode === 'last'
+          ? toMoney(bucket.last)
+          : toMoney(bucket.sum)
+    }));
+}
+
+function sumSeriesValues(series) {
+  return toMoney((Array.isArray(series) ? series : []).reduce((sum, point) => sum + Number(point?.value || 0), 0));
+}
+
+function normalizeOverviewChartsForRange(data, range) {
+  if (!data || typeof data !== 'object' || range === 'week' || range === 'month') return data;
+  const charts = data.charts || {};
+  const netProfitTrend = aggregateTrendForRange(charts.netProfitTrend || [], range, 'sum');
+  const companyShareTrend = aggregateTrendForRange(charts.companyShareTrend || [], range, 'sum');
+  const voyageCountTrend = aggregateTrendForRange(charts.voyageCountTrend || [], range, 'sum');
+  const freightLossValueTrend = aggregateTrendForRange(charts.freightLossValueTrend || [], range, 'sum');
+  const grossRevenueTrend = aggregateTrendForRange(charts.grossRevenueTrend || [], range, 'sum');
+  const outstandingTrend = aggregateTrendForRange(charts.outstandingTrend || companyShareTrend, range, 'last');
+  const avgNetProfitTrend = netProfitTrend.map((point, index) => ({
+    key: point.key,
+    label: point.label,
+    value:
+      Number(voyageCountTrend[index]?.value || 0) > 0
+        ? toMoney(Number(point.value || 0) / Math.max(1, Number(voyageCountTrend[index]?.value || 0)))
+        : toMoney(point.value || 0)
+  }));
+
+  const grossRevenueTotal = sumSeriesValues(grossRevenueTrend);
+  const netProfitTotal = sumSeriesValues(netProfitTrend);
+  const companyShareTotal = Number(data?.kpis?.companyShareEarnings || 0);
+
+  return {
+    ...data,
+    kpis: {
+      ...(data?.kpis || {}),
+      grossRevenue: grossRevenueTotal,
+      netProfit: netProfitTotal,
+      crewShare: Math.max(0, toMoney(grossRevenueTotal - companyShareTotal))
+    },
+    charts: {
+      ...charts,
+      netProfitTrend,
+      companyShareTrend,
+      voyageCountTrend,
+      freightLossValueTrend,
+      grossRevenueTrend,
+      avgNetProfitTrend,
+      outstandingTrend
+    }
+  };
+}
+
 function normalizeSeriesPoints(series) {
   const rows = Array.isArray(series) ? series : [];
   return rows
@@ -2647,4 +2753,5 @@ init().catch((error) => {
   console.error('finances init error', error);
   setFeedback(`Failed to load finance module: ${error.message || 'Unknown error'}`, 'error');
 });
+
 
