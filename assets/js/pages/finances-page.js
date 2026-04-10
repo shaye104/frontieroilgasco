@@ -2146,7 +2146,7 @@ async function loadOverview(state) {
 
     const [current, previous] = await Promise.all([currentPromise, previousPromise]);
 
-    state.overview = current || {};
+    state.overview = normalizeOverviewChartsForRange(current || {}, state.range);
     state.overviewPrevious = previous || {};
     renderOverview(state.overview, state.overviewPrevious, state.range, state.breakdownMode);
     clearFeedback();
