@@ -333,6 +333,11 @@ export async function onRequestGet(context) {
   const localRangeEnd = localByOffset(end, tzOffsetMinutes);
   const localStartDateOnly = isoDay(localRangeStart);
   const localEndDateOnly = isoDay(localRangeEnd);
+  const [hasLegacyHistory, hasLegacySalaries, hasLegacyFinanceEntries] = await Promise.all([
+    hasLegacyHistoryTable(env),
+    hasLegacySalariesTable(env),
+    hasLegacyFinanceEntriesTable(env)
+  ]);
 
   const [endedInRangeResult, legacyInRangeResult] = await Promise.all([
     env.DB
@@ -362,7 +367,7 @@ export async function onRequestGet(context) {
       )
       .bind(startIso, endIso)
       .all(),
-    hasLegacyHistoryTable(env)
+    hasLegacyHistory
       ? env.DB
           .prepare(
             `SELECT
@@ -601,7 +606,7 @@ export async function onRequestGet(context) {
       )
       .bind(startIso, endIso)
       .first(),
-    hasLegacySalariesTable(env)
+    hasLegacySalaries
       ? env.DB
           .prepare(
             `SELECT catch_summary
@@ -659,7 +664,7 @@ export async function onRequestGet(context) {
       )
       .bind(...unsettledBindings)
       .all(),
-    hasLegacyFinanceEntriesTable(env)
+    hasLegacyFinanceEntries
       ? env.DB
           .prepare(
             `SELECT
