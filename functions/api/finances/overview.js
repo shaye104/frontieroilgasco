@@ -215,24 +215,40 @@ function calcSettledDays(endedAt, settledAt) {
 }
 
 async function hasLegacyHistoryTable(env) {
-  const row = await env.DB
-    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_voyage_history'")
-    .first();
-  return Boolean(row?.name);
+  const row = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_voyage_history'").first();
+  if (!row?.name) return false;
+  const columns = await env.DB.prepare(`PRAGMA table_info(legacy_voyage_history)`).all();
+  const names = new Set((columns?.results || []).map((column) => String(column?.name || '').trim().toLowerCase()).filter(Boolean));
+  const required = [
+    'id',
+    'voyage_id',
+    'record_date',
+    'etd_time',
+    'skipper_username',
+    'arrival_port',
+    'status',
+    'revenue_florins',
+    'profit_florins',
+    'loss_florins'
+  ];
+  return required.every((name) => names.has(name));
 }
 
 async function hasLegacyFinanceEntriesTable(env) {
-  const row = await env.DB
-    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_finance_entries'")
-    .first();
-  return Boolean(row?.name);
+  const row = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_finance_entries'").first();
+  if (!row?.name) return false;
+  const columns = await env.DB.prepare(`PRAGMA table_info(legacy_finance_entries)`).all();
+  const names = new Set((columns?.results || []).map((column) => String(column?.name || '').trim().toLowerCase()).filter(Boolean));
+  const required = ['id', 'record_date', 'voyage_id', 'entry_type', 'from_username', 'to_username', 'amount_florins', 'status'];
+  return required.every((name) => names.has(name));
 }
 
 async function hasLegacySalariesTable(env) {
-  const row = await env.DB
-    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_voyage_salaries'")
-    .first();
-  return Boolean(row?.name);
+  const row = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_voyage_salaries'").first();
+  if (!row?.name) return false;
+  const columns = await env.DB.prepare(`PRAGMA table_info(legacy_voyage_salaries)`).all();
+  const names = new Set((columns?.results || []).map((column) => String(column?.name || '').trim().toLowerCase()).filter(Boolean));
+  return ['record_date', 'catch_summary'].every((name) => names.has(name));
 }
 
 async function hasShipyardShipsTable(env) {
