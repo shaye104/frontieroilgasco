@@ -4,6 +4,7 @@ import { enrichSessionWithPermissions, hasPermission } from './permissions.js';
 import { canUseVoyageAndFinance, deriveConfiguredLifecycleStatus } from './lifecycle.js';
 
 const RANGE_KEYS = new Set(['week', 'month', '3m', '6m', 'year', 'all']);
+export const COMPANY_SHARE_RATE = 0.1;
 
 export function normalizeTzOffsetMinutes(value) {
   const num = Number(value);
@@ -219,13 +220,17 @@ export function resolveVoyageEarnings(row, settlementLines = []) {
   return Math.max(settlementRevenue, storedProfit, storedEffectiveSell, legacyRevenue);
 }
 
-export function resolveVoyageCompanyShare(row, settlementLines = [], companyShareRate = 0.1, earnings = null) {
+export function resolveVoyageCompanyShare(row, settlementLines = [], companyShareRate = COMPANY_SHARE_RATE, earnings = null) {
   const resolvedEarnings =
     Number.isFinite(Number(earnings)) && Number(earnings) > 0 ? Math.max(0, toMoney(earnings)) : resolveVoyageEarnings(row, settlementLines);
   const derivedShare = Math.max(0, toMoney(resolvedEarnings * Number(companyShareRate || 0)));
   const storedShare = Math.max(0, toMoney(row?.company_share_amount || 0));
   const legacyShare = Math.max(0, toMoney(row?.company_share || 0));
   return Math.max(derivedShare, storedShare, legacyShare);
+}
+
+export function companyShareForVoyage(row, settlementLines = [], earnings = null) {
+  return resolveVoyageCompanyShare(row, settlementLines, COMPANY_SHARE_RATE, earnings);
 }
 
 export async function requireFinancePermission(context, permissionKey) {
