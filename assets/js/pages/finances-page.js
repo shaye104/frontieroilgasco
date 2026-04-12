@@ -524,6 +524,59 @@ function chartViewport(target, options = {}) {
   return { width, height };
 }
 
+function niceNumber(value, round) {
+  const safe = Math.abs(Number(value || 0));
+  if (!Number.isFinite(safe) || safe <= 0) return 1;
+  const exponent = Math.floor(Math.log10(safe));
+  const fraction = safe / 10 ** exponent;
+  let niceFraction;
+  if (round) {
+    if (fraction < 1.5) niceFraction = 1;
+    else if (fraction < 3) niceFraction = 2;
+    else if (fraction < 7) niceFraction = 5;
+    else niceFraction = 10;
+  } else {
+    if (fraction <= 1) niceFraction = 1;
+    else if (fraction <= 2) niceFraction = 2;
+    else if (fraction <= 5) niceFraction = 5;
+    else niceFraction = 10;
+  }
+  return niceFraction * 10 ** exponent;
+}
+
+function buildNiceTickScale(minValue, maxValue, tickCount = 5) {
+  const safeTickCount = Math.max(2, Math.floor(Number(tickCount) || 5));
+  let min = Number(minValue || 0);
+  let max = Number(maxValue || 0);
+
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    min = 0;
+    max = 1;
+  }
+
+  if (min === max) {
+    if (min === 0) max = 1;
+    else {
+      min = Math.min(0, min - Math.abs(min * 0.2));
+      max += Math.abs(max * 0.2);
+    }
+  }
+
+  const range = niceNumber(max - min, false);
+  const step = niceNumber(range / (safeTickCount - 1), true);
+  const niceMin = Math.floor(min / step) * step;
+  const niceMax = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let idx = 0; idx < safeTickCount; idx += 1) {
+    ticks.push(toMoney(niceMax - idx * step));
+  }
+  return {
+    min: niceMin,
+    max: niceMax,
+    ticks
+  };
+}
+
 function renderCartesianLineChart(target, lines, options = {}) {
   if (!target) return;
 
@@ -567,21 +620,12 @@ function renderCartesianLineChart(target, lines, options = {}) {
   const allValues = safeLines.flatMap((line) => line.points.map((point) => toMoney(point.value)));
   let minValue = Math.min(...allValues);
   let maxValue = Math.max(...allValues);
-  if (minValue === maxValue) {
-    if (minValue === 0) {
-      maxValue = 1;
-    } else {
-      minValue = Math.min(0, minValue - Math.abs(minValue * 0.2));
-      maxValue += Math.abs(maxValue * 0.2);
-    }
-  }
   if (minValue > 0) minValue = 0;
 
-  const yTicks = 5;
-  const tickValues = Array.from({ length: yTicks }, (_, idx) => {
-    const ratio = idx / (yTicks - 1);
-    return Math.round(maxValue - ratio * (maxValue - minValue));
-  });
+  const yScale = buildNiceTickScale(minValue, maxValue, 5);
+  minValue = yScale.min;
+  maxValue = yScale.max;
+  const tickValues = yScale.ticks;
 
   const xAt = (idx) => plotLeft + (idx / steps) * plotWidth;
   const yAt = (value) => plotTop + ((maxValue - value) / (maxValue - minValue)) * plotHeight;
@@ -732,13 +776,11 @@ function renderCartesianBarChart(target, series, label, color, options = {}) {
   const nonZeroBars = values.filter((value) => value > 0).length;
   const sparseBars = points.length >= 4 && nonZeroBars <= 1;
 
-  const yTicks = 5;
-  const tickValues = Array.from({ length: yTicks }, (_, idx) => {
-    const ratio = idx / (yTicks - 1);
-    return Math.round(maxValue - ratio * maxValue);
-  });
+  const yScale = buildNiceTickScale(0, maxValue, 5);
+  const scaledMaxValue = yScale.max;
+  const tickValues = yScale.ticks;
 
-  const yAt = (value) => plotTop + ((maxValue - value) / maxValue) * plotHeight;
+  const yAt = (value) => plotTop + ((scaledMaxValue - value) / scaledMaxValue) * plotHeight;
   const band = plotWidth / points.length;
   const barWidth = sparseBars ? Math.max(20, Math.min(64, band * 0.78)) : Math.max(10, Math.min(42, band * 0.66));
 
