@@ -113,6 +113,238 @@
         padding-inline: 0;
         font-size: 1.05rem;
       }
+          /* frontier-dark-cleanup */
+      html[data-theme='dark'] {
+        --color-bg: #091321;
+        --color-surface: #142033;
+        --color-surface-soft: #1a2940;
+        --color-ink: #f3f7fd;
+        --color-ink-soft: #d8e2f1;
+        --color-muted: #9bb0cd;
+        --color-primary: #74a8ff;
+        --color-primary-strong: #0e1a2c;
+        --color-secondary: #74a8ff;
+        --color-border: #2a3b57;
+        --color-success: #44c387;
+        --color-danger: #ef7676;
+        --shadow-soft: none;
+      }
+
+      html[data-theme='dark'],
+      html[data-theme='dark'] body {
+        background: var(--color-bg) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+      }
+
+      html[data-theme='dark'] .site-header,
+      html[data-theme='dark'] .site-footer,
+      html[data-theme='dark'] .panel,
+      html[data-theme='dark'] .section-surface,
+      html[data-theme='dark'] .modal-card,
+      html[data-theme='dark'] .table-wrap,
+      html[data-theme='dark'] .metric-card,
+      html[data-theme='dark'] .fleet-summary-card,
+      html[data-theme='dark'] .fleet-summary-item,
+      html[data-theme='dark'] .fleet-inline-card,
+      html[data-theme='dark'] .fleet-stat-pill,
+      html[data-theme='dark'] .shipyard-panel,
+      html[data-theme='dark'] .admin-employee-stat-card,
+      html[data-theme='dark'] .admin-employees-filter-bar,
+      html[data-theme='dark'] .admin-employee-drawer-panel,
+      html[data-theme='dark'] .join-requests-modal-card,
+      html[data-theme='dark'] .employee-scan-modal-card,
+      html[data-theme='dark'] .finance-kpi,
+      html[data-theme='dark'] .finance-chart-card,
+      html[data-theme='dark'] .finance-overview-side,
+      html[data-theme='dark'] .finance-performance-stat,
+      html[data-theme='dark'] .finance-table-card,
+      html[data-theme='dark'] .finance-remittance-table-card,
+      html[data-theme='dark'] .finance-cashflow-ledger-card,
+      html[data-theme='dark'] .activity-summary-stat,
+      html[data-theme='dark'] .my-details-page-header,
+      html[data-theme='dark'] .voyage-stat-tile,
+      html[data-theme='dark'] .voyage-console-header,
+      html[data-theme='dark'] .voyage-control-bar,
+      html[data-theme='dark'] .voyage-card-archived,
+      html[data-theme='dark'] .site-settings-hero-panel,
+      html[data-theme='dark'] .site-settings-hero-panel-compact,
+      html[data-theme='dark'] .site-settings-primary-card,
+      html[data-theme='dark'] .site-settings-groups-card,
+      html[data-theme='dark'] .site-settings-maintenance-panel,
+      html[data-theme='dark'] .site-settings-maintenance-bar,
+      html[data-theme='dark'] .site-settings-maintenance-box,
+      html[data-theme='dark'] .site-settings-maintenance-copy,
+      html[data-theme='dark'] .site-settings-admin-card,
+      html[data-theme='dark'] .site-settings-compact-form,
+      html[data-theme='dark'] .site-settings-config-modal-card,
+      html[data-theme='dark'] .site-settings-config-modal-card-wide {
+        background: var(--color-surface) !important;
+        background-image: none !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .panel::before,
+      html[data-theme='dark'] .panel::after,
+      html[data-theme='dark'] .section-surface::before,
+      html[data-theme='dark'] .section-surface::after,
+      html[data-theme='dark'] .metric-card::before,
+      html[data-theme='dark'] .metric-card::after,
+      html[data-theme='dark'] .fleet-summary-card::before,
+      html[data-theme='dark'] .fleet-summary-card::after,
+      html[data-theme='dark'] .voyage-card-archived::before,
+      html[data-theme='dark'] .voyage-card-archived::after,
+      html[data-theme='dark'] .finance-kpi::before,
+      html[data-theme='dark'] .finance-kpi::after,
+      html[data-theme='dark'] .finance-chart-card::before,
+      html[data-theme='dark'] .finance-chart-card::after,
+      html[data-theme='dark'] .site-settings-maintenance-bar::before,
+      html[data-theme='dark'] .site-settings-maintenance-bar::after,
+      html[data-theme='dark'] .site-settings-maintenance-box::before,
+      html[data-theme='dark'] .site-settings-maintenance-box::after {
+        background-image: none !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .btn-secondary,
+      html[data-theme='dark'] .btn-theme-toggle,
+      html[data-theme='dark'] .site-theme-toggle,
+      html[data-theme='dark'] .finance-tab,
+      html[data-theme='dark'] .segmented-btn,
+      html[data-theme='dark'] details summary.btn-secondary {
+        background: var(--color-surface-soft) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .btn-primary,
+      html[data-theme='dark'] .btn-accent {
+        background: #3c7fe7 !important;
+        border-color: #3c7fe7 !important;
+        color: #f8fbff !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .btn-danger {
+        background: #c54343 !important;
+        border-color: #c54343 !important;
+        color: #fff7f7 !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] input,
+      html[data-theme='dark'] select,
+      html[data-theme='dark'] textarea {
+        background: var(--color-surface-soft) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] input::placeholder,
+      html[data-theme='dark'] textarea::placeholder {
+        color: #8fa5c4 !important;
+      }
+
+      html[data-theme='dark'] .identity-pill,
+      html[data-theme='dark'] .status-pill,
+      html[data-theme='dark'] .badge-status,
+      html[data-theme='dark'] .finance-type-pill,
+      html[data-theme='dark'] .finance-status-pill,
+      html[data-theme='dark'] .site-settings-state-pill {
+        background: #1d2d44 !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .badge-status.is-active,
+      html[data-theme='dark'] .finance-status-pill.is-settled,
+      html[data-theme='dark'] .finance-type-pill.is-in {
+        background: rgba(68, 195, 135, 0.14) !important;
+        color: #7fe0a7 !important;
+        border-color: rgba(68, 195, 135, 0.34) !important;
+      }
+
+      html[data-theme='dark'] .badge-status.is-inactive,
+      html[data-theme='dark'] .badge-status.is-suspended,
+      html[data-theme='dark'] .finance-status-pill.is-unsettled,
+      html[data-theme='dark'] .finance-type-pill.is-out {
+        background: rgba(239, 118, 118, 0.14) !important;
+        color: #ff9b9b !important;
+        border-color: rgba(239, 118, 118, 0.32) !important;
+      }
+
+      html[data-theme='dark'] .data-table th,
+      html[data-theme='dark'] .data-table td,
+      html[data-theme='dark'] .join-requests-table th,
+      html[data-theme='dark'] .join-requests-table td,
+      html[data-theme='dark'] .employee-scan-table th,
+      html[data-theme='dark'] .employee-scan-table td {
+        background: transparent !important;
+        color: var(--color-ink) !important;
+        border-color: rgba(42, 59, 87, 0.88) !important;
+      }
+
+      html[data-theme='dark'] .data-table thead th,
+      html[data-theme='dark'] .join-requests-table thead th,
+      html[data-theme='dark'] .employee-scan-table thead th {
+        color: #b8c9e3 !important;
+      }
+
+      html[data-theme='dark'] p,
+      html[data-theme='dark'] label,
+      html[data-theme='dark'] small,
+      html[data-theme='dark'] .lead,
+      html[data-theme='dark'] .nav-user,
+      html[data-theme='dark'] .my-details-subtitle,
+      html[data-theme='dark'] .finance-kpi-label,
+      html[data-theme='dark'] .finance-kpi-delta,
+      html[data-theme='dark'] .activity-summary-label,
+      html[data-theme='dark'] .metric-card p,
+      html[data-theme='dark'] .fleet-summary-item span,
+      html[data-theme='dark'] .voyage-stat-label,
+      html[data-theme='dark'] .voyage-stat-note {
+        color: var(--color-ink-soft) !important;
+      }
+
+      html[data-theme='dark'] h1,
+      html[data-theme='dark'] h2,
+      html[data-theme='dark'] h3,
+      html[data-theme='dark'] h4,
+      html[data-theme='dark'] strong,
+      html[data-theme='dark'] th,
+      html[data-theme='dark'] td,
+      html[data-theme='dark'] .brand-text,
+      html[data-theme='dark'] .finance-kpi-value,
+      html[data-theme='dark'] .admin-employee-stat-value,
+      html[data-theme='dark'] .voyage-stat-value {
+        color: var(--color-ink) !important;
+      }
+
+      html[data-theme='dark'] .site-nav a:not(.btn) {
+        color: #deebff !important;
+      }
+
+      html[data-theme='dark'] .site-nav a:not(.btn):hover,
+      html[data-theme='dark'] .site-nav a.is-active:not(.btn),
+      html[data-theme='dark'] .site-nav a[aria-current='page']:not(.btn) {
+        color: #8ab5ff !important;
+        border-bottom-color: #8ab5ff !important;
+      }
+
+      html[data-theme='dark'] .skeleton-line {
+        background: #22324c !important;
+      }
+
+      html[data-theme='dark'] .skeleton-line::after {
+        background: linear-gradient(90deg, rgba(34, 50, 76, 0) 0%, rgba(120, 149, 196, 0.32) 50%, rgba(34, 50, 76, 0) 100%) !important;
+      }
     </style>
 <meta name="description" content="Frontier Oil & Gas Company finance dashboard." />
     <title>Frontier Oil & Gas Company | Finances</title>
