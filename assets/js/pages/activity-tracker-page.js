@@ -8,7 +8,7 @@ initIntranetPageGuard({
 }).then((session) => {
   if (!session) return;
 
-  import('../modules/activity-tracker.js?v=20260227d').then(({ initActivityTracker }) =>
+  import('../modules/activity-tracker.js?v=20260412a').then(({ initActivityTracker }) =>
     initActivityTracker({
     feedbackSelector: '#activityTrackerFeedback',
     tableBodySelector: '#activityTrackerBody',
