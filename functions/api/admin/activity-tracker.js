@@ -106,6 +106,13 @@ export async function onRequestGet(context) {
 
   const legacyCteSql = hasLegacyHistory
     ? `,
+    legacy_base AS (
+      SELECT voyage_id, skipper_username, crew_usernames, record_date
+      FROM legacy_voyage_history
+      WHERE status = 'COMPLETED'
+      ${dateFrom ? 'AND date(record_date) >= date(?)' : ''}
+      ${dateTo ? 'AND date(record_date) <= date(?)' : ''}
+    ),
     legacy_split AS (
       WITH RECURSIVE split(voyage_id, rest, username_part) AS (
         SELECT
@@ -115,10 +122,7 @@ export async function onRequestGet(context) {
             ELSE REPLACE(TRIM(COALESCE(crew_usernames, '')), '|', ' | ') || ' | '
           END AS rest,
           '' AS username_part
-        FROM legacy_voyage_history
-        WHERE status = 'COMPLETED'
-        ${dateFrom ? 'AND date(record_date) >= date(?)' : ''}
-        ${dateTo ? 'AND date(record_date) <= date(?)' : ''}
+        FROM legacy_base
         UNION ALL
         SELECT
           voyage_id,
@@ -137,7 +141,7 @@ export async function onRequestGet(context) {
         LOWER(TRIM(skipper_username)) AS username_key,
         'OOW' AS role,
         record_date AS legacy_voyage_at
-      FROM legacy_voyage_history
+      FROM legacy_base
       WHERE status = 'COMPLETED' AND TRIM(COALESCE(skipper_username, '')) <> ''
       UNION ALL
       SELECT
@@ -145,9 +149,9 @@ export async function onRequestGet(context) {
         ls.username_key,
         'CREW' AS role,
         l.record_date AS legacy_voyage_at
-      FROM legacy_voyage_history l
+      FROM legacy_base l
       INNER JOIN legacy_split ls ON ls.voyage_id = l.voyage_id
-      WHERE l.status = 'COMPLETED'
+      WHERE TRIM(COALESCE(ls.username_key, '')) <> ''
     ),
     legacy_unique AS (
       SELECT
