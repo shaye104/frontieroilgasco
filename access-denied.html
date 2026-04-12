@@ -1,11 +1,84 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Access denied." />
-    <meta name="theme-color" content="#112d72" />
-    <title>Frontier Oil & Gas Company | Access Denied</title>
+    
+    <meta name="theme-color" content="#112d72" /><meta name="description" content="Access denied." />
+    
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('frontier:theme-preference');
+          if (theme !== 'dark' && theme !== 'light') theme = 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+          var themeColor = document.querySelector('meta[name="theme-color"]');
+          if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#08111f' : '#112d72');
+        } catch {}
+      })();
+    </script>
+    <style>
+      html[data-theme='dark'] {
+        --color-bg: #08111f;
+        --color-surface: #0f1b2d;
+        --color-surface-soft: #15243a;
+        --color-ink: #e6edf7;
+        --color-ink-soft: #c5d1e0;
+        --color-muted: #98abc2;
+        --color-border: #29405e;
+        --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.35);
+      }
+
+      html[data-theme='dark'] body {
+        background: var(--color-bg);
+        color: var(--color-ink);
+      }
+
+      html[data-theme='dark'] .site-header,
+      html[data-theme='dark'] .site-footer,
+      html[data-theme='dark'] .panel,
+      html[data-theme='dark'] .section-surface,
+      html[data-theme='dark'] .modal-card,
+      html[data-theme='dark'] .employee-page-panel,
+      html[data-theme='dark'] .employee-modal-panel,
+      html[data-theme='dark'] .finance-kpi,
+      html[data-theme='dark'] .finance-chart-card,
+      html[data-theme='dark'] .table-wrap,
+      html[data-theme='dark'] .feedback,
+      html[data-theme='dark'] input,
+      html[data-theme='dark'] select,
+      html[data-theme='dark'] textarea {
+        background: var(--color-surface);
+        color: var(--color-ink);
+        border-color: var(--color-border);
+      }
+
+      html[data-theme='dark'] .data-table th,
+      html[data-theme='dark'] .data-table td,
+      html[data-theme='dark'] .finance-table-card,
+      html[data-theme='dark'] .finance-remittance-table-card,
+      html[data-theme='dark'] .finance-cashflow-ledger-card {
+        background: var(--color-surface);
+        color: var(--color-ink);
+        border-color: var(--color-border);
+      }
+
+      html[data-theme='dark'] .data-table th {
+        background: var(--color-surface-soft);
+      }
+
+      html[data-theme='dark'] .btn-secondary {
+        background: var(--color-surface-soft);
+        color: var(--color-ink);
+        border-color: var(--color-border);
+      }
+
+      .btn-theme-toggle {
+        min-width: 108px;
+      }
+    </style>
+<title>Frontier Oil & Gas Company | Access Denied</title>
     <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260325fix" />
     <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260325fix" />
     <link rel="apple-touch-icon" href="/assets/brand/favicon.svg?v=20260325fix" />
@@ -27,7 +100,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260404025648" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260412010812" />
   </head>
   <body class="page page-home">
     <header class="site-header">
@@ -53,6 +126,69 @@
       </div>
     </main>
     <script type="module" src="/assets/dist/js/access-denied-page.bundle.js?v=20260325144816"></script>
+      <script>
+      (function () {
+        var KEY = 'frontier:theme-preference';
+
+        function currentTheme() {
+          try {
+            return localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light';
+          } catch {
+            return 'light';
+          }
+        }
+
+        function applyTheme(theme) {
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+          document.body && document.body.setAttribute('data-theme', theme);
+          var themeColor = document.querySelector('meta[name="theme-color"]');
+          if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#08111f' : '#112d72');
+        }
+
+        function updateButton(button, theme) {
+          if (!button) return;
+          var isDark = theme === 'dark';
+          button.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+          button.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+          button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+        }
+
+        function ensureToggle() {
+          var nav = document.querySelector('.site-nav');
+          if (!nav) return;
+          var button = nav.querySelector('.btn-theme-toggle');
+          if (!button) {
+            button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-secondary btn-theme-toggle';
+            var logout = nav.querySelector('.nav-logout-btn') || nav.querySelector('button.btn.btn-secondary');
+            if (logout && logout.nextSibling) nav.insertBefore(button, logout.nextSibling);
+            else nav.appendChild(button);
+            button.addEventListener('click', function () {
+              var next = currentTheme() === 'dark' ? 'light' : 'dark';
+              try {
+                localStorage.setItem(KEY, next);
+              } catch {}
+              applyTheme(next);
+              updateButton(button, next);
+            });
+          }
+          updateButton(button, currentTheme());
+        }
+
+        applyTheme(currentTheme());
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', ensureToggle, { once: true });
+        } else {
+          ensureToggle();
+        }
+        new MutationObserver(ensureToggle).observe(document.documentElement, { childList: true, subtree: true });
+      })();
+    </script>
   </body>
 </html>
+
+
+
 

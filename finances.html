@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Frontier Oil & Gas Company finance dashboard." />
+    
+    <meta name="theme-color" content="#112d72" /><meta name="description" content="Frontier Oil & Gas Company finance dashboard." />
     <title>Frontier Oil & Gas Company | Finances</title>
     <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=20260325fix" />
     <link rel="shortcut icon" href="/assets/brand/favicon.svg?v=20260325fix" />
@@ -15,7 +16,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260412004815" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260412010812" />
   </head>
   <body class="page page-intranet page-finances">
     <header class="site-header">
@@ -435,9 +436,72 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/js/pages/finances-page.js?v=20260412d"></script>
+    <script type="module" src="/assets/dist/js/finances-page.bundle.js?v=20260412005023"></script>
+      <script>
+      (function () {
+        var KEY = 'frontier:theme-preference';
+
+        function currentTheme() {
+          try {
+            return localStorage.getItem(KEY) === 'dark' ? 'dark' : 'light';
+          } catch {
+            return 'light';
+          }
+        }
+
+        function applyTheme(theme) {
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+          document.body && document.body.setAttribute('data-theme', theme);
+          var themeColor = document.querySelector('meta[name="theme-color"]');
+          if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#08111f' : '#112d72');
+        }
+
+        function updateButton(button, theme) {
+          if (!button) return;
+          var isDark = theme === 'dark';
+          button.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+          button.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+          button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+        }
+
+        function ensureToggle() {
+          var nav = document.querySelector('.site-nav');
+          if (!nav) return;
+          var button = nav.querySelector('.btn-theme-toggle');
+          if (!button) {
+            button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-secondary btn-theme-toggle';
+            var logout = nav.querySelector('.nav-logout-btn') || nav.querySelector('button.btn.btn-secondary');
+            if (logout && logout.nextSibling) nav.insertBefore(button, logout.nextSibling);
+            else nav.appendChild(button);
+            button.addEventListener('click', function () {
+              var next = currentTheme() === 'dark' ? 'light' : 'dark';
+              try {
+                localStorage.setItem(KEY, next);
+              } catch {}
+              applyTheme(next);
+              updateButton(button, next);
+            });
+          }
+          updateButton(button, currentTheme());
+        }
+
+        applyTheme(currentTheme());
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', ensureToggle, { once: true });
+        } else {
+          ensureToggle();
+        }
+        new MutationObserver(ensureToggle).observe(document.documentElement, { childList: true, subtree: true });
+      })();
+    </script>
   </body>
 </html>
+
+
+
 
 
 
