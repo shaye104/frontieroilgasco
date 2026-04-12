@@ -22,6 +22,7 @@
           <span class="brand-text">Codswallop</span>
         </a>
         <nav class="site-nav" aria-label="Primary"></nav>
+        <button type="button" class="btn btn-secondary site-theme-toggle btn-theme-toggle" aria-pressed="false">Dark Mode</button>
       </div>
     </header>
 
@@ -95,16 +96,10 @@
         }
 
         function ensureToggle() {
-          var nav = document.querySelector('.site-nav');
-          if (!nav) return;
-          var button = nav.querySelector('.btn-theme-toggle');
-          if (!button) {
-            button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'btn btn-secondary btn-theme-toggle';
-            var logout = nav.querySelector('.nav-logout-btn') || nav.querySelector('button.btn.btn-secondary');
-            if (logout && logout.nextSibling) nav.insertBefore(button, logout.nextSibling);
-            else nav.appendChild(button);
+          var button = document.querySelector('.site-theme-toggle') || document.querySelector('.btn-theme-toggle');
+          if (!button) return;
+          if (button.dataset.themeBound !== '1') {
+            button.dataset.themeBound = '1';
             button.addEventListener('click', function () {
               var next = currentTheme() === 'dark' ? 'light' : 'dark';
               try {
@@ -128,6 +123,8 @@
     </script>
   </body>
 </html>
+
+
 
 
 
