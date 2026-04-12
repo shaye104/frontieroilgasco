@@ -562,13 +562,28 @@ function buildNiceTickScale(minValue, maxValue, tickCount = 5) {
     }
   }
 
-  const range = niceNumber(max - min, false);
-  const step = niceNumber(range / (safeTickCount - 1), true);
-  const niceMin = Math.floor(min / step) * step;
-  const niceMax = Math.ceil(max / step) * step;
+  let step;
+  let niceMin;
+  let niceMax;
+
+  if (min >= 0) {
+    niceMin = 0;
+    step = niceNumber(max / Math.max(1, safeTickCount - 1), true);
+    niceMax = Math.ceil(max / step) * step;
+  } else if (max <= 0) {
+    niceMax = 0;
+    step = niceNumber(Math.abs(min) / Math.max(1, safeTickCount - 1), true);
+    niceMin = Math.floor(min / step) * step;
+  } else {
+    const range = niceNumber(max - min, false);
+    step = niceNumber(range / Math.max(1, safeTickCount - 1), true);
+    niceMin = Math.floor(min / step) * step;
+    niceMax = Math.ceil(max / step) * step;
+  }
+
   const ticks = [];
-  for (let idx = 0; idx < safeTickCount; idx += 1) {
-    ticks.push(toMoney(niceMax - idx * step));
+  for (let value = niceMax; value >= niceMin - step * 0.5; value -= step) {
+    ticks.push(toMoney(value));
   }
   return {
     min: niceMin,
