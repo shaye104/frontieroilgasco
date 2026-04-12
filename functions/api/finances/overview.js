@@ -1,8 +1,14 @@
 import { cachedJson } from '../auth/_lib/auth.js';
-import { getFinanceRangeWindow, normalizeFinanceRange, normalizeTzOffsetMinutes, parseSettlementLines, requireFinancePermission, resolveVoyageCompanyShare, resolveVoyageEarnings, toMoney } from '../_lib/finances.js';
-
-const COMPANY_SHARE_RATE = 0.1;
-const VOYAGE_EVENT_AT_SQL = `COALESCE(NULLIF(TRIM(v.ended_at), ''), NULLIF(TRIM(v.updated_at), ''), NULLIF(TRIM(v.created_at), ''))`;
+import {
+  COMPANY_SHARE_RATE,
+  companyShareForVoyage,
+  getFinanceRangeWindow,
+  normalizeFinanceRange,
+  normalizeTzOffsetMinutes,
+  parseSettlementLines,
+  requireFinancePermission,
+  toMoney
+} from '../_lib/finances.js';
 
 function isoDay(date) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
@@ -200,37 +206,12 @@ function isGasolineCargo(name) {
 
 function calcSettledDays(endedAt, settledAt) {
   if (!endedAt || !settledAt) return null;
-  const ended = parseTimestamp(endedAt);
-  const settled = parseTimestamp(settledAt);
+  const ended = new Date(endedAt);
+  const settled = new Date(settledAt);
   if (Number.isNaN(ended.getTime()) || Number.isNaN(settled.getTime())) return null;
   const diff = settled.getTime() - ended.getTime();
   if (diff < 0) return null;
   return diff / 86400000;
-}
-
-function parseTimestamp(value) {
-  const raw = String(value || '').trim();
-  if (!raw) return new Date(Number.NaN);
-  const d1Match = raw.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})(?:\.(\d{1,3}))?$/);
-  if (d1Match) {
-    const ms = String(d1Match[3] || '0').padEnd(3, '0');
-    return new Date(`${d1Match[1]}T${d1Match[2]}.${ms}Z`);
-  }
-  return new Date(raw);
-}
-
-function netProfitForVoyage(row, settlementLines = []) {
-  return resolveVoyageEarnings(row, settlementLines);
-}
-
-function companyShareForVoyage(row, settlementLines = [], netProfit = null) {
-  return resolveVoyageCompanyShare(row, settlementLines, COMPANY_SHARE_RATE, netProfit);
-}
-
-function grossRevenueForVoyage(row, settlementLines = [], netProfit = null, freightLossValue = null) {
-  return Number.isFinite(Number(netProfit)) && Number(netProfit) > 0
-    ? Math.max(0, toMoney(netProfit))
-    : resolveVoyageEarnings(row, settlementLines);
 }
 
 async function hasLegacyHistoryTable(env) {
@@ -267,8 +248,8 @@ async function resolveAllTimeStart(env) {
       .prepare(
         `SELECT MIN(v.ended_at) AS min_ended_at
          FROM voyages v
-         WHERE COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-           AND UPPER(COALESCE(v.status, '')) IN ('ENDED', 'CANCELLED')
+         WHERE v.deleted_at IS NULL
+           AND v.status IN ('ENDED', 'CANCELLED')
            AND v.ended_at IS NOT NULL`
       )
       .first(),
@@ -311,7 +292,7 @@ function parseLegacyCatchTotal(catchSummary) {
   return total;
 }
 
-async function buildOverviewResponse(context) {
+export async function onRequestGet(context) {
   const { env, request } = context;
   const { errorResponse } = await requireFinancePermission(context, 'finances.view');
   if (errorResponse) return errorResponse;
@@ -342,30 +323,26 @@ async function buildOverviewResponse(context) {
       .prepare(
         `SELECT
            v.id,
-           ${VOYAGE_EVENT_AT_SQL} AS ended_at,
+           v.ended_at,
            v.profit,
            v.company_share,
            v.company_share_amount,
-           v.effective_sell,
            COALESCE(v.company_share_status, 'UNSETTLED') AS company_share_status,
            v.company_share_settled_at,
            v.settlement_lines_json,
+           v.settlement_owner_totals_json,
            v.departure_port,
            v.destination_port,
            v.sell_location_name,
            v.vessel_name,
            v.vessel_callsign,
-           v.vessel_class,
            v.officer_of_watch_employee_id,
            e.roblox_username AS officer_name
          FROM voyages v
          LEFT JOIN employees e ON e.id = v.officer_of_watch_employee_id
-         WHERE COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-           AND UPPER(COALESCE(v.status, '')) IN ('ENDED', 'CANCELLED')
-           AND ${VOYAGE_EVENT_AT_SQL} IS NOT NULL
-           AND datetime(${VOYAGE_EVENT_AT_SQL}) >= datetime(?)
-           AND datetime(${VOYAGE_EVENT_AT_SQL}) <= datetime(?)
-         ORDER BY datetime(${VOYAGE_EVENT_AT_SQL}) ASC, v.id ASC`
+         WHERE v.deleted_at IS NULL AND v.status IN ('ENDED', 'CANCELLED') AND v.ended_at IS NOT NULL
+           AND v.ended_at >= ? AND v.ended_at <= ?
+         ORDER BY v.ended_at ASC, v.id ASC`
       )
       .bind(startIso, endIso)
       .all(),
@@ -408,7 +385,6 @@ async function buildOverviewResponse(context) {
       legacy_revenue_florins: revenue,
       company_share: null,
       company_share_amount: null,
-      effective_sell: revenue,
       company_share_status: 'SETTLED',
       company_share_settled_at: endedAt,
       settlement_lines_json: JSON.stringify([
@@ -422,6 +398,7 @@ async function buildOverviewResponse(context) {
           ownerName: String(row.skipper_username || '').trim() || 'Legacy'
         }
       ]),
+      settlement_owner_totals_json: null,
       departure_port: String(row.arrival_port || '').trim(),
       destination_port: String(row.arrival_port || '').trim(),
       sell_location_name: String(row.arrival_port || '').trim(),
@@ -453,7 +430,6 @@ async function buildOverviewResponse(context) {
   );
 
   let netProfitTotal = 0;
-  let grossRevenueTotal = 0;
   let companyShareTotal = 0;
   let crewShareTotal = 0;
   let freightLossesValueTotal = 0;
@@ -491,33 +467,36 @@ async function buildOverviewResponse(context) {
   }
 
   allEndedInRange.forEach((voyage) => {
-    const endedAt = voyage.ended_at ? parseTimestamp(voyage.ended_at) : null;
+    const endedAt = voyage.ended_at ? new Date(voyage.ended_at) : null;
     if (!endedAt || Number.isNaN(endedAt.getTime())) return;
 
     const bucket = bucketForDate(range, endedAt, start, tzOffsetMinutes);
     const target = buckets.get(bucket.key);
     if (!target) return;
 
+    const netProfit = toMoney(voyage.profit || 0);
+    const companyShare = companyShareForVoyage(voyage);
+    const crewShare = netProfit > 0 ? toMoney(netProfit - companyShare) : 0;
     const settlementLines = parseSettlementLines(voyage.settlement_lines_json);
-    const netProfit = netProfitForVoyage(voyage, settlementLines);
+    const settlementGrossRevenue = toMoney(settlementLines.reduce((sum, line) => sum + toMoney(line.lineRevenue || 0), 0));
+    const grossRevenue =
+      settlementGrossRevenue > 0
+        ? settlementGrossRevenue
+        : Math.max(0, toMoney(voyage.legacy_revenue_florins ?? Number(voyage.profit || 0)));
+    const settlementFreightCost = toMoney(settlementLines.reduce((sum, line) => sum + toMoney(line.lineCost || 0), 0));
+    const freightCost =
+      settlementFreightCost > 0 ? settlementFreightCost : Math.max(0, toMoney(grossRevenue - Number(voyage.profit || 0)));
     const inferredLoss = Math.max(
       0,
       toMoney(
         settlementLines.reduce((sum, line) => {
-          const lostValue = toMoney(line.lostValue || 0);
-          if (lostValue > 0) return sum + lostValue;
-          const unit = toMoney(line.trueSellUnitPrice || line.baseSellPrice || 0);
+          const unit = toMoney(line.trueSellUnitPrice || 0);
           const lostQty = Math.max(0, Number(line.lostQuantity || 0));
           return sum + toMoney(unit * lostQty);
         }, 0)
       )
     );
     const freightLossValue = Math.max(inferredLoss, Math.max(0, toMoney(voyage.legacy_freight_loss_value || 0)));
-    const grossRevenue = grossRevenueForVoyage(voyage, settlementLines, netProfit, freightLossValue);
-    const companyShare = companyShareForVoyage(voyage, settlementLines, netProfit);
-    const crewShare = netProfit > 0 ? Math.max(0, toMoney(netProfit - companyShare)) : 0;
-    const settlementFreightCost = toMoney(settlementLines.reduce((sum, line) => sum + toMoney(line.lineCost || 0), 0));
-    const freightCost = settlementFreightCost > 0 ? settlementFreightCost : Math.max(0, toMoney(freightLossValue));
 
     settlementLines.forEach((line) => {
       const soldQty = Math.max(
@@ -544,7 +523,6 @@ async function buildOverviewResponse(context) {
     target.voyageCount += 1;
 
     netProfitTotal = toMoney(netProfitTotal + netProfit);
-    grossRevenueTotal = toMoney(grossRevenueTotal + grossRevenue);
     companyShareTotal = toMoney(companyShareTotal + companyShare);
     crewShareTotal = toMoney(crewShareTotal + crewShare);
     freightLossesValueTotal = toMoney(freightLossesValueTotal + freightLossValue);
@@ -564,13 +542,13 @@ async function buildOverviewResponse(context) {
     addProfit(sellLocationProfit, sellLocationLabel, netProfit);
     addProfit(vesselProfit, vesselLabel, netProfit);
     addProfit(ootwProfit, officerLabel, netProfit);
-    addProfit(sellLocationEarnings, sellLocationLabel, netProfit);
-    addProfit(vesselEarnings, vesselLabel, netProfit);
+    addProfit(sellLocationEarnings, sellLocationLabel, grossRevenue);
+    addProfit(vesselEarnings, vesselLabel, grossRevenue);
     const fleetKey = `${String(voyage.vessel_name || '').trim().toLowerCase()}::${String(voyage.vessel_class || '').trim().toLowerCase()}`;
     const fleetLabel = fleetShipLabels.get(fleetKey);
     if (fleetLabel) {
       addProfit(fleetVesselProfit, fleetLabel, netProfit);
-      addProfit(fleetVesselEarnings, fleetLabel, netProfit);
+      addProfit(fleetVesselEarnings, fleetLabel, grossRevenue);
     }
     if (settlementLines.length) {
       settlementLines.forEach((line) => {
@@ -579,8 +557,8 @@ async function buildOverviewResponse(context) {
         if (ownerRevenue <= 0) return;
         addProfit(employeeEarnings, owner, ownerRevenue);
       });
-    } else if (netProfit > 0) {
-      addProfit(employeeEarnings, officerLabel, netProfit);
+    } else if (grossRevenue > 0) {
+      addProfit(employeeEarnings, officerLabel, grossRevenue);
     }
 
     const liveVoyageId = Number(voyage.id || 0);
@@ -591,7 +569,7 @@ async function buildOverviewResponse(context) {
         : legacyVoyageId > 0
         ? `Voyage #${legacyVoyageId}`
         : `Legacy Voyage #${Math.abs(Number(voyage.id || 0)) || 0}`;
-    addProfit(voyageEarnings, voyageLabel, netProfit);
+    addProfit(voyageEarnings, voyageLabel, grossRevenue);
   });
 
   const [fishKilledResult, legacySalaryRowsResult] = await Promise.all([
@@ -600,11 +578,10 @@ async function buildOverviewResponse(context) {
         `SELECT COALESCE(SUM(CASE WHEN tl.quantity > 0 THEN tl.quantity ELSE 0 END), 0) AS total_fish
          FROM voyage_tote_lines tl
          INNER JOIN voyages v ON v.id = tl.voyage_id
-         WHERE COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-           AND UPPER(COALESCE(v.status, '')) IN ('ENDED', 'CANCELLED')
+         WHERE v.deleted_at IS NULL
+           AND v.status IN ('ENDED', 'CANCELLED')
            AND v.ended_at IS NOT NULL
-           AND v.ended_at >= ?
-           AND v.ended_at <= ?`
+           AND v.ended_at >= ? AND v.ended_at <= ?`
       )
       .bind(startIso, endIso)
       .first(),
@@ -626,57 +603,11 @@ async function buildOverviewResponse(context) {
   );
   const totalFishKilled = Math.max(0, Math.floor(liveFishTotal + legacyFishTotal));
 
-  if (toMoney(netProfitTotal) === 0 && toMoney(companyShareTotal) === 0) {
-    const emergencyTotals = await env.DB
-      .prepare(
-        `SELECT
-           COUNT(*) AS voyage_count,
-           ROUND(COALESCE(SUM(COALESCE(v.profit, 0)), 0)) AS net_profit_total,
-           ROUND(COALESCE(SUM(COALESCE(v.company_share_amount, v.company_share, COALESCE(v.profit, 0) * ${COMPANY_SHARE_RATE})), 0)) AS company_share_total
-         FROM voyages v
-         WHERE COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-           AND (
-             UPPER(COALESCE(v.status, '')) IN ('ENDED', 'CANCELLED')
-             OR ${VOYAGE_EVENT_AT_SQL} IS NOT NULL
-           )`
-      )
-      .first();
-
-    const emergencyNet = toMoney(emergencyTotals?.net_profit_total || 0);
-    const emergencyCompanyShare = Math.max(0, toMoney(emergencyTotals?.company_share_total || 0));
-    const emergencyCrewShare = Math.max(0, toMoney(emergencyNet - emergencyCompanyShare));
-    const emergencyVoyages = Math.max(0, Number(emergencyTotals?.voyage_count || 0));
-
-    if (emergencyVoyages > 0 || emergencyNet !== 0 || emergencyCompanyShare !== 0) {
-      netProfitTotal = emergencyNet;
-      companyShareTotal = emergencyCompanyShare;
-      crewShareTotal = emergencyCrewShare;
-    }
-  }
-
-  if (toMoney(grossRevenueTotal) === 0 && (toMoney(netProfitTotal) !== 0 || toMoney(companyShareTotal) !== 0)) {
-    grossRevenueTotal = toMoney(companyShareTotal + crewShareTotal);
-  }
-
   const settlementRatePct = companyShareTotal > 0 ? toMoney((companyShareSettledTotal / companyShareTotal) * 100) : 0;
   const avgDaysToSettle = settledAgesDays.length
     ? toMoney(settledAgesDays.reduce((sum, days) => sum + days, 0) / settledAgesDays.length)
     : null;
-  let completedVoyagesCount = Number(allEndedInRange.length || 0);
-  if (completedVoyagesCount === 0 && (toMoney(netProfitTotal) !== 0 || toMoney(companyShareTotal) !== 0)) {
-    const emergencyCount = await env.DB
-      .prepare(
-        `SELECT COUNT(*) AS voyage_count
-         FROM voyages v
-         WHERE COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-           AND (
-             UPPER(COALESCE(v.status, '')) IN ('ENDED', 'CANCELLED')
-             OR ${VOYAGE_EVENT_AT_SQL} IS NOT NULL
-           )`
-      )
-      .first();
-    completedVoyagesCount = Math.max(0, Number(emergencyCount?.voyage_count || 0));
-  }
+  const completedVoyagesCount = Number(allEndedInRange.length || 0);
   const emissionsKg = toMoney(
     Math.max(0, crudeSoldTotal) * 430 +
       Math.max(0, gasolineSoldTotal) * 373 +
@@ -684,13 +615,11 @@ async function buildOverviewResponse(context) {
   );
 
   const unsettledBindings = [];
-  let unsettledWhere = `COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-    AND UPPER(COALESCE(v.status, '')) = 'ENDED'
-    AND COALESCE(v.company_share_status, 'UNSETTLED') = 'UNSETTLED'
+  let unsettledWhere = `v.deleted_at IS NULL AND v.status = 'ENDED' AND COALESCE(v.company_share_status, 'UNSETTLED') = 'UNSETTLED'
     AND ROUND(COALESCE(v.company_share_amount, v.company_share, ROUND(COALESCE(v.profit, 0) * ${COMPANY_SHARE_RATE}))) > 0`;
 
   if (unsettledScope === 'range') {
-    unsettledWhere += ` AND ${VOYAGE_EVENT_AT_SQL} IS NOT NULL AND datetime(${VOYAGE_EVENT_AT_SQL}) >= datetime(?) AND datetime(${VOYAGE_EVENT_AT_SQL}) <= datetime(?)`;
+    unsettledWhere += ' AND v.ended_at IS NOT NULL AND v.ended_at >= ? AND v.ended_at <= ?';
     unsettledBindings.push(startIso, endIso);
   }
 
@@ -699,19 +628,18 @@ async function buildOverviewResponse(context) {
       .prepare(
         `SELECT
            v.id,
-           ${VOYAGE_EVENT_AT_SQL} AS ended_at,
+           v.ended_at,
            v.profit,
-           v.effective_sell,
            v.company_share,
            v.company_share_amount,
-           v.settlement_lines_json,
+           v.settlement_owner_totals_json,
            v.officer_of_watch_employee_id,
            e.roblox_username AS officer_name,
            e.serial_number AS officer_serial
          FROM voyages v
          LEFT JOIN employees e ON e.id = v.officer_of_watch_employee_id
          WHERE ${unsettledWhere}
-         ORDER BY v.profit DESC, datetime(${VOYAGE_EVENT_AT_SQL}) DESC, v.id DESC`
+         ORDER BY v.profit DESC, v.ended_at DESC, v.id DESC`
       )
       .bind(...unsettledBindings)
       .all(),
@@ -748,15 +676,21 @@ async function buildOverviewResponse(context) {
     company_share: Number(row.amount_florins || 0),
     company_share_amount: Number(row.amount_florins || 0),
     officer_of_watch_employee_id: null,
+    settlement_owner_totals_json: null,
     officer_name: String(row.from_username || '').trim() || 'Unknown',
     officer_serial: '',
     isLegacyFinance: true
   }));
   const unsettledRows = [...liveUnsettledRows, ...legacyUnsettledRows];
+  const unsettledVoyageIds = new Set(
+    liveUnsettledRows
+      .map((row) => Number(row?.id || 0))
+      .filter((id) => Number.isInteger(id) && id > 0)
+  );
 
   const unsettledTotal = Math.max(0, toMoney(unsettledRows.reduce((sum, row) => sum + companyShareForVoyage(row), 0)));
   const now = Date.now();
-  const overdueVoyages = unsettledRows.reduce((count, row) => {
+  const overdueVoyages = liveUnsettledRows.reduce((count, row) => {
     const endedAt = row?.ended_at ? new Date(row.ended_at).getTime() : Number.NaN;
     if (!Number.isFinite(endedAt)) return count;
     return now - endedAt > 5 * 86400000 ? count + 1 : count;
@@ -771,12 +705,14 @@ async function buildOverviewResponse(context) {
         officerName: String(row.officer_name || 'Unknown').trim() || 'Unknown',
         officerSerial: String(row.officer_serial || '').trim(),
         outstanding: 0,
-        voyageCount: 0
+        voyageCount: 0,
+        legacyEntryCount: 0
       });
     }
     const item = groupedDebts.get(key);
     item.outstanding = toMoney(item.outstanding + companyShareForVoyage(row));
-    item.voyageCount += 1;
+    if (row?.isLegacyFinance) item.legacyEntryCount += 1;
+    else item.voyageCount += 1;
   });
 
   const topDebtors = [...groupedDebts.values()]
@@ -787,18 +723,18 @@ async function buildOverviewResponse(context) {
   const outstandingBaseRowsResult = await env.DB
     .prepare(
       `SELECT
-         ${VOYAGE_EVENT_AT_SQL} AS ended_at,
+         v.ended_at,
          v.company_share_settled_at,
          v.profit,
          v.company_share,
          v.company_share_amount
+         ,v.settlement_owner_totals_json
        FROM voyages v
-       WHERE COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-         AND UPPER(COALESCE(v.status, '')) = 'ENDED'
-         AND ${VOYAGE_EVENT_AT_SQL} IS NOT NULL
-         AND datetime(${VOYAGE_EVENT_AT_SQL}) <= datetime(?)
+       WHERE v.deleted_at IS NULL AND v.status = 'ENDED'
+         AND v.ended_at IS NOT NULL
+         AND v.ended_at <= ?
          AND ROUND(COALESCE(v.company_share_amount, v.company_share, ROUND(COALESCE(v.profit, 0) * ${COMPANY_SHARE_RATE}))) > 0
-       ORDER BY datetime(${VOYAGE_EVENT_AT_SQL}) ASC`
+       ORDER BY v.ended_at ASC`
     )
     .bind(endIso)
     .all();
@@ -867,20 +803,6 @@ async function buildOverviewResponse(context) {
     };
   });
 
-  if (chartBuckets.every((row) => Number(row.voyageCount || 0) === 0) && (toMoney(netProfitTotal) !== 0 || Number(completedVoyagesCount || 0) > 0)) {
-    const targetIndex = Math.max(0, chartBuckets.length - 1);
-    const target = chartBuckets[targetIndex];
-    chartBuckets[targetIndex] = {
-      ...target,
-      netProfit: toMoney(netProfitTotal),
-      grossRevenue: toMoney(grossRevenueTotal),
-      companyShare: toMoney(companyShareTotal),
-      crewShare: toMoney(crewShareTotal),
-      voyageCount: Math.max(1, Number(completedVoyagesCount || 0)),
-      avgNetProfit: Number(completedVoyagesCount || 0) > 0 ? toMoney(netProfitTotal / completedVoyagesCount) : toMoney(netProfitTotal)
-    };
-  }
-
   let runningOutstanding = Math.max(0, toMoney(openingOutstanding));
   const outstandingTrend = bucketList.map((bucket) => {
     const created = Math.max(0, toMoney(outstandingCreatedByBucket.get(bucket.key) || 0));
@@ -888,11 +810,6 @@ async function buildOverviewResponse(context) {
     runningOutstanding = Math.max(0, toMoney(runningOutstanding + created - settled));
     return { key: bucket.key, label: bucket.label, value: runningOutstanding };
   });
-
-  const directVoyageCount = Math.max(0, Number(allEndedInRange.length || 0));
-  const directNetProfit = toMoney(netProfitTotal);
-  const directGrossRevenue = toMoney(grossRevenueTotal);
-  const directCompanyShare = Math.max(0, toMoney(companyShareTotal));
 
   return cachedJson(
     request,
@@ -902,7 +819,6 @@ async function buildOverviewResponse(context) {
       unsettledScope,
       kpis: {
         netProfit: toMoney(netProfitTotal),
-        grossRevenue: toMoney(grossRevenueTotal),
         companyShareEarnings: toMoney(companyShareTotal),
         crewShare: toMoney(crewShareTotal),
         freightLossesValue: Math.max(0, toMoney(freightLossesValueTotal)),
@@ -928,7 +844,7 @@ async function buildOverviewResponse(context) {
       },
       unsettled: {
         totalOutstanding: unsettledTotal,
-        totalVoyages: unsettledRows.length,
+        totalVoyages: unsettledVoyageIds.size,
         overdueVoyages,
         topDebtors
       },
@@ -943,24 +859,8 @@ async function buildOverviewResponse(context) {
         voyage: pickTop(voyageEarnings),
         vessel: pickTop(fleetVesselEarnings),
         ootw: pickTop(employeeEarnings)
-      },
-      debugOverview: {
-        startIso,
-        endIso,
-        endedInRangeCount: endedInRange.length,
-        legacyInRangeCount: legacyInRange.length,
-        allEndedInRangeCount: allEndedInRange.length,
-        directVoyageCount,
-        directNetProfit,
-        directGrossRevenue,
-        directCompanyShare
       }
     },
     { cacheControl: 'private, max-age=20, stale-while-revalidate=40' }
   );
 }
-export async function onRequestGet(context) {
-  return buildOverviewResponse(context);
-}
-
-
