@@ -1363,12 +1363,12 @@ function isAllZeroSeries(series) {
 }
 
 function renderOverviewSkeleton() {
-  ['#kpiNetProfit', '#kpiCompanyShare', '#kpiFishKilled', '#kpiAvgDaysToSettle', '#kpiLossValue'].forEach((selector) => {
+  ['#kpiNetProfit', '#kpiCompanyShare', '#kpiEmissions', '#kpiLossValue'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-value-skeleton"></span>';
   });
 
-  ['#kpiDeltaNetProfit', '#kpiDeltaCompanyShare', '#kpiDeltaFishKilled', '#kpiDeltaLossValue', '#kpiAvgDaysHint'].forEach((selector) => {
+  ['#kpiDeltaNetProfit', '#kpiDeltaCompanyShare', '#kpiDeltaEmissions', '#kpiDeltaLossValue'].forEach((selector) => {
     const el = $(selector);
     if (el) el.innerHTML = '<span class="finance-line-skeleton"></span>';
   });
@@ -1427,18 +1427,12 @@ function renderOverview(data, previousData, range, breakdownMode = 'route') {
 
   writeMoney('#kpiNetProfit', kpis.netProfit || 0);
   writeMoney('#kpiCompanyShare', kpis.companyShareEarnings || 0);
-  writeCount('#kpiFishKilled', kpis.totalFishKilled || 0);
+  writeCount('#kpiEmissions', kpis.emissionsKg || 0);
   writeMoney('#kpiLossValue', kpis.freightLossesValue || 0);
-
-  const avgDays = $('#kpiAvgDaysToSettle');
-  if (avgDays) avgDays.textContent = kpis.avgDaysToSettle == null ? '—' : `${formatInteger(kpis.avgDaysToSettle)}d`;
-
-  const avgDaysHint = $('#kpiAvgDaysHint');
-  if (avgDaysHint) avgDaysHint.textContent = kpis.avgDaysToSettle == null ? 'No settled voyages in range' : 'Settled voyages only';
 
   setDelta('#kpiDeltaNetProfit', toDelta(kpis.netProfit, previousKpis.netProfit, range));
   setDelta('#kpiDeltaCompanyShare', toDelta(kpis.companyShareEarnings, previousKpis.companyShareEarnings, range));
-  setDelta('#kpiDeltaFishKilled', toDelta(kpis.totalFishKilled, previousKpis.totalFishKilled, range));
+  setDelta('#kpiDeltaEmissions', toDelta(kpis.emissionsKg, previousKpis.emissionsKg, range, true));
   setDelta('#kpiDeltaLossValue', toDelta(kpis.freightLossesValue, previousKpis.freightLossesValue, range, true));
   const hasVoyages = !isAllZeroSeries(charts.voyageCountTrend || []);
   renderProfitLossChart($('#chartNetProfit'), charts.netProfitTrend || [], charts.freightLossValueTrend || []);
