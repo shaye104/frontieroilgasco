@@ -36,7 +36,10 @@ async function hasLegacyHistoryTable(env) {
   const row = await env.DB
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_voyage_history'")
     .first();
-  return Boolean(row?.name);
+  if (!row?.name) return false;
+  const columns = await env.DB.prepare("PRAGMA table_info(legacy_voyage_history)").all();
+  const names = new Set((columns?.results || []).map((col) => String(col.name || '').trim().toLowerCase()).filter(Boolean));
+  return ['voyage_id', 'record_date', 'skipper_username', 'crew_usernames', 'status'].every((name) => names.has(name));
 }
 
 export async function onRequestGet(context) {
@@ -64,7 +67,7 @@ export async function onRequestGet(context) {
     ? '(COALESCE(stats.total_voyages, 0) + COALESCE(legacy_stats.total_voyages, 0))'
     : 'COALESCE(stats.total_voyages, 0)';
 
-  const statsWhere = [`v.status = 'ENDED'`, `v.deleted_at IS NULL`];
+  const statsWhere = [`v.status = 'ENDED'`, `v.deleted_at IS NULL`, `v.ended_at IS NOT NULL`];
   const statsBinds = [];
   if (dateFromUtc) {
     statsWhere.push('v.ended_at >= ?');
@@ -191,8 +194,8 @@ export async function onRequestGet(context) {
       SELECT
         vp.employee_id,
         COUNT(DISTINCT vp.voyage_id) AS total_voyages,
-        SUM(CASE WHEN vp.role_in_voyage = 'OOW' THEN 1 ELSE 0 END) AS oow_voyages,
-        SUM(CASE WHEN vp.role_in_voyage = 'CREW' THEN 1 ELSE 0 END) AS crew_voyages,
+        COUNT(DISTINCT CASE WHEN vp.role_in_voyage = 'OOW' THEN vp.voyage_id END) AS oow_voyages,
+        COUNT(DISTINCT CASE WHEN vp.role_in_voyage = 'CREW' THEN vp.voyage_id END) AS crew_voyages,
         MAX(v.ended_at) AS last_voyage_at
       FROM voyage_participants vp
       INNER JOIN voyages v ON v.id = vp.voyage_id
