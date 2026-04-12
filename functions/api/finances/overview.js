@@ -392,67 +392,7 @@ async function buildOverviewResponse(context) {
           .all()
       : Promise.resolve({ results: [] })
   ]);
-  let endedInRange = endedInRangeResult?.results || [];
-  if (!endedInRange.length) {
-    const fallbackEndedRows = await env.DB
-      .prepare(
-        `SELECT
-           v.id,
-           ${VOYAGE_EVENT_AT_SQL} AS ended_at,
-           v.profit,
-           v.company_share,
-           v.company_share_amount,
-           v.effective_sell,
-           COALESCE(v.company_share_status, 'UNSETTLED') AS company_share_status,
-           v.company_share_settled_at,
-           v.settlement_lines_json,
-           v.departure_port,
-           v.destination_port,
-           v.sell_location_name,
-           v.vessel_name,
-           v.vessel_callsign,
-           v.vessel_class,
-           v.officer_of_watch_employee_id,
-           e.roblox_username AS officer_name
-         FROM voyages v
-         LEFT JOIN employees e ON e.id = v.officer_of_watch_employee_id
-         WHERE COALESCE(NULLIF(TRIM(v.deleted_at), ''), NULL) IS NULL
-           AND UPPER(COALESCE(v.status, '')) IN ('ENDED', 'CANCELLED')
-           AND ${VOYAGE_EVENT_AT_SQL} IS NOT NULL
-         ORDER BY datetime(${VOYAGE_EVENT_AT_SQL}) ASC, v.id ASC`
-      )
-      .all();
-    endedInRange = fallbackEndedRows?.results || [];
-  }
-  if (!endedInRange.length) {
-    const ultraFallbackRows = await env.DB
-      .prepare(
-        `SELECT
-           v.id,
-           ${VOYAGE_EVENT_AT_SQL} AS ended_at,
-           v.profit,
-           v.company_share,
-           v.company_share_amount,
-           v.effective_sell,
-           COALESCE(v.company_share_status, 'UNSETTLED') AS company_share_status,
-           v.company_share_settled_at,
-           v.settlement_lines_json,
-           v.departure_port,
-           v.destination_port,
-           v.sell_location_name,
-           v.vessel_name,
-           v.vessel_callsign,
-           v.vessel_class,
-           v.officer_of_watch_employee_id,
-           e.roblox_username AS officer_name
-         FROM voyages v
-         LEFT JOIN employees e ON e.id = v.officer_of_watch_employee_id
-         WHERE ${VOYAGE_EVENT_AT_SQL} IS NOT NULL
-         ORDER BY datetime(${VOYAGE_EVENT_AT_SQL}) ASC, v.id ASC`
-      )
-      .all();
-    endedInRange = ultraFallbackRows?.results || [];
-  }
+  const endedInRange = endedInRangeResult?.results || [];
   const legacyInRange = (legacyInRangeResult?.results || []).map((row) => {
     const date = String(row.record_date || '').trim();
     const time = String(row.etd_time || '').trim() || '00:00';
@@ -1020,35 +960,7 @@ async function buildOverviewResponse(context) {
   );
 }
 export async function onRequestGet(context) {
-  try {
-    return await buildOverviewResponse(context);
-  } catch (error) {
-    console.error('finances overview route failed; using debug fallback', error);
-
-    try {
-      const { onRequestGet: onDebugRequestGet } = await import('./debug.js');
-      const debugResponse = await onDebugRequestGet(context);
-      const debugPayload = await debugResponse.clone().json().catch(() => null);
-      const fallbackOverview = debugPayload?.fallbackOverview;
-      if (fallbackOverview) {
-        return cachedJson(
-          context.request,
-          {
-            ...fallbackOverview,
-            debugOverview: {
-              source: 'overview_error_fallback',
-              error: String(error?.message || error || 'Unknown error')
-            }
-          },
-          { cacheControl: 'private, max-age=5, stale-while-revalidate=10' }
-        );
-      }
-    } catch (fallbackError) {
-      console.error('finances overview debug fallback failed', fallbackError);
-    }
-
-    throw error;
-  }
+  return buildOverviewResponse(context);
 }
 
 
