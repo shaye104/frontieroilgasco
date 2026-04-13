@@ -14,6 +14,10 @@
           document.documentElement.style.colorScheme = theme;
           var themeColor = document.querySelector('meta[name="theme-color"]');
           if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#08111f' : '#112d72');
+          var brandLogos = document.querySelectorAll('.brand-mark-image img');
+          brandLogos.forEach(function (logo) {
+            logo.src = theme === 'dark' ? '/assets/brand/frontierdarkmode.png?v=20260413a' : '/assets/brand/frontierlogo.svg?v=20260325fix';
+          });
         } catch {}
       })();
     </script>
@@ -367,7 +371,397 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260412010812" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260413222149" />
+      <style id="frontier-dark-cleanup-final">
+      html[data-theme='dark'] {
+        color-scheme: dark;
+        --color-bg: #091321;
+        --color-surface: #132036;
+        --color-surface-soft: #1a2940;
+        --color-ink: #f3f7fd;
+        --color-ink-soft: #d8e2f1;
+        --color-muted: #9bb0cd;
+        --color-primary: #74a8ff;
+        --color-primary-strong: #0d1829;
+        --color-secondary: #74a8ff;
+        --color-border: #2a3b57;
+        --color-success: #44c387;
+        --color-danger: #ef7676;
+      }
+
+      html[data-theme='dark'],
+      html[data-theme='dark'] body,
+      html[data-theme='dark'] main.section,
+      html[data-theme='dark'] .page,
+      html[data-theme='dark'] .page-login,
+      html[data-theme='dark'] .page-intranet {
+        background: var(--color-bg) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+      }
+
+      html[data-theme='dark'] .site-header,
+      html[data-theme='dark'] .site-footer,
+      html[data-theme='dark'] .site-header::before,
+      html[data-theme='dark'] .site-header::after,
+      html[data-theme='dark'] .site-footer::before,
+      html[data-theme='dark'] .site-footer::after,
+      html[data-theme='dark'] .panel,
+      html[data-theme='dark'] .section-surface,
+      html[data-theme='dark'] .modal-card,
+      html[data-theme='dark'] .table-wrap,
+      html[data-theme='dark'] .details-card,
+      html[data-theme='dark'] .profile-highlight,
+      html[data-theme='dark'] .my-details-page-header,
+      html[data-theme='dark'] .voyage-stat-tile,
+      html[data-theme='dark'] .discipline-tab-panel,
+      html[data-theme='dark'] .admin-action-link,
+      html[data-theme='dark'] .admin-employee-stat-card,
+      html[data-theme='dark'] .admin-employees-filter-bar,
+      html[data-theme='dark'] .admin-employee-drawer-panel,
+      html[data-theme='dark'] .admin-employee-drawer-header,
+      html[data-theme='dark'] .admin-employee-drawer-tabs,
+      html[data-theme='dark'] .admin-employee-drawer-body,
+      html[data-theme='dark'] .admin-employee-drawer-tab,
+      html[data-theme='dark'] .join-requests-modal-card,
+      html[data-theme='dark'] .employee-scan-modal-card,
+      html[data-theme='dark'] .finance-kpi,
+      html[data-theme='dark'] .finance-chart-card,
+      html[data-theme='dark'] .finance-overview-side,
+      html[data-theme='dark'] .finance-performance-stat,
+      html[data-theme='dark'] .finance-table-card,
+      html[data-theme='dark'] .finance-remittance-table-card,
+      html[data-theme='dark'] .finance-cashflow-ledger-card,
+      html[data-theme='dark'] .finance-performer-card,
+      html[data-theme='dark'] .finance-chart-host,
+      html[data-theme='dark'] .finance-chart-shell,
+      html[data-theme='dark'] .finance-chart-empty,
+      html[data-theme='dark'] .finance-chart-tooltip,
+      html[data-theme='dark'] .activity-summary-stat,
+      html[data-theme='dark'] .fleet-summary-card,
+      html[data-theme='dark'] .fleet-summary-item,
+      html[data-theme='dark'] .fleet-inline-card,
+      html[data-theme='dark'] .fleet-stat-pill,
+      html[data-theme='dark'] .shipyard-panel,
+      html[data-theme='dark'] .site-settings-hero-panel,
+      html[data-theme='dark'] .site-settings-hero-panel-compact,
+      html[data-theme='dark'] .site-settings-primary-card,
+      html[data-theme='dark'] .site-settings-groups-card,
+      html[data-theme='dark'] .site-settings-maintenance-panel,
+      html[data-theme='dark'] .site-settings-maintenance-bar,
+      html[data-theme='dark'] .site-settings-maintenance-box,
+      html[data-theme='dark'] .site-settings-maintenance-copy,
+      html[data-theme='dark'] .site-settings-admin-card,
+      html[data-theme='dark'] .site-settings-compact-form,
+      html[data-theme='dark'] .site-settings-config-modal-card,
+      html[data-theme='dark'] .site-settings-config-modal-card-wide,
+      html[data-theme='dark'] [class*='-card'],
+      html[data-theme='dark'] [class*='-panel'],
+      html[data-theme='dark'] [class*='-tile'] {
+        background: var(--color-surface) !important;
+        background-image: none !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .panel::before,
+      html[data-theme='dark'] .panel::after,
+      html[data-theme='dark'] [class*='-card']::before,
+      html[data-theme='dark'] [class*='-card']::after,
+      html[data-theme='dark'] [class*='-panel']::before,
+      html[data-theme='dark'] [class*='-panel']::after,
+      html[data-theme='dark'] [class*='-tile']::before,
+      html[data-theme='dark'] [class*='-tile']::after {
+        background: none !important;
+        background-image: none !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .btn-secondary,
+      html[data-theme='dark'] .btn-theme-toggle,
+      html[data-theme='dark'] .site-theme-toggle,
+      html[data-theme='dark'] .finance-tab,
+      html[data-theme='dark'] .segmented-btn,
+      html[data-theme='dark'] .segmented-control,
+      html[data-theme='dark'] .finance-inline-segmented,
+      html[data-theme='dark'] .finance-inline-segmented-tight,
+      html[data-theme='dark'] .finance-range-control.segmented-control,
+      html[data-theme='dark'] .ship-status-toggle-wrap,
+      html[data-theme='dark'] .table-sort-btn,
+      html[data-theme='dark'] details summary.btn-secondary {
+        background: var(--color-surface-soft) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .segmented-btn.is-active,
+      html[data-theme='dark'] .finance-tab.is-active,
+      html[data-theme='dark'] .finance-range-control .segmented-btn.is-active,
+      html[data-theme='dark'] .finance-inline-segmented-tight .segmented-btn.is-active {
+        background: #203453 !important;
+        color: #f5f9ff !important;
+        border-color: #3a5376 !important;
+      }
+
+      html[data-theme='dark'] .btn-primary,
+      html[data-theme='dark'] .btn-accent {
+        background: #3c7fe7 !important;
+        border-color: #3c7fe7 !important;
+        color: #f8fbff !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .btn-danger {
+        background: #c54343 !important;
+        border-color: #c54343 !important;
+        color: #fff7f7 !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] input,
+      html[data-theme='dark'] select,
+      html[data-theme='dark'] textarea {
+        background: var(--color-surface-soft) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] input::placeholder,
+      html[data-theme='dark'] textarea::placeholder {
+        color: #8fa5c4 !important;
+      }
+
+      html[data-theme='dark'] .identity-pill,
+      html[data-theme='dark'] .status-pill,
+      html[data-theme='dark'] .badge-status,
+      html[data-theme='dark'] .finance-type-pill,
+      html[data-theme='dark'] .finance-status-pill,
+      html[data-theme='dark'] .site-settings-state-pill,
+      html[data-theme='dark'] .badge,
+      html[data-theme='dark'] [class*='pill'],
+      html[data-theme='dark'] [class*='badge'] {
+        background: #1b2b43 !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .badge-status.is-active,
+      html[data-theme='dark'] .finance-status-pill.is-settled,
+      html[data-theme='dark'] .finance-type-pill.is-in {
+        background: rgba(68, 195, 135, 0.14) !important;
+        color: #7fe0a7 !important;
+        border-color: rgba(68, 195, 135, 0.34) !important;
+      }
+
+      html[data-theme='dark'] .badge-status.is-inactive,
+      html[data-theme='dark'] .badge-status.is-suspended,
+      html[data-theme='dark'] .finance-status-pill.is-unsettled,
+      html[data-theme='dark'] .finance-type-pill.is-out {
+        background: rgba(239, 118, 118, 0.14) !important;
+        color: #ff9b9b !important;
+        border-color: rgba(239, 118, 118, 0.32) !important;
+      }
+
+      html[data-theme='dark'] .profile-kv-grid dt,
+      html[data-theme='dark'] .profile-highlight-label,
+      html[data-theme='dark'] .finance-kpi-label,
+      html[data-theme='dark'] .finance-kpi-delta,
+      html[data-theme='dark'] .activity-summary-label,
+      html[data-theme='dark'] .voyage-stat-label,
+      html[data-theme='dark'] .voyage-stat-note,
+      html[data-theme='dark'] .my-details-subtitle,
+      html[data-theme='dark'] .nav-user,
+      html[data-theme='dark'] .admin-action-link span,
+      html[data-theme='dark'] .finance-inline-heading,
+      html[data-theme='dark'] .finance-inline-caption,
+      html[data-theme='dark'] .pagination-info,
+      html[data-theme='dark'] .finance-overview-unsettled-count,
+      html[data-theme='dark'] .finance-legend-item,
+      html[data-theme='dark'] .finance-axis-y-label,
+      html[data-theme='dark'] .finance-axis-x-label,
+      html[data-theme='dark'] .finance-tooltip-row,
+      html[data-theme='dark'] p,
+      html[data-theme='dark'] label,
+      html[data-theme='dark'] small,
+      html[data-theme='dark'] .lead,
+      html[data-theme='dark'] [class*='subtitle'],
+      html[data-theme='dark'] [class*='caption'],
+      html[data-theme='dark'] [class*='label'] {
+        color: var(--color-ink-soft) !important;
+      }
+
+      html[data-theme='dark'] .identity-user,
+      html[data-theme='dark'] .profile-title,
+      html[data-theme='dark'] .profile-highlight-value,
+      html[data-theme='dark'] .profile-kv-grid dd,
+      html[data-theme='dark'] .admin-action-link strong,
+      html[data-theme='dark'] .finance-kpi-value,
+      html[data-theme='dark'] .admin-employee-stat-value,
+      html[data-theme='dark'] .voyage-stat-value,
+      html[data-theme='dark'] .finance-overview-unsettled-amount,
+      html[data-theme='dark'] .finance-tooltip-title,
+      html[data-theme='dark'] .table-sort-btn,
+      html[data-theme='dark'] h1,
+      html[data-theme='dark'] h2,
+      html[data-theme='dark'] h3,
+      html[data-theme='dark'] h4,
+      html[data-theme='dark'] strong,
+      html[data-theme='dark'] th,
+      html[data-theme='dark'] td,
+      html[data-theme='dark'] .brand-text,
+      html[data-theme='dark'] [class*='value'],
+      html[data-theme='dark'] [class*='title'] {
+        color: var(--color-ink) !important;
+      }
+
+      html[data-theme='dark'] .data-table,
+      html[data-theme='dark'] .data-table thead,
+      html[data-theme='dark'] .data-table tbody,
+      html[data-theme='dark'] .data-table tr,
+      html[data-theme='dark'] .join-requests-table,
+      html[data-theme='dark'] .employee-scan-table,
+      html[data-theme='dark'] .role-list,
+      html[data-theme='dark'] .role-item {
+        background: transparent !important;
+        background-image: none !important;
+      }
+
+      html[data-theme='dark'] .data-table th,
+      html[data-theme='dark'] .data-table td,
+      html[data-theme='dark'] .join-requests-table th,
+      html[data-theme='dark'] .join-requests-table td,
+      html[data-theme='dark'] .employee-scan-table th,
+      html[data-theme='dark'] .employee-scan-table td,
+      html[data-theme='dark'] .profile-kv-grid dt,
+      html[data-theme='dark'] .profile-kv-grid dd,
+      html[data-theme='dark'] .role-item {
+        border-color: rgba(42, 59, 87, 0.88) !important;
+      }
+
+      html[data-theme='dark'] .finance-axis-line,
+      html[data-theme='dark'] .finance-hover-line {
+        stroke: #6f86a8 !important;
+      }
+
+      html[data-theme='dark'] .finance-grid-line {
+        stroke: #2b3e5b !important;
+      }
+
+      html[data-theme='dark'] .finance-cartesian-svg > rect:first-child {
+        fill: #132036 !important;
+      }
+
+      html[data-theme='dark'] .finance-chart-tooltip {
+        background: #16253a !important;
+        border-color: #314766 !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .finance-chart-empty,
+      html[data-theme='dark'] .finance-value-skeleton,
+      html[data-theme='dark'] .finance-line-skeleton,
+      html[data-theme='dark'] .skeleton-line {
+        background: #22324c !important;
+        border-color: #2a3b57 !important;
+        color: #9bb0cd !important;
+      }
+
+      html[data-theme='dark'] .finance-value-skeleton::after,
+      html[data-theme='dark'] .finance-line-skeleton::after,
+      html[data-theme='dark'] .skeleton-line::after {
+        background: linear-gradient(90deg, rgba(34, 50, 76, 0) 0%, rgba(120, 149, 196, 0.32) 50%, rgba(34, 50, 76, 0) 100%) !important;
+      }
+
+      html[data-theme='dark'] .site-nav a:not(.btn) {
+        color: #deebff !important;
+      }
+
+      html[data-theme='dark'] .site-nav a:not(.btn):hover,
+      html[data-theme='dark'] .site-nav a.is-active:not(.btn),
+      html[data-theme='dark'] .site-nav a[aria-current='page']:not(.btn) {
+        color: #8ab5ff !important;
+        border-bottom-color: #8ab5ff !important;
+      }
+    </style>
+<style id="frontier-dark-layout-fix">
+  .site-header .header-row {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .site-header .site-nav {
+    margin-left: auto !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    flex: 1 1 auto !important;
+  }
+
+  .site-header .site-nav .nav-spacer {
+    order: -1 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .site-theme-toggle,
+  .btn-theme-toggle {
+    position: fixed !important;
+    right: 24px !important;
+    bottom: 24px !important;
+    top: auto !important;
+    z-index: 9999 !important;
+    width: 58px !important;
+    height: 58px !important;
+    min-width: 58px !important;
+    min-height: 58px !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 18px 42px rgba(4, 10, 20, 0.35) !important;
+  }
+
+  .site-theme-toggle svg,
+  .btn-theme-toggle svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  html[data-theme='dark'] .finance-data-table thead,
+  html[data-theme='dark'] .finance-data-table thead tr,
+  html[data-theme='dark'] .finance-data-table thead th,
+  html[data-theme='dark'] .finance-debts-grid thead,
+  html[data-theme='dark'] .finance-debts-grid thead tr,
+  html[data-theme='dark'] .finance-debts-grid thead th {
+    background: #1a2940 !important;
+    color: #deebff !important;
+  }
+
+  html[data-theme='dark'] .finance-table-card .data-table thead,
+  html[data-theme='dark'] .finance-table-card .data-table thead tr,
+  html[data-theme='dark'] .finance-table-card .data-table thead th,
+  html[data-theme='dark'] .finance-remittance-table-card .data-table thead,
+  html[data-theme='dark'] .finance-remittance-table-card .data-table thead tr,
+  html[data-theme='dark'] .finance-remittance-table-card .data-table thead th,
+  html[data-theme='dark'] .finance-cashflow-ledger-card .data-table thead,
+  html[data-theme='dark'] .finance-cashflow-ledger-card .data-table thead tr,
+  html[data-theme='dark'] .finance-cashflow-ledger-card .data-table thead th {
+    background: #1a2940 !important;
+    color: #deebff !important;
+    border-color: #314766 !important;
+  }
+
+  html[data-theme='dark'] .finance-data-table tbody tr,
+  html[data-theme='dark'] .finance-data-table td {
+    background: transparent !important;
+  }
+</style>
   </head>
   <body class="page page-intranet page-finances">
     <header class="site-header">
@@ -788,7 +1182,269 @@
       </div>
     </div>
 
-    <script type="module" src="/assets/dist/js/finances-page.bundle.js?v=20260412005023"></script>
+    <script>
+      (function () {
+        var originalFetch = window.fetch ? window.fetch.bind(window) : null;
+        if (!originalFetch) return;
+
+        function parsePointDate(value) {
+          var raw = String(value || '').trim();
+          if (!raw) return null;
+          if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(raw + 'T00:00:00');
+          if (/^\d{4}-\d{2}$/.test(raw)) return new Date(raw + '-01T00:00:00');
+          var parsed = new Date(raw);
+          return Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function toDayKey(date) {
+          return [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, '0'),
+            String(date.getDate()).padStart(2, '0')
+          ].join('-');
+        }
+
+        function toMonthKey(date) {
+          return [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, '0'),
+            '01'
+          ].join('-');
+        }
+
+        function startOfDay(date) {
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+        }
+
+        function endOfDay(date) {
+          return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+        }
+
+        function addDays(date, days) {
+          var next = new Date(date.getTime());
+          next.setDate(next.getDate() + days);
+          return next;
+        }
+
+        function addMonths(date, months) {
+          return new Date(date.getFullYear(), date.getMonth() + months, 1, 0, 0, 0, 0);
+        }
+
+        function shiftMonths(date, months) {
+          var year = date.getFullYear();
+          var month = date.getMonth() + months;
+          var day = date.getDate();
+          var lastDay = new Date(year, month + 1, 0).getDate();
+          return new Date(year, month, Math.min(day, lastDay), date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
+        }
+
+        function rangeWindow(range, offset) {
+          var safeOffset = Math.max(0, Math.floor(Number(offset || 0) || 0));
+          var now = new Date();
+          var start = startOfDay(now);
+          var end = endOfDay(now);
+          if (range === 'week') {
+            var day = now.getDay();
+            var mondayDelta = day === 0 ? -6 : 1 - day;
+            start = startOfDay(addDays(now, mondayDelta));
+            if (safeOffset > 0) {
+              start = addDays(start, safeOffset * -7);
+              end = addDays(end, safeOffset * -7);
+            }
+          } else if (range === 'month') {
+            start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            if (safeOffset > 0) {
+              start = new Date(now.getFullYear(), now.getMonth() - safeOffset, 1, 0, 0, 0, 0);
+              end = shiftMonths(end, safeOffset * -1);
+            }
+          } else if (range === '3m') {
+            start = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0);
+            if (safeOffset > 0) {
+              start = new Date(now.getFullYear(), now.getMonth() - 2 - safeOffset * 3, 1, 0, 0, 0, 0);
+              end = shiftMonths(end, safeOffset * -3);
+            }
+          } else if (range === '6m') {
+            start = new Date(now.getFullYear(), now.getMonth() - 5, 1, 0, 0, 0, 0);
+            if (safeOffset > 0) {
+              start = new Date(now.getFullYear(), now.getMonth() - 5 - safeOffset * 6, 1, 0, 0, 0, 0);
+              end = shiftMonths(end, safeOffset * -6);
+            }
+          } else if (range === 'year') {
+            start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+            if (safeOffset > 0) {
+              start = new Date(now.getFullYear() - safeOffset, 0, 1, 0, 0, 0, 0);
+              end = new Date(now.getFullYear() - safeOffset, now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            }
+          } else if (range === 'all') {
+            start = new Date(1970, 0, 1, 0, 0, 0, 0);
+          }
+          return { start: start, end: end };
+        }
+
+        function bucketLabel(date, range) {
+          if (range === 'week' || range === 'month') {
+            return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+          }
+          return date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+        }
+
+        function buildBuckets(range, start, end) {
+          var rows = [];
+          if (range === 'week' || range === 'month') {
+            var cursor = startOfDay(start);
+            while (cursor <= end) {
+              rows.push({ key: toDayKey(cursor), label: bucketLabel(cursor, range), value: 0 });
+              cursor = addDays(cursor, 1);
+            }
+            return rows;
+          }
+          var monthCursor = new Date(start.getFullYear(), start.getMonth(), 1, 0, 0, 0, 0);
+          var monthEnd = new Date(end.getFullYear(), end.getMonth(), 1, 0, 0, 0, 0);
+          while (monthCursor <= monthEnd) {
+            rows.push({ key: toMonthKey(monthCursor), label: bucketLabel(monthCursor, range), value: 0 });
+            monthCursor = addMonths(monthCursor, 1);
+          }
+          return rows;
+        }
+
+        function transformSeries(series, range, start, end, mode) {
+          var buckets = buildBuckets(range, start, end);
+          var map = new Map();
+          buckets.forEach(function (bucket) {
+            map.set(bucket.key, { key: bucket.key, label: bucket.label, value: 0, count: 0, last: 0 });
+          });
+          (Array.isArray(series) ? series : []).forEach(function (point) {
+            var parsed = parsePointDate(point && (point.key || point.label));
+            if (!parsed) return;
+            if (parsed < start || parsed > end) return;
+            var key = (range === 'week' || range === 'month') ? toDayKey(parsed) : toMonthKey(parsed);
+            if (!map.has(key)) return;
+            var bucket = map.get(key);
+            var value = Number(point && point.value || 0);
+            if (!Number.isFinite(value)) value = 0;
+            bucket.value += value;
+            bucket.count += 1;
+            bucket.last = value;
+          });
+          return buckets.map(function (bucket) {
+            var value = map.get(bucket.key) || { value: 0, count: 0, last: 0 };
+            return {
+              key: bucket.key,
+              label: bucket.label,
+              value:
+                mode === 'avg'
+                  ? Math.round((value.count ? value.value / value.count : 0))
+                  : mode === 'last'
+                  ? Math.round(value.last || 0)
+                  : Math.round(value.value || 0)
+            };
+          });
+        }
+
+        function sumSeries(series) {
+          return Math.round((Array.isArray(series) ? series : []).reduce(function (sum, point) {
+            return sum + Number(point && point.value || 0);
+          }, 0));
+        }
+
+        function trimLeadingEmptyMonths(seriesMap) {
+          var keys = Object.keys(seriesMap || {});
+          if (!keys.length) return seriesMap;
+          var length = Array.isArray(seriesMap[keys[0]]) ? seriesMap[keys[0]].length : 0;
+          var startIndex = 0;
+          while (startIndex < Math.max(0, length - 1)) {
+            var hasValue = keys.some(function (key) {
+              var point = seriesMap[key] && seriesMap[key][startIndex];
+              return Number(point && point.value || 0) > 0;
+            });
+            if (hasValue) break;
+            startIndex += 1;
+          }
+          if (!startIndex) return seriesMap;
+          var trimmed = {};
+          keys.forEach(function (key) {
+            trimmed[key] = (Array.isArray(seriesMap[key]) ? seriesMap[key] : []).slice(startIndex);
+          });
+          return trimmed;
+        }
+
+        function fixOverviewPayload(payload, range, offset) {
+          if (!payload || typeof payload !== 'object') return payload;
+          var safeRange = String(range || 'week').trim().toLowerCase();
+          if (!safeRange) safeRange = 'week';
+          var windowRange = rangeWindow(safeRange, offset);
+          var charts = payload.charts || {};
+          var seriesMap = {
+            netProfitTrend: transformSeries(charts.netProfitTrend || [], safeRange, windowRange.start, windowRange.end, 'sum'),
+            companyShareTrend: transformSeries(charts.companyShareTrend || [], safeRange, windowRange.start, windowRange.end, 'sum'),
+            freightLossValueTrend: transformSeries(charts.freightLossValueTrend || [], safeRange, windowRange.start, windowRange.end, 'sum'),
+            voyageCountTrend: transformSeries(charts.voyageCountTrend || [], safeRange, windowRange.start, windowRange.end, 'sum'),
+            grossRevenueTrend: transformSeries(charts.grossRevenueTrend || [], safeRange, windowRange.start, windowRange.end, 'sum'),
+            avgNetProfitTrend: transformSeries(charts.avgNetProfitTrend || [], safeRange, windowRange.start, windowRange.end, 'avg'),
+            settlementRateTrend: transformSeries(charts.settlementRateTrend || [], safeRange, windowRange.start, windowRange.end, 'avg'),
+            outstandingTrend: transformSeries(charts.outstandingTrend || [], safeRange, windowRange.start, windowRange.end, 'last')
+          };
+
+          if (safeRange === '3m' || safeRange === '6m' || safeRange === 'year') {
+            seriesMap = trimLeadingEmptyMonths(seriesMap);
+          }
+
+          return {
+            range: payload.range,
+            offset: payload.offset,
+            unsettledScope: payload.unsettledScope,
+            kpis: {
+              ...(payload.kpis || {}),
+              netProfit: sumSeries(seriesMap.netProfitTrend),
+              companyShareEarnings: sumSeries(seriesMap.companyShareTrend),
+              freightLossesValue: sumSeries(seriesMap.freightLossValueTrend),
+              grossRevenue: sumSeries(seriesMap.grossRevenueTrend),
+              completedVoyages: sumSeries(seriesMap.voyageCountTrend)
+            },
+            charts: {
+              ...charts,
+              netProfitTrend: seriesMap.netProfitTrend,
+              companyShareTrend: seriesMap.companyShareTrend,
+              freightLossValueTrend: seriesMap.freightLossValueTrend,
+              voyageCountTrend: seriesMap.voyageCountTrend,
+              grossRevenueTrend: seriesMap.grossRevenueTrend,
+              avgNetProfitTrend: seriesMap.avgNetProfitTrend,
+              settlementRateTrend: seriesMap.settlementRateTrend,
+              outstandingTrend: seriesMap.outstandingTrend
+            },
+            unsettled: payload.unsettled,
+            breakdowns: payload.breakdowns,
+            topPerformers: payload.topPerformers
+          };
+        }
+
+        window.fetch = async function (input, init) {
+          var response = await originalFetch(input, init);
+          try {
+            var requestUrl = new URL(typeof input === 'string' ? input : input.url, window.location.origin);
+            if (requestUrl.pathname !== '/api/finances/overview' || !response.ok) return response;
+            var contentType = response.headers.get('content-type') || '';
+            if (contentType.indexOf('application/json') === -1) return response;
+            var payload = await response.clone().json();
+            var fixed = fixOverviewPayload(
+              payload,
+              requestUrl.searchParams.get('range') || 'week',
+              requestUrl.searchParams.get('offset') || '0'
+            );
+            var headers = new Headers(response.headers);
+            headers.set('content-type', 'application/json; charset=utf-8');
+            return new Response(JSON.stringify(fixed), {
+              status: response.status,
+              statusText: response.statusText,
+              headers: headers
+            });
+          } catch (_) {
+            return response;
+          }
+        };
+      })();
+    </script>
+    <script type="module" src="/assets/dist/js/finances-page.bundle.js?v=20260413222149"></script>
       <script>
       (function () {
         var KEY = 'frontier:theme-preference';
@@ -807,6 +1463,10 @@
           document.body && document.body.setAttribute('data-theme', theme);
           var themeColor = document.querySelector('meta[name="theme-color"]');
           if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#08111f' : '#112d72');
+          var brandLogos = document.querySelectorAll('.brand-mark-image img');
+          brandLogos.forEach(function (logo) {
+            logo.src = theme === 'dark' ? '/assets/brand/frontierdarkmode.png?v=20260413a' : '/assets/brand/frontierlogo.svg?v=20260325fix';
+          });
         }
 
                 function updateButton(button, theme) {
@@ -839,8 +1499,9 @@
 
         applyTheme(currentTheme());
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', ensureToggle, { once: true });
+          document.addEventListener('DOMContentLoaded', function () { applyTheme(currentTheme()); ensureToggle(); }, { once: true });
         } else {
+          applyTheme(currentTheme());
           ensureToggle();
         }
       })();

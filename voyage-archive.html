@@ -14,6 +14,10 @@
           document.documentElement.style.colorScheme = theme;
           var themeColor = document.querySelector('meta[name="theme-color"]');
           if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#08111f' : '#112d72');
+          var brandLogos = document.querySelectorAll('.brand-mark-image img');
+          brandLogos.forEach(function (logo) {
+            logo.src = theme === 'dark' ? '/assets/brand/frontierdarkmode.png?v=20260413a' : '/assets/brand/frontierlogo.svg?v=20260325fix';
+          });
         } catch {}
       })();
     </script>
@@ -366,7 +370,324 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260412010812" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260413222149" />
+      <style id="frontier-dark-cleanup-final">
+      html[data-theme='dark'] {
+        color-scheme: dark;
+        --color-bg: #091321;
+        --color-surface: #132036;
+        --color-surface-soft: #1a2940;
+        --color-ink: #f3f7fd;
+        --color-ink-soft: #d8e2f1;
+        --color-muted: #9bb0cd;
+        --color-primary: #74a8ff;
+        --color-primary-strong: #0d1829;
+        --color-secondary: #74a8ff;
+        --color-border: #2a3b57;
+        --color-success: #44c387;
+        --color-danger: #ef7676;
+      }
+
+      html[data-theme='dark'],
+      html[data-theme='dark'] body,
+      html[data-theme='dark'] main.section,
+      html[data-theme='dark'] .page,
+      html[data-theme='dark'] .page-login,
+      html[data-theme='dark'] .page-intranet {
+        background: var(--color-bg) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+      }
+
+      html[data-theme='dark'] .site-header,
+      html[data-theme='dark'] .site-footer,
+      html[data-theme='dark'] .site-header::before,
+      html[data-theme='dark'] .site-header::after,
+      html[data-theme='dark'] .site-footer::before,
+      html[data-theme='dark'] .site-footer::after,
+      html[data-theme='dark'] .panel,
+      html[data-theme='dark'] .section-surface,
+      html[data-theme='dark'] .modal-card,
+      html[data-theme='dark'] .table-wrap,
+      html[data-theme='dark'] .details-card,
+      html[data-theme='dark'] .profile-highlight,
+      html[data-theme='dark'] .my-details-page-header,
+      html[data-theme='dark'] .voyage-stat-tile,
+      html[data-theme='dark'] .discipline-tab-panel,
+      html[data-theme='dark'] .admin-action-link,
+      html[data-theme='dark'] .admin-employee-stat-card,
+      html[data-theme='dark'] .admin-employees-filter-bar,
+      html[data-theme='dark'] .admin-employee-drawer-panel,
+      html[data-theme='dark'] .admin-employee-drawer-header,
+      html[data-theme='dark'] .admin-employee-drawer-tabs,
+      html[data-theme='dark'] .admin-employee-drawer-body,
+      html[data-theme='dark'] .admin-employee-drawer-tab,
+      html[data-theme='dark'] .join-requests-modal-card,
+      html[data-theme='dark'] .employee-scan-modal-card,
+      html[data-theme='dark'] .finance-kpi,
+      html[data-theme='dark'] .finance-chart-card,
+      html[data-theme='dark'] .finance-overview-side,
+      html[data-theme='dark'] .finance-performance-stat,
+      html[data-theme='dark'] .finance-table-card,
+      html[data-theme='dark'] .finance-remittance-table-card,
+      html[data-theme='dark'] .finance-cashflow-ledger-card,
+      html[data-theme='dark'] .finance-performer-card,
+      html[data-theme='dark'] .finance-chart-host,
+      html[data-theme='dark'] .finance-chart-shell,
+      html[data-theme='dark'] .finance-chart-empty,
+      html[data-theme='dark'] .finance-chart-tooltip,
+      html[data-theme='dark'] .activity-summary-stat,
+      html[data-theme='dark'] .fleet-summary-card,
+      html[data-theme='dark'] .fleet-summary-item,
+      html[data-theme='dark'] .fleet-inline-card,
+      html[data-theme='dark'] .fleet-stat-pill,
+      html[data-theme='dark'] .shipyard-panel,
+      html[data-theme='dark'] .site-settings-hero-panel,
+      html[data-theme='dark'] .site-settings-hero-panel-compact,
+      html[data-theme='dark'] .site-settings-primary-card,
+      html[data-theme='dark'] .site-settings-groups-card,
+      html[data-theme='dark'] .site-settings-maintenance-panel,
+      html[data-theme='dark'] .site-settings-maintenance-bar,
+      html[data-theme='dark'] .site-settings-maintenance-box,
+      html[data-theme='dark'] .site-settings-maintenance-copy,
+      html[data-theme='dark'] .site-settings-admin-card,
+      html[data-theme='dark'] .site-settings-compact-form,
+      html[data-theme='dark'] .site-settings-config-modal-card,
+      html[data-theme='dark'] .site-settings-config-modal-card-wide,
+      html[data-theme='dark'] [class*='-card'],
+      html[data-theme='dark'] [class*='-panel'],
+      html[data-theme='dark'] [class*='-tile'] {
+        background: var(--color-surface) !important;
+        background-image: none !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .panel::before,
+      html[data-theme='dark'] .panel::after,
+      html[data-theme='dark'] [class*='-card']::before,
+      html[data-theme='dark'] [class*='-card']::after,
+      html[data-theme='dark'] [class*='-panel']::before,
+      html[data-theme='dark'] [class*='-panel']::after,
+      html[data-theme='dark'] [class*='-tile']::before,
+      html[data-theme='dark'] [class*='-tile']::after {
+        background: none !important;
+        background-image: none !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .btn-secondary,
+      html[data-theme='dark'] .btn-theme-toggle,
+      html[data-theme='dark'] .site-theme-toggle,
+      html[data-theme='dark'] .finance-tab,
+      html[data-theme='dark'] .segmented-btn,
+      html[data-theme='dark'] .segmented-control,
+      html[data-theme='dark'] .finance-inline-segmented,
+      html[data-theme='dark'] .finance-inline-segmented-tight,
+      html[data-theme='dark'] .finance-range-control.segmented-control,
+      html[data-theme='dark'] .ship-status-toggle-wrap,
+      html[data-theme='dark'] .table-sort-btn,
+      html[data-theme='dark'] details summary.btn-secondary {
+        background: var(--color-surface-soft) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .segmented-btn.is-active,
+      html[data-theme='dark'] .finance-tab.is-active,
+      html[data-theme='dark'] .finance-range-control .segmented-btn.is-active,
+      html[data-theme='dark'] .finance-inline-segmented-tight .segmented-btn.is-active {
+        background: #203453 !important;
+        color: #f5f9ff !important;
+        border-color: #3a5376 !important;
+      }
+
+      html[data-theme='dark'] .btn-primary,
+      html[data-theme='dark'] .btn-accent {
+        background: #3c7fe7 !important;
+        border-color: #3c7fe7 !important;
+        color: #f8fbff !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .btn-danger {
+        background: #c54343 !important;
+        border-color: #c54343 !important;
+        color: #fff7f7 !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] input,
+      html[data-theme='dark'] select,
+      html[data-theme='dark'] textarea {
+        background: var(--color-surface-soft) !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] input::placeholder,
+      html[data-theme='dark'] textarea::placeholder {
+        color: #8fa5c4 !important;
+      }
+
+      html[data-theme='dark'] .identity-pill,
+      html[data-theme='dark'] .status-pill,
+      html[data-theme='dark'] .badge-status,
+      html[data-theme='dark'] .finance-type-pill,
+      html[data-theme='dark'] .finance-status-pill,
+      html[data-theme='dark'] .site-settings-state-pill,
+      html[data-theme='dark'] .badge,
+      html[data-theme='dark'] [class*='pill'],
+      html[data-theme='dark'] [class*='badge'] {
+        background: #1b2b43 !important;
+        background-image: none !important;
+        color: var(--color-ink) !important;
+        border-color: var(--color-border) !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .badge-status.is-active,
+      html[data-theme='dark'] .finance-status-pill.is-settled,
+      html[data-theme='dark'] .finance-type-pill.is-in {
+        background: rgba(68, 195, 135, 0.14) !important;
+        color: #7fe0a7 !important;
+        border-color: rgba(68, 195, 135, 0.34) !important;
+      }
+
+      html[data-theme='dark'] .badge-status.is-inactive,
+      html[data-theme='dark'] .badge-status.is-suspended,
+      html[data-theme='dark'] .finance-status-pill.is-unsettled,
+      html[data-theme='dark'] .finance-type-pill.is-out {
+        background: rgba(239, 118, 118, 0.14) !important;
+        color: #ff9b9b !important;
+        border-color: rgba(239, 118, 118, 0.32) !important;
+      }
+
+      html[data-theme='dark'] .profile-kv-grid dt,
+      html[data-theme='dark'] .profile-highlight-label,
+      html[data-theme='dark'] .finance-kpi-label,
+      html[data-theme='dark'] .finance-kpi-delta,
+      html[data-theme='dark'] .activity-summary-label,
+      html[data-theme='dark'] .voyage-stat-label,
+      html[data-theme='dark'] .voyage-stat-note,
+      html[data-theme='dark'] .my-details-subtitle,
+      html[data-theme='dark'] .nav-user,
+      html[data-theme='dark'] .admin-action-link span,
+      html[data-theme='dark'] .finance-inline-heading,
+      html[data-theme='dark'] .finance-inline-caption,
+      html[data-theme='dark'] .pagination-info,
+      html[data-theme='dark'] .finance-overview-unsettled-count,
+      html[data-theme='dark'] .finance-legend-item,
+      html[data-theme='dark'] .finance-axis-y-label,
+      html[data-theme='dark'] .finance-axis-x-label,
+      html[data-theme='dark'] .finance-tooltip-row,
+      html[data-theme='dark'] p,
+      html[data-theme='dark'] label,
+      html[data-theme='dark'] small,
+      html[data-theme='dark'] .lead,
+      html[data-theme='dark'] [class*='subtitle'],
+      html[data-theme='dark'] [class*='caption'],
+      html[data-theme='dark'] [class*='label'] {
+        color: var(--color-ink-soft) !important;
+      }
+
+      html[data-theme='dark'] .identity-user,
+      html[data-theme='dark'] .profile-title,
+      html[data-theme='dark'] .profile-highlight-value,
+      html[data-theme='dark'] .profile-kv-grid dd,
+      html[data-theme='dark'] .admin-action-link strong,
+      html[data-theme='dark'] .finance-kpi-value,
+      html[data-theme='dark'] .admin-employee-stat-value,
+      html[data-theme='dark'] .voyage-stat-value,
+      html[data-theme='dark'] .finance-overview-unsettled-amount,
+      html[data-theme='dark'] .finance-tooltip-title,
+      html[data-theme='dark'] .table-sort-btn,
+      html[data-theme='dark'] h1,
+      html[data-theme='dark'] h2,
+      html[data-theme='dark'] h3,
+      html[data-theme='dark'] h4,
+      html[data-theme='dark'] strong,
+      html[data-theme='dark'] th,
+      html[data-theme='dark'] td,
+      html[data-theme='dark'] .brand-text,
+      html[data-theme='dark'] [class*='value'],
+      html[data-theme='dark'] [class*='title'] {
+        color: var(--color-ink) !important;
+      }
+
+      html[data-theme='dark'] .data-table,
+      html[data-theme='dark'] .data-table thead,
+      html[data-theme='dark'] .data-table tbody,
+      html[data-theme='dark'] .data-table tr,
+      html[data-theme='dark'] .join-requests-table,
+      html[data-theme='dark'] .employee-scan-table,
+      html[data-theme='dark'] .role-list,
+      html[data-theme='dark'] .role-item {
+        background: transparent !important;
+        background-image: none !important;
+      }
+
+      html[data-theme='dark'] .data-table th,
+      html[data-theme='dark'] .data-table td,
+      html[data-theme='dark'] .join-requests-table th,
+      html[data-theme='dark'] .join-requests-table td,
+      html[data-theme='dark'] .employee-scan-table th,
+      html[data-theme='dark'] .employee-scan-table td,
+      html[data-theme='dark'] .profile-kv-grid dt,
+      html[data-theme='dark'] .profile-kv-grid dd,
+      html[data-theme='dark'] .role-item {
+        border-color: rgba(42, 59, 87, 0.88) !important;
+      }
+
+      html[data-theme='dark'] .finance-axis-line,
+      html[data-theme='dark'] .finance-hover-line {
+        stroke: #6f86a8 !important;
+      }
+
+      html[data-theme='dark'] .finance-grid-line {
+        stroke: #2b3e5b !important;
+      }
+
+      html[data-theme='dark'] .finance-cartesian-svg > rect:first-child {
+        fill: #132036 !important;
+      }
+
+      html[data-theme='dark'] .finance-chart-tooltip {
+        background: #16253a !important;
+        border-color: #314766 !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] .finance-chart-empty,
+      html[data-theme='dark'] .finance-value-skeleton,
+      html[data-theme='dark'] .finance-line-skeleton,
+      html[data-theme='dark'] .skeleton-line {
+        background: #22324c !important;
+        border-color: #2a3b57 !important;
+        color: #9bb0cd !important;
+      }
+
+      html[data-theme='dark'] .finance-value-skeleton::after,
+      html[data-theme='dark'] .finance-line-skeleton::after,
+      html[data-theme='dark'] .skeleton-line::after {
+        background: linear-gradient(90deg, rgba(34, 50, 76, 0) 0%, rgba(120, 149, 196, 0.32) 50%, rgba(34, 50, 76, 0) 100%) !important;
+      }
+
+      html[data-theme='dark'] .site-nav a:not(.btn) {
+        color: #deebff !important;
+      }
+
+      html[data-theme='dark'] .site-nav a:not(.btn):hover,
+      html[data-theme='dark'] .site-nav a.is-active:not(.btn),
+      html[data-theme='dark'] .site-nav a[aria-current='page']:not(.btn) {
+        color: #8ab5ff !important;
+        border-bottom-color: #8ab5ff !important;
+      }
+    </style>
   </head>
   <body class="page page-intranet page-voyage-archive">
     <header class="site-header">
@@ -449,6 +770,10 @@
           document.body && document.body.setAttribute('data-theme', theme);
           var themeColor = document.querySelector('meta[name="theme-color"]');
           if (themeColor) themeColor.setAttribute('content', theme === 'dark' ? '#08111f' : '#112d72');
+          var brandLogos = document.querySelectorAll('.brand-mark-image img');
+          brandLogos.forEach(function (logo) {
+            logo.src = theme === 'dark' ? '/assets/brand/frontierdarkmode.png?v=20260413a' : '/assets/brand/frontierlogo.svg?v=20260325fix';
+          });
         }
 
                 function updateButton(button, theme) {
@@ -481,8 +806,9 @@
 
         applyTheme(currentTheme());
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', ensureToggle, { once: true });
+          document.addEventListener('DOMContentLoaded', function () { applyTheme(currentTheme()); ensureToggle(); }, { once: true });
         } else {
+          applyTheme(currentTheme());
           ensureToggle();
         }
       })();
