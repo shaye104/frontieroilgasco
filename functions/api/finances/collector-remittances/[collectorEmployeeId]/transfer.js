@@ -1,16 +1,9 @@
 import { json } from '../../../auth/_lib/auth.js';
-import { getCurrentCashBalance } from '../../../_lib/cashflow.js';
 import { requireFinancePermission, toMoney } from '../../../_lib/finances.js';
-import { BOOKKEEPER_PERMISSION } from '../../../_lib/permissions.js';
 
 function toInt(value) {
   const n = Number(value);
   return Number.isInteger(n) && n > 0 ? n : null;
-}
-
-function hasExplicitPermission(session, permissionKey) {
-  const permissions = Array.isArray(session?.permissions) ? session.permissions.map((value) => String(value || '').trim()) : [];
-  return permissions.includes(String(permissionKey || '').trim());
 }
 
 export async function onRequestPost(context) {
@@ -18,9 +11,6 @@ export async function onRequestPost(context) {
   const { errorResponse, session } = await requireFinancePermission(context, 'finances.debts.settle');
   if (errorResponse) return errorResponse;
   if (!session?.employee?.id) return json({ error: 'Employee profile required to transfer remittances.' }, 403);
-  if (!hasExplicitPermission(session, BOOKKEEPER_PERMISSION)) {
-    return json({ error: 'Only Bookkeepers can move manager transfer balances.' }, 403);
-  }
 
   const sourceCollectorEmployeeId = toInt(params.collectorEmployeeId);
   if (!sourceCollectorEmployeeId) return json({ error: 'Invalid source manager id.' }, 400);
@@ -76,26 +66,8 @@ export async function onRequestPost(context) {
 
   const transferCount = pendingRows.length;
   const transferAmount = toMoney(pendingRows.reduce((sum, row) => sum + Math.max(0, toMoney(row.amount || 0)), 0));
-  const actorName =
-    String(session?.employee?.robloxUsername || '').trim() ||
-    String(session?.displayName || '').trim() ||
-    String(session?.userId || '').trim() ||
-    'Unknown';
-  const balance = await getCurrentCashBalance(env);
-  const balanceAfter = toMoney(balance.currentBalance);
 
   await env.DB.batch([
-    env.DB.prepare(
-      `INSERT INTO finance_cash_ledger_entries
-       (created_by_employee_id, created_by_name, created_by_discord_user_id, type, amount, reason, category, voyage_id, balance_after)
-       VALUES (?, ?, ?, 'IN', 0, ?, 'Manager Transfer', NULL, ?)`
-    ).bind(
-      Number(session.employee.id),
-      actorName,
-      String(session.userId || ''),
-      `Manager transfer moved from ${String(sourceEmployee.roblox_username || '').trim() || `Employee #${sourceCollectorEmployeeId}`} to ${String(targetEmployee.roblox_username || '').trim() || `Employee #${targetCollectorEmployeeId}`}`,
-      balanceAfter
-    ),
     env.DB.prepare(
       `UPDATE finance_collector_remittances
        SET collector_employee_id = ?, updated_at = CURRENT_TIMESTAMP
@@ -105,7 +77,7 @@ export async function onRequestPost(context) {
     env.DB.prepare(
       `INSERT INTO finance_cashflow_audit
        (entry_id, action, amount, performed_by_employee_id, performed_by_discord_user_id, details_json)
-       VALUES (last_insert_rowid(), 'COLLECTOR_REMITTANCE_TRANSFERRED', ?, ?, ?, ?)`
+       VALUES (NULL, 'COLLECTOR_REMITTANCE_TRANSFERRED', ?, ?, ?, ?)`
     ).bind(
       transferAmount,
       Number(session.employee.id),

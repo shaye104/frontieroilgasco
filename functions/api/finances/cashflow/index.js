@@ -1,7 +1,9 @@
 import { cachedJson, json } from '../../auth/_lib/auth.js';
 import { getCashflowPeriodSnapshot, getCurrentCashBalance, normalizeCashflowCategory, normalizeCashflowReason, normalizeCashflowType, toOptionalInteger, toPositiveInteger } from '../../_lib/cashflow.js';
 import { getFinanceRangeWindow, normalizeTzOffsetMinutes, requireFinancePermission, toMoney, toUtcBoundaryFromLocalDateInput } from '../../_lib/finances.js';
-import { BOOKKEEPER_PERMISSION, hasPermission } from '../../_lib/permissions.js';
+import { hasPermission } from '../../_lib/permissions.js';
+
+const MANAGER_ACCOUNT_PERMISSION_KEYS = ['finances.debts.settle', 'admin.override', 'super.admin'];
 
 function buildVoyageLabel(row) {
   const vessel = String(row?.vessel_name || '').trim();
@@ -11,19 +13,36 @@ function buildVoyageLabel(row) {
   return [vessel || 'Unknown vessel', callsign || 'N/A', route, status].join(' | ');
 }
 
-function hasExplicitPermission(session, permissionKey) {
-  if (!permissionKey) return false;
-  const permissions = Array.isArray(session?.permissions)
-    ? session.permissions.map((value) => String(value || '').trim())
-    : [];
-  return permissions.includes(String(permissionKey).trim());
-}
-
 async function hasLegacyFinanceEntriesTable(env) {
   const row = await env.DB
     .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legacy_finance_entries'")
     .first();
   return Boolean(row?.name);
+}
+
+async function ensureManagerBalanceEntriesTable(env) {
+  await env.DB
+    .prepare(
+      `CREATE TABLE IF NOT EXISTS finance_manager_balance_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id INTEGER NOT NULL,
+        amount REAL NOT NULL DEFAULT 0,
+        entry_type TEXT NOT NULL,
+        reason TEXT,
+        voyage_id INTEGER,
+        cashflow_entry_id INTEGER,
+        related_employee_id INTEGER,
+        created_by_employee_id INTEGER,
+        details_json TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(employee_id) REFERENCES employees(id),
+        FOREIGN KEY(voyage_id) REFERENCES voyages(id),
+        FOREIGN KEY(cashflow_entry_id) REFERENCES finance_cash_ledger_entries(id),
+        FOREIGN KEY(related_employee_id) REFERENCES employees(id),
+        FOREIGN KEY(created_by_employee_id) REFERENCES employees(id)
+      )`
+    )
+    .run();
 }
 
 function isoDayFromUtcParts(date) {
@@ -99,6 +118,7 @@ export async function onRequestGet(context) {
       )` 
     )
     .run();
+  await ensureManagerBalanceEntriesTable(env);
 
   const url = new URL(request.url);
   const tzOffsetMinutes = normalizeTzOffsetMinutes(url.searchParams.get('tzOffsetMinutes'));
@@ -157,7 +177,7 @@ export async function onRequestGet(context) {
   const kpiFromIso = null;
   const kpiToIso = null;
 
-  const [balanceSnapshot, periodSnapshotBase, overallSnapshotBase, legacyPeriodSnapshot, legacyOverallSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult, reimbursementSettledByResult] = await Promise.all([
+  const [balanceSnapshot, periodSnapshotBase, overallSnapshotBase, legacyPeriodSnapshot, legacyOverallSnapshot, totalRow, rowsResult, voyageOptionsResult, collectorRemittancesResult, managerOptionsResult, managerBalanceAdjustmentsResult] = await Promise.all([
     getCurrentCashBalance(env),
     getCashflowPeriodSnapshot(env, kpiFromIso, kpiToIso),
     getCashflowPeriodSnapshot(env),
@@ -245,26 +265,22 @@ export async function onRequestGet(context) {
          LEFT JOIN rank_permission_mappings rpm ON LOWER(rpm.rank_value) = LOWER(COALESCE(e.rank, ''))
          WHERE COALESCE(NULLIF(TRIM(e.roblox_username), ''), '') <> ''
            AND (
-             arp.permission_key IN ('finances.debts.settle', 'admin.override', 'super.admin')
-             OR rpm.permission_key IN ('finances.debts.settle', 'admin.override', 'super.admin')
+             UPPER(COALESCE(e.rank, '')) = 'GENERAL MANAGER'
+             OR arp.permission_key IN (${MANAGER_ACCOUNT_PERMISSION_KEYS.map(() => '?').join(', ')})
+             OR rpm.permission_key IN (${MANAGER_ACCOUNT_PERMISSION_KEYS.map(() => '?').join(', ')})
            )
          ORDER BY LOWER(COALESCE(e.roblox_username, '')) ASC, e.id ASC`
       )
+      .bind(...MANAGER_ACCOUNT_PERMISSION_KEYS, ...MANAGER_ACCOUNT_PERMISSION_KEYS)
       .all()
     ,
     env.DB
       .prepare(
         `SELECT
-           owner_employee_id,
-           SUM(amount) AS total_settled
-         FROM finance_reimbursement_settlements
-         WHERE voyage_id IN (
-           SELECT id
-           FROM voyages
-           WHERE deleted_at IS NULL
-         )
-           AND owner_employee_id IS NOT NULL
-         GROUP BY owner_employee_id` 
+           employee_id,
+           COALESCE(SUM(amount), 0) AS total_amount
+         FROM finance_manager_balance_entries
+         GROUP BY employee_id`
       )
       .all()
   ]);
@@ -316,23 +332,23 @@ export async function onRequestGet(context) {
     id: Number(row.id || 0),
     label: buildVoyageLabel(row)
   }));
-  const reimbursementSettledBy = new Map(
-    (reimbursementSettledByResult?.results || [])
-      .map((row) => [Number(row.owner_employee_id || 0), Math.max(0, toMoney(row.total_settled || 0))])
+  const adjustmentsByEmployee = new Map(
+    (managerBalanceAdjustmentsResult?.results || [])
+      .map((row) => [Number(row.employee_id || 0), toMoney(row.total_amount || 0)])
       .filter(([employeeId]) => Number.isInteger(employeeId) && employeeId > 0)
   );
-  const collectorRemittances = (collectorRemittancesResult?.results || [])
-    .map((row) => ({
-      collectorEmployeeId: Number(row.collector_employee_id || 0),
-      collectorName: String(row.collector_name || '').trim() || `Employee #${Number(row.collector_employee_id || 0)}`,
-      voyageCount: Number(row.voyage_count || 0),
-      totalAmount: Math.max(
-        0,
-        toMoney(Number(row.total_amount || 0) - Number(reimbursementSettledBy.get(Number(row.collector_employee_id || 0)) || 0))
-      ),
-      firstCollectedAt: row.first_collected_at || null
-    }))
-    .filter((row) => row.collectorEmployeeId > 0 && row.totalAmount > 0);
+  const pendingByEmployee = new Map(
+    (collectorRemittancesResult?.results || [])
+      .map((row) => ({
+        collectorEmployeeId: Number(row.collector_employee_id || 0),
+        collectorName: String(row.collector_name || '').trim() || `Employee #${Number(row.collector_employee_id || 0)}`,
+        voyageCount: Number(row.voyage_count || 0),
+        pendingAmount: Math.max(0, toMoney(Number(row.total_amount || 0))),
+        firstCollectedAt: row.first_collected_at || null
+      }))
+      .filter((row) => row.collectorEmployeeId > 0)
+      .map((row) => [row.collectorEmployeeId, row])
+  );
   const managerOptionsById = new Map(
     (managerOptionsResult?.results || [])
       .map((row) => ({
@@ -342,15 +358,37 @@ export async function onRequestGet(context) {
       .filter((row) => row.employeeId > 0)
       .map((row) => [row.employeeId, row])
   );
-  collectorRemittances.forEach((row) => {
-    if (!managerOptionsById.has(Number(row.collectorEmployeeId || 0))) {
-      managerOptionsById.set(Number(row.collectorEmployeeId || 0), {
-        employeeId: Number(row.collectorEmployeeId || 0),
-        name: String(row.collectorName || '').trim() || `Employee #${Number(row.collectorEmployeeId || 0)}`
+  pendingByEmployee.forEach((row, employeeId) => {
+    if (!managerOptionsById.has(employeeId)) {
+      managerOptionsById.set(employeeId, {
+        employeeId,
+        name: String(row.collectorName || '').trim() || `Employee #${employeeId}`
+      });
+    }
+  });
+  adjustmentsByEmployee.forEach((_, employeeId) => {
+    if (!managerOptionsById.has(employeeId)) {
+      managerOptionsById.set(employeeId, {
+        employeeId,
+        name: `Employee #${employeeId}`
       });
     }
   });
   const managerOptions = [...managerOptionsById.values()].sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  const collectorRemittances = managerOptions.map((option) => {
+    const employeeId = Number(option.employeeId || 0);
+    const pending = pendingByEmployee.get(employeeId);
+    const adjustments = Number(adjustmentsByEmployee.get(employeeId) || 0);
+    return {
+      collectorEmployeeId: employeeId,
+      collectorName: String(option.name || '').trim() || `Employee #${employeeId}`,
+      voyageCount: Number(pending?.voyageCount || 0),
+      pendingAmount: Math.max(0, toMoney(pending?.pendingAmount || 0)),
+      adjustmentAmount: toMoney(adjustments),
+      totalAmount: toMoney(Number(pending?.pendingAmount || 0) + adjustments),
+      firstCollectedAt: pending?.firstCollectedAt || null
+    };
+  });
 
   const total = Number(totalRow?.total || 0);
 
@@ -378,7 +416,7 @@ export async function onRequestGet(context) {
       },
       permissions: {
         canManage: hasPermission(session, 'finances.debts.settle'),
-        canSettleCollectorRemittances: hasExplicitPermission(session, BOOKKEEPER_PERMISSION)
+        canSettleCollectorRemittances: hasPermission(session, 'finances.debts.settle')
       },
       filters: {
         search,
@@ -424,6 +462,7 @@ export async function onRequestPost(context) {
   if (!amount) return json({ error: 'Amount must be a positive whole number.' }, 400);
   if (!reason) return json({ error: 'Reason must be at least 5 characters.' }, 400);
   if (!category) return json({ error: 'Category is required.' }, 400);
+  await ensureManagerBalanceEntriesTable(env);
 
   if (voyageId) {
     const voyage = await env.DB.prepare(`SELECT id FROM voyages WHERE id = ? AND deleted_at IS NULL`).bind(voyageId).first();
@@ -451,6 +490,27 @@ export async function onRequestPost(context) {
         category,
         voyageId,
         balanceAfter
+      ),
+    env.DB
+      .prepare(
+        `INSERT INTO finance_manager_balance_entries
+         (employee_id, amount, entry_type, reason, voyage_id, created_by_employee_id, details_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(
+        Number(session.employee.id),
+        type === 'IN' ? amount : -amount,
+        type === 'IN' ? 'CASHFLOW_IN' : 'CASHFLOW_OUT',
+        reason,
+        voyageId,
+        Number(session.employee.id),
+        JSON.stringify({
+          source: 'manual_cashflow_entry',
+          type,
+          amount,
+          category: category || null,
+          voyageId: voyageId || null
+        })
       ),
     env.DB
       .prepare(

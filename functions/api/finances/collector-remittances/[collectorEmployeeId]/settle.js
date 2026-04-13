@@ -1,16 +1,10 @@
 import { json } from '../../../auth/_lib/auth.js';
 import { getCurrentCashBalance } from '../../../_lib/cashflow.js';
 import { requireFinancePermission, toMoney } from '../../../_lib/finances.js';
-import { BOOKKEEPER_PERMISSION } from '../../../_lib/permissions.js';
 
 function toInt(value) {
   const n = Number(value);
   return Number.isInteger(n) && n > 0 ? n : null;
-}
-
-function hasExplicitPermission(session, permissionKey) {
-  const permissions = Array.isArray(session?.permissions) ? session.permissions.map((value) => String(value || '').trim()) : [];
-  return permissions.includes(String(permissionKey || '').trim());
 }
 
 export async function onRequestPost(context) {
@@ -18,9 +12,6 @@ export async function onRequestPost(context) {
   const { errorResponse, session } = await requireFinancePermission(context, 'finances.debts.settle');
   if (errorResponse) return errorResponse;
   if (!session?.employee?.id) return json({ error: 'Employee profile required to settle remittances.' }, 403);
-  if (!hasExplicitPermission(session, BOOKKEEPER_PERMISSION)) {
-    return json({ error: 'Only Bookkeepers can settle pending transfers to CEO.' }, 403);
-  }
 
   const collectorEmployeeId = toInt(params.collectorEmployeeId);
   if (!collectorEmployeeId) return json({ error: 'Invalid collector employee id.' }, 400);

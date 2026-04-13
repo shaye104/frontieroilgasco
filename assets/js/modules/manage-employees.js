@@ -1157,9 +1157,8 @@ export async function initManageEmployees(config) {
   function applyConfigOptions(statusesItems = [], ranksItems = []) {
     state.configOptions.statuses = statusesItems;
     state.configOptions.ranks = ranksItems;
-    const mainFilterStatuses = (Array.isArray(statusesItems) ? statusesItems : []).filter((item) => Number(item?.exclude_from_stats || 0) !== 1);
     fillOptions(filterRank, ranksItems, 'All Ranks');
-    fillOptions(filterStatus, mainFilterStatuses, 'All Statuses');
+    fillOptions(filterStatus, statusesItems, 'All Statuses');
     fillOptions(createForm.querySelector('[name="employeeStatus"]'), statusesItems, 'Select');
     fillOptions(createForm.querySelector('[name="rank"]'), ranksItems, 'Select');
   }

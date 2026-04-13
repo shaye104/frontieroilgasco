@@ -1669,7 +1669,9 @@ function renderCollectorRemittances(state) {
 
   tbody.innerHTML = rows
     .map((row) => {
-      const canSettle = Boolean(state.canSettleCollectorRemittances) && Number(row.totalAmount || 0) > 0;
+      const canManage = Boolean(state.canSettleCollectorRemittances);
+      const hasBalance = Number(row.totalAmount || 0) > 0;
+      const canSettle = canManage && hasBalance;
       const sourceId = Number(row.collectorEmployeeId || 0);
       const targets = managerOptions.filter((option) => Number(option.employeeId || 0) > 0 && Number(option.employeeId || 0) !== sourceId);
       const targetSelectId = `collectorTransferTarget_${sourceId}`;
@@ -1679,28 +1681,48 @@ function renderCollectorRemittances(state) {
         <td class="align-right"><strong>${formatGuilders(row.totalAmount || 0)}</strong></td>
         <td class="finance-transfer-cell"><div class="finance-transfer-shell">${
           canSettle
-            ? canMove
-              ? `<div class="finance-transfer-actions">
-                   <select id="${targetSelectId}" class="finance-transfer-target" data-transfer-target="${sourceId}">
-                     <option value="">Target...</option>
-                     ${targets
-                       .map(
-                         (target) =>
-                           `<option value="${Number(target.employeeId || 0)}">${escapeHtml(
-                             text(target.name || `Employee #${Number(target.employeeId || 0)}`)
-                           )}</option>`
-                       )
-                       .join('')}
-                   </select>
-                 </div>`
-              : '<span class="muted finance-transfer-note">No other managers available</span>'
-            : '<span class="muted finance-transfer-note">Bookkeeper only</span>'
+            ? `<div class="finance-transfer-actions">
+                 <button type="button" class="btn btn-primary btn-compact" data-settle-collector="${sourceId}">Settle to CEO</button>
+                 ${
+                   canMove
+                     ? `<select id="${targetSelectId}" class="finance-transfer-target" data-transfer-target="${sourceId}">
+                          <option value="">Move to manager...</option>
+                          ${targets
+                            .map(
+                              (target) =>
+                                `<option value="${Number(target.employeeId || 0)}">${escapeHtml(
+                                  text(target.name || `Employee #${Number(target.employeeId || 0)}`)
+                                )}</option>`
+                            )
+                            .join('')}
+                        </select>`
+                     : '<span class="muted finance-transfer-note">No other managers available</span>'
+                 }
+               </div>`
+            : `<span class="muted finance-transfer-note">${canManage ? 'No balance' : 'Settlement access required'}</span>`
         }</div></td>
       </tr>`;
     })
     .join('');
 
   if (!state.canSettleCollectorRemittances) return;
+  tbody.querySelectorAll('[data-settle-collector]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const collectorEmployeeId = Number(button.getAttribute('data-settle-collector') || 0);
+      if (!Number.isInteger(collectorEmployeeId) || collectorEmployeeId <= 0) return;
+      const row = rows.find((entry) => Number(entry.collectorEmployeeId || 0) === collectorEmployeeId);
+      if (!row) return;
+      openSettleModal(state, {
+        kind: 'collector-remittance',
+        title: 'Confirm Manager Balance Settlement',
+        confirmLabel: 'Settle to CEO',
+        message: `Transfer ${formatGuilders(row.totalAmount || 0)} from ${text(row.collectorName)} into CEO cashflow?`,
+        collectorEmployeeId,
+        collectorName: text(row.collectorName),
+        amount: toMoney(row.totalAmount || 0)
+      });
+    });
+  });
   tbody.querySelectorAll('[data-transfer-target]').forEach((select) => {
     if (!(select instanceof HTMLSelectElement)) return;
     select.addEventListener('change', () => {

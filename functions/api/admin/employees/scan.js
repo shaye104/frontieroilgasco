@@ -509,8 +509,11 @@ export async function onRequestPost(context) {
     fetchGuildMemberIndex(env),
     ensureRobloxMembershipCacheSchema(env),
     env.DB.prepare(
-      `SELECT id, discord_user_id, roblox_username, roblox_user_id, rank, employee_status, activation_status, hire_date
-         FROM employees
+      `SELECT e.id, e.discord_user_id, e.roblox_username, e.roblox_user_id, e.rank, e.employee_status, e.activation_status, e.hire_date
+         FROM employees e
+         LEFT JOIN config_employee_statuses s
+           ON LOWER(TRIM(COALESCE(s.value, ''))) = LOWER(TRIM(COALESCE(e.employee_status, '')))
+        WHERE COALESCE(s.exclude_from_stats, 0) = 0
         ORDER BY id ASC`
     ).all()
   ]);

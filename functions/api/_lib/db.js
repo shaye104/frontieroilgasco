@@ -926,31 +926,6 @@ export async function ensureCoreSchema(env) {
     // Keep bootstrap non-fatal.
   }
 
-  try {
-    // Keep shipyard aligned with voyage identities for Fleet screens.
-    await env.DB
-      .prepare(
-        `INSERT INTO shipyard_ships (ship_name, vessel_callsign, vessel_type, vessel_class, is_active, created_at, updated_at)
-         SELECT
-           v.vessel_name,
-           v.vessel_callsign,
-           'Freight',
-           v.vessel_class,
-           1,
-           COALESCE(MIN(v.started_at), CURRENT_TIMESTAMP),
-           CURRENT_TIMESTAMP
-         FROM voyages v
-         WHERE COALESCE(NULLIF(TRIM(v.vessel_name), ''), '') <> ''
-           AND COALESCE(NULLIF(TRIM(v.vessel_callsign), ''), '') <> ''
-           AND COALESCE(NULLIF(TRIM(v.vessel_class), ''), '') <> ''
-         GROUP BY v.vessel_name, v.vessel_callsign, v.vessel_class
-         ON CONFLICT DO NOTHING`
-      )
-      .run();
-  } catch {
-    // Keep bootstrap non-fatal.
-  }
-
   const legacyTablesToDrop = [
     'voyage_manifest_lines',
     'cargo_types',

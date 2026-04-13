@@ -54,6 +54,36 @@ async function findDuplicateEmployee(env, { robloxUsername, robloxUserId }, excl
   return env.DB.prepare(sql).bind(...binds).first();
 }
 
+async function findDuplicateDiscordEmployee(env, discordUserId, excludeEmployeeId = null) {
+  const normalized = normalizeDiscordUserId(discordUserId);
+  if (!normalized) return null;
+  let sql = 'SELECT id, roblox_username, discord_user_id FROM employees WHERE discord_user_id = ?';
+  const binds = [normalized];
+  if (Number.isInteger(excludeEmployeeId) && excludeEmployeeId > 0) {
+    sql += ' AND id != ?';
+    binds.push(excludeEmployeeId);
+  }
+  sql += ' LIMIT 1';
+  return env.DB.prepare(sql).bind(...binds).first();
+}
+
+async function validateAssignableRoleIds(env, roleIds = []) {
+  if (!Array.isArray(roleIds) || !roleIds.length) return { ok: true, rows: [] };
+  const result = await env.DB
+    .prepare(`SELECT id, role_key FROM app_roles WHERE id IN (${roleIds.map(() => '?').join(', ')})`)
+    .bind(...roleIds)
+    .all();
+  const rows = result?.results || [];
+  if (rows.length !== roleIds.length) {
+    return { ok: false, error: 'One or more selected user groups no longer exist.' };
+  }
+  const forbidden = rows.find((row) => ['owner', 'employee'].includes(String(row?.role_key || '').trim()));
+  if (forbidden) {
+    return { ok: false, error: 'System roles cannot be assigned through user groups.' };
+  }
+  return { ok: true, rows };
+}
+
 export async function onRequestGet(context) {
   const { env, request } = context;
   const { errorResponse, session } = await requirePermission(context, ['employees.read']);
@@ -286,22 +316,20 @@ export async function onRequestPost(context) {
   if (!/^\d{6,30}$/.test(discordUserId)) {
     return json({ error: 'discordUserId is required and must be a Discord snowflake.' }, 400);
   }
+  const duplicateDiscord = await findDuplicateDiscordEmployee(env, discordUserId);
+  if (duplicateDiscord) {
+    return json(
+      { error: `Discord User ID is already linked to ${String(duplicateDiscord.roblox_username || '').trim() || `employee #${Number(duplicateDiscord.id || 0)}`}.` },
+      400
+    );
+  }
   if (providedRoleIds.length && !hasPermission(session, 'user_groups.assign')) {
     return json({ error: 'Forbidden. Missing required permission.' }, 403);
   }
   if (providedRoleIds.length) {
-    const forbiddenRoles = await env.DB
-      .prepare(
-        `SELECT id
-         FROM app_roles
-         WHERE id IN (${providedRoleIds.map(() => '?').join(', ')})
-           AND role_key IN ('owner', 'employee')
-         LIMIT 1`
-      )
-      .bind(...providedRoleIds)
-      .first();
-    if (forbiddenRoles?.id) {
-      return json({ error: 'System roles cannot be assigned through user groups.' }, 400);
+    const roleCheck = await validateAssignableRoleIds(env, providedRoleIds);
+    if (!roleCheck.ok) {
+      return json({ error: roleCheck.error }, 400);
     }
   }
   const duplicate = await findDuplicateEmployee(env, {
@@ -385,7 +413,14 @@ export async function onRequestPost(context) {
       });
     }
   } catch (error) {
-    return json({ error: error.message || 'Unable to create employee.' }, 500);
+    const message = String(error?.message || '').trim();
+    if (message.includes('employees.discord_user_id')) {
+      return json({ error: 'Discord User ID is already linked to another employee.' }, 400);
+    }
+    if (message.includes('FOREIGN KEY constraint failed')) {
+      return json({ error: 'One or more selected user groups are invalid. Please refresh and try again.' }, 400);
+    }
+    return json({ error: message || 'Unable to create employee.' }, 500);
   }
 
   const created = await env.DB.prepare('SELECT * FROM employees WHERE discord_user_id = ?').bind(discordUserId).first();
