@@ -697,11 +697,10 @@
         position: sticky;
         top: 0;
         z-index: 40;
-        min-height: 72px;
       }
 
       .page-login .header-row {
-        min-height: 72px;
+        min-height: 64px;
         align-items: center;
         justify-content: flex-start;
         gap: 18px;
@@ -710,14 +709,14 @@
       .page-login .brand {
         display: inline-flex;
         align-items: center;
-        min-height: 72px;
+        min-height: 64px;
       }
 
       .page-login .brand-mark-image img {
         display: block;
         width: auto;
-        height: 62px;
-        max-height: 62px;
+        height: 50px;
+        max-height: 50px;
         object-fit: contain;
       }
 
@@ -752,9 +751,10 @@
       }
 
       body.page-login .login-page {
-        min-height: calc(100vh - 72px);
+        min-height: calc(100vh - 64px);
         display: flex;
         align-items: center;
+        background: transparent !important;
       }
 
       body.page-login .login-cluster {
@@ -785,7 +785,7 @@
       }
 
       html:not([data-theme='dark']) body.page-login {
-        background: #1f5fae !important;
+        background: #153663 !important;
       }
 
       html:not([data-theme='dark']) body.page-login .site-header {
@@ -816,6 +816,11 @@
       html[data-theme='dark'] body.page-login .login-card {
         background: #132036 !important;
         border-color: #2a3b57 !important;
+      }
+
+      html[data-theme='dark'] body.page-login main.section {
+        background: transparent !important;
+        background-image: none !important;
       }
 
       @media (max-width: 920px) {
