@@ -763,9 +763,9 @@
 
       .page-login .login-shell {
         display: grid;
-        grid-template-columns: minmax(320px, 440px) minmax(420px, 520px);
-        gap: 24px;
-        align-items: center;
+        grid-template-columns: minmax(320px, 400px) minmax(420px, 500px);
+        gap: 22px;
+        align-items: start;
         justify-content: center;
       }
 
@@ -776,13 +776,13 @@
       }
 
       .page-login .login-story {
-        padding: 28px;
+        padding: 24px;
         background:
           radial-gradient(circle at top left, rgba(73, 125, 223, 0.18), transparent 50%),
           linear-gradient(180deg, #183862 0%, #122d50 100%);
         color: #f7fbff;
         display: grid;
-        gap: 18px;
+        gap: 16px;
       }
 
       .page-login .login-story .eyebrow,
@@ -793,30 +793,32 @@
 
       .page-login .login-story h2 {
         margin: 0;
-        font-size: clamp(2.1rem, 3.4vw, 3.25rem);
-        line-height: 1.02;
-        max-width: 8ch;
+        font-size: clamp(1.9rem, 3vw, 2.8rem);
+        line-height: 1.04;
+        max-width: 9ch;
         color: #ffffff;
       }
 
       .page-login .login-story-copy {
         display: grid;
-        gap: 14px;
+        gap: 12px;
       }
 
       .page-login .login-story-copy .lead {
-        max-width: 56ch;
+        max-width: 38ch;
+        font-size: 1rem;
       }
 
       .page-login .login-story-points {
         display: grid;
-        gap: 12px;
+        gap: 10px;
       }
 
       .page-login .login-story-point {
-        padding-left: 16px;
+        padding-left: 14px;
         border-left: 2px solid rgba(182, 209, 255, 0.22);
         color: rgba(236, 244, 255, 0.82);
+        font-size: 0.98rem;
       }
 
       .page-login .login-story-point strong {
@@ -845,9 +847,10 @@
       }
 
       .page-login .login-card {
-        padding: 32px;
+        padding: 28px;
         box-shadow: 0 24px 60px rgba(17, 45, 114, 0.16);
-        align-self: center;
+        align-self: start;
+        margin-top: 18px;
       }
 
       .page-login .login-helper {
@@ -916,6 +919,7 @@
 
         .page-login .login-card {
           order: 1;
+          margin-top: 0;
         }
 
         .page-login .login-story h2 {
@@ -969,10 +973,6 @@
               <div class="login-story-point">
                 <strong>Finance Oversight</strong>
                 Review earnings, freight loss, debts, and cashflow in one place.
-              </div>
-              <div class="login-story-point">
-                <strong>Staff Management</strong>
-                Manage permissions, ranks, and employee records without leaving the intranet.
               </div>
             </div>
             <div class="login-story-foot">
