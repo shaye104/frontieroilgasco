@@ -716,8 +716,8 @@
       .page-login .brand-mark-image img {
         display: block;
         width: auto;
-        height: 54px;
-        max-height: 54px;
+        height: 62px;
+        max-height: 62px;
         object-fit: contain;
       }
 
@@ -725,11 +725,12 @@
         display: none;
       }
 
-      .page-login .site-theme-toggle,
-      .page-login .btn-theme-toggle {
+      body.page-login .site-theme-toggle,
+      body.page-login .btn-theme-toggle {
         position: fixed !important;
         right: 24px !important;
         bottom: 24px !important;
+        left: auto !important;
         top: auto !important;
         z-index: 9999 !important;
         width: 58px !important;
@@ -744,30 +745,30 @@
         box-shadow: 0 18px 42px rgba(4, 10, 20, 0.2) !important;
       }
 
-      .page-login .site-theme-toggle svg,
-      .page-login .btn-theme-toggle svg {
+      body.page-login .site-theme-toggle svg,
+      body.page-login .btn-theme-toggle svg {
         width: 24px !important;
         height: 24px !important;
       }
 
-      .page-login .login-page {
+      body.page-login .login-page {
         min-height: calc(100vh - 72px);
         display: flex;
         align-items: center;
       }
 
-      .page-login .login-cluster {
+      body.page-login .login-cluster {
         width: min(1120px, calc(100vw - 48px));
         margin-inline: auto;
       }
 
-      .page-login .login-shell {
+      body.page-login .login-shell {
         display: block;
         max-width: 620px;
         margin: 0 auto;
       }
 
-      .page-login .login-card {
+      body.page-login .login-card {
         padding: 28px;
         border-radius: 24px;
         border-width: 1px;
@@ -775,65 +776,61 @@
         margin: 0 auto;
       }
 
-      .page-login .login-helper {
+      body.page-login .login-helper {
         color: #50627f;
       }
 
-      .page-login .login-meta-pill {
+      body.page-login .login-meta-pill {
         font-weight: 600;
       }
 
-      html:not([data-theme='dark']) .page-login,
-      html:not([data-theme='dark']) .page-login body {
-        background:
-          radial-gradient(circle at top left, rgba(53, 115, 213, 0.15), transparent 32%),
-          radial-gradient(circle at bottom right, rgba(32, 93, 190, 0.12), transparent 28%),
-          linear-gradient(180deg, #eef4fb 0%, #dbe9f7 100%) !important;
+      html:not([data-theme='dark']) body.page-login {
+        background: #1f5fae !important;
       }
 
-      html:not([data-theme='dark']) .page-login .site-header {
-        background: rgba(255, 255, 255, 0.88);
-        backdrop-filter: blur(18px);
-        border-bottom: 1px solid rgba(17, 45, 114, 0.1);
+      html:not([data-theme='dark']) body.page-login .site-header {
+        background: #ffffff !important;
+        backdrop-filter: none;
+        border-bottom: 1px solid rgba(17, 45, 114, 0.12);
       }
 
-      html:not([data-theme='dark']) .page-login .site-theme-toggle,
-      html:not([data-theme='dark']) .page-login .btn-theme-toggle {
+      html:not([data-theme='dark']) body.page-login .site-theme-toggle,
+      html:not([data-theme='dark']) body.page-login .btn-theme-toggle {
         background: rgba(255, 255, 255, 0.92);
         border-color: rgba(17, 45, 114, 0.12);
         color: #244f97;
       }
 
-      html:not([data-theme='dark']) .page-login .login-card {
+      html:not([data-theme='dark']) body.page-login .login-card {
         background: rgba(255, 255, 255, 0.94);
         border-color: rgba(17, 45, 114, 0.12);
       }
 
-      html[data-theme='dark'] .page-login .site-theme-toggle,
-      html[data-theme='dark'] .page-login .btn-theme-toggle {
+      html[data-theme='dark'] body.page-login .site-theme-toggle,
+      html[data-theme='dark'] body.page-login .btn-theme-toggle {
         background: #1a2940 !important;
         border-color: #2a3b57 !important;
         color: #f3f7fd !important;
       }
 
-      html[data-theme='dark'] .page-login .login-card {
+      html[data-theme='dark'] body.page-login .login-card {
         background: #132036 !important;
         border-color: #2a3b57 !important;
       }
 
       @media (max-width: 920px) {
-        .page-login .login-shell {
+        body.page-login .login-shell {
           max-width: 580px;
           margin: 0 auto;
         }
       }
 
       @media (max-width: 640px) {
-        .page-login .login-cluster {
+        body.page-login .login-cluster {
           width: min(100vw - 28px, 100%);
         }
 
-        .page-login .login-card {
+        body.page-login .login-card {
           padding: 24px;
           border-radius: 20px;
         }
