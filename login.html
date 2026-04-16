@@ -763,9 +763,10 @@
 
       .page-login .login-shell {
         display: grid;
-        grid-template-columns: minmax(0, 1.1fr) minmax(420px, 0.9fr);
-        gap: 28px;
-        align-items: stretch;
+        grid-template-columns: minmax(320px, 440px) minmax(420px, 520px);
+        gap: 24px;
+        align-items: center;
+        justify-content: center;
       }
 
       .page-login .login-story,
@@ -775,13 +776,13 @@
       }
 
       .page-login .login-story {
-        padding: 32px;
+        padding: 28px;
         background:
           radial-gradient(circle at top left, rgba(73, 125, 223, 0.18), transparent 50%),
           linear-gradient(180deg, #183862 0%, #122d50 100%);
         color: #f7fbff;
         display: grid;
-        gap: 20px;
+        gap: 18px;
       }
 
       .page-login .login-story .eyebrow,
@@ -792,9 +793,9 @@
 
       .page-login .login-story h2 {
         margin: 0;
-        font-size: clamp(2.2rem, 4vw, 4rem);
-        line-height: 1.08;
-        max-width: 12ch;
+        font-size: clamp(2.1rem, 3.4vw, 3.25rem);
+        line-height: 1.02;
+        max-width: 8ch;
         color: #ffffff;
       }
 
@@ -807,29 +808,22 @@
         max-width: 56ch;
       }
 
-      .page-login .login-story-grid {
+      .page-login .login-story-points {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 14px;
+        gap: 12px;
       }
 
-      .page-login .login-story-stat {
-        padding: 16px 18px;
-        border-radius: 18px;
-        border: 1px solid rgba(182, 209, 255, 0.16);
-        background: rgba(255, 255, 255, 0.08);
-        display: grid;
-        gap: 6px;
+      .page-login .login-story-point {
+        padding-left: 16px;
+        border-left: 2px solid rgba(182, 209, 255, 0.22);
+        color: rgba(236, 244, 255, 0.82);
       }
 
-      .page-login .login-story-stat strong {
-        font-size: 0.98rem;
+      .page-login .login-story-point strong {
+        display: block;
+        margin-bottom: 4px;
         color: #ffffff;
-      }
-
-      .page-login .login-story-stat span {
-        font-size: 0.95rem;
-        color: rgba(236, 244, 255, 0.78);
+        font-size: 0.98rem;
       }
 
       .page-login .login-story-foot {
@@ -912,6 +906,8 @@
       @media (max-width: 920px) {
         .page-login .login-shell {
           grid-template-columns: 1fr;
+          max-width: 580px;
+          margin: 0 auto;
         }
 
         .page-login .login-story {
@@ -938,8 +934,8 @@
           border-radius: 20px;
         }
 
-        .page-login .login-story-grid {
-          grid-template-columns: 1fr;
+        .page-login .login-story {
+          gap: 16px;
         }
       }
     </style>
@@ -965,23 +961,19 @@
               <h2>Run voyages, finance, and staff ops from one clean intranet.</h2>
               <p class="lead">The same Frontier workspace for live trips, finance tracking, and admin management, with one login and one theme system.</p>
             </div>
-            <div class="login-story-grid">
-              <article class="login-story-stat">
+            <div class="login-story-points">
+              <div class="login-story-point">
                 <strong>Voyage Control</strong>
-                <span>Track ongoing trips, start departures, and review completed voyages.</span>
-              </article>
-              <article class="login-story-stat">
+                Track ongoing trips, start departures, and review completed voyages.
+              </div>
+              <div class="login-story-point">
                 <strong>Finance Oversight</strong>
-                <span>Review earnings, freight loss, debts, and cashflow in one place.</span>
-              </article>
-              <article class="login-story-stat">
+                Review earnings, freight loss, debts, and cashflow in one place.
+              </div>
+              <div class="login-story-point">
                 <strong>Staff Management</strong>
-                <span>Manage permissions, ranks, and employee records without leaving the intranet.</span>
-              </article>
-              <article class="login-story-stat">
-                <strong>Persistent Theme</strong>
-                <span>Switch between light and dark mode whenever you want and keep that preference.</span>
-              </article>
+                Manage permissions, ranks, and employee records without leaving the intranet.
+              </div>
             </div>
             <div class="login-story-foot">
               <span class="login-story-chip">Discord sign-in</span>
