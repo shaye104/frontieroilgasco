@@ -376,7 +376,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260413222657" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260416002917" />
       <style id="frontier-dark-cleanup-final">
       html[data-theme='dark'] {
         color-scheme: dark;
@@ -660,6 +660,30 @@
 
       html[data-theme='dark'] .finance-cartesian-svg > rect:first-child {
         fill: #132036 !important;
+      }
+
+      html:not([data-theme='dark']) .finance-kpi-grid .finance-kpi {
+        background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%) !important;
+        border: 1px solid rgba(24, 67, 136, 0.12) !important;
+        box-shadow: 0 14px 34px rgba(17, 45, 114, 0.08) !important;
+      }
+
+      html:not([data-theme='dark']) .finance-kpi-grid .finance-kpi .finance-kpi-icon {
+        background: #eef4ff !important;
+        border: 1px solid rgba(24, 67, 136, 0.1) !important;
+        color: #2f67bf !important;
+      }
+
+      html:not([data-theme='dark']) .finance-kpi-grid .finance-kpi .finance-kpi-label {
+        color: #5f7291 !important;
+      }
+
+      html:not([data-theme='dark']) .finance-kpi-grid .finance-kpi .finance-kpi-value {
+        color: #13366f !important;
+      }
+
+      html:not([data-theme='dark']) .finance-kpi-grid .finance-kpi .finance-kpi-delta {
+        color: #536885 !important;
       }
 
       html[data-theme='dark'] .finance-chart-tooltip {

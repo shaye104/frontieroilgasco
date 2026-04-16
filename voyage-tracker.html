@@ -371,7 +371,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260413222149" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260416002917" />
       <style id="frontier-dark-cleanup-final">
       html[data-theme='dark'] {
         color-scheme: dark;
@@ -785,6 +785,55 @@
     background: rgba(180, 150, 255, 0.14) !important;
     border-color: rgba(180, 150, 255, 0.26) !important;
     color: #d8caff !important;
+  }
+
+  html[data-theme='dark'] .voyage-empty-state,
+  html[data-theme='dark'] .voyage-empty-state-muted,
+  html[data-theme='dark'] #ongoingVoyages > .voyage-empty-state,
+  html[data-theme='dark'] #archivedVoyages > .voyage-empty-state {
+    background: #16253a !important;
+    border: 1px solid #2c4060 !important;
+    color: #dce9fb !important;
+    box-shadow: none !important;
+  }
+
+  html[data-theme='dark'] .voyage-empty-state h3,
+  html[data-theme='dark'] .voyage-empty-state-muted h3,
+  html[data-theme='dark'] .voyage-empty-state p,
+  html[data-theme='dark'] .voyage-empty-state-muted p,
+  html[data-theme='dark'] .voyage-empty-icon {
+    color: inherit !important;
+  }
+
+  html[data-theme='dark'] #startVoyageModal,
+  html[data-theme='dark'] #startVoyageModal .modal-card,
+  html[data-theme='dark'] #startVoyageModal .voyage-start-form,
+  html[data-theme='dark'] #startVoyageModal .voyage-modal-section,
+  html[data-theme='dark'] #startVoyageModal .voyage-assigned-wrap,
+  html[data-theme='dark'] #startVoyageModal .voyage-assigned-ship,
+  html[data-theme='dark'] #startVoyageModal .voyage-assigned-ship-details,
+  html[data-theme='dark'] #startVoyageModal .combobox-wrap,
+  html[data-theme='dark'] #startVoyageModal .pill-list,
+  html[data-theme='dark'] #startVoyageModal .autocomplete-list,
+  html[data-theme='dark'] #startVoyageModal .autocomplete-empty {
+    background: #16253a !important;
+    background-image: none !important;
+    border-color: #2c4060 !important;
+    color: #e6edf7 !important;
+    box-shadow: none !important;
+  }
+
+  html[data-theme='dark'] #startVoyageModal .modal-overlay,
+  html[data-theme='dark'] .modal-overlay:not(.hidden) {
+    background: rgba(5, 12, 24, 0.66) !important;
+  }
+
+  html[data-theme='dark'] #startVoyageModal .voyage-assigned-ship-title,
+  html[data-theme='dark'] #startVoyageModal .voyage-assigned-ship-meta,
+  html[data-theme='dark'] #startVoyageModal .voyage-start-hint,
+  html[data-theme='dark'] #startVoyageModal .autocomplete-empty,
+  html[data-theme='dark'] #startVoyageModal p {
+    color: #d8e2f1 !important;
   }
 </style>
   </head>

@@ -371,7 +371,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260413222149" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260416002917" />
       <style id="frontier-dark-cleanup-final">
       html[data-theme='dark'] {
         color-scheme: dark;
@@ -688,6 +688,244 @@
         color: #8ab5ff !important;
         border-bottom-color: #8ab5ff !important;
       }
+
+      .page-login .site-nav {
+        display: none !important;
+      }
+
+      .page-login .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        min-height: 72px;
+      }
+
+      .page-login .header-row {
+        min-height: 72px;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 18px;
+      }
+
+      .page-login .brand {
+        display: inline-flex;
+        align-items: center;
+        min-height: 72px;
+      }
+
+      .page-login .brand-mark-image img {
+        display: block;
+        width: auto;
+        height: 54px;
+        max-height: 54px;
+        object-fit: contain;
+      }
+
+      .page-login .brand-text {
+        display: none;
+      }
+
+      .page-login .site-theme-toggle,
+      .page-login .btn-theme-toggle {
+        position: fixed !important;
+        right: 24px !important;
+        bottom: 24px !important;
+        top: auto !important;
+        z-index: 9999 !important;
+        width: 58px !important;
+        height: 58px !important;
+        min-width: 58px !important;
+        min-height: 58px !important;
+        padding: 0 !important;
+        border-radius: 999px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 18px 42px rgba(4, 10, 20, 0.2) !important;
+      }
+
+      .page-login .site-theme-toggle svg,
+      .page-login .btn-theme-toggle svg {
+        width: 24px !important;
+        height: 24px !important;
+      }
+
+      .page-login .login-page {
+        min-height: calc(100vh - 72px);
+        display: flex;
+        align-items: center;
+      }
+
+      .page-login .login-cluster {
+        width: min(1180px, calc(100vw - 48px));
+      }
+
+      .page-login .login-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+        gap: 28px;
+        align-items: stretch;
+      }
+
+      .page-login .login-story,
+      .page-login .login-card {
+        border-radius: 24px;
+        border-width: 1px;
+      }
+
+      .page-login .login-story {
+        padding: 32px;
+        background:
+          radial-gradient(circle at top left, rgba(73, 125, 223, 0.18), transparent 50%),
+          linear-gradient(180deg, #183862 0%, #122d50 100%);
+        color: #f7fbff;
+        display: grid;
+        gap: 20px;
+      }
+
+      .page-login .login-story .eyebrow,
+      .page-login .login-story .lead,
+      .page-login .login-story-copy p {
+        color: rgba(236, 244, 255, 0.82);
+      }
+
+      .page-login .login-story h2 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.05;
+        color: #ffffff;
+      }
+
+      .page-login .login-story-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .page-login .login-story-stat {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(182, 209, 255, 0.16);
+        background: rgba(255, 255, 255, 0.08);
+        display: grid;
+        gap: 6px;
+      }
+
+      .page-login .login-story-stat strong {
+        font-size: 0.98rem;
+        color: #ffffff;
+      }
+
+      .page-login .login-story-stat span {
+        font-size: 0.95rem;
+        color: rgba(236, 244, 255, 0.78);
+      }
+
+      .page-login .login-story-foot {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .page-login .login-story-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(182, 209, 255, 0.16);
+        color: rgba(247, 251, 255, 0.88);
+        font-weight: 600;
+      }
+
+      .page-login .login-card {
+        padding: 32px;
+        box-shadow: 0 24px 60px rgba(17, 45, 114, 0.16);
+      }
+
+      .page-login .login-helper {
+        color: #50627f;
+      }
+
+      .page-login .login-meta-pill {
+        font-weight: 600;
+      }
+
+      html:not([data-theme='dark']) .page-login,
+      html:not([data-theme='dark']) .page-login body {
+        background:
+          radial-gradient(circle at top left, rgba(53, 115, 213, 0.15), transparent 32%),
+          radial-gradient(circle at bottom right, rgba(32, 93, 190, 0.12), transparent 28%),
+          linear-gradient(180deg, #eef4fb 0%, #dbe9f7 100%) !important;
+      }
+
+      html:not([data-theme='dark']) .page-login .site-header {
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(17, 45, 114, 0.1);
+      }
+
+      html:not([data-theme='dark']) .page-login .site-theme-toggle,
+      html:not([data-theme='dark']) .page-login .btn-theme-toggle {
+        background: rgba(255, 255, 255, 0.92);
+        border-color: rgba(17, 45, 114, 0.12);
+        color: #244f97;
+      }
+
+      html:not([data-theme='dark']) .page-login .login-card {
+        background: rgba(255, 255, 255, 0.94);
+        border-color: rgba(17, 45, 114, 0.12);
+      }
+
+      html[data-theme='dark'] .page-login .site-theme-toggle,
+      html[data-theme='dark'] .page-login .btn-theme-toggle {
+        background: #1a2940 !important;
+        border-color: #2a3b57 !important;
+        color: #f3f7fd !important;
+      }
+
+      html[data-theme='dark'] .page-login .login-story {
+        background:
+          radial-gradient(circle at top left, rgba(116, 168, 255, 0.18), transparent 52%),
+          linear-gradient(180deg, #162740 0%, #122033 100%) !important;
+        border-color: #2a3b57 !important;
+      }
+
+      html[data-theme='dark'] .page-login .login-card {
+        background: #132036 !important;
+        border-color: #2a3b57 !important;
+      }
+
+      @media (max-width: 920px) {
+        .page-login .login-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .page-login .login-story {
+          order: 2;
+        }
+
+        .page-login .login-card {
+          order: 1;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .page-login .login-cluster {
+          width: min(100vw - 28px, 100%);
+        }
+
+        .page-login .login-card,
+        .page-login .login-story {
+          padding: 24px;
+          border-radius: 20px;
+        }
+
+        .page-login .login-story-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body class="page page-login">
@@ -705,6 +943,36 @@
     <main class="login-page section">
       <div class="container login-cluster">
         <div class="login-shell">
+          <section class="panel login-story" aria-hidden="true">
+            <div class="login-story-copy">
+              <span class="eyebrow">Operations Access</span>
+              <h2>Run voyages, finance, and staff ops from one clean intranet.</h2>
+              <p class="lead">The same Frontier workspace for live trips, finance tracking, and admin management, with one login and one theme system.</p>
+            </div>
+            <div class="login-story-grid">
+              <article class="login-story-stat">
+                <strong>Voyage Control</strong>
+                <span>Track ongoing trips, start departures, and review completed voyages.</span>
+              </article>
+              <article class="login-story-stat">
+                <strong>Finance Oversight</strong>
+                <span>Review earnings, freight loss, debts, and cashflow in one place.</span>
+              </article>
+              <article class="login-story-stat">
+                <strong>Staff Management</strong>
+                <span>Manage permissions, ranks, and employee records without leaving the intranet.</span>
+              </article>
+              <article class="login-story-stat">
+                <strong>Persistent Theme</strong>
+                <span>Switch between light and dark mode whenever you want and keep that preference.</span>
+              </article>
+            </div>
+            <div class="login-story-foot">
+              <span class="login-story-chip">Discord sign-in</span>
+              <span class="login-story-chip">Role-aware access</span>
+              <span class="login-story-chip">Live operations</span>
+            </div>
+          </section>
           <section class="panel login-card">
             <div id="authPanel">
               <span class="eyebrow">Frontier Oil & Gas Company Intranet</span>
