@@ -762,95 +762,17 @@
       }
 
       .page-login .login-shell {
-        display: grid;
-        grid-template-columns: minmax(320px, 400px) minmax(420px, 500px);
-        gap: 22px;
-        align-items: start;
-        justify-content: center;
-      }
-
-      .page-login .login-story,
-      .page-login .login-card {
-        border-radius: 24px;
-        border-width: 1px;
-      }
-
-      .page-login .login-story {
-        padding: 24px;
-        background:
-          radial-gradient(circle at top left, rgba(73, 125, 223, 0.18), transparent 50%),
-          linear-gradient(180deg, #183862 0%, #122d50 100%);
-        color: #f7fbff;
-        display: grid;
-        gap: 16px;
-      }
-
-      .page-login .login-story .eyebrow,
-      .page-login .login-story .lead,
-      .page-login .login-story-copy p {
-        color: rgba(236, 244, 255, 0.82);
-      }
-
-      .page-login .login-story h2 {
-        margin: 0;
-        font-size: clamp(1.9rem, 3vw, 2.8rem);
-        line-height: 1.04;
-        max-width: 9ch;
-        color: #ffffff;
-      }
-
-      .page-login .login-story-copy {
-        display: grid;
-        gap: 12px;
-      }
-
-      .page-login .login-story-copy .lead {
-        max-width: 38ch;
-        font-size: 1rem;
-      }
-
-      .page-login .login-story-points {
-        display: grid;
-        gap: 10px;
-      }
-
-      .page-login .login-story-point {
-        padding-left: 14px;
-        border-left: 2px solid rgba(182, 209, 255, 0.22);
-        color: rgba(236, 244, 255, 0.82);
-        font-size: 0.98rem;
-      }
-
-      .page-login .login-story-point strong {
         display: block;
-        margin-bottom: 4px;
-        color: #ffffff;
-        font-size: 0.98rem;
-      }
-
-      .page-login .login-story-foot {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .page-login .login-story-chip {
-        display: inline-flex;
-        align-items: center;
-        min-height: 36px;
-        padding: 0 14px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(182, 209, 255, 0.16);
-        color: rgba(247, 251, 255, 0.88);
-        font-weight: 600;
+        max-width: 620px;
+        margin: 0 auto;
       }
 
       .page-login .login-card {
         padding: 28px;
+        border-radius: 24px;
+        border-width: 1px;
         box-shadow: 0 24px 60px rgba(17, 45, 114, 0.16);
-        align-self: start;
-        margin-top: 18px;
+        margin: 0 auto;
       }
 
       .page-login .login-helper {
@@ -894,13 +816,6 @@
         color: #f3f7fd !important;
       }
 
-      html[data-theme='dark'] .page-login .login-story {
-        background:
-          radial-gradient(circle at top left, rgba(116, 168, 255, 0.18), transparent 52%),
-          linear-gradient(180deg, #162740 0%, #122033 100%) !important;
-        border-color: #2a3b57 !important;
-      }
-
       html[data-theme='dark'] .page-login .login-card {
         background: #132036 !important;
         border-color: #2a3b57 !important;
@@ -908,22 +823,8 @@
 
       @media (max-width: 920px) {
         .page-login .login-shell {
-          grid-template-columns: 1fr;
           max-width: 580px;
           margin: 0 auto;
-        }
-
-        .page-login .login-story {
-          order: 2;
-        }
-
-        .page-login .login-card {
-          order: 1;
-          margin-top: 0;
-        }
-
-        .page-login .login-story h2 {
-          max-width: none;
         }
       }
 
@@ -932,14 +833,9 @@
           width: min(100vw - 28px, 100%);
         }
 
-        .page-login .login-card,
-        .page-login .login-story {
+        .page-login .login-card {
           padding: 24px;
           border-radius: 20px;
-        }
-
-        .page-login .login-story {
-          gap: 16px;
         }
       }
     </style>
@@ -957,30 +853,8 @@
     </header>
 
     <main class="login-page section">
-      <div class="container login-cluster">
-        <div class="login-shell">
-          <section class="panel login-story" aria-hidden="true">
-            <div class="login-story-copy">
-              <span class="eyebrow">Operations Access</span>
-              <h2>Run voyages, finance, and staff ops from one clean intranet.</h2>
-              <p class="lead">The same Frontier workspace for live trips, finance tracking, and admin management, with one login and one theme system.</p>
-            </div>
-            <div class="login-story-points">
-              <div class="login-story-point">
-                <strong>Voyage Control</strong>
-                Track ongoing trips, start departures, and review completed voyages.
-              </div>
-              <div class="login-story-point">
-                <strong>Finance Oversight</strong>
-                Review earnings, freight loss, debts, and cashflow in one place.
-              </div>
-            </div>
-            <div class="login-story-foot">
-              <span class="login-story-chip">Discord sign-in</span>
-              <span class="login-story-chip">Role-aware access</span>
-              <span class="login-story-chip">Live operations</span>
-            </div>
-          </section>
+        <div class="container login-cluster">
+          <div class="login-shell">
           <section class="panel login-card">
             <div id="authPanel">
               <span class="eyebrow">Frontier Oil & Gas Company Intranet</span>
