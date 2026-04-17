@@ -700,7 +700,7 @@
       }
 
       .page-login .header-row {
-        min-height: 64px;
+        min-height: 72px;
         align-items: center;
         justify-content: flex-start;
         gap: 18px;
@@ -709,14 +709,14 @@
       .page-login .brand {
         display: inline-flex;
         align-items: center;
-        min-height: 64px;
+        min-height: 72px;
       }
 
       .page-login .brand-mark-image img {
         display: block;
         width: auto;
-        height: 50px;
-        max-height: 50px;
+        height: 58px;
+        max-height: 58px;
         object-fit: contain;
       }
 
@@ -774,6 +774,8 @@
         border-width: 1px;
         box-shadow: 0 24px 60px rgba(17, 45, 114, 0.16);
         margin: 0 auto;
+        overflow: hidden;
+        background-clip: padding-box;
       }
 
       body.page-login .login-helper {
@@ -784,8 +786,11 @@
         font-weight: 600;
       }
 
-      html:not([data-theme='dark']) body.page-login {
-        background: #153663 !important;
+      html:not([data-theme='dark']) body.page-login,
+      html:not([data-theme='dark']) body.page-login main.section,
+      html:not([data-theme='dark']) body.page-login .login-page {
+        background: #16345d !important;
+        background-image: none !important;
       }
 
       html:not([data-theme='dark']) body.page-login .site-header {
@@ -806,6 +811,12 @@
         border-color: rgba(17, 45, 114, 0.12);
       }
 
+      html[data-theme='dark'] body.page-login .login-page,
+      html[data-theme='dark'] body.page-login main.section {
+        background: #091321 !important;
+        background-image: none !important;
+      }
+
       html[data-theme='dark'] body.page-login .site-theme-toggle,
       html[data-theme='dark'] body.page-login .btn-theme-toggle {
         background: #1a2940 !important;
@@ -816,6 +827,7 @@
       html[data-theme='dark'] body.page-login .login-card {
         background: #132036 !important;
         border-color: #2a3b57 !important;
+        box-shadow: none !important;
       }
 
       html[data-theme='dark'] body.page-login main.section {
