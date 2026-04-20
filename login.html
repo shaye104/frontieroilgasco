@@ -371,7 +371,7 @@
 
 
 
-      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260416002917" />
+      <link rel="stylesheet" href="/assets/dist/css/app.bundle.css?v=20260420212752" />
       <style id="frontier-dark-cleanup-final">
       html[data-theme='dark'] {
         color-scheme: dark;
@@ -700,7 +700,7 @@
       }
 
       .page-login .header-row {
-        min-height: 72px;
+        min-height: 64px;
         align-items: center;
         justify-content: flex-start;
         gap: 18px;
@@ -709,15 +709,17 @@
       .page-login .brand {
         display: inline-flex;
         align-items: center;
-        min-height: 72px;
+        min-height: 64px;
       }
 
       .page-login .brand-mark-image img {
         display: block;
-        width: auto;
-        height: 58px;
-        max-height: 58px;
+        width: 320px;
+        max-width: 320px;
+        height: 60px;
+        max-height: 60px;
         object-fit: contain;
+        object-position: left center;
       }
 
       .page-login .brand-text {
@@ -766,6 +768,9 @@
         display: block;
         max-width: 620px;
         margin: 0 auto;
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
       }
 
       body.page-login .login-card {
@@ -789,7 +794,7 @@
       html:not([data-theme='dark']) body.page-login,
       html:not([data-theme='dark']) body.page-login main.section,
       html:not([data-theme='dark']) body.page-login .login-page {
-        background: #16345d !important;
+        background: var(--color-primary-strong) !important;
         background-image: none !important;
       }
 
@@ -827,6 +832,12 @@
       html[data-theme='dark'] body.page-login .login-card {
         background: #132036 !important;
         border-color: #2a3b57 !important;
+        box-shadow: none !important;
+      }
+
+      html[data-theme='dark'] body.page-login .login-shell {
+        background: transparent !important;
+        border: 0 !important;
         box-shadow: none !important;
       }
 
