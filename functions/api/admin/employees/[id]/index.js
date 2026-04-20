@@ -61,43 +61,54 @@ function mapRobloxRoleSyncFailure(result) {
   const reason = String(result?.reason || '').trim();
   if (reason === 'missing_roblox_user_id') {
     return {
-      status: 400,
-      error: 'Cannot change rank until this employee has a Roblox User ID.'
+      status: 200,
+      error: 'Employee rank saved, but Roblox sync was skipped because this employee has no Roblox User ID yet.'
     };
   }
   if (reason === 'rank_not_mapped') {
     return {
-      status: 400,
-      error: 'The selected rank is not mapped to a Roblox role.'
+      status: 200,
+      error: 'Employee rank saved, but the selected website rank is not mapped to a Roblox role yet.'
+    };
+  }
+  if (reason === 'mapped_role_missing') {
+    return {
+      status: 200,
+      error: 'Employee rank saved, but this rank is mapped to a Roblox role that no longer exists in the group.'
     };
   }
   if (reason === 'missing_group_config') {
     return {
-      status: 500,
-      error: 'Roblox group integration is not configured.'
+      status: 200,
+      error: 'Employee rank saved, but Roblox group integration is not configured.'
     };
   }
   if (reason === 'not_in_group') {
     return {
-      status: 409,
-      error: 'This user is not currently in the Roblox group.'
+      status: 200,
+      error: 'Employee rank saved, but this user is not currently in the Roblox group.'
     };
   }
-  if (reason === 'membership_lookup_failed' || reason === 'missing_user') {
+  if (reason === 'membership_lookup_failed' || reason === 'missing_user' || reason === 'roles_lookup_failed') {
     return {
-      status: 502,
-      error: 'Unable to verify Roblox group membership right now.'
+      status: 200,
+      error: 'Employee rank saved, but Roblox group details could not be verified right now.'
     };
   }
-  if (reason.startsWith('lookup_http_') || reason.startsWith('patch_http_') || reason.startsWith('delete_http_')) {
+  if (
+    reason.startsWith('lookup_http_') ||
+    reason.startsWith('patch_http_') ||
+    reason.startsWith('delete_http_') ||
+    reason.startsWith('roles_http_')
+  ) {
     return {
-      status: 502,
-      error: 'Roblox API request failed while updating the group role.'
+      status: 200,
+      error: 'Employee rank saved, but the Roblox API failed while updating the group role.'
     };
   }
   return {
-    status: Number(result?.status || 0) || 502,
-    error: 'Failed to update Roblox group role.'
+    status: 200,
+    error: 'Employee rank saved, but Roblox group role sync failed.'
   };
 }
 
@@ -322,32 +333,6 @@ export async function onRequestPut(context) {
       robloxUserId: nextRobloxUserId,
       rankValue: nextRank
     });
-    if (!rankRoleSyncPrecheck.ok) {
-      const failure = mapRobloxRoleSyncFailure(rankRoleSyncPrecheck);
-      await writeAdminActivityEvent(env, {
-        actorEmployeeId: actorEmployee?.id || null,
-        actorName: session.displayName || session.userId,
-        actorDiscordUserId: session.userId,
-        actionType: rankRoleSyncPrecheck.skipped ? 'ROBLOX_GROUP_ROLE_SKIPPED' : 'ROBLOX_GROUP_ROLE_FAILED',
-        targetEmployeeId: employeeId,
-        summary: `${failure.error} Rank update aborted for ${existing.roblox_username || `#${employeeId}`}.`,
-        metadata: {
-          attemptedRank: nextRank,
-          robloxUserId: nextRobloxUserId || null,
-          result: rankRoleSyncPrecheck
-        }
-      });
-      return json(
-        {
-          error: failure.error,
-          robloxGroupSync: {
-            action: 'update_role',
-            ...rankRoleSyncPrecheck
-          }
-        },
-        failure.status
-      );
-    }
   }
 
   await env.DB.prepare(
@@ -545,7 +530,16 @@ export async function onRequestPut(context) {
     });
   }
 
-  return json({ employee, rankSync: rankSyncDebug, robloxGroupSync });
+  const robloxWarning = !robloxGroupSync?.ok && rankChanged && !shouldRemoveFromGroup
+    ? mapRobloxRoleSyncFailure(robloxGroupSync)
+    : null;
+
+  return json({
+    employee,
+    rankSync: rankSyncDebug,
+    robloxGroupSync,
+    warning: robloxWarning?.error || null
+  });
 }
 
 export async function onRequestDelete(context) {

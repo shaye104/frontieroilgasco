@@ -1872,7 +1872,11 @@ export async function initManageEmployees(config) {
 
     void (async () => {
       try {
-        await updateEmployee(employeeId, changedPayload);
+        const result = await updateEmployee(employeeId, changedPayload);
+        const nextFeedback = drawerOverview?.querySelector('#drawerOverviewFeedback');
+        if (nextFeedback && result?.warning) {
+          showMessage(nextFeedback, result.warning, 'info');
+        }
         void loadEmployees();
       } catch (error) {
         payload.employee = previous;

@@ -53,6 +53,23 @@ async function findMembershipNameByUserId(env, groupId, robloxUserId) {
   return { ok: true, membershipName };
 }
 
+async function getGroupRolePathSet(env, groupId) {
+  const result = await callRobloxGroupApi(env, `/groups/${groupId}/roles`, { method: 'GET' });
+  if (!result.ok) {
+    return {
+      ok: false,
+      reason: result.error || `roles_http_${Number(result.status || 0)}`
+    };
+  }
+  const rows = Array.isArray(result.payload?.groupRoles) ? result.payload.groupRoles : [];
+  const rolePaths = new Set();
+  rows.forEach((row) => {
+    const roleId = cleanDigits(row?.id || row?.roleId || row?.role_id);
+    if (roleId) rolePaths.add(`groups/roles/${roleId}`);
+  });
+  return { ok: true, rolePaths };
+}
+
 export async function getRobloxRolePathForRank(env, rankValue) {
   const rank = text(rankValue);
   if (!rank) return '';
@@ -88,6 +105,17 @@ export async function syncRobloxRoleForEmployee(env, { robloxUserId, rankValue }
 
   const groupId = Number(env?.ROBLOX_GROUP_ID || 0);
   if (!groupId) return { ok: false, skipped: true, reason: 'missing_group_config' };
+
+  const groupRoles = await getGroupRolePathSet(env, groupId);
+  if (!groupRoles.ok) return { ok: false, skipped: false, reason: groupRoles.reason || 'roles_lookup_failed' };
+  if (!groupRoles.rolePaths.has(rolePath)) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'mapped_role_missing',
+      rolePath
+    };
+  }
 
   const membershipLookup = await findMembershipNameByUserId(env, groupId, userId);
   if (!membershipLookup.ok) return { ok: false, skipped: true, reason: membershipLookup.reason || 'membership_lookup_failed' };
