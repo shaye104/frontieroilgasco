@@ -153,6 +153,145 @@ async function getBlockingReferenceSummary(env, employeeId) {
   return { total, references };
 }
 
+async function listNumericIds(statementPromise) {
+  const rows = await statementPromise;
+  return (rows?.results || [])
+    .map((row) => Number(row?.id || 0))
+    .filter((value) => Number.isInteger(value) && value > 0);
+}
+
+function uniqueNumericIds(values) {
+  return [...new Set((Array.isArray(values) ? values : []).map((value) => Number(value || 0)).filter((value) => Number.isInteger(value) && value > 0))];
+}
+
+function buildInClause(values) {
+  const ids = uniqueNumericIds(values);
+  if (!ids.length) return null;
+  return {
+    ids,
+    placeholders: ids.map(() => '?').join(', ')
+  };
+}
+
+async function purgeEmployeeHistory(env, employee) {
+  const employeeId = Number(employee?.id || 0);
+  if (!Number.isInteger(employeeId) || employeeId <= 0) return;
+
+  const ownedOrCommandedVoyageIds = await listNumericIds(
+    env.DB
+      .prepare('SELECT id FROM voyages WHERE owner_employee_id = ? OR officer_of_watch_employee_id = ?')
+      .bind(employeeId, employeeId)
+      .all()
+  );
+
+  const collectorLedgerIds = await listNumericIds(
+    env.DB
+      .prepare('SELECT cashflow_entry_id AS id FROM finance_collector_remittances WHERE collector_employee_id = ? AND cashflow_entry_id IS NOT NULL')
+      .bind(employeeId)
+      .all()
+  );
+
+  const actorLedgerIds = await listNumericIds(
+    env.DB
+      .prepare('SELECT id FROM finance_cash_ledger_entries WHERE created_by_employee_id = ? OR deleted_by_employee_id = ?')
+      .bind(employeeId, employeeId)
+      .all()
+  );
+
+  let voyageLedgerIds = [];
+  const voyageClause = buildInClause(ownedOrCommandedVoyageIds);
+  if (voyageClause) {
+    voyageLedgerIds = await listNumericIds(
+      env.DB
+        .prepare(`SELECT id FROM finance_cash_ledger_entries WHERE voyage_id IN (${voyageClause.placeholders})`)
+        .bind(...voyageClause.ids)
+        .all()
+    );
+  }
+
+  const ledgerIdsToDelete = uniqueNumericIds([...collectorLedgerIds, ...actorLedgerIds, ...voyageLedgerIds]);
+  const ledgerClause = buildInClause(ledgerIdsToDelete);
+
+  if (ledgerClause) {
+    await env.DB
+      .prepare(`UPDATE finance_collector_remittances SET cashflow_entry_id = NULL WHERE cashflow_entry_id IN (${ledgerClause.placeholders})`)
+      .bind(...ledgerClause.ids)
+      .run();
+    await env.DB
+      .prepare(
+        `DELETE FROM finance_cashflow_audit
+         WHERE entry_id IN (${ledgerClause.placeholders}) OR performed_by_employee_id = ?`
+      )
+      .bind(...ledgerClause.ids, employeeId)
+      .run();
+    await env.DB
+      .prepare(`DELETE FROM finance_cash_ledger_entries WHERE id IN (${ledgerClause.placeholders})`)
+      .bind(...ledgerClause.ids)
+      .run();
+  } else {
+    await env.DB.prepare('DELETE FROM finance_cashflow_audit WHERE performed_by_employee_id = ?').bind(employeeId).run();
+  }
+
+  if (voyageClause) {
+    await env.DB
+      .prepare(`DELETE FROM finance_collector_remittances WHERE voyage_id IN (${voyageClause.placeholders})`)
+      .bind(...voyageClause.ids)
+      .run();
+    await env.DB
+      .prepare(`DELETE FROM finance_reimbursement_settlements WHERE voyage_id IN (${voyageClause.placeholders})`)
+      .bind(...voyageClause.ids)
+      .run();
+    await env.DB
+      .prepare(`DELETE FROM finance_settlement_audit WHERE voyage_id IN (${voyageClause.placeholders})`)
+      .bind(...voyageClause.ids)
+      .run();
+    await env.DB
+      .prepare(`DELETE FROM voyage_logs WHERE voyage_id IN (${voyageClause.placeholders})`)
+      .bind(...voyageClause.ids)
+      .run();
+    await env.DB
+      .prepare(`DELETE FROM voyage_tote_lines WHERE voyage_id IN (${voyageClause.placeholders})`)
+      .bind(...voyageClause.ids)
+      .run();
+    await env.DB
+      .prepare(`DELETE FROM voyage_participants WHERE voyage_id IN (${voyageClause.placeholders})`)
+      .bind(...voyageClause.ids)
+      .run();
+    await env.DB
+      .prepare(`DELETE FROM voyage_crew_members WHERE voyage_id IN (${voyageClause.placeholders})`)
+      .bind(...voyageClause.ids)
+      .run();
+    await env.DB
+      .prepare(`DELETE FROM voyages WHERE id IN (${voyageClause.placeholders})`)
+      .bind(...voyageClause.ids)
+      .run();
+  }
+
+  await env.DB.prepare('DELETE FROM finance_reimbursement_settlements WHERE owner_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('DELETE FROM finance_collector_remittances WHERE collector_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('DELETE FROM voyage_tote_lines WHERE owner_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('DELETE FROM voyage_logs WHERE author_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('DELETE FROM voyage_participants WHERE employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('DELETE FROM voyage_crew_members WHERE employee_id = ?').bind(employeeId).run();
+
+  await env.DB.prepare('UPDATE employees SET activated_by_employee_id = NULL WHERE activated_by_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE disciplinary_records SET issued_by_employee_id = NULL WHERE issued_by_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE disciplinary_records SET closed_by_employee_id = NULL WHERE closed_by_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE employee_vessel_assignments SET assigned_by_employee_id = NULL WHERE assigned_by_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE voyages SET deleted_by_employee_id = NULL WHERE deleted_by_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE finance_settlement_audit SET settled_by_employee_id = NULL WHERE settled_by_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE finance_settlement_audit SET oow_employee_id = NULL WHERE oow_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE finance_reimbursement_settlements SET settled_by_employee_id = NULL WHERE settled_by_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE finance_collector_remittances SET settled_by_employee_id = NULL WHERE settled_by_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE live_notifications SET sender_employee_id = NULL WHERE sender_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE admin_activity_events SET actor_employee_id = NULL WHERE actor_employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('UPDATE admin_activity_events SET target_employee_id = NULL WHERE target_employee_id = ?').bind(employeeId).run();
+
+  await env.DB.prepare('DELETE FROM live_notification_dismissals WHERE employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('DELETE FROM live_notification_presence_events WHERE employee_id = ?').bind(employeeId).run();
+  await env.DB.prepare('DELETE FROM live_notification_presence WHERE employee_id = ?').bind(employeeId).run();
+}
+
 async function findDuplicateEmployee(env, { robloxUsername, robloxUserId }, excludeEmployeeId) {
   const username = normalizeText(robloxUsername);
   const userId = normalizeText(robloxUserId);
@@ -579,8 +718,9 @@ export async function onRequestDelete(context) {
     return json({ error: 'Removal reason is required.' }, 400);
   }
 
+  const isOverrideDelete = hasHierarchyBypass(env, session);
   const blocking = await getBlockingReferenceSummary(env, employeeId);
-  if (Number(blocking?.total || 0) > 0) {
+  if (Number(blocking?.total || 0) > 0 && !isOverrideDelete) {
     return json(
       {
         error: 'This employee cannot be permanently deleted because they have voyage or finance history. Use a removal workflow instead.',
@@ -588,6 +728,10 @@ export async function onRequestDelete(context) {
       },
       409
     );
+  }
+
+  if (Number(blocking?.total || 0) > 0 && isOverrideDelete) {
+    await purgeEmployeeHistory(env, existing);
   }
 
   const robloxKick = await removeRobloxGroupMemberForEmployee(env, {
