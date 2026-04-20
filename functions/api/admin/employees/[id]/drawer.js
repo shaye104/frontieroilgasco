@@ -36,13 +36,14 @@ export async function onRequestGet(context) {
            v.vessel_class,
            v.vessel_callsign,
            v.departure_port,
-           v.destination_port,
+           COALESCE(NULLIF(TRIM(csl.linked_port), ''), NULLIF(TRIM(v.destination_port), ''), NULLIF(TRIM(v.sell_location_name), ''), NULLIF(TRIM(v.departure_port), '')) AS destination_port,
            v.status,
            v.started_at,
            v.ended_at,
            ROUND(COALESCE(v.profit, 0)) AS net_profit
          FROM voyage_participants vp
          INNER JOIN voyages v ON v.id = vp.voyage_id
+         LEFT JOIN config_sell_locations csl ON csl.id = v.sell_location_id
          WHERE vp.employee_id = ? AND v.deleted_at IS NULL
          ORDER BY COALESCE(v.ended_at, v.started_at) DESC, v.id DESC
          LIMIT 8`

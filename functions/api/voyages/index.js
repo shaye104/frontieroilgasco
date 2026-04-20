@@ -127,7 +127,7 @@ async function listFishTypes(env) {
 
 async function listSellLocations(env) {
   const rows = await env.DB
-    .prepare('SELECT id, name, multiplier FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC')
+    .prepare('SELECT id, name, multiplier, linked_port FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC')
     .all();
   return rows?.results || [];
 }

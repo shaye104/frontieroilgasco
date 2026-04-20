@@ -16,6 +16,11 @@ function text(value) {
   return String(value || '').trim();
 }
 
+function normalizeLinkedPort(value) {
+  const raw = text(value);
+  return raw || null;
+}
+
 export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse } = await requirePermission(context, ['voyages.config.manage']);
@@ -37,7 +42,7 @@ export async function onRequestGet(context) {
       : table === 'config_sell_locations'
       ? await env.DB
           .prepare(
-            `SELECT id, name AS value, multiplier, created_at, updated_at
+            `SELECT id, name AS value, multiplier, linked_port, created_at, updated_at
              FROM config_sell_locations
              WHERE active = 1
              ORDER BY name ASC, id ASC`
@@ -67,6 +72,7 @@ export async function onRequestPost(context) {
   const value = text(payload?.value);
   if (!value) return json({ error: 'Value is required.' }, 400);
   const numericValue = Number(payload?.numericValue);
+  const linkedPort = normalizeLinkedPort(payload?.linkedPort);
 
   try {
     if (table === 'config_fish_types') {
@@ -80,10 +86,10 @@ export async function onRequestPost(context) {
     } else if (table === 'config_sell_locations') {
       await env.DB
         .prepare(
-          `INSERT INTO config_sell_locations (name, multiplier, active, updated_at)
-           VALUES (?, ?, 1, CURRENT_TIMESTAMP)`
+          `INSERT INTO config_sell_locations (name, multiplier, linked_port, active, updated_at)
+           VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP)`
         )
-        .bind(value, 1)
+        .bind(value, 1, linkedPort)
         .run();
     } else {
       await env.DB
@@ -119,6 +125,7 @@ export async function onRequestPut(context) {
   const id = Number(payload?.id);
   const value = text(payload?.value);
   const numericValue = Number(payload?.numericValue);
+  const linkedPort = normalizeLinkedPort(payload?.linkedPort);
   if (!Number.isInteger(id) || id <= 0) return json({ error: 'id is required.' }, 400);
   if (!value) return json({ error: 'Value is required.' }, 400);
 
@@ -139,10 +146,10 @@ export async function onRequestPut(context) {
       await env.DB
         .prepare(
           `UPDATE config_sell_locations
-           SET name = ?, active = 1, updated_at = CURRENT_TIMESTAMP
+           SET name = ?, linked_port = ?, active = 1, updated_at = CURRENT_TIMESTAMP
            WHERE id = ?`
         )
-        .bind(value, id)
+        .bind(value, linkedPort, id)
         .run();
     } else {
       await env.DB

@@ -17,7 +17,7 @@ export async function onRequestGet(context) {
       .prepare('SELECT id, name, unit_price FROM config_fish_types WHERE active = 1 ORDER BY name ASC, id ASC')
       .all(),
     env.DB
-      .prepare('SELECT id, name, multiplier FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC')
+      .prepare('SELECT id, name, multiplier, linked_port FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC')
       .all()
   ]);
 

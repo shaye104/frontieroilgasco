@@ -77,7 +77,7 @@ export async function onRequestPost(context) {
   if (requestedSellLocationId) {
     selectedLocation = await env.DB
       .prepare(
-        `SELECT id, name
+        `SELECT id, name, linked_port
          FROM config_sell_locations
          WHERE id = ? AND active = 1
          LIMIT 1`
@@ -203,6 +203,7 @@ export async function onRequestPost(context) {
   const totalCrewDuesToSkipper = toMoney(ownerSettlements.reduce((sum, owner) => sum + Number(owner.payableTotal || 0), 0));
   const voyageProfit = toMoney(totalGrossEarnings);
   const companyShareAmount = Math.max(0, toMoney(totalGrossEarnings * COMPANY_SHARE_RATE));
+  const destinationPort = String(selectedLocation?.linked_port || '').trim() || String(voyage.destination_port || '').trim();
 
   await env.DB.batch([
     ...settlementLines.map((line) =>
@@ -221,6 +222,7 @@ export async function onRequestPost(context) {
              sell_multiplier = ?,
              sell_location_id = ?,
              sell_location_name = ?,
+             destination_port = ?,
              buy_total = ?,
              effective_sell = ?,
              profit = ?,
@@ -242,6 +244,7 @@ export async function onRequestPost(context) {
         sellMultiplier,
         selectedLocation?.id || null,
         selectedLocation?.name || null,
+        destinationPort,
         totalBuy,
         totalGrossEarnings,
         voyageProfit,
@@ -258,7 +261,12 @@ export async function onRequestPost(context) {
   return json({
     ok: true,
     sellLocation: selectedLocation
-      ? { id: Number(selectedLocation.id), name: String(selectedLocation.name || '').trim(), multiplier: Number(sellMultiplier || 1) }
+      ? {
+          id: Number(selectedLocation.id),
+          name: String(selectedLocation.name || '').trim(),
+          linkedPort: String(selectedLocation.linked_port || '').trim(),
+          multiplier: Number(sellMultiplier || 1)
+        }
       : null,
     totals: {
       totalFishQuantity,

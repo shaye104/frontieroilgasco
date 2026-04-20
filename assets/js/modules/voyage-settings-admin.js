@@ -14,7 +14,8 @@ const CONFIG_TYPES = [
     key: 'sell_locations',
     label: 'Sell Locations',
     placeholder: 'Add sell location name',
-    numeric: null
+    numeric: null,
+    linkedPort: true
   }
 ];
 
@@ -43,6 +44,15 @@ function formatMoney(value) {
   return String(Math.round(n * 100) / 100);
 }
 
+function linkedPortMarkup(type) {
+  if (!type.linkedPort) return '';
+  return `
+      <label for="voyageConfigLinkedPort_${type.key}" class="hidden">Linked destination port</label>
+      <select id="voyageConfigLinkedPort_${type.key}" name="linkedPort">
+        <option value="">Linked destination port</option>
+      </select>`;
+}
+
 function sectionMarkup(type) {
   const numericMarkup = type.numeric
     ? `
@@ -65,6 +75,7 @@ function sectionMarkup(type) {
       <form class="voyage-settings-add-row" data-voyage-config-add-form="${type.key}">
         <label for="voyageConfigInput_${type.key}" class="hidden">Value</label>
         <input id="voyageConfigInput_${type.key}" name="value" type="text" required placeholder="${escapeHtml(type.placeholder)}" />
+        ${linkedPortMarkup(type)}
         ${numericMarkup}
         <div class="voyage-settings-add-actions">
           <button class="btn btn-primary" type="submit">Add</button>
@@ -89,6 +100,10 @@ function sectionMarkup(type) {
 
 function detailText(type, item) {
   if (type.key === 'fish_types') return `Buy: ${formatMoney(item.unit_price)}`;
+  if (type.key === 'sell_locations') {
+    const linkedPort = text(item.linked_port);
+    return linkedPort ? `Linked port: ${linkedPort}` : 'Linked port: Not set';
+  }
   return formatDate(item.updated_at || item.created_at);
 }
 
@@ -107,8 +122,18 @@ export async function initVoyageSettingsAdmin(config) {
     return {
       rows: grid.querySelector(`[data-voyage-config-rows="${typeKey}"]`),
       feedbackNode: grid.querySelector(`[data-voyage-config-feedback="${typeKey}"]`),
-      form: grid.querySelector(`[data-voyage-config-add-form="${typeKey}"]`)
+      form: grid.querySelector(`[data-voyage-config-add-form="${typeKey}"]`),
+      linkedPortSelect: grid.querySelector(`#voyageConfigLinkedPort_${typeKey}`)
     };
+  }
+
+  function populateLinkedPortOptions(typeKey) {
+    const { linkedPortSelect } = sectionNodes(typeKey);
+    if (!linkedPortSelect) return;
+    const ports = state.itemsByType.get('ports') || [];
+    linkedPortSelect.innerHTML = ['<option value="">Linked destination port</option>']
+      .concat(ports.map((row) => `<option value="${escapeHtml(text(row.value))}">${escapeHtml(text(row.value))}</option>`))
+      .join('');
   }
 
   function showCardFeedback(typeKey, message, tone) {
@@ -159,6 +184,7 @@ export async function initVoyageSettingsAdmin(config) {
     const payload = await listVoyageConfigAdmin(type.key);
     state.itemsByType.set(type.key, Array.isArray(payload?.items) ? payload.items : []);
     renderRows(type);
+    if (type.key === 'ports') populateLinkedPortOptions('sell_locations');
   }
 
   async function loadAll() {
@@ -172,6 +198,7 @@ export async function initVoyageSettingsAdmin(config) {
       const data = new FormData(form);
       const value = text(data.get('value'));
       const numericValue = type.numeric ? Number(data.get('numericValue')) : null;
+      const linkedPort = type.linkedPort ? text(data.get('linkedPort')) : '';
 
       if (!value) return showCardFeedback(type.key, 'Value is required.', 'error');
       if (type.numeric && (!Number.isFinite(numericValue) || numericValue < 0)) {
@@ -179,8 +206,9 @@ export async function initVoyageSettingsAdmin(config) {
       }
 
       try {
-        await createVoyageConfigValue(type.key, value, numericValue);
+        await createVoyageConfigValue(type.key, value, numericValue, type.linkedPort ? { linkedPort } : {});
         form.reset();
+        if (type.linkedPort) populateLinkedPortOptions(type.key);
         await loadType(type);
         showCardFeedback(type.key, `${type.label} value added.`, 'success');
       } catch (error) {
@@ -208,6 +236,7 @@ export async function initVoyageSettingsAdmin(config) {
       if (!normalized) return showCardFeedback(type.key, 'Value cannot be empty.', 'error');
 
       let numericValue = null;
+      let linkedPort = '';
       if (type.numeric) {
         const currentNumeric = type.key === 'fish_types' ? Number(current?.unit_price) : 0;
         const numericPrompt = window.prompt(`Update ${type.numeric.label}`, String(Number.isFinite(currentNumeric) ? currentNumeric : 0));
@@ -215,10 +244,24 @@ export async function initVoyageSettingsAdmin(config) {
         numericValue = Number(numericPrompt);
         if (!Number.isFinite(numericValue) || numericValue < 0) return showCardFeedback(type.key, `${type.numeric.label} must be >= 0.`, 'error');
       }
+      if (type.linkedPort) {
+        const portOptions = (state.itemsByType.get('ports') || []).map((row) => text(row.value)).filter(Boolean);
+        const currentLinkedPort = text(current?.linked_port);
+        const linkedPortPrompt = window.prompt(
+          [
+            'Update linked destination port.',
+            portOptions.length ? `Available ports: ${portOptions.join(', ')}` : 'No ports configured yet.',
+            'Leave blank to clear.'
+          ].join('\n'),
+          currentLinkedPort
+        );
+        if (linkedPortPrompt === null) return;
+        linkedPort = text(linkedPortPrompt);
+      }
 
       void (async () => {
         try {
-          await updateVoyageConfigValue(type.key, id, normalized, numericValue);
+          await updateVoyageConfigValue(type.key, id, normalized, numericValue, type.linkedPort ? { linkedPort } : {});
           await loadType(type);
           showCardFeedback(type.key, 'Value updated.', 'success');
         } catch (error) {

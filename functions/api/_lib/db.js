@@ -351,6 +351,7 @@ export async function ensureCoreSchema(env) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
       multiplier REAL NOT NULL DEFAULT 1,
+      linked_port TEXT,
       active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -875,6 +876,12 @@ export async function ensureCoreSchema(env) {
   }
   if (!shipyardColumnNames.has('vessel_type')) {
     await env.DB.prepare(`ALTER TABLE shipyard_ships ADD COLUMN vessel_type TEXT NOT NULL DEFAULT 'Freight'`).run();
+  }
+
+  const sellLocationColumns = await env.DB.prepare(`PRAGMA table_info(config_sell_locations)`).all();
+  const sellLocationColumnNames = new Set((sellLocationColumns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!sellLocationColumnNames.has('linked_port')) {
+    await env.DB.prepare(`ALTER TABLE config_sell_locations ADD COLUMN linked_port TEXT`).run();
   }
   await env.DB
     .prepare(

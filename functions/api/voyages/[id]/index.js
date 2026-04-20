@@ -59,7 +59,7 @@ export async function onRequestGet(context) {
           .all(),
         context.env.DB.prepare('SELECT id, value FROM config_voyage_ports ORDER BY value ASC, id ASC').all(),
         context.env.DB.prepare('SELECT id, name, unit_price FROM config_fish_types WHERE active = 1 ORDER BY name ASC, id ASC').all(),
-        context.env.DB.prepare('SELECT id, name, multiplier FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC').all()
+        context.env.DB.prepare('SELECT id, name, multiplier, linked_port FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC').all()
       ])
     : [null, null, null, null];
 
