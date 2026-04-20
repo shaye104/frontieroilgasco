@@ -50,10 +50,19 @@ function toSettlementPriceMap(input) {
   return out;
 }
 
+async function ensureSellLocationLinkedPortColumn(env) {
+  const columns = await env.DB.prepare(`PRAGMA table_info(config_sell_locations)`).all();
+  const names = new Set((columns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!names.has('linked_port')) {
+    await env.DB.prepare(`ALTER TABLE config_sell_locations ADD COLUMN linked_port TEXT`).run();
+  }
+}
+
 export async function onRequestPost(context) {
   const { env, params } = context;
   const { errorResponse, employee, session } = await requireVoyagePermission(context, 'voyages.end');
   if (errorResponse) return errorResponse;
+  await ensureSellLocationLinkedPortColumn(env);
 
   const voyageId = Number(params.id);
   if (!Number.isInteger(voyageId) || voyageId <= 0) return json({ error: 'Invalid voyage id.' }, 400);

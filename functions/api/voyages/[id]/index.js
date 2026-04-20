@@ -32,10 +32,19 @@ function toLostQuantityMap(values) {
   return out;
 }
 
+async function ensureSellLocationLinkedPortColumn(env) {
+  const columns = await env.DB.prepare(`PRAGMA table_info(config_sell_locations)`).all();
+  const names = new Set((columns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!names.has('linked_port')) {
+    await env.DB.prepare(`ALTER TABLE config_sell_locations ADD COLUMN linked_port TEXT`).run();
+  }
+}
+
 export async function onRequestGet(context) {
   const { params, request } = context;
   const { errorResponse, session, employee } = await requireVoyagePermission(context, 'voyages.read');
   if (errorResponse) return errorResponse;
+  await ensureSellLocationLinkedPortColumn(context.env);
   const url = new URL(request.url);
   const includeSetup = url.searchParams.get('includeSetup') === '1';
   const includeManifest = url.searchParams.get('includeManifest') === '1' || url.searchParams.get('includeTotes') === '1';

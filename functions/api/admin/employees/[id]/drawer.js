@@ -5,10 +5,19 @@ import { canManageRoleRowByHierarchy, canViewEmployeeByHierarchy, getActorAccess
 import { canEditEmployeeByRank } from '../../../_lib/db.js';
 import { expireDisciplinaryRecordsForEmployee, listDisciplinaryRecordsForEmployee, reconcileEmployeeSuspensionState } from '../../../_lib/disciplinary.js';
 
+async function ensureSellLocationLinkedPortColumn(env) {
+  const columns = await env.DB.prepare(`PRAGMA table_info(config_sell_locations)`).all();
+  const names = new Set((columns?.results || []).map((row) => String(row.name || '').toLowerCase()));
+  if (!names.has('linked_port')) {
+    await env.DB.prepare(`ALTER TABLE config_sell_locations ADD COLUMN linked_port TEXT`).run();
+  }
+}
+
 export async function onRequestGet(context) {
   const { env, params, request } = context;
   const { errorResponse, session } = await requirePermission(context, ['employees.read']);
   if (errorResponse) return errorResponse;
+  await ensureSellLocationLinkedPortColumn(env);
   const startedAt = Date.now();
 
   const employeeId = Number(params.id);
