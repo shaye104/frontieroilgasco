@@ -9330,6 +9330,91 @@ body.page-finances .finance-cartesian-svg {
   }
 }
 
+/* Finance trends: keep charts readable and prevent profit-driver clipping */
+body.page-finances #financeTabTrends.finance-tab-panel.is-active:not(.hidden) {
+  overflow: visible !important;
+  padding-bottom: 1.2rem !important;
+}
+
+body.page-finances #financeTabTrends .finance-trends-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1rem !important;
+  align-items: stretch !important;
+}
+
+body.page-finances #financeTabTrends .finance-chart-card {
+  height: auto !important;
+  min-height: clamp(390px, 42vh, 520px) !important;
+  overflow: hidden !important;
+  padding: 1rem !important;
+}
+
+body.page-finances #financeTabTrends .finance-chart-host {
+  height: auto !important;
+  min-height: clamp(300px, 34vh, 430px) !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  overflow: visible !important;
+  padding-bottom: 0.2rem !important;
+}
+
+body.page-finances #financeTabTrends #trendsChartProfitDrivers.finance-chart-host {
+  min-height: clamp(330px, 38vh, 460px) !important;
+  padding-bottom: 0 !important;
+}
+
+body.page-finances #financeTabTrends #trendsChartProfitDrivers .finance-pie-wrap {
+  min-height: 310px !important;
+  height: auto !important;
+  grid-template-columns: minmax(240px, 0.85fr) minmax(260px, 1.15fr) !important;
+  align-items: center !important;
+  overflow: visible !important;
+  padding: 0.4rem 0.25rem 0.65rem !important;
+}
+
+body.page-finances #financeTabTrends #trendsChartProfitDrivers .finance-pie-svg {
+  width: min(100%, 285px) !important;
+  height: 250px !important;
+  max-height: none !important;
+}
+
+body.page-finances #financeTabTrends .finance-chart-shell {
+  min-height: inherit !important;
+}
+
+body.page-finances #financeTabTrends .finance-cartesian-svg {
+  min-height: 0 !important;
+}
+
+@media (max-width: 1200px) {
+  body.page-finances #financeTabTrends .finance-trends-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.page-finances #financeTabTrends .finance-chart-card {
+    min-height: 380px !important;
+  }
+
+  body.page-finances #financeTabTrends .finance-chart-host {
+    min-height: 300px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  body.page-finances #financeTabTrends .finance-chart-card {
+    min-height: 340px !important;
+  }
+
+  body.page-finances #financeTabTrends .finance-chart-host {
+    min-height: 260px !important;
+  }
+
+  body.page-finances #financeTabTrends #trendsChartProfitDrivers .finance-pie-wrap {
+    grid-template-columns: 1fr !important;
+    min-height: 420px !important;
+  }
+}
+
 /* General manager account balance: authoritative table layout */
 .page-finances #financeTabCashflow .finance-remittance-table-card .finance-data-table {
   table-layout: fixed !important;
