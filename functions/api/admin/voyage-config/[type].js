@@ -16,47 +16,6 @@ function text(value) {
   return String(value || '').trim();
 }
 
-function normalizeLinkedPort(value) {
-  const raw = text(value);
-  return raw || null;
-}
-
-async function ensureSellLocationLinkedPortColumn(env) {
-  const columns = await env.DB.prepare(`PRAGMA table_info(config_sell_locations)`).all();
-  const names = new Set((columns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!names.has('linked_port')) {
-    await env.DB.prepare(`ALTER TABLE config_sell_locations ADD COLUMN linked_port TEXT`).run();
-  }
-}
-
-async function backfillVoyageDestinationsForSellLocation(env, { sellLocationId = null, sellLocationName = '', linkedPort = null } = {}) {
-  const normalizedPort = normalizeLinkedPort(linkedPort);
-  if (!normalizedPort) return;
-  const normalizedName = text(sellLocationName);
-
-  if (Number.isInteger(Number(sellLocationId)) && Number(sellLocationId) > 0) {
-    await env.DB
-      .prepare(
-        `UPDATE voyages
-         SET destination_port = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE sell_location_id = ?`
-      )
-      .bind(normalizedPort, Number(sellLocationId))
-      .run();
-  }
-
-  if (normalizedName) {
-    await env.DB
-      .prepare(
-        `UPDATE voyages
-         SET destination_port = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE COALESCE(TRIM(sell_location_name), '') = ?`
-      )
-      .bind(normalizedPort, normalizedName)
-      .run();
-  }
-}
-
 export async function onRequestGet(context) {
   const { env, params } = context;
   const { errorResponse } = await requirePermission(context, ['voyages.config.manage']);
@@ -64,7 +23,6 @@ export async function onRequestGet(context) {
 
   const table = tableFor(params.type);
   if (!table) return json({ error: 'Unsupported voyage config type.' }, 404);
-  if (table === 'config_sell_locations') await ensureSellLocationLinkedPortColumn(env);
 
   const rows =
     table === 'config_fish_types'
@@ -79,7 +37,7 @@ export async function onRequestGet(context) {
       : table === 'config_sell_locations'
       ? await env.DB
           .prepare(
-            `SELECT id, name AS value, multiplier, linked_port, created_at, updated_at
+            `SELECT id, name AS value, multiplier, created_at, updated_at
              FROM config_sell_locations
              WHERE active = 1
              ORDER BY name ASC, id ASC`
@@ -98,7 +56,6 @@ export async function onRequestPost(context) {
 
   const table = tableFor(params.type);
   if (!table) return json({ error: 'Unsupported voyage config type.' }, 404);
-  if (table === 'config_sell_locations') await ensureSellLocationLinkedPortColumn(env);
 
   let payload;
   try {
@@ -110,7 +67,6 @@ export async function onRequestPost(context) {
   const value = text(payload?.value);
   if (!value) return json({ error: 'Value is required.' }, 400);
   const numericValue = Number(payload?.numericValue);
-  const linkedPort = normalizeLinkedPort(payload?.linkedPort);
 
   try {
     if (table === 'config_fish_types') {
@@ -122,18 +78,13 @@ export async function onRequestPost(context) {
         .bind(value, numericValue)
         .run();
     } else if (table === 'config_sell_locations') {
-      const result = await env.DB
+      await env.DB
         .prepare(
-          `INSERT INTO config_sell_locations (name, multiplier, linked_port, active, updated_at)
-           VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP)`
+          `INSERT INTO config_sell_locations (name, multiplier, active, updated_at)
+           VALUES (?, ?, 1, CURRENT_TIMESTAMP)`
         )
-        .bind(value, 1, linkedPort)
+        .bind(value, 1)
         .run();
-      await backfillVoyageDestinationsForSellLocation(env, {
-        sellLocationId: Number(result?.meta?.last_row_id || 0),
-        sellLocationName: value,
-        linkedPort
-      });
     } else {
       await env.DB
         .prepare(`INSERT INTO ${table} (value, updated_at) VALUES (?, CURRENT_TIMESTAMP)`)
@@ -157,7 +108,6 @@ export async function onRequestPut(context) {
 
   const table = tableFor(params.type);
   if (!table) return json({ error: 'Unsupported voyage config type.' }, 404);
-  if (table === 'config_sell_locations') await ensureSellLocationLinkedPortColumn(env);
 
   let payload;
   try {
@@ -169,7 +119,6 @@ export async function onRequestPut(context) {
   const id = Number(payload?.id);
   const value = text(payload?.value);
   const numericValue = Number(payload?.numericValue);
-  const linkedPort = normalizeLinkedPort(payload?.linkedPort);
   if (!Number.isInteger(id) || id <= 0) return json({ error: 'id is required.' }, 400);
   if (!value) return json({ error: 'Value is required.' }, 400);
 
@@ -190,16 +139,11 @@ export async function onRequestPut(context) {
       await env.DB
         .prepare(
           `UPDATE config_sell_locations
-           SET name = ?, linked_port = ?, active = 1, updated_at = CURRENT_TIMESTAMP
+           SET name = ?, active = 1, updated_at = CURRENT_TIMESTAMP
            WHERE id = ?`
         )
-        .bind(value, linkedPort, id)
+        .bind(value, id)
         .run();
-      await backfillVoyageDestinationsForSellLocation(env, {
-        sellLocationId: id,
-        sellLocationName: value,
-        linkedPort
-      });
     } else {
       await env.DB
         .prepare(`UPDATE ${table} SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
@@ -223,7 +167,6 @@ export async function onRequestDelete(context) {
 
   const table = tableFor(params.type);
   if (!table) return json({ error: 'Unsupported voyage config type.' }, 404);
-  if (table === 'config_sell_locations') await ensureSellLocationLinkedPortColumn(env);
 
   const id = Number(new URL(request.url).searchParams.get('id'));
   if (!Number.isInteger(id) || id <= 0) return json({ error: 'id is required.' }, 400);

@@ -14,8 +14,7 @@ const CONFIG_TYPES = [
     key: 'sell_locations',
     label: 'Sell Locations',
     placeholder: 'Add sell location name',
-    numeric: null,
-    linkedPort: true
+    numeric: null
   }
 ];
 
@@ -44,15 +43,6 @@ function formatMoney(value) {
   return String(Math.round(n * 100) / 100);
 }
 
-function linkedPortMarkup(type) {
-  if (!type.linkedPort) return '';
-  return `
-      <label for="voyageConfigLinkedPort_${type.key}" class="hidden">Linked destination port</label>
-      <select id="voyageConfigLinkedPort_${type.key}" name="linkedPort" class="voyage-settings-linked-port-select">
-        <option value="">Linked destination port</option>
-      </select>`;
-}
-
 function sectionMarkup(type) {
   const numericMarkup = type.numeric
     ? `
@@ -75,7 +65,6 @@ function sectionMarkup(type) {
       <form class="voyage-settings-add-row" data-voyage-config-add-form="${type.key}">
         <label for="voyageConfigInput_${type.key}" class="hidden">Value</label>
         <input id="voyageConfigInput_${type.key}" name="value" type="text" required placeholder="${escapeHtml(type.placeholder)}" />
-        ${linkedPortMarkup(type)}
         ${numericMarkup}
         <div class="voyage-settings-add-actions">
           <button class="btn btn-primary" type="submit">Add</button>
@@ -118,32 +107,8 @@ export async function initVoyageSettingsAdmin(config) {
     return {
       rows: grid.querySelector(`[data-voyage-config-rows="${typeKey}"]`),
       feedbackNode: grid.querySelector(`[data-voyage-config-feedback="${typeKey}"]`),
-      form: grid.querySelector(`[data-voyage-config-add-form="${typeKey}"]`),
-      linkedPortSelect: grid.querySelector(`#voyageConfigLinkedPort_${typeKey}`)
+      form: grid.querySelector(`[data-voyage-config-add-form="${typeKey}"]`)
     };
-  }
-
-  function populateLinkedPortOptions(typeKey) {
-    const { linkedPortSelect } = sectionNodes(typeKey);
-    if (!linkedPortSelect) return;
-    const ports = state.itemsByType.get('ports') || [];
-    linkedPortSelect.innerHTML = ['<option value="">Linked destination port</option>']
-      .concat(ports.map((row) => `<option value="${escapeHtml(text(row.value))}">${escapeHtml(text(row.value))}</option>`))
-      .join('');
-  }
-
-  function linkedPortOptionsMarkup(selectedValue = '') {
-    const selected = text(selectedValue);
-    const ports = state.itemsByType.get('ports') || [];
-    return ['<option value="">No linked port</option>']
-      .concat(
-        ports.map((row) => {
-          const value = text(row.value);
-          const selectedAttr = value === selected ? ' selected' : '';
-          return `<option value="${escapeHtml(value)}"${selectedAttr}>${escapeHtml(value)}</option>`;
-        })
-      )
-      .join('');
   }
 
   function showCardFeedback(typeKey, message, tone) {
@@ -157,11 +122,10 @@ export async function initVoyageSettingsAdmin(config) {
     const { rows } = sectionNodes(type.key);
     if (!rows) return;
     const items = state.itemsByType.get(type.key) || [];
-    const detailHeader = type.linkedPort ? 'Port of entry' : 'Details';
     if (!items.length) {
       rows.innerHTML = `
         <div class="voyage-settings-row voyage-settings-row-header">
-          <span>Value</span><span>${escapeHtml(detailHeader)}</span><span class="align-right">Actions</span>
+          <span>Value</span><span>Details</span><span class="align-right">Actions</span>
         </div>
         <div class="voyage-settings-row">
           <span class="voyage-settings-empty">No values configured.</span>
@@ -173,32 +137,20 @@ export async function initVoyageSettingsAdmin(config) {
 
     rows.innerHTML = `
       <div class="voyage-settings-row voyage-settings-row-header">
-        <span>Value</span><span>${escapeHtml(detailHeader)}</span><span class="align-right">Actions</span>
+        <span>Value</span><span>Details</span><span class="align-right">Actions</span>
       </div>
       ${items
-        .map((item) => {
-          const id = Number(item.id);
-          const detailsMarkup = type.linkedPort
-            ? `<select class="voyage-settings-linked-port-select" data-voyage-config-linked-port="${type.key}" data-id="${id}" aria-label="Port of entry for ${escapeHtml(text(item.value))}">
-                ${linkedPortOptionsMarkup(item.linked_port)}
-              </select>`
-            : escapeHtml(detailText(type, item));
-
-          return `
+        .map(
+          (item) => `
         <div class="voyage-settings-row" data-voyage-config-row-id="${Number(item.id)}" data-voyage-config-type="${type.key}">
           <span class="voyage-settings-value">${escapeHtml(text(item.value))}</span>
-          <span class="voyage-settings-updated">${detailsMarkup}</span>
+          <span class="voyage-settings-updated">${escapeHtml(detailText(type, item))}</span>
           <span class="voyage-settings-actions">
-            ${
-              type.linkedPort
-                ? `<button class="btn btn-primary" type="button" data-voyage-config-save-link="${type.key}" data-id="${id}">Save Port</button>`
-                : ''
-            }
             <button class="btn btn-secondary" type="button" data-voyage-config-edit="${type.key}" data-id="${Number(item.id)}">Edit</button>
             <button class="btn btn-danger" type="button" data-voyage-config-delete="${type.key}" data-id="${Number(item.id)}">Delete</button>
           </span>
-        </div>`;
-        })
+        </div>`
+        )
         .join('')}
     `;
   }
@@ -207,11 +159,6 @@ export async function initVoyageSettingsAdmin(config) {
     const payload = await listVoyageConfigAdmin(type.key);
     state.itemsByType.set(type.key, Array.isArray(payload?.items) ? payload.items : []);
     renderRows(type);
-    if (type.key === 'ports') {
-      populateLinkedPortOptions('sell_locations');
-      const sellLocations = CONFIG_TYPES.find((item) => item.key === 'sell_locations');
-      if (sellLocations && state.itemsByType.has('sell_locations')) renderRows(sellLocations);
-    }
   }
 
   async function loadAll() {
@@ -225,7 +172,6 @@ export async function initVoyageSettingsAdmin(config) {
       const data = new FormData(form);
       const value = text(data.get('value'));
       const numericValue = type.numeric ? Number(data.get('numericValue')) : null;
-      const linkedPort = type.linkedPort ? text(data.get('linkedPort')) : '';
 
       if (!value) return showCardFeedback(type.key, 'Value is required.', 'error');
       if (type.numeric && (!Number.isFinite(numericValue) || numericValue < 0)) {
@@ -233,9 +179,8 @@ export async function initVoyageSettingsAdmin(config) {
       }
 
       try {
-        await createVoyageConfigValue(type.key, value, numericValue, type.linkedPort ? { linkedPort } : {});
+        await createVoyageConfigValue(type.key, value, numericValue);
         form.reset();
-        if (type.linkedPort) populateLinkedPortOptions(type.key);
         await loadType(type);
         showCardFeedback(type.key, `${type.label} value added.`, 'success');
       } catch (error) {
@@ -247,30 +192,6 @@ export async function initVoyageSettingsAdmin(config) {
   grid.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-
-    const saveLinkBtn = target.closest('[data-voyage-config-save-link]');
-    if (saveLinkBtn) {
-      const typeKey = text(saveLinkBtn.getAttribute('data-voyage-config-save-link'));
-      const id = Number(saveLinkBtn.getAttribute('data-id'));
-      const type = CONFIG_TYPES.find((item) => item.key === typeKey);
-      if (!type?.linkedPort || !Number.isInteger(id) || id <= 0) return;
-
-      const select = grid.querySelector(`[data-voyage-config-linked-port="${type.key}"][data-id="${id}"]`);
-      const items = state.itemsByType.get(type.key) || [];
-      const current = items.find((item) => Number(item.id) === id);
-      const linkedPort = select instanceof HTMLSelectElement ? text(select.value) : '';
-
-      void (async () => {
-        try {
-          await updateVoyageConfigValue(type.key, id, text(current?.value), null, { linkedPort });
-          await loadType(type);
-          showCardFeedback(type.key, 'Port link saved and existing voyages updated.', 'success');
-        } catch (error) {
-          showCardFeedback(type.key, error.message || 'Unable to save port link.', 'error');
-        }
-      })();
-      return;
-    }
 
     const editBtn = target.closest('[data-voyage-config-edit]');
     if (editBtn) {
@@ -287,7 +208,6 @@ export async function initVoyageSettingsAdmin(config) {
       if (!normalized) return showCardFeedback(type.key, 'Value cannot be empty.', 'error');
 
       let numericValue = null;
-      const linkedPort = type.linkedPort ? text(current?.linked_port) : '';
       if (type.numeric) {
         const currentNumeric = type.key === 'fish_types' ? Number(current?.unit_price) : 0;
         const numericPrompt = window.prompt(`Update ${type.numeric.label}`, String(Number.isFinite(currentNumeric) ? currentNumeric : 0));
@@ -298,7 +218,7 @@ export async function initVoyageSettingsAdmin(config) {
 
       void (async () => {
         try {
-          await updateVoyageConfigValue(type.key, id, normalized, numericValue, type.linkedPort ? { linkedPort } : {});
+          await updateVoyageConfigValue(type.key, id, normalized, numericValue);
           await loadType(type);
           showCardFeedback(type.key, 'Value updated.', 'success');
         } catch (error) {

@@ -32,19 +32,10 @@ function toLostQuantityMap(values) {
   return out;
 }
 
-async function ensureSellLocationLinkedPortColumn(env) {
-  const columns = await env.DB.prepare(`PRAGMA table_info(config_sell_locations)`).all();
-  const names = new Set((columns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!names.has('linked_port')) {
-    await env.DB.prepare(`ALTER TABLE config_sell_locations ADD COLUMN linked_port TEXT`).run();
-  }
-}
-
 export async function onRequestGet(context) {
   const { params, request } = context;
   const { errorResponse, session, employee } = await requireVoyagePermission(context, 'voyages.read');
   if (errorResponse) return errorResponse;
-  await ensureSellLocationLinkedPortColumn(context.env);
   const url = new URL(request.url);
   const includeSetup = url.searchParams.get('includeSetup') === '1';
   const includeManifest = url.searchParams.get('includeManifest') === '1' || url.searchParams.get('includeTotes') === '1';
@@ -68,7 +59,7 @@ export async function onRequestGet(context) {
           .all(),
         context.env.DB.prepare('SELECT id, value FROM config_voyage_ports ORDER BY value ASC, id ASC').all(),
         context.env.DB.prepare('SELECT id, name, unit_price FROM config_fish_types WHERE active = 1 ORDER BY name ASC, id ASC').all(),
-        context.env.DB.prepare('SELECT id, name, multiplier, linked_port FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC').all()
+        context.env.DB.prepare('SELECT id, name, multiplier FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC').all()
       ])
     : [null, null, null, null];
 

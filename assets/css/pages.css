@@ -2456,8 +2456,7 @@
   margin-bottom: 0.55rem;
 }
 
-#voyageSettingsGrid .voyage-settings-add-row input,
-#voyageSettingsGrid .voyage-settings-add-row select {
+#voyageSettingsGrid .voyage-settings-add-row input {
   margin-bottom: 0;
   min-width: 0;
 }
@@ -2509,13 +2508,6 @@
 #voyageSettingsGrid .voyage-settings-updated {
   color: #64748b;
   font-size: 0.84rem;
-}
-
-#voyageSettingsGrid .voyage-settings-linked-port-select {
-  width: 100%;
-  min-width: 0;
-  margin-bottom: 0;
-  font-size: 0.88rem;
 }
 
 #voyageSettingsGrid .voyage-settings-actions {

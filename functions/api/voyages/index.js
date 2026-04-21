@@ -8,14 +8,6 @@ function text(value) {
   return String(value || '').trim();
 }
 
-async function ensureSellLocationLinkedPortColumn(env) {
-  const columns = await env.DB.prepare(`PRAGMA table_info(config_sell_locations)`).all();
-  const names = new Set((columns?.results || []).map((row) => String(row.name || '').toLowerCase()));
-  if (!names.has('linked_port')) {
-    await env.DB.prepare(`ALTER TABLE config_sell_locations ADD COLUMN linked_port TEXT`).run();
-  }
-}
-
 function isLegacyStatus(value) {
   const status = String(value || '').trim().toUpperCase();
   return status === 'CANCELLED' || status === 'COMPLETED';
@@ -135,7 +127,7 @@ async function listFishTypes(env) {
 
 async function listSellLocations(env) {
   const rows = await env.DB
-    .prepare('SELECT id, name, multiplier, linked_port FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC')
+    .prepare('SELECT id, name, multiplier FROM config_sell_locations WHERE active = 1 ORDER BY name ASC, id ASC')
     .all();
   return rows?.results || [];
 }
@@ -177,7 +169,6 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   const { errorResponse, session, employee } = await requireVoyagePermission(context, 'voyages.read');
   if (errorResponse) return errorResponse;
-  await ensureSellLocationLinkedPortColumn(env);
 
   const url = new URL(request.url);
   const includeSetup = url.searchParams.get('includeSetup') === '1';
@@ -446,7 +437,6 @@ export async function onRequestPost(context) {
   const { env } = context;
   const { errorResponse, employee } = await requireVoyagePermission(context, 'voyages.create');
   if (errorResponse) return errorResponse;
-  await ensureSellLocationLinkedPortColumn(env);
 
   let payload;
   try {

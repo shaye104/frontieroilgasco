@@ -892,17 +892,17 @@ export function listVoyageConfigAdmin(type) {
   return requestJson(`/api/admin/voyage-config/${encodeURIComponent(type)}`, { method: 'GET' });
 }
 
-export function createVoyageConfigValue(type, value, numericValue = null, extraPayload = {}) {
+export function createVoyageConfigValue(type, value, numericValue = null) {
   return requestJson(`/api/admin/voyage-config/${encodeURIComponent(type)}`, {
     method: 'POST',
-    body: JSON.stringify({ value, numericValue, ...extraPayload })
+    body: JSON.stringify({ value, numericValue })
   });
 }
 
-export function updateVoyageConfigValue(type, id, value, numericValue = null, extraPayload = {}) {
+export function updateVoyageConfigValue(type, id, value, numericValue = null) {
   return requestJson(`/api/admin/voyage-config/${encodeURIComponent(type)}`, {
     method: 'PUT',
-    body: JSON.stringify({ id, value, numericValue, ...extraPayload })
+    body: JSON.stringify({ id, value, numericValue })
   });
 }
 
